@@ -1,27 +1,29 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.command.undo.ActionChangeRange;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.ImmutableActionChangeRange;
+import com.intellij.openapi.command.undo.MutableActionChangeRange;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Supplier;
 
 @ApiStatus.Internal
 final class SharedUndoRedoStacksHolder extends UndoRedoStacksHolderBase<ImmutableActionChangeRange> {
   private final SharedAdjustableUndoableActionsHolder myAdjustableUndoableActionsHolder;
-  final Supplier<Boolean> myIsPerClientSupported;
+  private final UndoCapabilities myUndoCapabilities;
 
   SharedUndoRedoStacksHolder(
     @NotNull SharedAdjustableUndoableActionsHolder undoableActionsHolder,
-    @NotNull Supplier<Boolean> isPerClientSupported,
+    @NotNull UndoCapabilities undoCapabilities,
     boolean isUndo
   ) {
     super(isUndo);
     myAdjustableUndoableActionsHolder = undoableActionsHolder;
-    myIsPerClientSupported = isPerClientSupported;
+    myUndoCapabilities = undoCapabilities;
   }
 
   void addToStack(@NotNull DocumentReference reference, @NotNull ImmutableActionChangeRange changeRange) {
@@ -65,7 +67,7 @@ final class SharedUndoRedoStacksHolder extends UndoRedoStacksHolderBase<Immutabl
   }
 
   @NotNull MovementAvailability canMoveToStackTop(@NotNull DocumentReference reference, @NotNull Map<Integer, MutableActionChangeRange> rangesToMove) {
-    if (!myIsPerClientSupported.get()) {
+    if (!myUndoCapabilities.isPerClientSupported()) {
       return MovementAvailability.ALREADY_MOVED;
     }
     UndoRedoList<ImmutableActionChangeRange> stack = getStack(reference);

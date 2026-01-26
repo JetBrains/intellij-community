@@ -78,7 +78,7 @@ public class UndoManagerImpl extends UndoManager {
   @NonInjectable
   protected UndoManagerImpl(@Nullable ComponentManager componentManager) {
     myProject = componentManager instanceof Project project ? project : null;
-    myUndoSharedState = new UndoSharedState(this::isPerClientSupported);
+    myUndoSharedState = new UndoSharedState(getUndoCapabilities());
   }
 
   @Override
@@ -307,45 +307,8 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @ApiStatus.Internal
-  protected boolean isTransparentSupported() {
-    return true;
-  }
-
-  @ApiStatus.Internal
-  protected boolean isConfirmationSupported() {
-    return true;
-  }
-
-  @ApiStatus.Internal
-  protected boolean isCompactSupported() {
-    return true;
-  }
-
-  @ApiStatus.Internal
-  protected boolean isGlobalSplitSupported() {
-    return true;
-  }
-
-  @ApiStatus.Internal
-  protected boolean isPerClientSupported() {
-    return true;
-  }
-
-  // TODO: remove it
-  @ApiStatus.Internal
-  public boolean isGroupIdChangeSupported() {
-    return true;
-  }
-
-  // TODO: IT IS A PRIORITY ONE
-  @ApiStatus.Internal
-  public boolean isCommandRestartSupported() {
-    return true;
-  }
-
-  @ApiStatus.Internal
-  protected boolean isEditorStateRestoreSupported() {
-    return true;
+  public UndoCapabilities getUndoCapabilities() {
+    return new LocalUndoCapabilities();
   }
 
   @ApiStatus.Internal
@@ -564,5 +527,50 @@ public class UndoManagerImpl extends UndoManager {
   @Override
   public String toString() {
     return "UndoManager for " + ObjectUtils.notNull(myProject, "application");
+  }
+
+  @ApiStatus.Internal
+  protected static class LocalUndoCapabilities implements UndoCapabilities {
+    @Override
+    public boolean isTransparentSupported() {
+      return true;
+    }
+
+    @Override
+    public boolean isConfirmationSupported() {
+      return true;
+    }
+
+    @Override
+    public boolean isCompactSupported() {
+      return true;
+    }
+
+    @Override
+    public boolean isGlobalSplitSupported() {
+      return true;
+    }
+
+    @Override
+    public boolean isPerClientSupported() {
+      return true;
+    }
+
+    // TODO: remove it
+    @Override
+    public boolean isGroupIdChangeSupported() {
+      return true;
+    }
+
+    // TODO: IT IS A PRIORITY ONE
+    @Override
+    public boolean isCommandRestartSupported() {
+      return true;
+    }
+
+    @Override
+    public boolean isEditorStateRestoreSupported() {
+      return true;
+    }
   }
 }

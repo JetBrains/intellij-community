@@ -112,7 +112,7 @@ public final class DefaultRawTypedHandler implements TypedActionHandlerEx {
   @NlsContexts.Command
   private static @NotNull String commandName(@Nullable Project project) {
     UndoManager undoManager = project == null ? UndoManager.getGlobalInstance() : UndoManager.getInstance(project);
-    if (((UndoManagerImpl) undoManager).isGroupIdChangeSupported()) {
+    if (((UndoManagerImpl)undoManager).getUndoCapabilities().isGroupIdChangeSupported()) {
       return "";
     }
     return EditorBundle.message("typing.in.editor.command.name");
@@ -120,6 +120,6 @@ public final class DefaultRawTypedHandler implements TypedActionHandlerEx {
 
   private static boolean isCommandRestartSupported(@Nullable Project project) {
     UndoManager undoManager = project == null ? UndoManager.getGlobalInstance() : UndoManager.getInstance(project);
-    return ((UndoManagerImpl) undoManager).isCommandRestartSupported();
+    return ((UndoManagerImpl)undoManager).getUndoCapabilities().isCommandRestartSupported();
   }
 }
