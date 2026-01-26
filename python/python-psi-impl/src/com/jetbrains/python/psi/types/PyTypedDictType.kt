@@ -47,15 +47,11 @@ class PyTypedDictType @JvmOverloads constructor(
       PyTypedDictType(name, fields, dictClass, true, declaration)
   }
 
-  override fun getName(): String {
-    return name
-  }
+  override fun getName(): String = name
 
   override fun isBuiltin(): Boolean = false
 
-  override fun isCallable(): Boolean {
-    return isDefinition
-  }
+  override fun isCallable(): Boolean = isDefinition
 
   override fun getParameters(context: TypeEvalContext): List<PyCallableParameter>? {
     return if (isCallable)
@@ -72,9 +68,7 @@ class PyTypedDictType @JvmOverloads constructor(
     else null
   }
 
-  override fun toString(): String {
-    return "PyTypedDictType: $name"
-  }
+  override fun toString(): String = "PyTypedDictType: $name"
 
   override fun equals(other: Any?): Boolean {
     if (other === this) return true
