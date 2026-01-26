@@ -218,6 +218,7 @@ jvm_library(
     "//plugins/kotlin/kotlin.searching/base",
     "//plugins/kotlin/j2k/k1.old.post-processing",
     "//java/ide-customization",
+    "//java/ide-customization:ide-customization_test_lib",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//plugins/kotlin/base/test:test_test_lib",
     "@lib//:hamcrest",
