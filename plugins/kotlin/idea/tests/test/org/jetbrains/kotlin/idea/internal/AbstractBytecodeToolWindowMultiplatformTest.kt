@@ -5,9 +5,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.kotlin.cli.extensionsStorage
-import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
-import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
+import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -35,10 +33,8 @@ abstract class AbstractBytecodeToolWindowMultiplatformTest : AbstractMultiModule
 }
 
 private fun configureCompilerAndCheckBytecode(file: KtFile) {
-    val configuration = CompilerConfiguration().apply {
+    val configuration = CompilerConfiguration.create().apply {
         languageVersionSettings = file.languageVersionSettings
-        @OptIn(ExperimentalCompilerApi::class)
-        extensionsStorage = CompilerPluginRegistrar.ExtensionStorage()
     }
 
     val bytecode = runBlockingMaybeCancellable {

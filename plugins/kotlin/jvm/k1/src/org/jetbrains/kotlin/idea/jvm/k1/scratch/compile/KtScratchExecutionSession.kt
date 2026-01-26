@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
+import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.cli.extensionsStorage
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
@@ -162,16 +163,13 @@ class KtScratchExecutionSession(
         LOG.printDebugMessage("Temp output dir: ${tmpDir.path}")
 
         val result = analyze(psiFile) {
-            val configuration = CompilerConfiguration().apply {
+            val configuration = CompilerConfiguration.create().apply {
                 val containingModule = psiFile.module
                 if (containingModule != null) {
                     put(CommonConfigurationKeys.MODULE_NAME, containingModule.name)
                 }
 
                 put(CommonConfigurationKeys.LANGUAGE_VERSION_SETTINGS, psiFile.languageVersionSettings)
-
-                @OptIn(ExperimentalCompilerApi::class)
-                extensionsStorage = CompilerPluginRegistrar.ExtensionStorage()
             }
 
             try {

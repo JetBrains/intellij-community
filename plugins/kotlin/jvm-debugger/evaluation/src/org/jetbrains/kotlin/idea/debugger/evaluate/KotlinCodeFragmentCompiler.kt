@@ -26,8 +26,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
 import org.jetbrains.kotlin.analysis.api.components.KaDebuggerExtension
 import org.jetbrains.kotlin.analysis.api.components.isClassFile
 import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.KaRestrictedAnalysisException
-import org.jetbrains.kotlin.cli.FrontendConfigurationKeys
-import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
+import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -181,14 +180,13 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
 
         val (generatedClassName, generatedEntryFunctionName) =
             KOTLIN_CODE_FRAGMENT_CLASS_AND_FUNCTION_NAMES.get(codeFragment) ?: (GENERATED_CLASS_NAME to GENERATED_FUNCTION_NAME)
-        val compilerConfiguration = CompilerConfiguration().apply {
+        val compilerConfiguration = CompilerConfiguration.create().apply {
             if (module != null) {
                 put(CommonConfigurationKeys.MODULE_NAME, module.name)
             }
             put(CommonConfigurationKeys.LANGUAGE_VERSION_SETTINGS, codeFragment.languageVersionSettings)
             put(CODE_FRAGMENT_CLASS_NAME, generatedClassName)
             put(CODE_FRAGMENT_METHOD_NAME, generatedEntryFunctionName)
-            put(FrontendConfigurationKeys.EXTENSIONS_STORAGE, CompilerPluginRegistrar.ExtensionStorage())
         }
 
         return analyze(codeFragment) {

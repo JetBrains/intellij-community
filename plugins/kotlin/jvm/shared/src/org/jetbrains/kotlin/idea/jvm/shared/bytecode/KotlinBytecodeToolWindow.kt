@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaCompiledFile
 import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
 import org.jetbrains.kotlin.analysis.api.components.isClassFile
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
+import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.cli.extensionsStorage
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
@@ -118,10 +119,7 @@ class KotlinBytecodeToolWindow(
         override fun processRequest(location: Location): BytecodeGenerationResult {
             val ktFile = location.kFile!!
 
-            val configuration = CompilerConfiguration()
-
-            @OptIn(ExperimentalCompilerApi::class)
-            configuration.extensionsStorage = CompilerPluginRegistrar.ExtensionStorage()
+            val configuration = CompilerConfiguration.create()
 
             val containingModule = ktFile.module
             if (containingModule != null) {

@@ -6,9 +6,9 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
+import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.cli.extensionsStorage
 import org.jetbrains.kotlin.codegen.state.GenerationState
-import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.compiler.plugin.registerInProject
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -109,14 +109,12 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
         val fragmentCompilerBackend = IRFragmentCompilerCodegen()
 
-        @OptIn(ExperimentalCompilerApi::class)
-        val extensionStorage = CompilerPluginRegistrar.ExtensionStorage()
-        val compilerConfiguration = CompilerConfiguration().apply {
+        val compilerConfiguration = CompilerConfiguration.create().apply {
             languageVersionSettings = codeFragment.languageVersionSettings
             doNotClearBindingContext = true
-            @OptIn(ExperimentalCompilerApi::class)
-            extensionsStorage = extensionStorage
         }
+        @OptIn(ExperimentalCompilerApi::class)
+        val extensionStorage = compilerConfiguration.extensionsStorage!!
 
         val parameterInfo = fragmentCompilerBackend.computeFragmentParameters(executionContext, codeFragment, bindingContext)
 

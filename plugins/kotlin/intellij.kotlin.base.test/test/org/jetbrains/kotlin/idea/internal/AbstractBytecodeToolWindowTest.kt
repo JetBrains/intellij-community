@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.internal
 import com.intellij.openapi.application.readAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.cli.extensionsStorage
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
@@ -37,14 +38,12 @@ abstract class AbstractBytecodeToolWindowTest : KotlinLightCodeInsightFixtureTes
 
         val file = myFixture.file as KtFile
 
-        val configuration = CompilerConfiguration().apply {
+        val configuration = CompilerConfiguration.create().apply {
             if (InTextDirectivesUtils.getPrefixedBoolean(mainFileText, "// INLINE:") == false) {
                 put(CommonConfigurationKeys.DISABLE_INLINE, true)
             }
 
             languageVersionSettings = file.languageVersionSettings
-            @OptIn(ExperimentalCompilerApi::class)
-            extensionsStorage = CompilerPluginRegistrar.ExtensionStorage()
         }
 
         val bytecode = runBlocking(Dispatchers.Default) {
