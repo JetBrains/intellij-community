@@ -188,6 +188,10 @@ private val EelIpPreference.protocolFamily: ProtocolFamily?
 private val HostAddress.asInetSocketAddress: InetSocketAddress get() = InetSocketAddress(hostname, port.toInt())
 
 private class ConnectionAcceptorImpl(private val boundServerSocket: ServerSocketChannel) : ConnectionAcceptor {
+  private val _incomingConnections = Channel<Connection>()
+  override val incomingConnections: ReceiveChannel<Connection> = _incomingConnections
+  override val boundAddress: ResolvedSocketAddress = boundServerSocket.localAddress.asResolvedSocketAddress
+
   private val listenSocket: Job
 
   init {
@@ -223,9 +227,6 @@ private class ConnectionAcceptorImpl(private val boundServerSocket: ServerSocket
     }
   }
 
-  private val _incomingConnections = Channel<Connection>()
-  override val incomingConnections: ReceiveChannel<Connection> = _incomingConnections
-  override val boundAddress: ResolvedSocketAddress = boundServerSocket.localAddress.asResolvedSocketAddress
 
   override suspend fun close() {
     closeImpl()
