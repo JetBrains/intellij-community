@@ -7349,17 +7349,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.jediterm/jediterm-core-3.59.jar_copy",
-  src = "@org_jetbrains_jediterm-jediterm-core-3_59_http//file",
-  out = "org.jetbrains.jediterm/jediterm-core-3.59.jar",
+  name = "org.jetbrains.jediterm/jediterm-core-3.61.jar_copy",
+  src = "@org_jetbrains_jediterm-jediterm-core-3_61_http//file",
+  out = "org.jetbrains.jediterm/jediterm-core-3.61.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "jediterm-core",
-  jar = "@org_jetbrains_jediterm-jediterm-core-3_59_http//file",
-  source_jar = "@org_jetbrains_jediterm-jediterm-core-3_59-sources_http//file",
+  jar = "@org_jetbrains_jediterm-jediterm-core-3_61_http//file",
+  source_jar = "@org_jetbrains_jediterm-jediterm-core-3_61-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -11409,17 +11409,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains.jediterm/jediterm-ui-3.59.jar_copy",
-  src = "@org_jetbrains_jediterm-jediterm-ui-3_59_http//file",
-  out = "org.jetbrains.jediterm/jediterm-ui-3.59.jar",
+  name = "org.jetbrains.jediterm/jediterm-ui-3.61.jar_copy",
+  src = "@org_jetbrains_jediterm-jediterm-ui-3_61_http//file",
+  out = "org.jetbrains.jediterm/jediterm-ui-3.61.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-jediterm-ui-jediterm-ui",
-  jar = "@org_jetbrains_jediterm-jediterm-ui-3_59_http//file",
-  source_jar = "@org_jetbrains_jediterm-jediterm-ui-3_59-sources_http//file",
+  jar = "@org_jetbrains_jediterm-jediterm-ui-3_61_http//file",
+  source_jar = "@org_jetbrains_jediterm-jediterm-ui-3_61-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
