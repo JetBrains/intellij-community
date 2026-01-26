@@ -15095,6 +15095,41 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/assignment.kt");
             }
 
+            @TestMetadata("emptyListArgumentToMutableList.kt")
+            public void testEmptyListArgumentToMutableList() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/emptyListArgumentToMutableList.kt");
+            }
+
+            @TestMetadata("emptyListInitializerToMutableList.kt")
+            public void testEmptyListInitializerToMutableList() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/emptyListInitializerToMutableList.kt");
+            }
+
+            @TestMetadata("emptyListToMutableList.kt")
+            public void testEmptyListToMutableList() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/emptyListToMutableList.kt");
+            }
+
+            @TestMetadata("emptyListToMutableListWithTypeArg.kt")
+            public void testEmptyListToMutableListWithTypeArg() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/emptyListToMutableListWithTypeArg.kt");
+            }
+
+            @TestMetadata("emptyMapToMutableMap.kt")
+            public void testEmptyMapToMutableMap() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/emptyMapToMutableMap.kt");
+            }
+
+            @TestMetadata("emptySetAssignmentToMutableSet.kt")
+            public void testEmptySetAssignmentToMutableSet() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/emptySetAssignmentToMutableSet.kt");
+            }
+
+            @TestMetadata("emptySetToMutableSet.kt")
+            public void testEmptySetToMutableSet() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/emptySetToMutableSet.kt");
+            }
+
             @TestMetadata("initializer.kt")
             public void testInitializer() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/initializer.kt");
@@ -15103,6 +15138,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("iterableToArray.kt")
             public void testIterableToArray() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/iterableToArray.kt");
+            }
+
+            @TestMetadata("listOfToMutableList.kt")
+            public void testListOfToMutableList() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/listOfToMutableList.kt");
+            }
+
+            @TestMetadata("listOfWithTypeArgsToMutableList.kt")
+            public void testListOfWithTypeArgsToMutableList() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/listOfWithTypeArgsToMutableList.kt");
             }
 
             @TestMetadata("listToArray.kt")
@@ -15125,6 +15170,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/listToSequence.kt");
             }
 
+            @TestMetadata("mapOfToMutableMap.kt")
+            public void testMapOfToMutableMap() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/mapOfToMutableMap.kt");
+            }
+
             @TestMetadata("sequenceToArray.kt")
             public void testSequenceToArray() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/sequenceToArray.kt");
@@ -15133,6 +15183,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("sequenceToList.kt")
             public void testSequenceToList() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/sequenceToList.kt");
+            }
+
+            @TestMetadata("setOfToMutableSet.kt")
+            public void testSetOfToMutableSet() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/setOfToMutableSet.kt");
             }
         }
 

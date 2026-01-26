@@ -1,14 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.StandardNames.BUILT_INS_PACKAGE_FQ_NAME
-import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.JvmStandardClassIds
-import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.name.StandardClassIds.BASE_COLLECTIONS_PACKAGE
 import org.jetbrains.kotlin.name.StandardClassIds.BASE_ENUMS_PACKAGE
 import org.jetbrains.kotlin.name.StandardClassIds.BASE_SEQUENCES_PACKAGE
@@ -30,6 +26,12 @@ object StandardKotlinNames {
         @JvmField val flatten: FqName = BASE_COLLECTIONS_PACKAGE + "flatten"
         @JvmField val map: FqName = BASE_COLLECTIONS_PACKAGE + "map"
         @JvmField val mapIndexed: FqName = BASE_COLLECTIONS_PACKAGE + "mapIndexed"
+        @JvmField val emptyList: FqName = BASE_COLLECTIONS_PACKAGE + "emptyList"
+        @JvmField val emptyMap: FqName = BASE_COLLECTIONS_PACKAGE + "emptyMap"
+        @JvmField val emptySet: FqName = BASE_COLLECTIONS_PACKAGE + "emptySet"
+        @JvmField val listOf: FqName = BASE_COLLECTIONS_PACKAGE + "listOf"
+        @JvmField val mapOf: FqName = BASE_COLLECTIONS_PACKAGE + "mapOf"
+        @JvmField val setOf: FqName = BASE_COLLECTIONS_PACKAGE + "setOf"
 
         @JvmField val transformations: List<FqName> =
             collectionTransformationFunctionNames.map { BASE_COLLECTIONS_PACKAGE + it }
