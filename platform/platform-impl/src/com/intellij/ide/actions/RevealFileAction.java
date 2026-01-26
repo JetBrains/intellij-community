@@ -225,8 +225,9 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
         spawn(fmApp, toSelect != null ? toSelect : dir);
       }
     }
-    else if (toSelect == null && PathEnvironmentVariableUtil.isOnPath("xdg-open")) {
-      spawn("xdg-open", dir);
+    else if (PathEnvironmentVariableUtil.isOnPath("xdg-open")) {
+      var path = toSelect != null ? toSelect : dir;
+      spawn("xdg-open", path);
     }
     else {
       var message = IdeBundle.message("reveal.unsupported.message", requireNonNullElse(toSelect, dir));
