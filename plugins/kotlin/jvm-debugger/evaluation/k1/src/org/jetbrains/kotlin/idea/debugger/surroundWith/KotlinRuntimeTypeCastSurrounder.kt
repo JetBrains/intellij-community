@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.surroundWith
 
 import com.intellij.debugger.DebuggerInvocationUtil
@@ -10,7 +10,6 @@ import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -49,10 +48,12 @@ internal class KotlinRuntimeTypeCastSurrounder : Surrounder {
         val debuggerContext = DebuggerManagerEx.getInstanceEx(project).context
         val debuggerSession = debuggerContext.debuggerSession
         if (debuggerSession != null) {
-            val progressWindow = ProgressWindow(true, expression.project)
-            val worker = SurroundWithCastWorker(editor, expression, debuggerContext, progressWindow)
-            progressWindow.title = JavaDebuggerBundle.message("title.evaluating")
-            debuggerContext.managerThread?.startProgress(worker, progressWindow)
+            debuggerContext.managerThread?.startCommandWithModalProgress(
+                expression.project,
+                JavaDebuggerBundle.message("title.evaluating")
+            ) { progressIndicator ->
+                SurroundWithCastWorker(editor, expression, debuggerContext, progressIndicator)
+            }
         }
         return null
     }

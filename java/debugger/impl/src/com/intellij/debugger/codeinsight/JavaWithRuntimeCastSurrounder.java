@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.codeinsight;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder;
@@ -12,7 +12,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -46,10 +45,11 @@ public final class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounde
     DebuggerContextImpl debuggerContext = (DebuggerManagerEx.getInstanceEx(project)).getContext();
     DebuggerSession debuggerSession = debuggerContext.getDebuggerSession();
     if (debuggerSession != null) {
-      final ProgressWindow progressWindow = new ProgressWindow(true, expr.getProject());
-      SurroundWithCastWorker worker = new SurroundWithCastWorker(editor, expr, debuggerContext, progressWindow);
-      progressWindow.setTitle(JavaDebuggerBundle.message("title.evaluating"));
-      Objects.requireNonNull(debuggerContext.getManagerThread()).startProgress(worker, progressWindow);
+      Objects.requireNonNull(debuggerContext.getManagerThread()).startCommandWithModalProgress(
+        expr.getProject(), JavaDebuggerBundle.message("title.evaluating"),
+        (progressIndicator) -> {
+          return new SurroundWithCastWorker(editor, expr, debuggerContext, progressIndicator);
+        });
     }
     return null;
   }

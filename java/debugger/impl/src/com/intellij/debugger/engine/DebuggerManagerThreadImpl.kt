@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine
 
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
@@ -12,18 +12,20 @@ import com.intellij.debugger.impl.InvokeAndWaitThread
 import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.statistics.StatisticsStorage
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.ProgressIndicatorListener
-import com.intellij.openapi.progress.util.ProgressWindow
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts.ModalProgressTitle
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.util.AwaitCancellationAndInvoke
@@ -239,19 +241,46 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
     }
   }
 
-  fun startProgress(command: DebuggerCommandImpl, progressWindow: ProgressWindow) {
-    object : ProgressIndicatorListener {
-      override fun cancelled() {
-        command.release()
-      }
-    }.installToProgress(progressWindow)
+  /**
+   * Executes a debugger command while showing a cancellable modal progress dialog with [title].
+   *
+   * Create a command to execute inside [commandProvider] with the given [ProgressIndicator],
+   * so it is possible to update current step and check for cancellation.
+   */
+  fun startCommandWithModalProgress(
+    project: Project,
+    title: @ModalProgressTitle String,
+    commandProvider: (ProgressIndicator) -> DebuggerCommandImpl,
+  ) {
+    coroutineScope.launch(ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()) {
+      withModalProgress(project, title) {
+        val progressScope = this@withModalProgress
+        val commandCompleted = CompletableDeferred<Unit>()
+        coroutineToIndicator { indicator ->
+          val command = commandProvider(indicator)
 
-    ApplicationManager.getApplication().executeOnPooledThread {
-      ProgressManager.getInstance().runProcess(
-        { invokeAndWait(command) }, progressWindow)
+          progressScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            try {
+              commandCompleted.await()
+            }
+            catch (e: CancellationException) {
+              // if the modal progress is cancelled, we need to release the command,
+              // so invokeAndWait call will be completed (not the command itself!)
+              command.release()
+              throw e
+            }
+          }
+
+          try {
+            invokeAndWait(command)
+          }
+          finally {
+            commandCompleted.complete(Unit)
+          }
+        }
+      }
     }
   }
-
 
   fun startLongProcessAndFork(process: Runnable) {
     assertIsManagerThread()
