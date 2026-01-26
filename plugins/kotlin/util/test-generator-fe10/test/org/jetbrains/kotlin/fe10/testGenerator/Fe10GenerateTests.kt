@@ -199,7 +199,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
 
         listOf(
             AbstractIndyLambdaIrKotlinEvaluateExpressionTest::class,
-            AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest::class,
+            AbstractK1IrKotlinEvaluateExpressionTest::class,
         ).forEach {
             testClass(it) {
                 model(
