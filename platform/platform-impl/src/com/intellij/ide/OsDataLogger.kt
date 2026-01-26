@@ -36,7 +36,7 @@ private class OsDataLogger(val coroutineScope: CoroutineScope) {
         if (osInfo.isUnderWsl) info += " (in WSL)"
         if (osInfo.glibcVersion != null) info += "; glibc: " + osInfo.glibcVersion
       }
-      UnixDesktopEnv.CURRENT?.also { currentEnv ->
+      UnixDesktopEnv.CURRENT?.let { currentEnv ->
         info += "; desktop: " + currentEnv.name
         withContext(Dispatchers.IO) {
           ExecUtil.execAndReadLine(GeneralCommandLine(listOf(currentEnv.versionTool) + currentEnv.versionToolArguments))?.also { line ->
