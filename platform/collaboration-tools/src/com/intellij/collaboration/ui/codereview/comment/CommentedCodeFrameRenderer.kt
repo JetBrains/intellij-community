@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.util.CodeReviewColorUtil
 import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.markup.CustomHighlighterOrder
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -18,6 +19,10 @@ internal class CommentedCodeFrameRenderer(
   private val endLine: Int,
   private val editorSide: Side?,
 ) : CustomHighlighterRenderer, LineMarkerRenderer {
+
+  override fun getOrder(): CustomHighlighterOrder {
+    return CustomHighlighterOrder.AFTER_TEXT
+  }
 
   override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) { // editor part
     var x = 0f
