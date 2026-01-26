@@ -50,7 +50,8 @@ public final class ReassignVariableUtil {
   }
   
   @VisibleForTesting
-  public static boolean reassign(final Editor editor) {
+  public static boolean reassign(final @Nullable Editor editor) {
+    if (editor == null) return false;
     final SmartPsiElementPointer<PsiDeclarationStatement> pointer = editor.getUserData(DECLARATION_KEY);
     final PsiDeclarationStatement declaration = pointer != null ? pointer.getElement() : null;
     final PsiType type = getVariableType(declaration);

@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightFrontbackUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddNewArrayExpressionFix;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,14 +36,17 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -85,13 +89,100 @@ public final class IntroduceVariableUtil {
     return PropertiesComponent.getInstance().getBoolean(PREFER_STATEMENTS_OPTION) || Registry.is(PREFER_STATEMENTS_OPTION, false);
   }
 
-  public static PsiElement[] findStatementsAtOffset(final Editor editor, final PsiFile file, final int offset) {
+  /**
+   * @see IntroduceVariableUtil#getExpressionAndSelectionRange(Project, Document, PsiFile, int)
+   */
+  public static @NotNull Pair<@Nullable TextRange, @NotNull List<PsiExpression>> getExpressionAndSelectionRange(
+    final @NotNull Project project,
+    final @NotNull Editor editor,
+    final @NotNull PsiFile file,
+    int offset
+  ) {
+    return getExpressionAndSelectionRange(project, editor.getDocument(), file, offset);
+  }
+
+  /**
+   * Searches for the expressions that can be extracted into the variable near the given {@code offset}
+   * @return {@link TextRange} that includes preferred expression to extract and list of {@link PsiExpression} - candidates that can be extracted as well
+   */
+  public static @NotNull Pair<@Nullable TextRange, @NotNull List<PsiExpression>> getExpressionAndSelectionRange(
+    final @NotNull Project project,
+    final @NotNull Document document,
+    final @NotNull PsiFile file,
+    int offset
+  ) {
+    final PsiElement[] statementsInRange = findStatementsAtOffset(document, file, offset);
+    int line = document.getLineNumber(offset);
+    TextRange lineRange =
+      TextRange.create(document.getLineStartOffset(line), Math.min(document.getLineEndOffset(line) + 1, document.getTextLength()));
+
+    //try line selection
+    if (statementsInRange.length == 1 && selectLineAtCaret(offset, statementsInRange)) {
+      final PsiExpression expressionInRange =
+        findExpressionInRange(project, file, lineRange.getStartOffset(), lineRange.getEndOffset());
+      if (expressionInRange != null && getErrorMessage(expressionInRange) == null) {
+        return Pair.create(lineRange, Collections.singletonList(expressionInRange));
+      }
+    }
+
+    final List<PsiExpression> expressions = ContainerUtil
+      .filter(CommonJavaRefactoringUtil.collectExpressions(file, document, offset, false), expression ->
+        CommonJavaRefactoringUtil.getParentStatement(expression, false) != null ||
+        PsiTreeUtil.getParentOfType(expression, PsiField.class, true, PsiStatement.class) != null);
+    if (expressions.isEmpty()) {
+      return Pair.create(lineRange, Collections.emptyList());
+    }
+    else if (!isChooserNeeded(expressions)) {
+      return Pair.create(expressions.get(0).getTextRange(), expressions);
+    }
+    else {
+      return Pair.create(null, expressions);
+    }
+  }
+
+
+  /**
+   * @return single expression that can be extracted into the variable.
+   */
+  public static PsiExpression findExpressionInRange(Project project, PsiFile file, int startOffset, int endOffset) {
+    PsiExpression tempExpr = CodeInsightFrontbackUtil.findExpressionInRange(file, startOffset, endOffset);
+    if (tempExpr == null) {
+      PsiElement[] statements = CodeInsightFrontbackUtil.findStatementsInRange(file, startOffset, endOffset);
+      if (statements.length == 1) {
+        if (statements[0] instanceof PsiExpressionStatement) {
+          tempExpr = ((PsiExpressionStatement) statements[0]).getExpression();
+        }
+        else if (statements[0] instanceof PsiReturnStatement) {
+          tempExpr = ((PsiReturnStatement)statements[0]).getReturnValue();
+        }
+        else if (statements[0] instanceof PsiSwitchStatement) {
+          PsiExpression expr = JavaPsiFacade.getElementFactory(project).createExpressionFromText(statements[0].getText(), statements[0]);
+          TextRange range = statements[0].getTextRange();
+          final RangeMarker rangeMarker = file.getViewProvider().getDocument().createRangeMarker(range);
+          expr.putUserData(ElementToWorkOn.TEXT_RANGE, rangeMarker);
+          expr.putUserData(ElementToWorkOn.PARENT, statements[0]);
+          return expr;
+        }
+      }
+    }
+
+    if (tempExpr == null) {
+      tempExpr = getSelectedExpression(project, file, startOffset, endOffset);
+    }
+    return CommonJavaRefactoringUtil.isExtractable(tempExpr) ? tempExpr : null;
+  }
+
+  public static PsiElement[] findStatementsAtOffset(final @NotNull Editor editor, final @NotNull PsiFile file, final int offset) {
     final Document document = editor.getDocument();
+    return findStatementsAtOffset(document, file, offset);
+  }
+
+  private static PsiElement[] findStatementsAtOffset(final @NotNull Document document, final @NotNull PsiFile file, final int offset) {
     final int lineNumber = document.getLineNumber(offset);
     final int lineStart = document.getLineStartOffset(lineNumber);
     final int lineEnd = document.getLineEndOffset(lineNumber);
 
-    return CodeInsightUtil.findStatementsInRange(file, lineStart, lineEnd);
+    return CodeInsightFrontbackUtil.findStatementsInRange(file, lineStart, lineEnd);
   }
 
   /**

@@ -99,7 +99,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     String switchLabelError = RefactoringUtil.checkEnumConstantInSwitchLabel(selectedExpr);
     if (switchLabelError != null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, switchLabelError, getRefactoringName(), getHelpID());
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(switchLabelError), getRefactoringName(), getHelpID());
       return false;
     }
 

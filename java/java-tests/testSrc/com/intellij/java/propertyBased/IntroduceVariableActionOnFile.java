@@ -218,7 +218,7 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
     }
 
     @Override
-    protected void showErrorMessage(Project project, Editor editor, String message) {
+    protected void showErrorMessage(@NotNull Project project, Editor editor, @NotNull String message) {
     }
   }
 }

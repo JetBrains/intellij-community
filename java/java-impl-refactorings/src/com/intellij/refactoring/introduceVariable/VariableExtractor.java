@@ -47,7 +47,7 @@ import java.util.Set;
  * Performs actual write action (see {@link #extractVariable()}) which introduces new variable and replaces all occurrences.
  * No user interaction is performed here.
  */
-final class VariableExtractor {
+public final class VariableExtractor {
   private static final Logger LOG = Logger.getInstance(VariableExtractor.class);
 
   private final @NotNull Project myProject;

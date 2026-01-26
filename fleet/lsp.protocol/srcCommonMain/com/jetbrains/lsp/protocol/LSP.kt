@@ -161,6 +161,12 @@ fun Range.intersects(other: Range): Boolean =
 fun Range.isSingleLine(): Boolean =
   start.line == end.line
 
+/**
+ * Checks whether current selection range is empty
+ */
+fun Range.isEmpty(): Boolean =
+  start == end
+
 @Serializable
 @JvmInline
 value class DocumentUri(val uri: URI)
