@@ -197,7 +197,9 @@ public abstract class InplaceEditor implements AWTEventListener {
     editorComponent.getActionMap().put("escapeStroke", new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        cancelEditing();
+        WriteIntentReadAction.run(() -> {
+          cancelEditing();
+        });
       }
     });
     final Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
