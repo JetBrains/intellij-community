@@ -262,7 +262,6 @@ object PyExpectedTypeJudgement {
           fields = fields,
           dictClass = dictClass,
           definitionLevel = PyTypedDictType.DefinitionLevel.INSTANCE,
-          ancestors = emptyList(),
           declaration = mapping.callableType?.declarationElement
         )
       }

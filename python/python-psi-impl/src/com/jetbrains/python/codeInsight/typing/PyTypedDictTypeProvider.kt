@@ -185,7 +185,6 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
                                TDFields(collectFields(cls, context)),
                                PyBuiltinCache.getInstance(cls).dictType?.pyClass ?: return null,
                                if (isInstance) PyTypedDictType.DefinitionLevel.INSTANCE else PyTypedDictType.DefinitionLevel.NEW_TYPE,
-                               cls.getAncestorTypes(context).filterIsInstance<PyTypedDictType>(),
                                cls)
       }
 
@@ -359,7 +358,6 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
                              typedDictFields,
                              dictClass,
                              if (isInstance) PyTypedDictType.DefinitionLevel.INSTANCE else PyTypedDictType.DefinitionLevel.NEW_TYPE,
-                             emptyList(),
                              getDeclaration(targetOrCall))
     }
 
