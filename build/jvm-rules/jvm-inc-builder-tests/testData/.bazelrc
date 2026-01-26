@@ -36,9 +36,3 @@ common --experimental_platform_in_output_dir
 
 # Do not depend on external environment
 build --action_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
-
-# Simulate current monorepo behavior.
-# Another problem this flag fixes: current implementation of KotlinRunner loads compiler plugins from plugin classpath with URLClassLoader (see 'kotlinPlugins.kt').
-# Such approach may lead to locked plugin jar files on Windows. Restarting worker guarantees it uses the most recent compiler plugin implementation.
-# If different approach is used to load kotlin plugins, we can consider reusing worker instance between builds in tests
-build --worker_quit_after_build
