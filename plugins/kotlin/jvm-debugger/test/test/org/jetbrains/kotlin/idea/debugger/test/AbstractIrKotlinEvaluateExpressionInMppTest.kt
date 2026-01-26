@@ -9,12 +9,9 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
@@ -79,12 +76,7 @@ import java.io.File
  * /* optionally code and test directives for debugger */
  * ```
  */
-abstract class AbstractK1IrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEvaluateExpressionInMppTest() {
 
-    override fun getMainClassName(compilerFacility: DebuggerTestCompilerFacility): String {
-        return K1DebuggerTestCompilerFacility.analyzeAndFindMainClass(project, sourcesKtFiles.jvmKtFiles) ?: error("No main class found")
-    }
-}
 abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEvaluateExpressionTest() {
     private lateinit var perModuleLibraryOutputDirectory: File
     private lateinit var perModuleLibrarySourceDirectory: File
@@ -297,12 +289,6 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
 
 private typealias PlatformName = String
 private typealias ModuleName = String
-
-abstract class AbstractK1IdeK2CodeKotlinEvaluateExpressionInMppTest : AbstractK1IrKotlinEvaluateExpressionInMppTest() {
-    override val compileWithK2 = true
-
-    override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
-}
 
 
 open class MppDebuggerCompilerFacility(

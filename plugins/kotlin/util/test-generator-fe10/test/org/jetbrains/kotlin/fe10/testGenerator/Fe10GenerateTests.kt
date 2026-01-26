@@ -180,11 +180,21 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
     }
 
-    testGroup("jvm-debugger/test", category = DEBUGGER) {
+    testGroup("jvm-debugger/test/kotlin.jvm-debugger.test.k1", category = DEBUGGER, testDataPath = "../testData") {
+        listOf(AbstractK1FileRankingTest::class, AbstractK1IdeK2CodeFileRankingTest::class).forEach {
+            testClass(it) {
+                model("fileRanking")
+            }
+        }
+
+        testClass<AbstractIrSequenceTraceTestCase> { // TODO: implement mapping logic for terminal operations
+            model("sequence/streams/sequence", excludedDirectories = listOf("terminal"))
+        }
+
         listOf(
-          AbstractK1IrKotlinSteppingTest::class,
-          AbstractIndyLambdaIrKotlinSteppingTest::class,
-          AbstractK1IdeK2CodeKotlinSteppingTest::class,
+            AbstractK1IrKotlinSteppingTest::class,
+            AbstractIndyLambdaIrKotlinSteppingTest::class,
+            AbstractK1IdeK2CodeKotlinSteppingTest::class,
         ).forEach {
             testClass(it) {
                 model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepInto")
@@ -234,9 +244,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             }
         }
 
+
         listOf(
-          AbstractIrKotlinScriptEvaluateExpressionTest::class,
-          AbstractK1IdeK2CodeScriptEvaluateExpressionTest::class,
+            AbstractIrKotlinScriptEvaluateExpressionTest::class,
+            AbstractK1IdeK2CodeScriptEvaluateExpressionTest::class,
         ).forEach {
             testClass(it) {
                 model("evaluation/scripts", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
@@ -270,22 +281,14 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
         }
 
-        testClass<AbstractSelectExpressionForDebuggerTestWithAnalysisApi> {
-            model("selectExpression")
-        }
-
-        testClass<AbstractSelectExpressionForDebuggerTestWithLegacyImplementation> {
-            model("selectExpression")
-        }
 
         testClass<AbstractPositionManagerTest> {
             model("positionManager", isRecursive = false, pattern = KT, testClassName = "SingleFile")
             model("positionManager", isRecursive = false, pattern = DIRECTORY, testClassName = "MultiFile")
         }
 
-
         listOf(AbstractK1IrBreakpointHighlightingTest::class,
-               AbstractK1IdeK2CodeBreakpointHighlightingTest::class).forEach {
+            AbstractK1IdeK2CodeBreakpointHighlightingTest::class).forEach {
             testClass(it) {
                 model("highlighting", isRecursive = false, pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
             }
@@ -293,6 +296,30 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
 
         testClass<AbstractK1IdeK2CodeKotlinSteppingPacketsNumberTest> {
             model("stepping/packets", isRecursive = false, pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
+        }
+
+        testClass<AbstractFlowAsyncStackTraceTest> {
+            model("asyncStackTrace/flows")
+        }
+
+
+        testClass<AbstractCoroutineAsyncStackTraceTest> {
+            model("asyncStackTrace/coroutines")
+        }
+
+        listOf(AbstractCoroutineViewJobHierarchyTest::class, AbstractK1IdeK2CoroutineViewTest::class).forEach {
+            testClass(it) {
+                model("coroutinesView")
+            }
+        }
+
+
+        testClass<AbstractSelectExpressionForDebuggerTestWithAnalysisApi> {
+            model("selectExpression")
+        }
+
+        testClass<AbstractSelectExpressionForDebuggerTestWithLegacyImplementation> {
+            model("selectExpression")
         }
 
         testClass<AbstractSmartStepIntoTest> {
@@ -303,25 +330,9 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("breakpointApplicability", pattern = KT_OR_KTS)
         }
 
-        listOf(AbstractK1FileRankingTest::class, AbstractK1IdeK2CodeFileRankingTest::class).forEach {
-            testClass(it) {
-                model("fileRanking")
-            }
-        }
-
         listOf(AbstractSuspendStackTraceTest::class, AbstractK1IdeK2CodeSuspendStackTraceTest::class).forEach {
             testClass(it) {
                 model("suspendStackTrace")
-            }
-        }
-
-        testClass<AbstractFlowAsyncStackTraceTest> {
-            model("asyncStackTrace/flows")
-        }
-
-        listOf(AbstractCoroutineAsyncStackTraceTest::class, AbstractK2CoroutineAsyncStackTraceTest::class).forEach {
-            testClass(it) {
-                model("asyncStackTrace/coroutines")
             }
         }
 
@@ -329,16 +340,6 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             testClass(it) {
                 model("coroutines")
             }
-        }
-
-        listOf(AbstractCoroutineViewJobHierarchyTest::class, AbstractK1IdeK2CoroutineViewTest::class).forEach {
-            testClass(it) {
-                model("coroutinesView")
-            }
-        }
-
-        testClass<AbstractIrSequenceTraceTestCase> { // TODO: implement mapping logic for terminal operations
-            model("sequence/streams/sequence", excludedDirectories = listOf("terminal"))
         }
 
         listOf(AbstractContinuationStackTraceTest::class, AbstractK1IdeK2CodeContinuationStackTraceTest::class).forEach {
@@ -366,6 +367,14 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         testClass<AbstractKotlinExceptionFilterTest> {
             model("exceptionFilter", pattern = Patterns.forRegex("""^([^.]+)$"""), isRecursive = false)
         }
+    }
+
+    testGroup("jvm-debugger/test", category = DEBUGGER) {
+
+        testClass<AbstractK2CoroutineAsyncStackTraceTest> {
+            model("asyncStackTrace/coroutines")
+        }
+
     }
 
     testGroup("copyright/tests", category = CODE_INSIGHT) {

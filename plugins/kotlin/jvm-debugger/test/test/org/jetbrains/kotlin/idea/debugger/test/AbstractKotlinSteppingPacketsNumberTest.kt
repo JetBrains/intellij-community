@@ -4,16 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.test
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.execution.process.ProcessOutputTypes
 import com.jetbrains.jdi.VirtualMachineImpl
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import java.util.concurrent.atomic.AtomicInteger
-
-abstract class AbstractK1KotlinSteppingPacketsNumberTest: AbstractKotlinSteppingPacketsNumberTest() {
-
-    override fun getMainClassName(compilerFacility: DebuggerTestCompilerFacility): String {
-        return K1DebuggerTestCompilerFacility.analyzeAndFindMainClass(project, sourcesKtFiles.jvmKtFiles) ?: error("No main class found")
-    }
-}
 
 abstract class AbstractKotlinSteppingPacketsNumberTest : AbstractIrKotlinSteppingTestWithVariablePrinting() {
     private val packets = AtomicInteger()
@@ -39,9 +30,3 @@ abstract class AbstractKotlinSteppingPacketsNumberTest : AbstractIrKotlinSteppin
     }
 }
 
-abstract class AbstractK1IdeK2CodeKotlinSteppingPacketsNumberTest : AbstractK1KotlinSteppingPacketsNumberTest() {
-    override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
-    override val compileWithK2 = true
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
-}

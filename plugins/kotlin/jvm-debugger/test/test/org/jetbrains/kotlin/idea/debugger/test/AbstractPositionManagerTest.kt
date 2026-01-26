@@ -18,18 +18,16 @@ import com.sun.jdi.Location
 import com.sun.jdi.ReferenceType
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.backend.common.output.OutputFile
-import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
-import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
-import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.config.JvmAnalysisFlags.suppressMissingBuiltinsError
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
 import org.jetbrains.kotlin.idea.debugger.core.KotlinPositionManagerFactory
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockLocation
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockVirtualMachine
 import org.jetbrains.kotlin.idea.debugger.test.mock.SmartMockReferenceTypeContext
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.allKotlinFiles
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.TestJdkKind
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files.createTempDirectory
@@ -73,14 +71,6 @@ abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCa
         for (file in files) {
             breakpoints.addAll(extractBreakpointsInfo(file, file.text))
         }
-
-        val configuration = KotlinTestUtilsImpl.newConfiguration(ConfigurationKind.STDLIB, TestJdkKind.MOCK_JDK)
-        // TODO: delete this once IDEVirtualFileFinder supports loading .kotlin_builtins files
-        configuration.languageVersionSettings = LanguageVersionSettingsImpl(
-            LanguageVersion.LATEST_STABLE,
-            ApiVersion.LATEST_STABLE,
-            mapOf(suppressMissingBuiltinsError to true),
-        )
 
         val tempDir = createTempDirectory("debugger-test-").toFile()
         try {

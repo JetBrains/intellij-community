@@ -4,18 +4,10 @@ package org.jetbrains.kotlin.idea.debugger.test
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.execution.process.ProcessOutputTypes
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
 import org.jetbrains.kotlin.idea.debugger.core.KotlinPositionManagerFactory
 import org.jetbrains.kotlin.idea.debugger.core.KotlinSourcePositionHighlighter
 import org.junit.Assert
-
-abstract class AbstractK1IrBreakpointHighlightingTest : AbstractIrBreakpointHighlightingTest() {
-
-    override fun getMainClassName(compilerFacility: DebuggerTestCompilerFacility): String {
-        return K1DebuggerTestCompilerFacility.analyzeAndFindMainClass(project, sourcesKtFiles.jvmKtFiles) ?: error("No main class found")
-    }
-}
 
 abstract class AbstractIrBreakpointHighlightingTest : AbstractIrKotlinSteppingTest() {
   override fun extraPrintContext(context: SuspendContextImpl) {
@@ -39,8 +31,3 @@ abstract class AbstractIrBreakpointHighlightingTest : AbstractIrKotlinSteppingTe
   }
 }
 
-abstract class AbstractK1IdeK2CodeBreakpointHighlightingTest : AbstractK1IrBreakpointHighlightingTest() {
-  override val compileWithK2 = true
-
-  override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
-}

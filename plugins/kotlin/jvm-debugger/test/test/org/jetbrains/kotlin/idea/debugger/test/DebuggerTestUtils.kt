@@ -19,7 +19,7 @@ val DEBUGGER_TESTDATA_PATH_BASE: String =
         KotlinRoot.DIR.resolve("jvm-debugger").resolve("test").resolve("testData").path
     }
 
-internal fun chooseLanguageVersionForCompilation(useK2: Boolean): LanguageVersion {
+fun chooseLanguageVersionForCompilation(useK2: Boolean): LanguageVersion {
     return if (useK2) {
         LanguageVersion.values().last { it.usesK2 && it.isStable }
     } else {

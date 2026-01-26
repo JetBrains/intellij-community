@@ -17,6 +17,7 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/eval4j",
     "//plugins/kotlin/native/tests",
     "//plugins/kotlin/jvm-debugger/test",
+    "//plugins/kotlin/jvm-debugger/test/kotlin.jvm-debugger.test.k1:kotlin-jvm-debugger-test-k1",
     "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling",
     "//plugins/kotlin/gradle/gradle-tooling/impl",
     "//plugins/kotlin/gradle/gradle-java",

@@ -43,16 +43,13 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.fe10.analysis" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.base.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.core-fe10" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.coroutines" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.eval4j" scope="TEST" />
@@ -72,8 +69,6 @@
     <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.debugger.streams.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.debugger.streams.core.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.scripting.k1" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
   </component>
 </module>

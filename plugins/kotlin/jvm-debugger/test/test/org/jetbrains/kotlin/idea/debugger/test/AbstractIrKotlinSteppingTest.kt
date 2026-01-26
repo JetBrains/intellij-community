@@ -6,13 +6,6 @@ import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstructionKind
 
-abstract class AbstractK1IrKotlinSteppingTest: AbstractIrKotlinSteppingTest() {
-
-    override fun getMainClassName(compilerFacility: DebuggerTestCompilerFacility): String {
-        return K1DebuggerTestCompilerFacility.analyzeAndFindMainClass(project, sourcesKtFiles.jvmKtFiles) ?: error("No main class found")
-    }
-}
-
 abstract class AbstractIrKotlinSteppingTest : KotlinDescriptorTestCaseWithStepping() {
     private enum class Category(val instruction: SteppingInstructionKind?) {
         StepIntoIgnoreFilters(SteppingInstructionKind.StepIntoIgnoreFilters),

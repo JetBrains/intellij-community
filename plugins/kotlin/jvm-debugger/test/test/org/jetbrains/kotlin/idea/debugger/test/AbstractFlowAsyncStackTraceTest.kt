@@ -38,7 +38,4 @@ abstract class AbstractFlowAsyncStackTraceTest : AbstractAsyncStackTraceTest() {
     override fun getFramePresentation(f: XStackFrame): String {
         return XDebuggerTestUtil.getFramePresentation(f)
     }
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
 }

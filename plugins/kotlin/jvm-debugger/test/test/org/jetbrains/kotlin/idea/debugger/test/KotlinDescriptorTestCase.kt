@@ -73,7 +73,7 @@ import java.io.File
 internal const val KOTLIN_LIBRARY_NAME = "KotlinJavaRuntime"
 internal const val TEST_LIBRARY_NAME = "TestLibrary"
 internal const val COMMON_SOURCES_DIR = "commonSrc"
-internal const val SCRIPT_SOURCES_DIR = "scripts"
+const val SCRIPT_SOURCES_DIR = "scripts"
 internal const val JVM_MODULE_NAME_START = "jvm"
 
 private const val MULTI_MODULES = "multiModules"
