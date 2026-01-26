@@ -238,7 +238,7 @@ object ActionUtil {
    */
   @JvmStatic
   fun updateAction(action: AnAction, e: AnActionEvent): AnActionResult {
-    val checkDumb = Registry.`is`("actionSystem.update.dumb.mode.check.awareness")
+    val checkDumb = Registry.`is`("actionSystem.update.dumb.mode.check.awareness", false)
     val presentation = e.presentation
     if (LightEdit.owns(e.project) && !isActionLightEditCompatible(action)) {
       presentation.isEnabledAndVisible = false
