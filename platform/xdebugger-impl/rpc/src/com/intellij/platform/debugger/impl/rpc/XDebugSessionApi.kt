@@ -107,13 +107,24 @@ data class XDebugSessionDto(
 
 @ApiStatus.Internal
 @Serializable
-sealed interface XExecutionStacksEvent {
-  @Serializable
-  data class NewExecutionStacks(val stacks: List<XExecutionStackDto>, val last: Boolean) : XExecutionStacksEvent
+sealed interface XExecutionStacksEvent
 
-  @Serializable
-  data class ErrorOccurred(val errorMessage: @NlsContexts.DialogMessage String) : XExecutionStacksEvent
+@ApiStatus.Internal
+@Serializable
+sealed interface XExecutionStackGroupsEvent {
 }
+
+@ApiStatus.Internal
+@Serializable
+data class NewExecutionStacksEvent(val stacks: List<XExecutionStackDto>, val last: Boolean) : XExecutionStacksEvent, XExecutionStackGroupsEvent
+
+@ApiStatus.Internal
+@Serializable
+data class ErrorOccurredEvent(val errorMessage: @NlsContexts.DialogMessage String) : XExecutionStacksEvent, XExecutionStackGroupsEvent
+
+@ApiStatus.Internal
+@Serializable
+data class NewExecutionStackGroupsEvent(val groups: List<XExecutionStackGroupDto>, val last: Boolean) : XExecutionStackGroupsEvent
 
 @ApiStatus.Internal
 @Serializable
