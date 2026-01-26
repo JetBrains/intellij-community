@@ -6,6 +6,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
@@ -27,7 +28,8 @@ import org.jetbrains.kotlin.psi.*
  *
  * By default, and when instantiated by IntelliJ IDEA, [useTemplate] is set to `true`.
  */
-internal class SpecifyTypeExplicitlyIntention @JvmOverloads constructor(private val useTemplate: Boolean = true) :
+@ApiStatus.Internal
+class SpecifyTypeExplicitlyIntention @JvmOverloads constructor(private val useTemplate: Boolean = true) :
     KotlinApplicableModCommandAction<KtCallableDeclaration, TypeInfo>(KtCallableDeclaration::class) {
 
     override fun getApplicableRanges(element: KtCallableDeclaration): List<TextRange> =
