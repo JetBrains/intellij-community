@@ -25,10 +25,9 @@ import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.packaging.PyPackageUtil
-import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.hasInstalledPackageSnapshot
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
+import com.jetbrains.python.psi.resolve.isPackageAvailable
 import com.jetbrains.python.psi.PyUtil
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import java.util.function.Supplier
 
 class CreateSetupPyAction : CreateFromTemplateAction(
@@ -108,14 +107,11 @@ class CreateSetupPyAction : CreateFromTemplateAction(
       return if (hasSetuptoolsPackage(module)) "from setuptools import setup" else "from distutils.core import setup"
     }
 
+    private val SETUPTOOLS_MARKER = PackageAvailabilitySpec("setuptools", "setuptools.setup")
+
     private fun hasSetuptoolsPackage(module: Module?): Boolean {
-      val sdk = PythonSdkUtil.findPythonSdk(module)
-      if (sdk == null) return false
-
-      val project = module?.project ?: return false
-      val packageManager = PythonPackageManager.forSdk(project, sdk)
-
-      return packageManager.hasInstalledPackageSnapshot("setuptools")
+      if (module == null) return false
+      return isPackageAvailable(module, SETUPTOOLS_MARKER)
     }
 
     private fun getPackageList(dataContext: DataContext): String {

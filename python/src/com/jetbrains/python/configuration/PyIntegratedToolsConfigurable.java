@@ -168,7 +168,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
           var factory = myModel.getSelected();
           if (factory != null && !factory.isFrameworkInstalled(myProject, sdk)) {
             return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", factory.getName()),
-                                        createQuickFix(sdk, facetErrorPanel, factory.getPackageRequired()));
+                                        // isFrameworkInstalled() == false => getPackageSpec() != null
+                                        createQuickFix(sdk, facetErrorPanel, Objects.requireNonNull(factory.getPackageSpec()).getPackageName()));
           }
         }
         return ValidationResult.OK;

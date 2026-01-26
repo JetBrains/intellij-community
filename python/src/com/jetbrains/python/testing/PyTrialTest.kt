@@ -8,7 +8,9 @@ import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
 import com.jetbrains.python.PythonHelper
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * trial test runner
@@ -38,6 +40,11 @@ class PyTrialTestConfiguration(project: Project, factory: PyTrialTestFactory)
 
 
 class PyTrialTestFactory(type:PythonTestConfigurationType) : PyAbstractTestFactory<PyTrialTestConfiguration>(type) {
+  @ApiStatus.Internal
+  companion object {
+    private val PACKAGE_SPEC = PackageAvailabilitySpec("Twisted", "twisted.trial.unittest.TestCase")
+  }
+
   override fun createTemplateConfiguration(project: Project): PyTrialTestConfiguration = PyTrialTestConfiguration(project, this)
 
   override fun getName(): String = PyBundle.message("runcfg.trial.display_name")
@@ -46,5 +53,5 @@ class PyTrialTestFactory(type:PythonTestConfigurationType) : PyAbstractTestFacto
 
   override fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean = true
 
-  override val packageRequired: String = "Twisted"
+  override val packageSpec: PackageAvailabilitySpec = PACKAGE_SPEC
 }

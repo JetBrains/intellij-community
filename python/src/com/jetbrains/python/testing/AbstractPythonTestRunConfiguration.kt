@@ -8,20 +8,16 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.testframework.AbstractTestProxy
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.extensions.getQName
-import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.hasInstalledPackageSnapshot
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
+import com.jetbrains.python.psi.resolve.isPackageAvailable
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
@@ -37,7 +33,11 @@ import org.jetbrains.annotations.ApiStatus.Internal
  */
 abstract class AbstractPythonTestRunConfiguration<T : AbstractPythonTestRunConfiguration<T>>
 @JvmOverloads
-protected constructor(project: Project, factory: ConfigurationFactory, private val requiredPackage: String? = null) :
+protected constructor(
+  project: Project,
+  factory: ConfigurationFactory,
+  private val packageSpec: PackageAvailabilitySpec? = null,
+) :
   AbstractPythonRunConfiguration<T>(project, factory) {
   /**
    * Create test spec (string to be passed to runner, probably glued with [TEST_NAME_PARTS_SPLITTER])
@@ -113,16 +113,15 @@ protected constructor(project: Project, factory: ConfigurationFactory, private v
   @Throws(RuntimeConfigurationException::class)
   override fun checkConfiguration() {
     super.checkConfiguration()
-    if (requiredPackage != null && !isFrameworkInstalled()) {
+    if (packageSpec != null && !isFrameworkInstalled()) {
       throw RuntimeConfigurationWarning(
-        PyBundle.message("runcfg.testing.no.test.framework", requiredPackage))
+        PyBundle.message("runcfg.testing.no.test.framework", packageSpec))
     }
   }
 
   /**
    * Check if framework is available on SDK
    */
-  @RequiresBlockingContext
   fun isFrameworkInstalled(): Boolean {
     val sdk = sdk
     if (sdk == null) {
@@ -130,13 +129,8 @@ protected constructor(project: Project, factory: ConfigurationFactory, private v
       logger<AbstractPythonRunConfiguration<*>>().warn("Failed to detect test framework: SDK is null")
       return false
     }
-    val requiredPackage = this.requiredPackage ?: return true // Installed by default
-    val hasInstalledPackage = { PythonPackageManager.forSdk(project, sdk).hasInstalledPackageSnapshot(requiredPackage) }
-
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      return runWithModalProgressBlocking(project, PyBundle.message("progress.title.checking.test.framework")) { hasInstalledPackage() }
-    }
-    return runBlockingMaybeCancellable { hasInstalledPackage() }
+    if (packageSpec == null) return true
+    return isPackageAvailable(project, sdk, packageSpec)
   }
 
 

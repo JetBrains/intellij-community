@@ -44,8 +44,8 @@ import com.intellij.util.ThreeState
 import com.intellij.util.execution.ParametersListUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.extensions.*
-import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.hasInstalledPackageSnapshot
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
+import com.jetbrains.python.psi.resolve.isPackageAvailable
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
@@ -481,7 +481,7 @@ abstract class PyAbstractTestConfiguration(
   project: Project,
   private val testFactory: PyAbstractTestFactory<*>,
 )
-  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, testFactory, testFactory.packageRequired),
+  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, testFactory, packageSpec = testFactory.packageSpec),
     PyRerunAwareConfiguration,
     RefactoringListenerProvider,
     SMRunnerConsolePropertiesProvider {
@@ -779,14 +779,15 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration>(t
   abstract fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean
 
   /**
-   * Test framework needs package to be installed
+   * Marker fully-qualified name used to detect if the framework is installed.
+   * Override this in subclasses to provide framework-specific packageSpec FQN.
+   * If null, [packageSpec] will be used as the module name to resolve.
    */
-  open val packageRequired: String? = null
+  open val packageSpec: PackageAvailabilitySpec? = null
 
   open fun isFrameworkInstalled(project: Project, sdk: Sdk): Boolean {
-    val requiredPackage = packageRequired ?: return true // No package required
-    val isInstalled = PythonPackageManager.forSdk(project, sdk).hasInstalledPackageSnapshot(requiredPackage)
-    return isInstalled
+    val spec = packageSpec ?: return true
+    return isPackageAvailable(project, sdk, spec)
   }
 }
 

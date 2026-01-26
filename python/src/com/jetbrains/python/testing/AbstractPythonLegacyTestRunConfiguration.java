@@ -22,6 +22,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import org.jdom.Element;
@@ -52,8 +53,8 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
   private @NlsSafe String myPattern = ""; // pattern for modules in folder to match against
   private boolean usePattern = false;
 
-  protected AbstractPythonLegacyTestRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
-    super(project, configurationFactory);
+  protected AbstractPythonLegacyTestRunConfiguration(Project project, ConfigurationFactory configurationFactory, PackageAvailabilitySpec packageSpec) {
+    super(project, configurationFactory, packageSpec);
   }
 
   @Override
