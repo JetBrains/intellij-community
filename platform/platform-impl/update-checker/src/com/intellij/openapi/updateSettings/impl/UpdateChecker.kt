@@ -291,15 +291,7 @@ object UpdateChecker {
     indicator: ProgressIndicator? = null,
     buildNumber: BuildNumber? = null,
   ): InternalPluginResults {
-    val pluginHosts = UpdateCheckerPluginsFacade.getInstance().getPluginHosts()
-    val backends = pluginHosts.mapNotNull { host ->
-      if (host == null && ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository())
-        MarketplaceRepositoryBackend()
-      else if (host != null)
-        CustomRepositoryBackend(host)
-      else
-        null
-    }
+    val backends = collectPluginRepositories(MarketplacePluginRepository())
 
     return getInternalPluginUpdates(backends, plugins, indicator, buildNumber)
   }
@@ -311,23 +303,30 @@ object UpdateChecker {
   @JvmStatic
   @JvmOverloads
   fun checkInstalledPluginUpdates(buildNumber: BuildNumber? = null, indicator: ProgressIndicator? = null): InternalPluginResults {
-    val pluginHosts = UpdateCheckerPluginsFacade.getInstance().getPluginHosts()
-    val backends = pluginHosts.mapNotNull { host ->
-      if (host == null && ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository())
-        MarketplaceUpdateCheckRepositoryBackend()
-      else if (host != null)
-        CustomRepositoryBackend(host)
-      else
-        null
-    }
-
+    val backends = collectPluginRepositories(MarketplaceUpdateCheckPluginRepository())
     val pluginIds = collectUpdateablePlugins().map { it.key }
 
     return getInternalPluginUpdates(backends, pluginIds, indicator, buildNumber)
   }
 
+  private fun collectPluginRepositories(marketplaceBackend: RemotePluginRepository): List<RemotePluginRepository> {
+    val pluginHosts = UpdateCheckerPluginsFacade.getInstance().getPluginHosts()
+    return pluginHosts.mapNotNull { host ->
+      if (isMarketplaceBackend(host))
+        marketplaceBackend
+      else if (host != null)
+        CustomPluginRepository(host)
+      else
+        null
+    }
+  }
+
+  private fun isMarketplaceBackend(host: String?): Boolean {
+    return host == null && ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()
+  }
+
   private fun getInternalPluginUpdates(
-    backends: Collection<RepositoryBackend>,
+    backends: Collection<RemotePluginRepository>,
     plugins: Collection<PluginId>,
     indicator: ProgressIndicator? = null,
     buildNumber: BuildNumber? = null,

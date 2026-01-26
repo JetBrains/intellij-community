@@ -6,14 +6,14 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 sealed interface PluginUpdateInfo {
-  class UpdateAvailable(val update: PluginDownloader) : PluginUpdateInfo
+  class UpdateAvailable internal constructor(val update: PluginDownloader) : PluginUpdateInfo
 
-  class NoUpdate : PluginUpdateInfo
+  class NoUpdate internal constructor() : PluginUpdateInfo
 
-  class CheckFailed(
+  class CheckFailed internal constructor(
     /**
      * Errors for plugin repositories.
      */
-    val errors: Map<String?, Exception>
+    val errors: Map<String?, Exception>,
   ) : PluginUpdateInfo
 }
