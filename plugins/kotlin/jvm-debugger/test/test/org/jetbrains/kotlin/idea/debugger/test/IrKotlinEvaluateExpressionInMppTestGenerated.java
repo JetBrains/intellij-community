@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test;
 
@@ -19,16 +19,16 @@ import org.jetbrains.kotlin.test.TargetBackend;
 @TestRoot("jvm-debugger/test")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends AbstractIrKotlinEvaluateExpressionInMppTest {
+public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/evaluation/singleBreakpoint")
-    public abstract static class SingleBreakpoint extends AbstractIrKotlinEvaluateExpressionInMppTest {
+    public abstract static class SingleBreakpoint extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator")
-        public abstract static class CompilingEvaluator extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public abstract static class CompilingEvaluator extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers")
-            public static class InaccessibleMembers extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            public static class InaccessibleMembers extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -122,7 +122,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator")
-            public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            public static class Uncategorized extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -182,7 +182,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/contextReceivers")
-        public static class ContextReceivers extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public static class ContextReceivers extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -261,10 +261,10 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/coroutines")
-        public abstract static class Coroutines extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public abstract static class Coroutines extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/runToCursor")
-            public static class RunToCursor extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            public static class RunToCursor extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -318,7 +318,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepInto")
-            public static class StepInto extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            public static class StepInto extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -372,7 +372,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepOut")
-            public static class StepOut extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            public static class StepOut extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -441,10 +441,10 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepOver")
-            public abstract static class StepOver extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            public abstract static class StepOver extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepOver")
-                public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionInMppTest {
+                public static class Uncategorized extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -558,7 +558,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepOver/unsupported")
-                public static class Unsupported extends AbstractIrKotlinEvaluateExpressionInMppTest {
+                public static class Unsupported extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -583,7 +583,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/coroutines")
-            public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            public static class Uncategorized extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -708,7 +708,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/createExpression")
-        public static class CreateExpression extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public static class CreateExpression extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -737,7 +737,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/extraVariables")
-        public static class ExtraVariables extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public static class ExtraVariables extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -806,7 +806,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/frame")
-        public static class Frame extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public static class Frame extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1130,7 +1130,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/funWithDefaultParam")
-        public static class FunWithDefaultParam extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public static class FunWithDefaultParam extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1164,7 +1164,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/implicitClassReceiver")
-        public static class ImplicitClassReceiver extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public static class ImplicitClassReceiver extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1213,7 +1213,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/javaContext")
-        public static class JavaContext extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public static class JavaContext extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1257,7 +1257,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/labels")
-        public static class Labels extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public static class Labels extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1296,7 +1296,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/lambdas")
-        public static class Lambdas extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public static class Lambdas extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1415,10 +1415,10 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/reflectiveAccess")
-        public abstract static class ReflectiveAccess extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public abstract static class ReflectiveAccess extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/reflectiveAccess")
-            public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            public static class Uncategorized extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1437,7 +1437,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/reflectiveAccess/valueClasses")
-            public static class ValueClasses extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            public static class ValueClasses extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1482,7 +1482,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/reifiedTypeParameters")
-        public static class ReifiedTypeParameters extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public static class ReifiedTypeParameters extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1521,7 +1521,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/renderer")
-        public static class Renderer extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public static class Renderer extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1550,7 +1550,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/simpleConstructors")
-        public static class SimpleConstructors extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public static class SimpleConstructors extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1569,7 +1569,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/simpleLocals")
-        public static class SimpleLocals extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public static class SimpleLocals extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1678,7 +1678,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/simpleSmartcasts")
-        public static class SimpleSmartcasts extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public static class SimpleSmartcasts extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1722,7 +1722,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint")
-        public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public static class Uncategorized extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -2542,13 +2542,13 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/evaluation/multipleBreakpoints")
-    public abstract static class MultipleBreakpoints extends AbstractIrKotlinEvaluateExpressionInMppTest {
+    public abstract static class MultipleBreakpoints extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/multipleBreakpoints/inlineLambda")
-        public abstract static class InlineLambda extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public abstract static class InlineLambda extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/multipleBreakpoints/inlineLambda/capturing")
-            public static class Capturing extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            public static class Capturing extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2627,7 +2627,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/multipleBreakpoints/inlineLambda/defaultValues")
-            public static class DefaultValues extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            public static class DefaultValues extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2656,10 +2656,10 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs")
-            public abstract static class FunctionTypeArgs extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            public abstract static class FunctionTypeArgs extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs/funReferences")
-                public static class FunReferences extends AbstractIrKotlinEvaluateExpressionInMppTest {
+                public static class FunReferences extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -2713,7 +2713,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs")
-                public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionInMppTest {
+                public static class Uncategorized extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -2743,7 +2743,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/multipleBreakpoints/inlineLambda/lambdaContent")
-            public static class LambdaContent extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            public static class LambdaContent extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2787,7 +2787,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/multipleBreakpoints/inlineLambda/returns")
-            public static class Returns extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            public static class Returns extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2816,7 +2816,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/multipleBreakpoints/inlineLambda")
-            public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            public static class Uncategorized extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2836,7 +2836,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/multipleBreakpoints/library")
-        public static class Library extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public static class Library extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -2860,7 +2860,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/multipleBreakpoints/reifiedParamEvaluation")
-        public static class ReifiedParamEvaluation extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public static class ReifiedParamEvaluation extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -2894,7 +2894,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/multipleBreakpoints")
-        public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        public static class Uncategorized extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -3174,7 +3174,7 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/evaluation/multiplatform")
-    public static class Multiplatform extends AbstractIrKotlinEvaluateExpressionInMppTest {
+    public static class Multiplatform extends AbstractK1IrKotlinEvaluateExpressionInMppTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {

@@ -182,7 +182,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
 
     testGroup("jvm-debugger/test", category = DEBUGGER) {
         listOf(
-          AbstractIrKotlinSteppingTest::class,
+          AbstractK1IrKotlinSteppingTest::class,
           AbstractIndyLambdaIrKotlinSteppingTest::class,
           AbstractK1IdeK2CodeKotlinSteppingTest::class,
         ).forEach {
@@ -243,7 +243,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             }
         }
 
-        testClass<AbstractIrKotlinEvaluateExpressionInMppTest> {
+        testClass<AbstractK1IrKotlinEvaluateExpressionInMppTest>(generatedClassName = "org.jetbrains.kotlin.idea.debugger.test.IrKotlinEvaluateExpressionInMppTestGenerated") {
             model(
                 "evaluation/singleBreakpoint",
                 testMethodName = "doSingleBreakpointTest",
@@ -284,7 +284,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
 
 
-        listOf(AbstractIrBreakpointHighlightingTest::class,
+        listOf(AbstractK1IrBreakpointHighlightingTest::class,
                AbstractK1IdeK2CodeBreakpointHighlightingTest::class).forEach {
             testClass(it) {
                 model("highlighting", isRecursive = false, pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
@@ -303,7 +303,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("breakpointApplicability", pattern = KT_OR_KTS)
         }
 
-        listOf(AbstractFileRankingTest::class, AbstractK1IdeK2CodeFileRankingTest::class).forEach {
+        listOf(AbstractK1FileRankingTest::class, AbstractK1IdeK2CodeFileRankingTest::class).forEach {
             testClass(it) {
                 model("fileRanking")
             }

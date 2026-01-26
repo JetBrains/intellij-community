@@ -21,7 +21,7 @@ abstract class AbstractK2IdeK2MultiplatformCodeKotlinEvaluateExpressionTest: Abs
 
 
 private class K2MppDebuggerCompilerFacility(
-    private val project: Project,
+    project: Project,
     files: List<TestFileWithModule>,
     jvmTarget: JvmTarget,
     compileConfig: TestCompileConfiguration,

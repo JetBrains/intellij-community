@@ -10,6 +10,13 @@ import org.jetbrains.kotlin.idea.debugger.core.KotlinPositionManagerFactory
 import org.jetbrains.kotlin.idea.debugger.core.KotlinSourcePositionHighlighter
 import org.junit.Assert
 
+abstract class AbstractK1IrBreakpointHighlightingTest : AbstractIrBreakpointHighlightingTest() {
+
+    override fun getMainClassName(compilerFacility: DebuggerTestCompilerFacility): String {
+        return K1DebuggerTestCompilerFacility.analyzeAndFindMainClass(project, sourcesKtFiles.jvmKtFiles) ?: error("No main class found")
+    }
+}
+
 abstract class AbstractIrBreakpointHighlightingTest : AbstractIrKotlinSteppingTest() {
   override fun extraPrintContext(context: SuspendContextImpl) {
     val positionManager = createPositionManager(context.debugProcess)
@@ -32,7 +39,7 @@ abstract class AbstractIrBreakpointHighlightingTest : AbstractIrKotlinSteppingTe
   }
 }
 
-abstract class AbstractK1IdeK2CodeBreakpointHighlightingTest : AbstractIrBreakpointHighlightingTest() {
+abstract class AbstractK1IdeK2CodeBreakpointHighlightingTest : AbstractK1IrBreakpointHighlightingTest() {
   override val compileWithK2 = true
 
   override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY

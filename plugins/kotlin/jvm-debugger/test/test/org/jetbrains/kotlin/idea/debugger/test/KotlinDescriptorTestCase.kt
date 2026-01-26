@@ -342,7 +342,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
         )
         val sourcesKtFilesForModule = compilerFacility.creatKtFiles(jvmSrcDir, commonSourcesOutputDirectory, scriptSourcesOutputDirectory)
 
-        return getMainClassNameOrNull(compilerFacility, sourcesKtFilesForModule.jvmKtFiles)
+        return getMainClassNameOrNull(sourcesKtFilesForModule.jvmKtFiles)
     }
 
     private fun getOutputDirectoryForModule(debuggerTestModule: DebuggerTestModule): File =
@@ -505,16 +505,10 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
     }
 
     protected open fun getMainClassName(compilerFacility: DebuggerTestCompilerFacility): String {
-        return getMainClassNameOrNull(compilerFacility, sourcesKtFiles.jvmKtFiles) ?: error("Cannot find a 'main()' function")
+        return getMainClassNameOrNull(sourcesKtFiles.jvmKtFiles) ?: error("Cannot find a 'main()' function")
     }
 
-    private fun getMainClassNameOrNull(compilerFacility: DebuggerTestCompilerFacility, jvmKtFiles: List<KtFile>): String? {
-        if (pluginMode == KotlinPluginMode.K1) {
-            // Although the implementation below is frontend-agnostic, K1 tests seem to depend on resolution ordering.
-            // Some evaluation tests fail if not all files are analyzed at this point.
-            return compilerFacility.analyzeAndFindMainClass(jvmKtFiles)
-        }
-
+    private fun getMainClassNameOrNull(jvmKtFiles: List<KtFile>): String? {
         return runReadAction {
             val mainFunctionDetector = KotlinMainFunctionDetector.getInstance()
             val candidates = mutableListOf<ClassId>()

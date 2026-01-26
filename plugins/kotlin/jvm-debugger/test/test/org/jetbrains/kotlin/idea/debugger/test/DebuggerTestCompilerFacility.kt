@@ -43,8 +43,40 @@ data class TestCompileConfiguration(
 
 const val COMPILER_ARGS_FILENAME = "compiler.args"
 
+class K1DebuggerTestCompilerFacility(
+    project: Project,
+    files: List<TestFileWithModule>,
+    jvmTarget: JvmTarget,
+    compileConfig: TestCompileConfiguration,
+): DebuggerTestCompilerFacility(project, files, jvmTarget, compileConfig) {
+    companion object {
+        // Returns the qualified name of the main test class.
+        internal fun analyzeAndFindMainClass(project: Project, jvmKtFiles: List<KtFile>): String? {
+            return runReadAction {
+                val (languageVersionSettings, analysisResult) = analyzeSources(project, jvmKtFiles)
+                findMainClass(analysisResult.bindingContext, languageVersionSettings, jvmKtFiles)?.asString()
+            }
+        }
+
+        fun analyzeSources(project: Project, ktFiles: List<KtFile>): Pair<LanguageVersionSettings, AnalysisResult> {
+            return runReadAction {
+                val resolutionFacade = KotlinCacheService.getInstance(project)
+                    .getResolutionFacadeWithForcedPlatform(ktFiles, JvmPlatforms.unspecifiedJvmPlatform)
+                val analysisResult = try {
+                    resolutionFacade.analyzeWithAllCompilerChecks(ktFiles)
+                } catch (_: ProcessCanceledException) {
+                    // allow module's descriptors update due to dynamic loading of Scripting Support Libraries for .kts files
+                    resolutionFacade.analyzeWithAllCompilerChecks(ktFiles)
+                }
+                analysisResult.throwIfError()
+                resolutionFacade.languageVersionSettings to analysisResult
+            }
+        }
+    }
+}
+
 open class DebuggerTestCompilerFacility(
-    private val project: Project,
+    protected val project: Project,
     files: List<TestFileWithModule>,
     private val jvmTarget: JvmTarget,
     private val compileConfig: TestCompileConfiguration,
@@ -244,29 +276,6 @@ open class DebuggerTestCompilerFacility(
 
         options.addAll(compileConfig.enabledLanguageFeatures.map { "-XXLanguage:+$it" })
         return options
-    }
-
-    open fun analyzeSources(ktFiles: List<KtFile>): Pair<LanguageVersionSettings, AnalysisResult> {
-        return runReadAction {
-            val resolutionFacade = KotlinCacheService.getInstance(project)
-                .getResolutionFacadeWithForcedPlatform(ktFiles, JvmPlatforms.unspecifiedJvmPlatform)
-            val analysisResult = try {
-                resolutionFacade.analyzeWithAllCompilerChecks(ktFiles)
-            } catch (_: ProcessCanceledException) {
-                // allow module's descriptors update due to dynamic loading of Scripting Support Libraries for .kts files
-                resolutionFacade.analyzeWithAllCompilerChecks(ktFiles)
-            }
-            analysisResult.throwIfError()
-            resolutionFacade.languageVersionSettings to analysisResult
-        }
-    }
-
-    // Returns the qualified name of the main test class.
-    internal fun analyzeAndFindMainClass(jvmKtFiles: List<KtFile>): String? {
-        return runReadAction {
-            val (languageVersionSettings, analysisResult) = analyzeSources(jvmKtFiles)
-            findMainClass(analysisResult.bindingContext, languageVersionSettings, jvmKtFiles)?.asString()
-        }
     }
 
     private fun createPsiFilesAndCollectKtFiles(testFiles: List<TestFile>, srcDir: File): List<KtFile> {

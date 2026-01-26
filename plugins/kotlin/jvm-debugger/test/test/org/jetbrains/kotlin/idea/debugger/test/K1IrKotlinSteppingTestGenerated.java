@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test;
 
@@ -18,10 +18,10 @@ import org.junit.runner.RunWith;
 @TestRoot("jvm-debugger/test")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinSteppingTest {
+public abstract class K1IrKotlinSteppingTestGenerated extends AbstractK1IrKotlinSteppingTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/stepIntoAndSmartStepInto")
-    public static class StepInto extends AbstractIrKotlinSteppingTest {
+    public static class StepInto extends AbstractK1IrKotlinSteppingTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -125,7 +125,7 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/stepIntoAndSmartStepInto")
-    public static class SmartStepInto extends AbstractIrKotlinSteppingTest {
+    public static class SmartStepInto extends AbstractK1IrKotlinSteppingTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -229,7 +229,7 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/stepInto")
-    public static class StepIntoOnly extends AbstractIrKotlinSteppingTest {
+    public static class StepIntoOnly extends AbstractK1IrKotlinSteppingTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -383,7 +383,7 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/stepOut")
-    public static class StepOut extends AbstractIrKotlinSteppingTest {
+    public static class StepOut extends AbstractK1IrKotlinSteppingTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -447,10 +447,10 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/stepOver")
-    public abstract static class StepOver extends AbstractIrKotlinSteppingTest {
+    public abstract static class StepOver extends AbstractK1IrKotlinSteppingTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/stepping/stepOver/coroutines")
-        public static class Coroutines extends AbstractIrKotlinSteppingTest {
+        public static class Coroutines extends AbstractK1IrKotlinSteppingTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -484,7 +484,7 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/stepping/stepOver/steppingThroughInlineLambdas")
-        public static class SteppingThroughInlineLambdas extends AbstractIrKotlinSteppingTest {
+        public static class SteppingThroughInlineLambdas extends AbstractK1IrKotlinSteppingTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -533,7 +533,7 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/stepping/stepOver")
-        public static class Uncategorized extends AbstractIrKotlinSteppingTest {
+        public static class Uncategorized extends AbstractK1IrKotlinSteppingTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1128,7 +1128,7 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/filters")
-    public static class Filters extends AbstractIrKotlinSteppingTest {
+    public static class Filters extends AbstractK1IrKotlinSteppingTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1202,7 +1202,7 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stepping/custom")
-    public static class Custom extends AbstractIrKotlinSteppingTest {
+    public static class Custom extends AbstractK1IrKotlinSteppingTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
