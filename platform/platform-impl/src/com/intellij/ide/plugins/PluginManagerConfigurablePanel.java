@@ -134,10 +134,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   private List<String> myTagsSorted;
   private List<String> myVendorsSorted;
 
-  private DefaultActionGroup myMarketplaceSortByGroup;
-  private Consumer<MarketplaceSortByAction> myMarketplaceSortByCallback;
-  private LinkComponent myMarketplaceSortByAction;
-
   private String myLaterSearchQuery;
   private boolean myForceShowInstalledTabForTag = false;
   private boolean myShowMarketplaceTab;
@@ -1410,6 +1406,17 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   }
 
   private class MarketplacePluginsTab extends PluginsTab {
+    private final DefaultActionGroup myMarketplaceSortByGroup;
+    private LinkComponent myMarketplaceSortByAction;
+
+    MarketplacePluginsTab() {
+      super();
+      myMarketplaceSortByGroup = new DefaultActionGroup();
+      for (SortBy option : SortBy.getEntries()) {
+        myMarketplaceSortByGroup.addAction(new MarketplaceSortByAction(option));
+      }
+    }
+
     @Override
     protected void createSearchTextField(int flyDelay) {
       super.createSearchTextField(250);
@@ -1693,12 +1700,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
         }
       };
 
-      myMarketplaceSortByGroup = new DefaultActionGroup();
-
-      for (SortBy option : SortBy.getEntries()) {
-        myMarketplaceSortByGroup.addAction(new MarketplaceSortByAction(option));
-      }
-
       myMarketplaceSortByAction = new LinkComponent() {
         @Override
         protected boolean isInClickableArea(Point pt) {
@@ -1752,73 +1753,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
       DumbAwareAction.create(event -> myMarketplaceSortByAction.doClick())
         .registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, myMarketplaceSortByAction);
-
-      myMarketplaceSortByCallback = updateAction -> {
-        MarketplaceSortByAction removeAction = null;
-        MarketplaceSortByAction addAction = null;
-
-        if (updateAction.myState) {
-          for (AnAction action : myMarketplaceSortByGroup.getChildren(ActionManager.getInstance())) {
-            MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
-            if (sortByAction != updateAction && sortByAction.myState) {
-              sortByAction.myState = false;
-              removeAction = sortByAction;
-              break;
-            }
-          }
-          addAction = updateAction;
-        }
-        else {
-          if (updateAction.myOption == SortBy.RELEVANCE) {
-            updateAction.myState = true;
-            return;
-          }
-
-          for (AnAction action : myMarketplaceSortByGroup.getChildren(ActionManager.getInstance())) {
-            MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
-            if (sortByAction.myOption == SortBy.RELEVANCE) {
-              sortByAction.myState = true;
-              break;
-            }
-          }
-
-          removeAction = updateAction;
-        }
-
-        List<String> queries = new ArrayList<>();
-        new SearchQueryParser.Marketplace(searchTextField.getText()) { // FIXME: it's unused - why hasn't it been removed?
-          @Override
-          protected void addToSearchQuery(@NotNull String query) {
-            queries.add(query);
-          }
-
-          @Override
-          protected void handleAttribute(@NotNull String name, @NotNull String value) {
-            queries.add(name + SearchQueryParser.wrapAttribute(value));
-          }
-        };
-        if (removeAction != null) {
-          String query = removeAction.getQuery();
-          if (query != null) {
-            queries.remove(query);
-          }
-        }
-        if (addAction != null) {
-          String query = addAction.getQuery();
-          if (query != null) {
-            queries.add(query);
-          }
-        }
-
-        String query = StringUtil.join(queries, " ");
-        searchTextField.setTextIgnoreEvents(query);
-        if (query.isEmpty()) {
-          myMarketplaceTab.hideSearchPanel();
-        }
-        else {
-          myMarketplaceTab.showSearchPanel(query);
-        }
-      };
 
       MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
       marketplaceController.setSearchResultEventHandler(eventHandler);
@@ -2003,9 +1937,126 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       return myMarketplaceSearchPanel;
     }
 
+    private void handleSortByOptionSelection(MarketplaceSortByAction updateAction) {
+      MarketplaceSortByAction removeAction = null;
+      MarketplaceSortByAction addAction = null;
+
+      if (updateAction.myState) {
+        for (AnAction action : myMarketplaceSortByGroup.getChildren(ActionManager.getInstance())) {
+          MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
+          if (sortByAction != updateAction && sortByAction.myState) {
+            sortByAction.myState = false;
+            removeAction = sortByAction;
+            break;
+          }
+        }
+        addAction = updateAction;
+      }
+      else {
+        if (updateAction.myOption == SortBy.RELEVANCE) {
+          updateAction.myState = true;
+          return;
+        }
+
+        for (AnAction action : myMarketplaceSortByGroup.getChildren(ActionManager.getInstance())) {
+          MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
+          if (sortByAction.myOption == SortBy.RELEVANCE) {
+            sortByAction.myState = true;
+            break;
+          }
+        }
+
+        removeAction = updateAction;
+      }
+
+      List<String> queries = new ArrayList<>();
+      new SearchQueryParser.Marketplace(searchTextField.getText()) { // FIXME: it's unused - why hasn't it been removed?
+        @Override
+        protected void addToSearchQuery(@NotNull String query) {
+          queries.add(query);
+        }
+
+        @Override
+        protected void handleAttribute(@NotNull String name, @NotNull String value) {
+          queries.add(name + SearchQueryParser.wrapAttribute(value));
+        }
+      };
+      if (removeAction != null) {
+        String query = removeAction.getQuery();
+        if (query != null) {
+          queries.remove(query);
+        }
+      }
+      if (addAction != null) {
+        String query = addAction.getQuery();
+        if (query != null) {
+          queries.add(query);
+        }
+      }
+
+      String query = StringUtil.join(queries, " ");
+      searchTextField.setTextIgnoreEvents(query);
+      if (query.isEmpty()) {
+        myMarketplaceTab.hideSearchPanel();
+      }
+      else {
+        myMarketplaceTab.showSearchPanel(query);
+      }
+    }
+
     @Override
     protected void onSearchReset() {
       PluginManagerUsageCollector.INSTANCE.searchReset();
+    }
+
+    private final class MarketplaceSortByAction extends ToggleAction implements DumbAware {
+      private final SortBy myOption;
+      private boolean myState;
+      private boolean myVisible;
+
+      private MarketplaceSortByAction(@NotNull SortBy option) {
+        super(option.getPresentableNameSupplier());
+        getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
+        myOption = option;
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setVisible(myVisible);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
+      public boolean isSelected(@NotNull AnActionEvent e) {
+        return myState;
+      }
+
+      @Override
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
+        myState = state;
+        handleSortByOptionSelection(this);
+      }
+
+      public void setState(@NotNull SearchQueryParser.Marketplace parser) {
+        if (myOption == SortBy.RELEVANCE) {
+          myState = parser.sortBy == null;
+          myVisible = parser.sortBy == null || !parser.tags.isEmpty() || !parser.vendors.isEmpty() || parser.searchQuery != null;
+        }
+        else {
+          myState = parser.sortBy != null && myOption == parser.sortBy;
+          myVisible = true;
+        }
+      }
+
+      public @Nullable String getQuery() {
+        if (myOption == SortBy.RELEVANCE) return null;
+        return SearchWords.SORT_BY.getValue() + myOption.getQuery();
+      }
     }
   }
 
@@ -2138,56 +2189,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
     private void setEnabledState() {
       setState(myPluginModelFacade, getModels(), myIsEnable);
-    }
-  }
-
-  private final class MarketplaceSortByAction extends ToggleAction implements DumbAware {
-    private final SortBy myOption;
-    private boolean myState;
-    private boolean myVisible;
-
-    private MarketplaceSortByAction(@NotNull SortBy option) {
-      super(option.getPresentableNameSupplier());
-      getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
-      myOption = option;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setVisible(myVisible);
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return myState;
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myState = state;
-      myMarketplaceSortByCallback.accept(this);
-    }
-
-    public void setState(@NotNull SearchQueryParser.Marketplace parser) {
-      if (myOption == SortBy.RELEVANCE) {
-        myState = parser.sortBy == null;
-        myVisible = parser.sortBy == null || !parser.tags.isEmpty() || !parser.vendors.isEmpty() || parser.searchQuery != null;
-      }
-      else {
-        myState = parser.sortBy != null && myOption == parser.sortBy;
-        myVisible = true;
-      }
-    }
-
-    public @Nullable String getQuery() {
-      if (myOption == SortBy.RELEVANCE) return null;
-      return SearchWords.SORT_BY.getValue() + myOption.getQuery();
     }
   }
 
