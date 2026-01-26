@@ -5,6 +5,7 @@ import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
+import com.intellij.notification.BrowseNotificationAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.Service
@@ -107,12 +108,12 @@ private fun delaySincePreviousActivity(): Duration = Registry.intValue("wayland.
 private fun showNotification(project: Project?) {
   Notification(
     "Wayland",
-    IdeBundle.message("notification.wayland", "https://jetbrains.com/TODO-blog-post"), // TODO
+    IdeBundle.message("notification.wayland.title"),
+    IdeBundle.message("notification.wayland"),
     NotificationType.INFORMATION
-  ).also {
-    it.isSuggestionType = true
-    it.isImportantSuggestion = true
-  }.notify(project)
+  ).setSuggestionType(true).setImportantSuggestion(true)
+    .addAction(BrowseNotificationAction(IdeBundle.message("notification.wayland.action"), "https://jb.gg/7v6dos"))
+    .notify(project)
 }
 
 private const val WAYLAND_NOTIFICATION_ALREADY_SHOWN = "WAYLAND_NOTIFICATION_ALREADY_SHOWN"
