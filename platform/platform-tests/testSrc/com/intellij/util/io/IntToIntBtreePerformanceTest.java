@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
@@ -22,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 @SkipSlowTestLocally
+@PerformanceUnitTest
 public class IntToIntBtreePerformanceTest {
   private static final Logger LOG = Logger.getInstance(IntToIntBtreePerformanceTest.class);
   

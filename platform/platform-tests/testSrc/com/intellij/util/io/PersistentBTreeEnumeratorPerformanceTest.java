@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.junit.After;
@@ -21,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.*;
 
 @SkipSlowTestLocally
+@PerformanceUnitTest
 public class PersistentBTreeEnumeratorPerformanceTest {
   private static final Logger LOG = Logger.getInstance(PersistentBTreeEnumeratorPerformanceTest.class);
   private static final Random random = new Random(13101977);
