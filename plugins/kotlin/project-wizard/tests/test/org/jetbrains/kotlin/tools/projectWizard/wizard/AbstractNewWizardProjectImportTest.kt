@@ -1,29 +1,34 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.serviceOrNull
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getSettings
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.enableInspectionTool
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.KotlinGradleScriptEntitySource
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceUntilWithRangeUntilInspection
-import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.v1.getKtFile
 import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.cli.*
 import org.jetbrains.kotlin.tools.projectWizard.core.service.Services
@@ -36,7 +41,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.jetbrains.plugins.gradle.util.GradleEnvironment
 import java.io.File
@@ -106,8 +110,8 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
 
     private fun doTest(directoryPath: String, buildSystem: BuildSystem) {
         // Enable inspection to avoid "Can't find tools" exception (only reproducible on TeamCity)
-        val wrapper = LocalInspectionToolWrapper(ReplaceUntilWithRangeUntilInspection());
-        enableInspectionTool(project, wrapper, testRootDisposable);
+        val wrapper = LocalInspectionToolWrapper(ReplaceUntilWithRangeUntilInspection())
+        enableInspectionTool(project, wrapper, testRootDisposable)
 
         val directory = Paths.get(directoryPath)
 
@@ -153,11 +157,13 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
             distributionType = distributionTypeSettings
         }
 
-        ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID).linkProject(settings)
+        getSettings(project, SYSTEM_ID).linkProject(settings)
     }
 
+    @OptIn(KaExperimentalApi::class)
     protected fun checkScriptConfigurationsIfAny() {
-        val settings = (getSettings(project, SYSTEM_ID) as GradleSettings).linkedProjectsSettings.firstOrNull() ?: error("Cannot find linked gradle project: ${project.basePath}")
+        val settings = (getSettings(project, SYSTEM_ID) as GradleSettings).linkedProjectsSettings.firstOrNull()
+            ?: error("Cannot find linked gradle project: ${project.basePath}")
         val scripts = File(settings.externalProjectPath).walkTopDown().filter {
             it.name.endsWith("gradle.kts")
         }
@@ -167,15 +173,25 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
             val psiFile = project.getKtFile(virtualFile) ?: error("Cannot find KtFile for $file")
             assertTrue(
                 "Configuration for ${file.path} is missing",
-                ScriptConfigurationManager.getInstance(project).hasConfiguration(psiFile)
+                psiFile.isProcessedAsKotlinScript()
             )
-            val bindingContext = psiFile.analyzeWithContent()
-
-            val diagnostics = bindingContext.diagnostics.filter { it.severity == Severity.ERROR }
-            assert(diagnostics.isEmpty()) {
-                "Diagnostics list should be empty:\n ${diagnostics.joinToString("\n") { DefaultErrorMessages.render(it) }}"
+            analyze(psiFile) {
+                val diagnostics =
+                    psiFile.diagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS).filter { it.severity == KaSeverity.ERROR }
+                assert(diagnostics.isEmpty()) {
+                    "Diagnostics list should be empty:\n ${diagnostics.joinToString("\n") { it.defaultMessage }}"
+                }
             }
         }
+    }
+
+    private fun KtFile.isProcessedAsKotlinScript(): Boolean {
+        val workspaceModel = this.project.workspaceModel
+        val fileUrlManager = workspaceModel.getVirtualFileUrlManager()
+        val scriptEntities = workspaceModel.currentSnapshot.getVirtualFileUrlIndex()
+            .findEntitiesByUrl(this.alwaysVirtualFile.toVirtualFileUrl(fileUrlManager))
+            .filterIsInstance<KotlinScriptEntity>().toList()
+        return scriptEntities.any { it.entitySource is KotlinGradleScriptEntitySource }
     }
 
     companion object {

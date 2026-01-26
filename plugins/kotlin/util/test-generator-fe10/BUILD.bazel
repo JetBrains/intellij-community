@@ -30,8 +30,6 @@ jvm_library(
     "//java/testFramework",
     "//plugins/kotlin/gradle/gradle-java/k1",
     "//plugins/kotlin/gradle/gradle-java/k1:k1_test_lib",
-    "//plugins/kotlin/project-wizard/cli",
-    "//plugins/kotlin/project-wizard/tests:tests_test_lib",
     "//plugins/kotlin/j2k/k1.new/tests:tests_test_lib",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",

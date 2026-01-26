@@ -28,14 +28,12 @@
     <orderEntry type="module" module-name="kotlin.j2k.k1.new.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.shared.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jps.graphImplementationTests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.copyright.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.i18n.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.featuresTrainer.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.kotlin.projectWizard.cli" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.compose" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.scripting-support" scope="RUNTIME" />
