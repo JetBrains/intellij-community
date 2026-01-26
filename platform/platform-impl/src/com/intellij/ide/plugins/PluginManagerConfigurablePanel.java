@@ -1631,23 +1631,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
           SearchWords word = SearchWords.find(attribute);
           return switch (word) {
             case TAG -> {
-              if (myTagsSorted == null || myTagsSorted.isEmpty()) {
-                Set<String> allTags = new HashSet<>();
-                Set<String> customRepoTags = UiPluginManager.getInstance().getCustomRepoTags();
-                if (!customRepoTags.isEmpty()) {
-                  allTags.addAll(customRepoTags);
-                }
-                try {
-                  ProcessIOExecutorService.INSTANCE.submit(() -> {
-                    allTags.addAll(UiPluginManager.getInstance().getAllPluginsTags());
-                  }).get();
-                }
-                catch (InterruptedException | ExecutionException e) {
-                  LOG.error("Error while getting tags from marketplace", e);
-                }
-                myTagsSorted = ContainerUtil.sorted(allTags, String::compareToIgnoreCase);
-              }
-              yield myTagsSorted;
+              yield getOrCalculateTags();
             }
             case SORT_BY -> ContainerUtil.map(
               Arrays.asList(MarketplaceTabSearchSortByOptions.DOWNLOADS, MarketplaceTabSearchSortByOptions.NAME, MarketplaceTabSearchSortByOptions.RATING, MarketplaceTabSearchSortByOptions.UPDATE_DATE),
@@ -1933,6 +1917,28 @@ public final class PluginManagerConfigurablePanel implements Disposable {
           }
         };
       return myMarketplaceSearchPanel;
+    }
+
+    private List<String> getOrCalculateTags() {
+      if (myTagsSorted == null ||
+          myTagsSorted.isEmpty() // FIXME seems like it shouldn't be here...
+      ) {
+        Set<String> allTags = new HashSet<>();
+        Set<String> customRepoTags = UiPluginManager.getInstance().getCustomRepoTags();
+        if (!customRepoTags.isEmpty()) {
+          allTags.addAll(customRepoTags);
+        }
+        try {
+          ProcessIOExecutorService.INSTANCE.submit(() -> {
+            allTags.addAll(UiPluginManager.getInstance().getAllPluginsTags());
+          }).get();
+        }
+        catch (InterruptedException | ExecutionException e) {
+          LOG.error("Error while getting tags from marketplace", e);
+        }
+        myTagsSorted = ContainerUtil.sorted(allTags, String::compareToIgnoreCase);
+      }
+      return myTagsSorted;
     }
 
     private void handleSortByOptionSelection(MarketplaceSortByAction updateAction) {
