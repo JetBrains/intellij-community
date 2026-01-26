@@ -48,9 +48,8 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         element: PsiElement,
         sink: InlayTreeSink
     ) {
-        val valueArgumentList = element as? KtValueArgumentList ?: return
-        val callElement = valueArgumentList.parent as? KtCallElement ?: return
-        analyze(valueArgumentList) {
+        val callElement = element as? KtCallElement ?: return
+        analyze(callElement) {
             collectFromParameters(callElement, sink)
         }
     }
@@ -218,10 +217,12 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     ) {
         if (contextParameterPairs.isEmpty()) return
 
-        val offset = callElement.valueArgumentList?.endOffset ?: callElement.endOffset
+        val offset = callElement.valueArgumentList?.endOffset?.let { it - 1 }
+            ?: callElement.lambdaArguments.firstOrNull()?.startOffset
+            ?: callElement.endOffset
 
         sink.addPresentation(
-            InlineInlayPosition(offset - 1, true),
+            InlineInlayPosition(offset, true),
             payloads = contextMenuPayloads,
             hintFormat = CONTEXT_HINT_FORMAT
         ) {
@@ -229,7 +230,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                 state = if (isUnitTestMode()) CollapseState.Expanded else CollapseState.Collapsed,
 
                 expandedState = {
-                    addParametersSeparator(valueParametersWithNames)
+                    addParametersSeparator(callElement, valueParametersWithNames)
 
                     for ((index, pair) in contextParameterPairs.withIndex()) {
                         val (parameterSymbol, receiverValue) = pair
@@ -247,7 +248,11 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
-    private fun CollapsiblePresentationTreeBuilder.addParametersSeparator(valueParametersWithNames: List<Pair<KaValueParameterSymbol, Name?>>) {
+    private fun CollapsiblePresentationTreeBuilder.addParametersSeparator(
+        callElement: KtCallElement,
+        valueParametersWithNames: List<Pair<KaValueParameterSymbol, Name?>>
+    ) {
+        if (callElement.valueArgumentList == null) return
         if (valueParametersWithNames.isNotEmpty()) text(", ")
     }
 

@@ -35,6 +35,11 @@ public class KtParameterHintsProviderTestGenerated extends AbstractKtParameterHi
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/blacklisted.kt");
     }
 
+    @TestMetadata("contextParametersLambda.kt")
+    public void testContextParametersLambda() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/contextParametersLambda.kt");
+    }
+
     @TestMetadata("contextParametersMultiple.kt")
     public void testContextParametersMultiple() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/contextParametersMultiple.kt");
