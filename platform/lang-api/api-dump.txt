@@ -186,6 +186,11 @@ com.intellij.codeInsight.codeVision.settings.CodeVisionSettings$CodeVisionSettin
 - visibleMetricsNextToDeclarationCountChanged(I):V
 com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributor
 - a:getLookupElements(com.intellij.psi.PsiFile,I,java.lang.String):java.util.Collection
+f:com.intellij.codeInsight.completion.SkipAutopopupInStrings
+- com.intellij.codeInsight.completion.CompletionConfidence
+- <init>():V
+- s:isInStringLiteral(com.intellij.psi.PsiElement):Z
+- shouldSkipAutopopup(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement,com.intellij.psi.PsiFile,I):com.intellij.util.ThreeState
 com.intellij.codeInsight.completion.TemplateParameterTraversalPolicy
 - a:invoke(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,Z):V
 - a:isValidForFile(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z

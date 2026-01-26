@@ -179,7 +179,7 @@ public class KotlinConfidenceTest extends LightCompletionTestCase implements Exp
         Language language = PsiUtilCore.findLanguageFromElement(elementAt);
 
         for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
-            ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset);
+            ThreeState result = confidence.shouldSkipAutopopup(editor, elementAt, psiFile, offset);
             if (result != ThreeState.UNSURE) {
                 return result == ThreeState.YES;
             }

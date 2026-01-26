@@ -404,15 +404,6 @@ c:com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributorEP
 - com.intellij.lang.LanguageExtensionPoint
 - <init>():V
 - s:forLanguage(com.intellij.lang.Language):com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributor
-c:com.intellij.codeInsight.completion.SkipAutopopupInComments
-- com.intellij.codeInsight.completion.CompletionConfidence
-- <init>():V
-- shouldSkipAutopopup(com.intellij.psi.PsiElement,com.intellij.psi.PsiFile,I):com.intellij.util.ThreeState
-c:com.intellij.codeInsight.completion.SkipAutopopupInStrings
-- com.intellij.codeInsight.completion.CompletionConfidence
-- <init>():V
-- s:isInStringLiteral(com.intellij.psi.PsiElement):Z
-- shouldSkipAutopopup(com.intellij.psi.PsiElement,com.intellij.psi.PsiFile,I):com.intellij.util.ThreeState
 c:com.intellij.codeInsight.completion.StartOnlyMatcher
 - com.intellij.codeInsight.completion.PrefixMatcher
 - <init>(com.intellij.codeInsight.completion.PrefixMatcher):V

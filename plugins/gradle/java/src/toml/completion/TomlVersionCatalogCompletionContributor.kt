@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.toml.completion
 
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.editor.Editor
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PlatformPatterns.psiFile
@@ -247,7 +248,7 @@ class TomlVersionCatalogCompletionContributor : CompletionContributor() {
 }
 
 class EnableAutoPopupInTomlVersionCatalogCompletion : CompletionConfidence() {
-  override fun shouldSkipAutopopup(contextElement: PsiElement, psiFile: PsiFile, offset: Int): ThreeState {
+  override fun shouldSkipAutopopup(editor: Editor, contextElement: PsiElement, psiFile: PsiFile, offset: Int): ThreeState {
 
     return if (TOML_PLUGINS_TABLE_SYNTAX_PATTERN.accepts(contextElement) ||
                TOML_LIBRARIES_TABLE_SYNTAX_PATTERN.accepts(contextElement) ||
