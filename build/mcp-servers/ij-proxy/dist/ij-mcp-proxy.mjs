@@ -21626,7 +21626,7 @@ function parsePatch(text) {
       let path3 = headerLine.slice(ADD_PREFIX.length).trim();
       if (!path3)
         throw Error("Add File requires a path");
-      i += 1;
+      ensureSafePatchPath(path3, "Add File"), i += 1;
       let contentLines = [];
       while (i < endIndex && !isPatchHeaderLine(lines[i])) {
         if (!lines[i].startsWith("+"))
@@ -21643,21 +21643,21 @@ function parsePatch(text) {
       let path3 = headerLine.slice(DELETE_PREFIX.length).trim();
       if (!path3)
         throw Error("Delete File requires a path");
-      operations.push({ type: "delete", path: path3 }), i += 1;
+      ensureSafePatchPath(path3, "Delete File"), operations.push({ type: "delete", path: path3 }), i += 1;
       continue;
     }
     if (headerLine.startsWith(UPDATE_PREFIX)) {
       let path3 = headerLine.slice(UPDATE_PREFIX.length).trim();
       if (!path3)
         throw Error("Update File requires a path");
-      i += 1;
+      ensureSafePatchPath(path3, "Update File"), i += 1;
       let moveTo = null;
       if (i < endIndex && isPatchHeaderLine(lines[i])) {
         let moveLine = lines[i].trimStart();
         if (moveLine.startsWith(MOVE_PREFIX)) {
           if (moveTo = moveLine.slice(MOVE_PREFIX.length).trim(), !moveTo)
             throw Error("Move to requires a path");
-          i += 1;
+          ensureSafePatchPath(moveTo, "Move to"), i += 1;
         }
       }
       let hunks = [];
@@ -21714,6 +21714,12 @@ function parsePatch(text) {
   if (operations.length === 0)
     throw Error("patch did not contain any operations");
   return operations;
+}
+function ensureSafePatchPath(rawPath, label) {
+  if (/[\u0000-\u001F\u007F]/.test(rawPath))
+    throw Error(`${label} path contains control characters or escape sequences`);
+  if (/\\[nrt]/.test(rawPath))
+    throw Error(`${label} path contains control characters or escape sequences`);
 }
 async function ensureParentDir(absolutePath) {
   let parentDir = path2.dirname(absolutePath);

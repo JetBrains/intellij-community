@@ -64,6 +64,34 @@ describe('apply_patch handler (edge cases)', () => {
     )
   })
 
+  it('errors when Delete File path contains escaped control sequences', async () => {
+    const {callUpstreamTool} = createMockToolCaller()
+    const patch = buildPatch([
+      '*** Begin Patch',
+      '*** Delete File: bad\\npath.txt',
+      '*** End Patch'
+    ])
+
+    await rejects(
+      () => handleApplyPatchTool({patch}, projectPath, callUpstreamTool),
+      /Delete File path contains control characters or escape sequences/
+    )
+  })
+
+  it('errors when Delete File path contains control characters', async () => {
+    const {callUpstreamTool} = createMockToolCaller()
+    const patch = buildPatch([
+      '*** Begin Patch',
+      '*** Delete File: bad\tpath.txt',
+      '*** End Patch'
+    ])
+
+    await rejects(
+      () => handleApplyPatchTool({patch}, projectPath, callUpstreamTool),
+      /Delete File path contains control characters or escape sequences/
+    )
+  })
+
   it('errors when Update File path is missing', async () => {
     const {callUpstreamTool} = createMockToolCaller()
     const patch = buildPatch([

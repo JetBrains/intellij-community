@@ -124,6 +124,7 @@ function parsePatch(text) {
     if (headerLine.startsWith(ADD_PREFIX)) {
       const path = headerLine.slice(ADD_PREFIX.length).trim()
       if (!path) throw new Error('Add File requires a path')
+      ensureSafePatchPath(path, 'Add File')
       i += 1
       const contentLines = []
       while (i < endIndex && !isPatchHeaderLine(lines[i])) {
@@ -141,6 +142,7 @@ function parsePatch(text) {
     if (headerLine.startsWith(DELETE_PREFIX)) {
       const path = headerLine.slice(DELETE_PREFIX.length).trim()
       if (!path) throw new Error('Delete File requires a path')
+      ensureSafePatchPath(path, 'Delete File')
       operations.push({type: 'delete', path})
       i += 1
       continue
@@ -149,6 +151,7 @@ function parsePatch(text) {
     if (headerLine.startsWith(UPDATE_PREFIX)) {
       const path = headerLine.slice(UPDATE_PREFIX.length).trim()
       if (!path) throw new Error('Update File requires a path')
+      ensureSafePatchPath(path, 'Update File')
       i += 1
 
       let moveTo = null
@@ -156,12 +159,13 @@ function parsePatch(text) {
         const moveLine = lines[i].trimStart()
         if (moveLine.startsWith(MOVE_PREFIX)) {
           moveTo = moveLine.slice(MOVE_PREFIX.length).trim()
-          if (!moveTo) {
-            throw new Error('Move to requires a path')
+            if (!moveTo) {
+              throw new Error('Move to requires a path')
+            }
+            ensureSafePatchPath(moveTo, 'Move to')
+            i += 1
           }
-          i += 1
         }
-      }
 
       const hunks = []
       while (i < endIndex && !isPatchHeaderLine(lines[i])) {
@@ -233,6 +237,15 @@ function parsePatch(text) {
   }
 
   return operations
+}
+
+function ensureSafePatchPath(rawPath, label) {
+  if (/[\u0000-\u001F\u007F]/.test(rawPath)) {
+    throw new Error(`${label} path contains control characters or escape sequences`)
+  }
+  if (/\\[nrt]/.test(rawPath)) {
+    throw new Error(`${label} path contains control characters or escape sequences`)
+  }
 }
 
 async function ensureParentDir(absolutePath) {
