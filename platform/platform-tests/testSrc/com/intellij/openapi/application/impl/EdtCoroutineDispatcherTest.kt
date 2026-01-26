@@ -7,6 +7,8 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.LeakHunter
+import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
@@ -126,11 +128,13 @@ class EdtCoroutineDispatcherTest {
   @UiThreadDispatcherTest
   fun `switch to EDT under read lock fails with ISE`(dispatcher: CoroutineContext): Unit = timeoutRunBlocking {
     readAction {
-      assertThrows<IllegalStateException> {
-        runBlockingMaybeCancellable {
-          launch(Dispatchers.Default) {
-            withContext(dispatcher) {
-              fail<Nothing>()
+      assertThrows<TestLoggerFactory.TestLoggerAssertionError> {
+        assertErrorLogged<IllegalStateException> {
+          runBlockingMaybeCancellable {
+            launch(Dispatchers.Default) {
+              withContext(dispatcher) {
+                fail<Nothing>()
+              }
             }
           }
         }
