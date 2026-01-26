@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.hint.TooltipController;
@@ -261,8 +261,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       .setCancelOnClickOutside(myCancelOnClickOutside)
       .setBelongsToGlobalPopupStack(myBelongsToGlobalPopupStack)
       .setCancelCallback(() -> {
-        //maybe readaction
-        ReadAction.run(this::onPopupCancel);
+        onPopupCancel();
         return true;
       })
       .setCancelOnOtherWindowOpen(myCancelOnOtherWindowOpen)
