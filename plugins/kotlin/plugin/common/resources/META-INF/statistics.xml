@@ -1,6 +1,6 @@
 <idea-plugin>
   <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingImportListener"
+    <listener class="org.jetbrains.kotlin.idea.statistics.KotlinProjectSetupImportListener"
               topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>
   </projectListeners>
   <extensions defaultExtensionNs="com.intellij">
