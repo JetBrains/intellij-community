@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import org.jetbrains.jewel.samples.showcase.ShowcaseIcons
+import org.jetbrains.jewel.samples.showcase.components.Badges
 import org.jetbrains.jewel.samples.showcase.components.Banners
 import org.jetbrains.jewel.samples.showcase.components.Borders
 import org.jetbrains.jewel.samples.showcase.components.BrushesShowcase
@@ -111,6 +112,7 @@ public class ComponentsViewModel(
                 iconKey = ShowcaseIcons.Components.speedSearch,
                 content = { SpeedSearches() },
             ),
+            ViewInfo(title = "Badges", iconKey = ShowcaseIcons.Components.badge, content = { Badges() }),
         )
 
     private var _currentView: ViewInfo by mutableStateOf(views.first())
