@@ -434,6 +434,15 @@ class ProcessOutputControllerService(
                     list
                         .filter { it.traceContext == NON_INTERACTIVE_ROOT_TRACE_CONTEXT }
                         .forEach { process ->
+                            val exitInfo = process.exitInfo.value
+
+                            if (exitInfo != null) {
+                                if (exitInfo.exitValue != 0) {
+                                    backgroundErrorProcesses.value += process.id
+                                }
+                                return@forEach
+                            }
+
                             backgroundObservingCoroutines +=
                                 launch(CoroutineName(CoroutineNames.EXIT_INFO_COLLECTOR)) {
                                     process.exitInfo.collect {
@@ -445,6 +454,7 @@ class ProcessOutputControllerService(
                                         }
                                     }
                                 }
+
                         }
                 }
         }
@@ -559,9 +569,9 @@ class ProcessOutputControllerService(
 }
 
 internal object Tag {
-    const val ERROR = "error"
-    const val OUTPUT = "output"
-    const val EXIT = "exit"
+    val ERROR = message("process.output.output.tag.stdout")
+    val OUTPUT = message("process.output.output.tag.stderr")
+    val EXIT = message("process.output.output.tag.exit")
 
     val maxLength: Int =
         Tag::class.java.declaredFields
