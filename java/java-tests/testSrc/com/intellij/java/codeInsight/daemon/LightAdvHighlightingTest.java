@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -176,7 +177,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
                                       "  }" +
                                       "}");
     try {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       doTest(false);
     }
@@ -208,7 +209,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testMethodCalls() { doTest(false); }
   public void testSingleTypeImportConflicts() {
     createSaveAndOpenFile("sql/Date.java", "package sql; public class Date{}");
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     doTest(false);
   }

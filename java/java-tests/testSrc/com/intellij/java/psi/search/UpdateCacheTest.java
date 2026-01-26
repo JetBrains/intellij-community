@@ -148,7 +148,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
 
     setUpModule();
     setUpJdk();
-    UIUtil.dispatchAllInvocationEvents(); // startup activities
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // startup activities
 
     PsiTestUtil.addSourceContentToRoots(getModule(), content);
 

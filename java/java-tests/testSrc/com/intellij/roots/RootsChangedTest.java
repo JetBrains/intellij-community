@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.testFramework.JavaModuleTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -83,7 +84,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
     myModuleRootListener.reset();
 
     ModuleRootModificationUtil.addContentRoot(moduleA, vDir1.getPath());
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     myModuleRootListener.assertEventsCount(1);
     assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir1);
@@ -494,13 +495,13 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
   private void checkRootChangedOnDirCreationDeletion(VirtualFile contentRoot, String dirUrl, int mustGenerateEvents) {
     myModuleRootListener.reset();
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     VirtualFile dir = createChildDirectory(contentRoot, new File(dirUrl).getName());
     myModuleRootListener.assertEventsCount(mustGenerateEvents);
 
     myModuleRootListener.reset();
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     delete(dir);
     myModuleRootListener.assertEventsCount(mustGenerateEvents);
   }
@@ -539,7 +540,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
     File ioExcluded = new File(iParent, "excluded");
     assertTrue(ioExcluded.mkdirs());
-    UIUtil.dispatchAllInvocationEvents(); // now events are fired
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // now events are fired
 
     assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioExcluded));
 

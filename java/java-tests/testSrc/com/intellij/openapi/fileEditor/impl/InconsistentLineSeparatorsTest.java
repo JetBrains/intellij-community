@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +27,7 @@ public class InconsistentLineSeparatorsTest extends LightDaemonAnalyzerTestCase 
   @Override
   protected void tearDown() throws Exception {
     try {
-      UIUtil.dispatchAllInvocationEvents(); // invokeLater() in EncodingProjectManagerImpl.reloadAllFilesUnder()
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // invokeLater() in EncodingProjectManagerImpl.reloadAllFilesUnder()
     }
     catch (Throwable e) {
       addSuppressedException(e);

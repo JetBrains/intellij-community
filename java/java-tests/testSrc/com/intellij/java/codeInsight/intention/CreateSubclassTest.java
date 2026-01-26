@@ -13,8 +13,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ui.UIUtil;
 
 
 public class CreateSubclassTest extends LightMultiFileTestCase {
@@ -81,7 +81,7 @@ public class CreateSubclassTest extends LightMultiFileTestCase {
       PsiClass superClass = myFixture.findClass("Superclass");
       ApplicationManager.getApplication().invokeLater(
         () -> CreateSubclassAction.createSameFileClass("Subclass", superClass));
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     });
   }
 
@@ -91,7 +91,7 @@ public class CreateSubclassTest extends LightMultiFileTestCase {
       PsiClass superClass = myFixture.findClass("Superclass");
       ApplicationManager.getApplication().invokeLater(
         () -> CreateSubclassAction.createSubclass(superClass, root, "Subclass"));
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     });
   }
 

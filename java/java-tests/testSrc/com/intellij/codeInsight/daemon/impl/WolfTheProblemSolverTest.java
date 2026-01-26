@@ -25,6 +25,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -120,7 +121,7 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     ExcludeEntryDescription description = new ExcludeEntryDescription(x, false, true, getTestRootDisposable());
     CompilerConfiguration.getInstance(myProject).getExcludedEntriesConfiguration().addExcludeEntryDescription(description);
     FileStatusManager.getInstance(myProject).fileStatusesChanged();
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     myWolfTheProblemSolver.waitForFilesQueuedForInvalidationAreProcessed();
 
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));

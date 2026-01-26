@@ -34,6 +34,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.KeyedLazyInstance;
@@ -147,7 +148,7 @@ class X {
       configureFromFileText("A.java", text);
       List<HighlightInfo> infos = doHighlighting();
       assertEmpty(DaemonAnalyzerTestCase.filter(infos, HighlightSeverity.ERROR));
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
     }
     LOG.debug(System.currentTimeMillis() - time+"ms");
@@ -222,7 +223,7 @@ class X {
       for (int k=0; k<"/*--*/".length();k++) {
         backspace();
       }
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
       long end = System.currentTimeMillis();
       time[i] = end - start;
@@ -374,7 +375,7 @@ class X {
         backspace();
         backspace();
         backspace();
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
         List<HighlightInfo> after = ContainerUtil.sorted(highlightErrors(), HighlightInfoUpdaterImpl.BY_OFFSETS_AND_HASH_ERRORS_FIRST);
         assertEquals("highlighters didn't restore; seed="+seed, initErrors, after);
@@ -441,7 +442,7 @@ class X {
 
       try {
         typeAndCheck(seed, N, random, initErrors);
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       }
       catch (Throwable e) {
         System.err.println("Error running with seed " + seed + "L");
@@ -537,7 +538,7 @@ class X {
           });
         });
 
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
         List<HighlightInfo> after = doHighlightAndSort(seed);
         assertEquals("highlighters didn't restore; seed="+seed, initErrors, after);

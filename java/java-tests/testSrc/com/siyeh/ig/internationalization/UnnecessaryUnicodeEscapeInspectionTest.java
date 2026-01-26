@@ -4,6 +4,7 @@ package com.siyeh.ig.internationalization;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 
@@ -20,7 +21,7 @@ public class UnnecessaryUnicodeEscapeInspectionTest extends LightJavaInspectionT
     final VirtualFile vFile = myFixture.getFile().getVirtualFile();
     Charset ascii = StandardCharsets.US_ASCII;
     EncodingProjectManager.getInstance(getProject()).setEncoding(vFile, ascii);
-    UIUtil.dispatchAllInvocationEvents(); // reload in invokeLater
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reload in invokeLater
     assertEquals(ascii, vFile.getCharset());
     myFixture.testHighlighting(true, false, false);
   }

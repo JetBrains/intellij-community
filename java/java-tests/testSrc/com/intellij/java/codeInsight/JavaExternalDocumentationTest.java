@@ -22,10 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
@@ -124,7 +121,7 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
     while (System.currentTimeMillis() - start < 300000) {
       //noinspection BusyWait
       Thread.sleep(100);
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       if (actionCallback.isProcessed()) return;
     }
     fail("Timed out waiting for documentation to show");

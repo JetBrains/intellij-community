@@ -8,6 +8,7 @@ import com.intellij.refactoring.listeners.MoveMemberListener;
 import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
@@ -180,7 +181,7 @@ public class GrPullUpTest extends LightGroovyTestCase {
     JavaRefactoringListenerManager.getInstance(getProject()).addMoveMembersListener(listener);
     final PullUpProcessor helper = new PullUpProcessor(sourceClass, targetClass, infos, new DocCommentPolicy(DocCommentPolicy.ASIS));
     helper.run();
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     JavaRefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener);
     if (checkMembersMovedCount) {
       assertEquals(countMoved[0], membersToFind.length);

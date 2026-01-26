@@ -33,6 +33,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -150,7 +151,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     action.update(event);
     assertTrue(event.getPresentation().isEnabledAndVisible());
     action.actionPerformed(event);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     checkResultByFile(getBasePath() + "GoToImplementations.after.java");
   }
 

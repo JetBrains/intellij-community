@@ -33,10 +33,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.testFramework.DumbModeTestUtils;
-import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -67,7 +64,7 @@ public class LiveTemplateTest extends LiveTemplateTestCase {
     CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable());
 
     writeCommand(() -> manager.startTemplate(getEditor(), '\t'));
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     checkResultByText(expected);
   }
 
@@ -1011,7 +1008,7 @@ public class LiveTemplateTest extends LiveTemplateTestCase {
     template.addVariable("CS", "completeSmart()", "", true);
     template.addVariable("S", "", "\"\"", true);
     getTemplateManager().startTemplate(myFixture.getEditor(), template);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     assertTrue(myFixture.getEditor().getDocument().getText().contains("foo(this, \"\");"));
     assertNotNull(getState());
@@ -1239,7 +1236,7 @@ public class LiveTemplateTest extends LiveTemplateTestCase {
 
     Editor injectionEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myFixture.getEditor(), file);
     manager.startTemplate(injectionEditor, template);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     assertNotNull(getState());
     myFixture.type("123\t");

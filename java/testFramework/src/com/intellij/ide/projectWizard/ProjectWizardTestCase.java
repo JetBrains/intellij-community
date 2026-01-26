@@ -133,7 +133,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   protected void waitForConfiguration(@NotNull Project project) {
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     IndexingTestUtil.waitUntilIndexesAreReady(project);
     TestObservation.waitForConfiguration(project, TimeUnit.MINUTES.toMillis(10));
   }
@@ -187,7 +187,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   protected void createWizard(@Nullable Project project) {
     setWizard(createWizard(project, contentRoot));
     // to make default selection applied
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
   }
 
   protected Project createProject(Consumer<? super Step> adjuster) throws IOException {
@@ -283,7 +283,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   private static <T> T computeInWriteSafeContext(Supplier<? extends T> supplier) {
     Ref<T> module = Ref.create();
     ApplicationManager.getApplication().invokeLater(() -> module.set(supplier.get()));
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     return module.get();
   }
 

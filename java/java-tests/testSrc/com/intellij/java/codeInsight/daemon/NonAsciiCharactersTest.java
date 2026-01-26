@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.NonAsciiCharactersInspection;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +25,7 @@ public class NonAsciiCharactersTest extends DaemonAnalyzerTestCase {
 
   private void doTest(String extension) throws Exception {
     doTest(BASE_PATH + "/" + getTestName(false) + extension, true, false);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
   }
 
   public void testNotAsciiJavaInVariousContexts() throws Exception {

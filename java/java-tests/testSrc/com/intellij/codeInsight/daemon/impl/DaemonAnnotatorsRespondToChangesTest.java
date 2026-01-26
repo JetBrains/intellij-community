@@ -370,7 +370,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     Runnable checkHighlighted = () -> {
       if (success.get()) return;
       called.incrementAndGet();
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       long highlighted = Arrays.stream(markupModel.getAllHighlighters())
         .map(highlighter -> HighlightInfo.fromRangeHighlighter(highlighter))
         .filter(Objects::nonNull)
@@ -884,7 +884,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
       Document document = myFile.getFileDocument();
       VirtualFile virtualFile = myFile.getVirtualFile();
       FileEditorManager.getInstance(myProject).closeFile(virtualFile);
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
       configureByExistingFile(virtualFile);
       assertSame(document, getEditor().getDocument());

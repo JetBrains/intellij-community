@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,7 @@ public class GenerateGetterSetterTest extends DaemonAnalyzerTestCase {
         return members;
       }
     }.invoke(getProject(), getEditor(), getFile());
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     checkResultByFile("/generateGetterSetter/after" + getTestName(false) + ".java");
   }
   

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -280,7 +281,7 @@ public class EditorTypingAndNavigationUndoTest extends EditorUndoTestCase {
     EditorFactory.getInstance().releaseEditor(getFirstEditor());
     myEditors[0] = EditorFactory.getInstance().createEditor(document, myProject);
 
-    UIUtil.dispatchAllInvocationEvents(); // remove references to original editor from event queue
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // remove references to original editor from event queue
     System.gc(); // make sure weak references to original editor are cleared
 
     undoFirstEditor();

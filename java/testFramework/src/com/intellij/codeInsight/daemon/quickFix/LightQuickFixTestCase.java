@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -109,8 +110,8 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       else {
         quickFix.invoke(action);
       }
-      UIUtil.dispatchAllInvocationEvents();
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       if (!quickFix.shouldBeAvailableAfterExecution()) {
         final IntentionAction afterAction = quickFix.findActionWithText(text);
         if (afterAction != null && Comparing.equal(element, PsiUtilBase.getElementAtCaret(getEditor()))) {

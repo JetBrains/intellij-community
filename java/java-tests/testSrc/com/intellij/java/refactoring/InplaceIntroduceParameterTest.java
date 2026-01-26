@@ -10,6 +10,7 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
 import com.intellij.util.ui.UIUtil;
@@ -95,7 +96,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
       assert state != null;
       state.gotoEnd(false);
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       checkResultByFile(getBasePath() + name + "_after" + getExtension());
     }
     finally {

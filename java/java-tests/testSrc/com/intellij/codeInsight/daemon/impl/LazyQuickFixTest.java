@@ -22,6 +22,7 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -83,7 +84,7 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
     DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
     errors = highlightErrors();
     CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getFile(), getEditor());
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     assertSize(N, errors);
     assertNotEmpty(regFixCalled);
   }

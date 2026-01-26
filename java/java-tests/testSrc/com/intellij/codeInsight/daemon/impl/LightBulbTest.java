@@ -50,6 +50,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.HintListener;
@@ -263,20 +264,20 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
         LOG.debug("i = " + i);
         int updateCount0 = updateCount.get();
         caretRight();
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         caretLeft();
         myDaemonCodeAnalyzer.restart(this);
         assertFalse(myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(myEditor.getDocument(), EditorContextManager.getEditorContext(myEditor, myProject)));
         long daemonStartDeadline = System.currentTimeMillis() + 5000;
         while (!myDaemonCodeAnalyzer.isRunning() && !myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(myEditor.getDocument(), EditorContextManager.getEditorContext(myEditor, myProject)) && System.currentTimeMillis() < daemonStartDeadline) { // wait until the daemon started
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
         if (System.currentTimeMillis() > daemonStartDeadline) {
           throw new RuntimeException("Daemon failed to start in 5000 ms");
         }
         long start = System.currentTimeMillis();
         while (myDaemonCodeAnalyzer.isRunning()) {
-          UIUtil.dispatchAllInvocationEvents(); // wait for a bit more until ShowIntentionsPass.doApplyInformationToEditor() called
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // wait for a bit more until ShowIntentionsPass.doApplyInformationToEditor() called
         }
         long finish = System.currentTimeMillis();
         LOG.debug("start: "+(daemonStartDeadline-5000)+"; started: "+start+"; finished: "+finish+"; updateCount:"+updateCount);
@@ -306,7 +307,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
     });
 
     assertNotEmpty(highlightErrors());
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     IntentionHintComponent lastHintBeforeDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
     assertNotNull(lastHintBeforeDeletion);
     IntentionContainer lastHintIntentions = lastHintBeforeDeletion.getCachedIntentions();
@@ -316,7 +317,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
 
     delete(myEditor);
     assertNotEmpty(highlightErrors());
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     IntentionHintComponent lastHintAfterDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
     // it must be either hidden or not have that error anymore
     if (lastHintAfterDeletion == null) {
@@ -534,10 +535,10 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
       List<IntentionActionWithTextCaching> actions = hintComponent.getCachedIntentions().getAllActions();
       assertTrue(actions.toString(), ContainerUtil.exists(actions, a -> a.getText().equals("Flip ',' (may change semantics)")));
     }
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     myDaemonCodeAnalyzer.mustWaitForSmartMode(false, getTestRootDisposable());
     DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       type(' ');
       backspace();
       assertEmpty(doHighlighting(HighlightSeverity.ERROR));
