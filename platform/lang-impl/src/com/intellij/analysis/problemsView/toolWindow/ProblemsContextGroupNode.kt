@@ -6,10 +6,8 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.tree.LeafState
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
-class ProblemsContextGroupNode(
+internal class ProblemsContextGroupNode(
   val parent: ProblemsContextNode,
   val group: String,
   val problems: Collection<Problem>,

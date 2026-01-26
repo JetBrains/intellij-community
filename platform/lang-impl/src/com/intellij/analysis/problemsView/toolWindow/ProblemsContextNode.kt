@@ -8,11 +8,9 @@ import com.intellij.openapi.editor.impl.multiverse.createCodeInsightContextPrese
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.tree.LeafState
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-@ApiStatus.Experimental
-class ProblemsContextNode(
+internal class ProblemsContextNode(
   val parent: FileNode,
   val contextGroup: CodeInsightContext,
   val problems: Collection<Problem>,
