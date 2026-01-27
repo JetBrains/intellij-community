@@ -38,6 +38,10 @@ import kotlin.io.path.name
 internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWithToml) {
   changeWorkspaceMutex.withLock {
     val (entries, excludeDirs) = generatePyProjectTomlEntries(files)
+    // No pyproject.toml files, no need to touch model at all
+    if (entries.isEmpty()) {
+      return
+    }
     val newStorage = createEntityStorage(entries, project.workspaceModel.getVirtualFileUrlManager())
 
     val workspaceModel = project.workspaceModel

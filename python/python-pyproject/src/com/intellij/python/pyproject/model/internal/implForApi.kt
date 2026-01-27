@@ -10,6 +10,8 @@ import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+internal val Module.isPyProjectTomlBasedImpl: Boolean get() = findModuleEntity()?.pyProjectTomlEntity != null
+
 internal suspend fun suggestSdkImpl(module: Module): SuggestedSdk? = withContext(Dispatchers.Default) {
   val entity = module.findModuleEntity()?.pyProjectTomlEntity ?: return@withContext null
   val storage = module.project.workspaceModel.currentSnapshot

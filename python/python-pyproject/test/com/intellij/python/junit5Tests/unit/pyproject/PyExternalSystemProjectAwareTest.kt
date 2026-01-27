@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.modules
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.api.ModelRebuiltListener
+import com.intellij.python.pyproject.model.api.isPyProjectTomlBased
 import com.intellij.python.pyproject.model.internal.MODEL_REBUILD
 import com.intellij.python.pyproject.model.internal.autoImportBridge.PyExternalSystemProjectAware
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -66,6 +67,9 @@ class PyExternalSystemProjectAwareTest {
     val m = Mutex(locked = true)
     projectFixture.get().messageBus.connect(disposable).subscribe(MODEL_REBUILD, ModelRebuiltListener { project ->
       try {
+        for (module in project.modules) {
+          Assertions.assertTrue(module.isPyProjectTomlBased, "$module isn't pyproject based")
+        }
         val moduleNames = project.modules.map { it.name }.sorted().toTypedArray()
         Assertions.assertArrayEquals(members, moduleNames, "Wrong modules created")
       }
