@@ -20,6 +20,7 @@ import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.test.VcsPlatformTestContext
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
@@ -127,6 +128,12 @@ private fun disableGitGc(project: Project) {
 fun createRepository(project: Project, root: String) = createRepository(project, Paths.get(root), true)
 
 internal fun createRepository(project: Project, root: Path, makeInitialCommit: Boolean): GitRepository {
+  initRepo(project, root, makeInitialCommit)
+  LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.resolve(GitUtil.DOT_GIT))!!
+  return registerRepo(project, root)
+}
+
+internal fun VcsPlatformTestContext.createRepository(project: Project, root: Path, makeInitialCommit: Boolean): GitRepository {
   initRepo(project, root, makeInitialCommit)
   LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.resolve(GitUtil.DOT_GIT))!!
   return registerRepo(project, root)
