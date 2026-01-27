@@ -7,6 +7,7 @@ import com.intellij.ide.CopyProvider
 import com.intellij.ide.TextCopyProvider
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.MessageType
@@ -285,7 +286,7 @@ class ErrorNotificationPanel private constructor(
   ) : MouseListener {
     private val originalFont = component.font
     private val underlinedFont = originalFont.deriveFont(mapOf(TextAttribute.UNDERLINE to TextAttribute.UNDERLINE_ON))
-    override fun mouseClicked(e: MouseEvent?) = onClickAction()
+    override fun mouseClicked(e: MouseEvent?) = WriteIntentReadAction.run { onClickAction() }
     override fun mousePressed(e: MouseEvent?) = Unit
     override fun mouseReleased(e: MouseEvent?) = Unit
     override fun mouseEntered(e: MouseEvent?) {
