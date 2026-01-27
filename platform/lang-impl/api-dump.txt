@@ -124,6 +124,12 @@ c:com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 com.intellij.codeInsight.completion.CompletionPhaseListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:completionPhaseChanged(Z):V
+f:com.intellij.codeInsight.completion.WordCompletionContributor
+- com.intellij.codeInsight.completion.CompletionContributor
+- com.intellij.openapi.project.DumbAware
+- <init>():V
+- s:addWordCompletionVariants(com.intellij.codeInsight.completion.CompletionResultSet,com.intellij.codeInsight.completion.CompletionParameters,java.util.Set):V
+- s:addWordCompletionVariants(com.intellij.codeInsight.completion.CompletionResultSet,com.intellij.codeInsight.completion.CompletionParameters,java.util.Set,Z):V
 f:com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$AutoRestarting
 - b:<init>(com.intellij.codeInsight.completion.PrefixMatcher,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 pe:com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$MatchingOutcome

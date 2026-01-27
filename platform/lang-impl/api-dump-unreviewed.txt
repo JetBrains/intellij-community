@@ -1879,13 +1879,6 @@ f:com.intellij.codeInsight.completion.FilePathCompletionContributor$FilePathLook
 - renderElement(com.intellij.codeInsight.lookup.LookupElementPresentation):V
 com.intellij.codeInsight.completion.FileReferenceWithExtendedCompletion
 - a:bindToExtendedElement(com.intellij.psi.PsiElement):V
-c:com.intellij.codeInsight.completion.WordCompletionContributor
-- com.intellij.codeInsight.completion.CompletionContributor
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- s:addWordCompletionVariants(com.intellij.codeInsight.completion.CompletionResultSet,com.intellij.codeInsight.completion.CompletionParameters,java.util.Set):V
-- s:addWordCompletionVariants(com.intellij.codeInsight.completion.CompletionResultSet,com.intellij.codeInsight.completion.CompletionParameters,java.util.Set,Z):V
-- fillCompletionVariants(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionResultSet):V
 a:com.intellij.codeInsight.completion.actions.BaseCodeCompletionAction
 - com.intellij.openapi.project.DumbAwareAction
 - com.intellij.codeInsight.hint.HintManagerImpl$ActionToIgnore

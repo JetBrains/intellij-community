@@ -2340,11 +2340,6 @@ f:com.intellij.lang.LanguagePsiElementExternalizer
 f:com.intellij.lang.LanguageSurrounders
 - com.intellij.lang.LanguageExtension
 - sf:INSTANCE:com.intellij.lang.LanguageSurrounders
-f:com.intellij.lang.LanguageWordCompletion
-- com.intellij.lang.LanguageExtension
-- sf:INSTANCE:com.intellij.lang.LanguageWordCompletion
-- isEnabledIn(com.intellij.psi.tree.IElementType):Z
-- isWordCompletionInDumbModeEnabled(com.intellij.lang.Language):Z
 com.intellij.lang.PsiElementExternalizer
 - a:findByQualifiedName(com.intellij.openapi.project.Project,java.lang.String):com.intellij.psi.PsiElement
 - a:getQualifiedName(com.intellij.psi.PsiElement):java.lang.String

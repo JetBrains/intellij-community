@@ -10,11 +10,12 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.NotNull;
 
 final class XmlWordCompletionFilter extends DefaultWordCompletionFilter {
   private static final TokenSet ENABLED_TOKENS = TokenSet.create(XmlElementType.XML_CDATA, XmlTokenType.XML_DATA_CHARACTERS);
   @Override
-  public boolean isWordCompletionEnabledIn(final IElementType element) {
+  public boolean isWordCompletionEnabledIn(@NotNull IElementType element) {
     return super.isWordCompletionEnabledIn(element) || ENABLED_TOKENS.contains(element);
   }
 }
