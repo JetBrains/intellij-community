@@ -212,7 +212,7 @@ class TextToolset : McpToolset {
       isCaseSensitive = false
       isWholeWordsOnly = false
       isRegularExpressions = false
-      isProjectScope = true
+      isProjectScope = directoryToSearch == null
       isSearchInProjectFiles = false
       fileFilter = fileMask
       isCaseSensitive = caseSensitive

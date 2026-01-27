@@ -15,6 +15,8 @@ import kotlin.test.assertTrue
 
 class TextToolsetTest : McpToolsetTestBase() {
   private val longContentFixture = sourceRootFixture.virtualFileFixture("long_content.txt", "x".repeat(1001) + "SEARCH_TARGET" + "y".repeat(1001))
+  private val subdir1 = sourceRootFixture.virtualFileFixture("subdir1/file1.txt", "FINDME_IN_SUBDIR in subdir1")
+  private val subdir2 = sourceRootFixture.virtualFileFixture("subdir2/file2.txt", "FINDME_IN_SUBDIR in subdir2")
 
   @Test
   fun get_file_text_by_path() = runBlocking {
@@ -49,6 +51,60 @@ class TextToolsetTest : McpToolsetTestBase() {
       }
     ) { actualResult ->
       assertTrue { actualResult.textContent.text?.contains("x".repeat(MAX_USAGE_TEXT_CHARS) + "||SEARCH_TARGET||" + "y".repeat(MAX_USAGE_TEXT_CHARS)) ?: false }
+    }
+  }
+
+  @Test
+  fun search_in_files_by_text_respects_directory_scope() = runBlocking {
+    testMcpTool(
+      TextToolset::search_in_files_by_text.name,
+      buildJsonObject {
+        put("searchText", JsonPrimitive("FINDME_IN_SUBDIR"))
+        put("directoryToSearch", JsonPrimitive("src/subdir1"))
+      }
+    ) { actualResult ->
+      val text = actualResult.textContent.text
+      assertTrue { text.contains("subdir1") && !text.contains("subdir2") }
+    }
+  }
+
+  @Test
+  fun search_in_files_by_text_return_result_for_all_subdirs() = runBlocking {
+    testMcpTool(
+      TextToolset::search_in_files_by_text.name,
+      buildJsonObject {
+        put("searchText", JsonPrimitive("FINDME_IN_SUBDIR"))
+      }
+    ) { actualResult ->
+      val text = actualResult.textContent.text
+      assertTrue { text.contains("subdir1") && text.contains("subdir2") }
+    }
+  }
+
+  @Test
+  fun search_in_files_by_regexp_respects_directory_scope() = runBlocking {
+    testMcpTool(
+      TextToolset::search_in_files_by_regex.name,
+      buildJsonObject {
+        put("regexPattern", JsonPrimitive("FINDME_IN_SUBDIR"))
+        put("directoryToSearch", JsonPrimitive("src/subdir1"))
+      }
+    ) { actualResult ->
+      val text = actualResult.textContent.text
+      assertTrue { text.contains("subdir1") && !text.contains("subdir2") }
+    }
+  }
+
+  @Test
+  fun search_in_files_by_regexp_return_result_for_all_subdirs() = runBlocking {
+    testMcpTool(
+      TextToolset::search_in_files_by_regex.name,
+      buildJsonObject {
+        put("regexPattern", JsonPrimitive("FINDME_IN_SUBDIR"))
+      }
+    ) { actualResult ->
+      val text = actualResult.textContent.text
+      assertTrue { text.contains("subdir1") && text.contains("subdir2") }
     }
   }
 
