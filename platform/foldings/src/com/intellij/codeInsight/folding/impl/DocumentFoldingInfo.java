@@ -152,8 +152,8 @@ final class DocumentFoldingInfo implements CodeFoldingState {
         }
       }
 
-      boolean state = info != null && info.expanded;
-      expandRegionBlessForNewLife(editor, region, state);
+      boolean expanded = info != null && info.expanded;
+      expandRegionBlessForNewLife(editor, region, expanded);
     }
   }
 
