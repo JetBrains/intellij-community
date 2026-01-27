@@ -7,13 +7,13 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Serializable
-data class TextRangeId(
+data class TextRangeDto(
   val startOffset: Int,
   val endOffset: Int,
 )
 
 @ApiStatus.Internal
-fun TextRange.toRpc(): TextRangeId = TextRangeId(startOffset, endOffset)
+fun TextRange.toRpc(): TextRangeDto = TextRangeDto(startOffset, endOffset)
 
 @ApiStatus.Internal
-fun TextRangeId.textRange(): TextRange = TextRange(startOffset, endOffset)
+fun TextRangeDto.textRange(): TextRange = TextRange(startOffset, endOffset)
