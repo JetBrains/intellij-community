@@ -1001,7 +1001,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (stringBasedType != null) {
         return Ref.create(stringBasedType);
       }
-      final Ref<PyType> anyType = getAnyType(resolved);
+      final Ref<PyType> anyType = getAnyType(resolved, context);
       if (anyType != null) {
         return anyType;
       }
@@ -1223,8 +1223,14 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return Ref.create();
   }
 
-  private static @Nullable Ref<PyType> getAnyType(@NotNull PsiElement element) {
-    return ANY.equals(getQualifiedName(element)) ? Ref.create() : null;
+  private static @Nullable Ref<PyType> getAnyType(@NotNull PsiElement element, @NotNull Context context) {
+    if (ANY.equals(getQualifiedName(element))) {
+      return Ref.create();
+    }
+    if (context.myUseFqn && ANY.equals(element.getText())) {
+      return Ref.create();
+    }
+    return null;
   }
 
   private static @Nullable Ref<PyType> getClassType(@NotNull PyExpression typeHint, @NotNull PsiElement element, @NotNull Context context) {
