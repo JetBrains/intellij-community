@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.TerminalSplitAction;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
+import org.jetbrains.plugins.terminal.classic.ClassicTerminalCommandStartedListener;
 import org.jetbrains.plugins.terminal.classic.ClassicTerminalVfsRefresher;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.util.TerminalUtilKt;
@@ -48,8 +49,8 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
   private final Prompt myPrompt = new Prompt();
   private final TerminalShellCommandHandlerHelper myShellCommandHandlerHelper;
   private final BlockingQueue<String> myCommandsToExecute = new LinkedBlockingQueue<>();
-  private final EventDispatcher<TerminalCommandStartedListener> myCommandStartedDispatcher =
-    EventDispatcher.create(TerminalCommandStartedListener.class);
+  private final EventDispatcher<ClassicTerminalCommandStartedListener> myCommandStartedDispatcher =
+    EventDispatcher.create(ClassicTerminalCommandStartedListener.class);
 
   /**
    * @deprecated use {@link #ShellTerminalWidget(Project, JBTerminalSystemSettingsProvider, Disposable)} instead
@@ -148,7 +149,7 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
    * <b>Note:</b> Command detection is heuristics-based
    */
   @ApiStatus.Experimental
-  public void addCommandStartedListener(@NotNull TerminalCommandStartedListener listener, @NotNull Disposable parent) {
+  public void addCommandStartedListener(@NotNull ClassicTerminalCommandStartedListener listener, @NotNull Disposable parent) {
     myCommandStartedDispatcher.addListener(listener, parent);
   }
 
