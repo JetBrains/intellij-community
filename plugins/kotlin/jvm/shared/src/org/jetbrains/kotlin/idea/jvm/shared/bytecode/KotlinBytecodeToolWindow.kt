@@ -31,6 +31,9 @@ import org.jetbrains.kotlin.analysis.api.components.KaCompiledFile
 import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
 import org.jetbrains.kotlin.analysis.api.components.isClassFile
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
+import org.jetbrains.kotlin.cli.extensionsStorage
+import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
@@ -108,6 +111,9 @@ class KotlinBytecodeToolWindow(
             val ktFile = location.kFile!!
 
             val configuration = CompilerConfiguration()
+
+            @OptIn(ExperimentalCompilerApi::class)
+            configuration.extensionsStorage = CompilerPluginRegistrar.ExtensionStorage()
 
             val containingModule = ktFile.module
             if (containingModule != null) {

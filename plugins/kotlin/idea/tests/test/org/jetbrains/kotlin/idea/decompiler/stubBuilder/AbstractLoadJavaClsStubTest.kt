@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinDecompiledFileViewProv
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinClsStubBuilder
 import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
+import org.jetbrains.kotlin.cli.pipeline.registerExtensionStorage
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
@@ -37,6 +38,7 @@ abstract class AbstractLoadJavaClsStubTest : KotlinLightCodeInsightFixtureTestCa
         val configuration = CompilerConfiguration().apply {
             languageVersionSettings = file.languageVersionSettings
             put(JVMConfigurationKeys.DO_NOT_CLEAR_BINDING_CONTEXT, true)
+            registerExtensionStorage()
         }
 
         val state = GenerationState(project, analysisResult.moduleDescriptor, configuration)

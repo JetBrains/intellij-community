@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.cli.extensionsStorage
 import org.jetbrains.kotlin.cli.plugins.processCompilerPluginsOptions
 import org.jetbrains.kotlin.compiler.plugin.CommandLineProcessor
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
@@ -164,7 +165,10 @@ class KtCompilerPluginsCache private constructor(
         ProgressManager.checkCanceled()
 
         val compilerConfiguration =
-            CompilerConfiguration().apply { // Temporary work-around for KTIJ-24320. Calls to 'setupCommonArguments()' and 'setupJvmSpecificArguments()'
+            CompilerConfiguration().apply {
+                @OptIn(ExperimentalCompilerApi::class)
+                extensionsStorage = CompilerPluginRegistrar.ExtensionStorage()
+                // Temporary work-around for KTIJ-24320. Calls to 'setupCommonArguments()' and 'setupJvmSpecificArguments()'
                 // (or even a platform-agnostic alternative) should be added.
                 if (compilerArguments is K2JVMCompilerArguments && module is KaSourceModule) {
                     val compilerExtension = CompilerModuleExtension.getInstance(module.openapiModule)
