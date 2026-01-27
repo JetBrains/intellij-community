@@ -178,16 +178,6 @@ internal open class WorkspaceProjectImporter(
     return true
   }
 
-  private data class ProjectChangesInfo(val allProjectsToChanges: Map<MavenProject, MavenProjectModifications>) {
-    val projectFilePaths: List<String> get() = allProjectsToChanges.keys.map { it.path }
-    val hasChanges: Boolean = allProjectsToChanges.values.any { it == MavenProjectModifications.ALL }
-    val changedProjectsOnly: Iterable<MavenProject>
-      get() = allProjectsToChanges
-        .asSequence()
-        .filter { (_, changes) -> changes == MavenProjectModifications.ALL }
-        .map { (mavenProject, _) -> mavenProject }
-        .asIterable()
-  }
 
   private fun collectProjectChanges(
     storageBeforeImport: EntityStorage,
