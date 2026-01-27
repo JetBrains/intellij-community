@@ -4,6 +4,7 @@ package org.jetbrains.jewel.ui.component
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,14 +22,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -1281,6 +1286,199 @@ class ScrollableContainerTest {
         rule.onNodeWithTag("item-0").assertHeightIsEqualTo(150.dp)
     }
 
+    @Test
+    fun `minWidth smaller than scrollbar width should not crash`() {
+        rule.setContent {
+            IntUiTheme {
+                ForceConstraints(
+                    Constraints(
+                        minWidth = 8, // minWidth = 8px < scrollbarWidth (14px)
+                        maxWidth = 36,
+                        minHeight = 0,
+                        maxHeight = 300,
+                    ),
+                    content = {
+                        VerticallyScrollableContainer(style = alwaysVisibleScrollbarStyle()) {
+                            Text("minWidth: 8px < scrollbar ~14px")
+                        }
+                    },
+                )
+            }
+        }
+
+        rule.waitForIdle()
+    }
+
+    @Test
+    fun `minHeight smaller than scrollbar height should not crash`() {
+        rule.setContent {
+            IntUiTheme {
+                ForceConstraints(
+                    Constraints(
+                        minWidth = 0,
+                        maxWidth = 600,
+                        minHeight = 8, // minHeight = 8px < scrollbarHeight
+                        maxHeight = 36,
+                    ),
+                    content = {
+                        HorizontallyScrollableContainer(style = alwaysVisibleScrollbarStyle()) {
+                            Text("minHeight: 8px < scrollbar ~14px")
+                        }
+                    },
+                )
+            }
+        }
+
+        rule.waitForIdle()
+    }
+
+    @Test
+    fun `maxWidth smaller than scrollbar width should not crash`() {
+        rule.setContent {
+            IntUiTheme {
+                // Use Layout to explicitly force minWidth > 0
+                ForceConstraints(
+                    Constraints(
+                        minWidth = 1,
+                        maxWidth = 8, // maxWidth = 8px < scrollbarWidth (14px)
+                        minHeight = 0,
+                        maxHeight = 300,
+                    ),
+                    content = {
+                        VerticallyScrollableContainer(style = alwaysVisibleScrollbarStyle()) {
+                            Text("minWidth: 8px < scrollbar ~14px")
+                        }
+                    },
+                )
+            }
+        }
+
+        rule.waitForIdle()
+    }
+
+    @Test
+    fun `maxHeight smaller than scrollbar height should not crash`() {
+        rule.setContent {
+            IntUiTheme {
+                ForceConstraints(
+                    Constraints(
+                        minWidth = 0,
+                        maxWidth = 600,
+                        minHeight = 3,
+                        maxHeight = 8, // maxHeight = 8px < scrollbarHeight
+                    ),
+                    content = {
+                        HorizontallyScrollableContainer(style = alwaysVisibleScrollbarStyle()) {
+                            Text("minHeight: 8px < scrollbar ~14px")
+                        }
+                    },
+                )
+            }
+        }
+
+        rule.waitForIdle()
+    }
+
+    @Test
+    fun `both minWidth and minHeight smaller than scrollbar should not crash`() {
+        rule.setContent {
+            IntUiTheme {
+                ForceConstraints(
+                    Constraints(
+                        minWidth = 8, // minWidth = 8px < scrollbarWidth (14px)
+                        maxWidth = 36,
+                        minHeight = 8, // minHeight = 8px < scrollbarHeight
+                        maxHeight = 36,
+                    ),
+                    content = {
+                        VerticallyScrollableContainer(style = alwaysVisibleScrollbarStyle()) {
+                            Text("Both min dimensions < scrollbar")
+                        }
+                    },
+                )
+            }
+        }
+
+        rule.waitForIdle()
+    }
+
+    @Test
+    fun `both maxWidth and maxHeight smaller than scrollbar should not crash`() {
+        rule.setContent {
+            IntUiTheme {
+                ForceConstraints(
+                    Constraints(
+                        minWidth = 2,
+                        maxWidth = 8, // maxWidth = 8px < scrollbarWidth (14px)
+                        minHeight = 2,
+                        maxHeight = 8, // maxHeight = 8px < scrollbarHeight
+                    ),
+                    content = {
+                        VerticallyScrollableContainer(style = alwaysVisibleScrollbarStyle()) {
+                            Text("Both min dimensions < scrollbar")
+                        }
+                    },
+                )
+            }
+        }
+
+        rule.waitForIdle()
+    }
+
+    @Test
+    fun `zero-size constraints should not crash`() {
+        rule.setContent {
+            IntUiTheme {
+                ForceConstraints(
+                    Constraints(minWidth = 0, maxWidth = 0, minHeight = 0, maxHeight = 0),
+                    content = {
+                        VerticallyScrollableContainer(style = alwaysVisibleScrollbarStyle()) {
+                            Text("Both min dimensions < scrollbar")
+                        }
+                    },
+                )
+            }
+        }
+
+        rule.waitForIdle()
+    }
+
+    @Test
+    fun `forced tiny constraints through custom layout should not crash`() {
+        rule.setContent {
+            IntUiTheme {
+                ForceConstraints(
+                    Constraints(minWidth = 5, maxWidth = 12, minHeight = 5, maxHeight = 12),
+                    content = {
+                        VerticallyScrollableContainer(style = alwaysVisibleScrollbarStyle()) {
+                            Text("Forced tiny constraints")
+                        }
+                    },
+                )
+            }
+        }
+
+        rule.waitForIdle()
+    }
+
+    @Test
+    fun `normal size constraints should still work correctly`() {
+        rule.setContent {
+            IntUiTheme {
+                ForceConstraints(
+                    Constraints(minWidth = 200, maxWidth = 400, minHeight = 200, maxHeight = 300),
+                    content = {
+                        VerticallyScrollableContainer(style = alwaysVisibleScrollbarStyle()) {
+                            Text("Both min dimensions < scrollbar")
+                        }
+                    },
+                )
+            }
+        }
+
+        rule.waitForIdle()
+    }
+
     @Composable
     private fun rememberScrollbarStyle(
         alwaysVisible: Boolean,
@@ -1323,4 +1521,34 @@ class ScrollableContainerTest {
         Sed nec sapien nec dui rhoncus bibendum. Sed blandit bibendum libero.
         """
             .trimIndent()
+
+    @Composable
+    fun ForceConstraints(constraints: Constraints, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+        // Use Layout to explicitly force minWidth/minHeight > 0
+        Layout(content, modifier) { measurables, _ ->
+            val placeable = measurables.first().measure(constraints)
+            layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+        }
+    }
+
+    @Composable
+    private fun alwaysVisibleScrollbarStyle(): ScrollbarStyle {
+        val alwaysVisibleConfig =
+            ScrollbarVisibility.AlwaysVisible(
+                trackThickness = 14.dp, // Important!
+                trackPadding = PaddingValues(2.dp),
+                trackPaddingWithBorder = PaddingValues(2.dp),
+                thumbColorAnimationDuration = Duration.ZERO,
+                trackColorAnimationDuration = Duration.ZERO,
+                scrollbarBackgroundColorLight = Color.Transparent,
+                scrollbarBackgroundColorDark = Color.Transparent,
+            )
+
+        return ScrollbarStyle(
+            colors = JewelTheme.scrollbarStyle.colors,
+            metrics = JewelTheme.scrollbarStyle.metrics,
+            trackClickBehavior = JewelTheme.scrollbarStyle.trackClickBehavior,
+            scrollbarVisibility = alwaysVisibleConfig,
+        )
+    }
 }
