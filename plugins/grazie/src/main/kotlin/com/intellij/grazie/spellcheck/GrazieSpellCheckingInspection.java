@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValuesManager;
@@ -101,7 +102,7 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,
                                                  @NotNull LocalInspectionToolSession session) {
-    if (!Registry.is("spellchecker.inspection.enabled", true) ||
+    if (CommitMessage.isCommitMessage(session.getFile()) ||
         InspectionProfileManager.hasTooLowSeverity(session, this) ||
         InjectedLanguageManager.getInstance(holder.getProject()).isFrankensteinInjection(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
