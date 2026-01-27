@@ -68,7 +68,7 @@ import kotlin.time.Duration
 
 
 private interface MavenSyncFileReader {
-  suspend operator fun invoke() : MavenProjectsTreeUpdateResult
+  suspend operator fun invoke(wrappers: MavenEmbedderWrappers): MavenProjectsTreeUpdateResult
 }
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
@@ -341,12 +341,13 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   ): List<Module> {
     val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
     mavenEmbedderWrappers.use {
-      return doUpdateMavenProjects(spec, null, mavenEmbedderWrappers, object : MavenSyncFileReader{
-        override suspend fun invoke(): MavenProjectsTreeUpdateResult {
-         return readMavenProjects(spec,
-                            filesToUpdate,
-                            filesToDelete,
-                            mavenEmbedderWrappers)
+      return doUpdateMavenProjects(spec, null, mavenEmbedderWrappers, object : MavenSyncFileReader {
+        override suspend fun invoke(wrappers: MavenEmbedderWrappers): MavenProjectsTreeUpdateResult {
+          return readMavenProjects(spec,
+                                   filesToUpdate,
+                                   filesToDelete,
+                                   wrappers
+          )
         }
 
       })
@@ -441,9 +442,9 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
     val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
     mavenEmbedderWrappers.use {
-      return doUpdateMavenProjects(spec, modelsProvider, mavenEmbedderWrappers, object : MavenSyncFileReader{
-        override suspend fun invoke(): MavenProjectsTreeUpdateResult {
-          return readAllMavenProjects(spec, mavenEmbedderWrappers)
+      return doUpdateMavenProjects(spec, modelsProvider, mavenEmbedderWrappers, object : MavenSyncFileReader {
+        override suspend fun invoke(wrappers: MavenEmbedderWrappers): MavenProjectsTreeUpdateResult {
+          return readAllMavenProjects(spec, wrappers)
         }
       })
     }
@@ -537,7 +538,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     modelsProvider: IdeModifiableModelsProvider?,
     mavenEmbedderWrappers: MavenEmbedderWrappers,
   ): List<Module> {
-    val readingResult = readMavenProjectsActivity(syncActivity) { read() }
+    val readingResult = readMavenProjectsActivity(syncActivity) { read(mavenEmbedderWrappers) }
 
     fireImportAndResolveScheduled()
     val projectsToResolve = collectProjectsToResolve(readingResult)
