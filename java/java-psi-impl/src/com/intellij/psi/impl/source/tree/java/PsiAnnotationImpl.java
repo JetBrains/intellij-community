@@ -116,6 +116,17 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
         }
       }
       else if (type instanceof PsiArrayType) {
+        boolean hasBracketAfter = false;
+        for (PsiElement next = getNextSibling(); next != null; next = next.getNextSibling()) {
+          if (PsiUtil.isJavaToken(next, JavaTokenType.LBRACKET) || PsiUtil.isJavaToken(next, JavaTokenType.ELLIPSIS)) {
+            hasBracketAfter = true;
+            break;
+          }
+        }
+        if (!hasBracketAfter) {
+          // Misplaced annotation after array brackets: no owner should be assigned
+          return null;
+        }
         for (PsiElement sibling = getPrevSibling(); sibling != null; sibling = sibling.getPrevSibling()) {
           if (PsiUtil.isJavaToken(sibling, JavaTokenType.LBRACKET)) {
             type = ((PsiArrayType)type).getComponentType();
