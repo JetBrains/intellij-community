@@ -39,24 +39,25 @@ internal fun createConsentSettings(consentMapping: MutableCollection<ConsentStat
   val addCheckBox = preferencesMode || consents.size > 1
   val shortCompanyName = if (isJetBrainsVendor) JETBRAINS_VENDOR_NAME else ApplicationInfoImpl.getShadowInstance().shortCompanyName
   return panel {
-    row {
-      comment(IdeBundle.message("gdpr.data.sharing.title.comment.text", shortCompanyName))
+    if (isJetBrainsVendor) {
+      row {
+        comment(IdeBundle.message("gdpr.data.sharing.title.comment.text", shortCompanyName))
+      }
     }
     val (actualConsents, localConsentsAsConsents) = partitionConsentsAndLocalConsents(consents)
     if (!actualConsents.isEmpty()) {
-      group(IdeBundle.message("gdpr.data.sharing.consents.title", shortCompanyName)) {
-          for (consent in actualConsents) {
-            val supplier = createConsentElement(consent, addCheckBox)
-            consentMapping.add(supplier)
-          }
+      if (isJetBrainsVendor) {
+        group(IdeBundle.message("gdpr.data.sharing.consents.title", shortCompanyName)) {
+          createConsentElements(actualConsents, addCheckBox, consentMapping)
+        }
+      }
+      else {
+        createConsentElements(actualConsents, addCheckBox, consentMapping)
       }
     }
     if (!localConsentsAsConsents.isEmpty()) {
       group(IdeBundle.message("gdpr.data.sharing.local.settings.title")) {
-          for (consent in localConsentsAsConsents) {
-            val supplier = createConsentElement(consent, addCheckBox)
-            consentMapping.add(supplier)
-          }
+        createConsentElements(localConsentsAsConsents, addCheckBox, consentMapping)
       }
     }
     if (!preferencesMode) {
@@ -67,6 +68,17 @@ internal fun createConsentSettings(consentMapping: MutableCollection<ConsentStat
   }.apply {
     background = if (preferencesMode) UIUtil.getPanelBackground() else UIUtil.getEditorPaneBackground()
     addBorder(preferencesMode)
+  }
+}
+
+private fun Panel.createConsentElements(
+  actualConsents: List<Consent>,
+  addCheckBox: Boolean,
+  consentMapping: MutableCollection<ConsentStateSupplier>,
+) {
+  for (consent in actualConsents) {
+    val supplier = createConsentElement(consent, addCheckBox)
+    consentMapping.add(supplier)
   }
 }
 
