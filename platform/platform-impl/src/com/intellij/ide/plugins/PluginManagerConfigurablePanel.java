@@ -1348,10 +1348,10 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       String query = StringUtil.join(queries, " ");
       searchTextField.setTextIgnoreEvents(query);
       if (query.isEmpty()) {
-        myMarketplaceTab.hideSearchPanel();
+        hideSearchPanel();
       }
       else {
-        myMarketplaceTab.showSearchPanel(query);
+        showSearchPanel(query);
       }
     }
 
@@ -1408,7 +1408,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       if (showAllPredicate.test(group)) {
         group.rightAction = new LinkLabelButton<>(IdeBundle.message("plugins.configurable.show.all"),
                                                   null,
-                                                  myMarketplaceTab.searchListener,
+                                                  searchListener,
                                                   showAllQuery);
         group.rightAction.setBorder(JBUI.Borders.emptyRight(5));
       }
