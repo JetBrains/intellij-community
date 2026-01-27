@@ -49,6 +49,10 @@
       "description": "Date when the current major version was firstly released, in yyyyMMdd format.",
       "type": "string"
     },
+    "minRequiredJavaVersion": {
+      "description": "Minimum Java version required to run this IDE (e.g., '21')",
+      "type": "string"
+    },
     "launch": {
       "description": "Specifies how the IDE can be launched",
       "type": "array",

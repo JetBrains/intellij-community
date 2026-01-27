@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildData.productInfo
 
 import kotlinx.serialization.KSerializer
@@ -35,6 +35,7 @@ class ProductInfoData private constructor(
   val productVendor: String? = null,
   @Serializable(with = LocalDateSerializer::class)
   val majorVersionReleaseDate: LocalDate? = null,
+  val minRequiredJavaVersion: String? = null,
   val launch: List<ProductInfoLaunchData>,
   val customProperties: List<CustomProperty> = emptyList(),
   val bundledPlugins: List<String> = emptyList(),
@@ -64,6 +65,7 @@ class ProductInfoData private constructor(
       svgIconPath: String?,
       productVendor: String,
       majorVersionReleaseDate: LocalDate?,
+      minRequiredJavaVersion: String?,
       launch: List<ProductInfoLaunchData>,
       customProperties: List<CustomProperty>,
       bundledPlugins: List<String>,
@@ -83,6 +85,7 @@ class ProductInfoData private constructor(
         svgIconPath = svgIconPath,
         productVendor = productVendor,
         majorVersionReleaseDate = majorVersionReleaseDate,
+        minRequiredJavaVersion = minRequiredJavaVersion,
         launch = launch,
         customProperties = customProperties,
         bundledPlugins = bundledPlugins,

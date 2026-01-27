@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.productInfo
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -66,6 +66,13 @@ class IdeProductInfoTest {
     assumeTrue(SystemInfo.isLinux || SystemInfo.isWindows)
     val productInfo = loadProductInfo("idea-2050.1-Linux")
     assertEquals("2050.1", productInfo.version)
+  }
+
+  @Test
+  fun `idea 2025_1 with minRequiredJavaVersion`() {
+    assumeTrue(SystemInfo.isLinux || SystemInfo.isWindows)
+    val productInfo = loadProductInfo("idea-2025.1-minRequiredJavaVersion")
+    assertEquals("21", productInfo.minRequiredJavaVersion)
   }
 
   private fun loadProductInfo(dirName: String): ProductInfoData {
