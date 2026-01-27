@@ -94,6 +94,7 @@
     <module name="intellij.java.jam.impl"/>
     <module name="intellij.java.jam"/>
     <module name="intellij.profiler.ultimate"/>
+    <module name="intellij.debugger.jvm.advanced.java"/>
     <module name="intellij.jvm.dfa.analysis.ui"/>
     <module name="intellij.java.copyright"/>
     <module name="intellij.java.promo"/>
