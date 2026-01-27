@@ -1249,6 +1249,10 @@ internal class IslandsUICustomization : InternalUICustomization() {
     centerComponent.revalidate()
     centerComponent.repaint()
   }
+
+  override fun getTabHOffsetUnscaled(compactMode: Boolean, position: JBTabsPosition): Int {
+    return IslandsTabPainter.getHOffsetUnscaled(compactMode, position)
+  }
 }
 
 private class ManyIslandDivider(isVertical: Boolean, splitter: Splittable) : OnePixelDivider(isVertical, splitter) {

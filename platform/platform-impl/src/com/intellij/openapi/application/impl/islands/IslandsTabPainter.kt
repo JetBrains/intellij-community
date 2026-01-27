@@ -186,13 +186,6 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
     RectanglePainter2D.DRAW.paint(g, x, y, width, height, arc)
   }
 
-  private fun getHOffsetUnscaled(compactMode: Boolean, position: JBTabsPosition): Int {
-    return  when (position.isSide) {
-        true -> 6
-        false -> if (compactMode) 2 else 4
-      }
-  }
-
   private val hoverBackground = JBColor("EditorTabs.hoverBackground", JBColor(Color(0xE5, 0xEE, 0xFF, 0x80), Color(0x34, 0x3E, 0x51, 0x80)))
 
   private val inactiveBorderColor = JBColor("EditorTabs.inactiveUnderlinedTabBorderColor", JBColor(Color(0x7F, 0x99, 0xC3, 0x80), Color(0x7F, 0x99, 0xC3, 0x80)))
@@ -223,5 +216,14 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
       return hoveredColors
     }
     return regularColors
+  }
+
+  companion object {
+    fun getHOffsetUnscaled(compactMode: Boolean, position: JBTabsPosition): Int {
+      return when (position.isSide) {
+        true -> 6
+        false -> if (compactMode) 2 else 4
+      }
+    }
   }
 }
