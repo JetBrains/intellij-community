@@ -100,6 +100,8 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   private static final int ITEMS_PER_GROUP = 9;
 
   private TabbedPaneHeaderComponent myTabHeaderComponent;
+  private final CountIcon myInstalledTabHeaderUpdatesCountIcon = new CountIcon();
+
   private MultiPanel myCardPanel;
 
   private MarketplacePluginsTab myMarketplaceTab;
@@ -118,7 +120,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   private final LinkLabel<Object> myUpdateAllBundled = new LinkLabelButton<>(IdeBundle.message("plugin.manager.update.all"), null);
   private final JLabel myUpdateCounter = new CountComponent();
   private final JLabel myUpdateCounterBundled = new CountComponent();
-  private final CountIcon myCountIcon = new CountIcon();
+
   private final CoroutineScope myCoroutineScope;
 
   private final PluginModelFacade myPluginModelFacade;
@@ -175,7 +177,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     myUpdateCounterBundled.setVisible(false);
 
     myTabHeaderComponent.addTab(IdeBundle.message("plugin.manager.tab.marketplace"), null);
-    myTabHeaderComponent.addTab(IdeBundle.message("plugin.manager.tab.installed"), myCountIcon);
+    myTabHeaderComponent.addTab(IdeBundle.message("plugin.manager.tab.installed"), myInstalledTabHeaderUpdatesCountIcon);
 
     CustomPluginRepositoryService.getInstance().clearCache();
     myPluginUpdatesService =
@@ -357,7 +359,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     myUpdateCounter.setVisible(visible && myBundledUpdateGroup.ui == null);
     myUpdateCounterBundled.setVisible(visible);
 
-    myCountIcon.setText(text);
+    myInstalledTabHeaderUpdatesCountIcon.setText(text);
     myTabHeaderComponent.update();
   }
 
