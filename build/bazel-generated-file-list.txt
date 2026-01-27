@@ -983,8 +983,10 @@ plugins/gradle/gradle-dependency-updater
 plugins/gradle/intellij.gradle.analysis
 plugins/gradle/java
 plugins/gradle/jps-plugin
+plugins/gradle/kotlin/tests
 plugins/gradle/native
 plugins/gradle/native/tooling
+plugins/gradle/toml
 plugins/gradle/tooling-extension-api
 plugins/gradle/tooling-extension-impl
 plugins/gradle/tooling-proxy

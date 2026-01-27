@@ -28,8 +28,6 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//plugins/gradle/java",
     "//plugins/toml",
-    "//plugins/repository-search/common",
-    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.toml` end

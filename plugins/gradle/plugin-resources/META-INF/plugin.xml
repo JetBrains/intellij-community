@@ -18,6 +18,7 @@
 
   <content namespace="jetbrains">
     <module name="intellij.gradle.completion"/>
+    <module name="intellij.gradle.toml"/>
   </content>
 
   <depends optional="true" config-file="gradle-properties.xml">com.intellij.properties</depends>

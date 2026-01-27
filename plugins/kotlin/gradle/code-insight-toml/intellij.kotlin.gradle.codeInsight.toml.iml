@@ -22,7 +22,5 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.gradle.java" />
     <orderEntry type="module" module-name="intellij.toml" />
-    <orderEntry type="module" module-name="intellij.repository.search.common" />
-    <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" />
   </component>
 </module>
