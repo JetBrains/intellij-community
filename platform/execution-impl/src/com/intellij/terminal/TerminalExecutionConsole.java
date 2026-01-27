@@ -170,7 +170,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
     if (myFirstOutput.compareAndSet(false, true) &&
         contentType == ConsoleViewContentType.SYSTEM_OUTPUT &&
-        getProcess() instanceof WinConPtyProcess) {
+        getProcess() instanceof WinConPtyProcess winConPtyProcess &&
+        !winConPtyProcess.isConPtyInheritCursor()) {
       moveScreenToScrollbackBufferAndShowAllOutput();
     }
   }
