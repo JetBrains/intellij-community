@@ -460,7 +460,7 @@ final class JBZipOutputStream {
   public void putNextEntryBytes(JBZipEntry entry, byte[] bytes) throws IOException {
     prepareNextEntry(entry);
     crc.reset();
-    crc.update(bytes);
+    crc.update(bytes, 0, bytes.length);
     entry.setCrc(crc.getValue());
 
     final byte[] outputBytes;
