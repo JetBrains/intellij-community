@@ -240,6 +240,7 @@ fleet/ktor/client/core
 fleet/ktor/network/tls
 fleet/ktor/server/cio
 fleet/lsp.protocol
+fleet/lsp.protocol/test
 fleet/modules/api
 fleet/modules/jvm
 fleet/multiplatform.shims
