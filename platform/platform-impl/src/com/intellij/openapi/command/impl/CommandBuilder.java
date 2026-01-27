@@ -127,9 +127,7 @@ final class CommandBuilder {
 
   @NotNull PerformedCommand commandFinished(@NotNull CmdEvent cmdFinishEvent) {
     assertInsideCommand(cmdFinishEvent);
-    if (undoCapabilities.isGroupIdChangeSupported()) {
-      this.cmdEvent = cmdFinishEvent;
-    }
+    this.cmdEvent = cmdFinishEvent;
     this.editorStateAfter = currentEditorState();
     if (originalDocument != null && hasActions() && !isTransparent() && affectedDocuments.affectsOnlyPhysical()) {
       addDocumentAsAffected(Objects.requireNonNull(originalDocument));

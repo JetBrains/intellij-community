@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.editorActions.NonWriteAccessTypedHandler;
@@ -14,12 +14,10 @@ import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +49,7 @@ public final class DefaultRawTypedHandler implements TypedActionHandlerEx {
     if (myCurrentCommandToken != null) {
       throw new IllegalStateException("Unexpected reentrancy of DefaultRawTypedHandler");
     }
-    myCurrentCommandToken = commandProcessorEx.startCommand(project, commandName(project), editor.getDocument(), UndoConfirmationPolicy.DEFAULT);
+    myCurrentCommandToken = commandProcessorEx.startCommand(project, "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT);
     myInOuterCommand = myCurrentCommandToken == null;
     try {
       FileDocumentManager.WriteAccessStatus writeAccess =
@@ -106,16 +104,6 @@ public final class DefaultRawTypedHandler implements TypedActionHandlerEx {
     }
     commandProcessorEx.finishCommand(myCurrentCommandToken, null);
     myCurrentCommandToken = commandProcessorEx.startCommand(project, "", null, UndoConfirmationPolicy.DEFAULT);
-  }
-
-  // TODO: remove this
-  @NlsContexts.Command
-  private static @NotNull String commandName(@Nullable Project project) {
-    UndoManager undoManager = project == null ? UndoManager.getGlobalInstance() : UndoManager.getInstance(project);
-    if (((UndoManagerImpl)undoManager).getUndoCapabilities().isGroupIdChangeSupported()) {
-      return "";
-    }
-    return EditorBundle.message("typing.in.editor.command.name");
   }
 
   private static boolean isCommandRestartSupported(@Nullable Project project) {

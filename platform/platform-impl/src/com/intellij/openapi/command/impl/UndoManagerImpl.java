@@ -556,12 +556,6 @@ public class UndoManagerImpl extends UndoManager {
       return true;
     }
 
-    // TODO: remove it
-    @Override
-    public boolean isGroupIdChangeSupported() {
-      return true;
-    }
-
     // TODO: IT IS A PRIORITY ONE
     @Override
     public boolean isCommandRestartSupported() {

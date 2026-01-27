@@ -14,8 +14,6 @@ public interface UndoCapabilities {
 
   boolean isPerClientSupported();
 
-  boolean isGroupIdChangeSupported();
-
   boolean isCommandRestartSupported();
 
   boolean isEditorStateRestoreSupported();
