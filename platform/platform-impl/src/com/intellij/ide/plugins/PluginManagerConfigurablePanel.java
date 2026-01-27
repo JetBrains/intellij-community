@@ -1424,6 +1424,45 @@ public final class PluginManagerConfigurablePanel implements Disposable {
         return myOption == InstalledSearchOption.NeedUpdate ? "/outdated" : "/" + StringUtil.decapitalize(myOption.name());
       }
     }
+
+    private final class ComparablePluginsGroup extends PluginsGroup
+      implements Comparable<ComparablePluginsGroup> {
+
+      private boolean myIsEnable = false;
+
+      private ComparablePluginsGroup(@NotNull @NlsSafe String category,
+                                     @NotNull List<PluginUiModel> descriptors,
+                                     @NotNull Map<PluginId, Boolean> pluginsRequiresUltimate) {
+        super(category, PluginsGroupType.INSTALLED);
+
+        this.addModels(descriptors);
+        sortByName();
+
+        rightAction = new LinkLabelButton<>("",
+                                            null,
+                                            (__, ___) -> setEnabledState());
+        boolean hasPluginsAvailableForEnableDisable =
+          ContainerUtil.exists(descriptors, it -> !pluginsRequiresUltimate.get(it.getPluginId()));
+        rightAction.setVisible(hasPluginsAvailableForEnableDisable);
+        titleWithEnabled(myPluginModelFacade);
+      }
+
+      @Override
+      public int compareTo(@NotNull ComparablePluginsGroup other) {
+        return StringUtil.compare(title, other.title, true);
+      }
+
+      @Override
+      public void titleWithCount(int enabled) {
+        myIsEnable = enabled == 0;
+        String key = myIsEnable ? "plugins.configurable.enable.all" : "plugins.configurable.disable.all";
+        rightAction.setText(IdeBundle.message(key));
+      }
+
+      private void setEnabledState() {
+        setState(myPluginModelFacade, getModels(), myIsEnable);
+      }
+    }
   }
 
   private class MarketplacePluginsTab extends PluginsTab {
@@ -2194,45 +2233,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
-    }
-  }
-
-  private final class ComparablePluginsGroup extends PluginsGroup
-    implements Comparable<ComparablePluginsGroup> {
-
-    private boolean myIsEnable = false;
-
-    private ComparablePluginsGroup(@NotNull @NlsSafe String category,
-                                   @NotNull List<PluginUiModel> descriptors,
-                                   @NotNull Map<PluginId, Boolean> pluginsRequiresUltimate) {
-      super(category, PluginsGroupType.INSTALLED);
-
-      this.addModels(descriptors);
-      sortByName();
-
-      rightAction = new LinkLabelButton<>("",
-                                          null,
-                                          (__, ___) -> setEnabledState());
-      boolean hasPluginsAvailableForEnableDisable =
-        ContainerUtil.exists(descriptors, it -> !pluginsRequiresUltimate.get(it.getPluginId()));
-      rightAction.setVisible(hasPluginsAvailableForEnableDisable);
-      titleWithEnabled(myPluginModelFacade);
-    }
-
-    @Override
-    public int compareTo(@NotNull ComparablePluginsGroup other) {
-      return StringUtil.compare(title, other.title, true);
-    }
-
-    @Override
-    public void titleWithCount(int enabled) {
-      myIsEnable = enabled == 0;
-      String key = myIsEnable ? "plugins.configurable.enable.all" : "plugins.configurable.disable.all";
-      rightAction.setText(IdeBundle.message(key));
-    }
-
-    private void setEnabledState() {
-      setState(myPluginModelFacade, getModels(), myIsEnable);
     }
   }
 
