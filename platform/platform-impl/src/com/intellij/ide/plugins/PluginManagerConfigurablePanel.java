@@ -1267,10 +1267,10 @@ public final class PluginManagerConfigurablePanel implements Disposable {
         String query = StringUtil.join(queries, " ");
         searchTextField.setTextIgnoreEvents(query);
         if (query.isEmpty()) {
-          myInstalledTab.hideSearchPanel();
+          hideSearchPanel();
         }
         else {
-          myInstalledTab.showSearchPanel(query);
+          showSearchPanel(query);
         }
       }
       finally {
