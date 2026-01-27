@@ -114,7 +114,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
   private PluginUpdatesService myPluginUpdatesService;
 
-  private PluginManagerCustomizer myPluginManagerCustomizer;
+  private final @Nullable PluginManagerCustomizer myPluginManagerCustomizer;
 
   private String myLaterSearchQuery;
   private boolean myForceShowInstalledTabForTag = false;
@@ -345,7 +345,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   }
 
   private void createMarketplaceTab() {
-    myMarketplaceTab = new MarketplacePluginsTab(myPluginModelFacade, myCoroutineScope);
+    myMarketplaceTab = new MarketplacePluginsTab(myPluginModelFacade, myCoroutineScope, myPluginManagerCustomizer);
   }
 
   private void createInstalledTab() {
@@ -721,6 +721,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   private class MarketplacePluginsTab extends PluginsTab {
     private final @NotNull PluginModelFacade myPluginModelFacade;
     private final @NotNull CoroutineScope myCoroutineScope;
+    private final @Nullable PluginManagerCustomizer myPluginManagerCustomizer;
 
     private final DefaultActionGroup myMarketplaceSortByGroup;
     private LinkComponent myMarketplaceSortByAction;
@@ -728,10 +729,15 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     private List<String> myTagsSorted;
     private List<String> myVendorsSorted;
 
-    MarketplacePluginsTab(@NotNull PluginModelFacade facade, @NotNull CoroutineScope scope) {
+    MarketplacePluginsTab(
+      @NotNull PluginModelFacade facade,
+      @NotNull CoroutineScope scope,
+      @Nullable PluginManagerCustomizer customizer
+    ) {
       super();
       myPluginModelFacade = facade;
       myCoroutineScope = scope;
+      myPluginManagerCustomizer = customizer;
 
       myMarketplaceSortByGroup = new DefaultActionGroup();
       for (MarketplaceTabSearchSortByOptions option : MarketplaceTabSearchSortByOptions.getEntries()) {
