@@ -663,22 +663,24 @@ public final class PropertyInspectorTable extends JBTable implements UiDataProvi
       return;
     }
     myStoppingEditing = true;
-    final Property property=myProperties.get(editingRow);
-    final PropertyEditor editor=property.getEditor();
-    editor.removePropertyEditorListener(myPropertyEditorListener);
-    try {
-      if (myEditor != null && !myEditor.isUndoRedoInProgress()) {
-        final Object value = editor.getValue();
-        setValueAt(value, editingRow, editingColumn);
+    WriteIntentReadAction.run(() -> {
+      final Property property=myProperties.get(editingRow);
+      final PropertyEditor editor=property.getEditor();
+      editor.removePropertyEditorListener(myPropertyEditorListener);
+      try {
+        if (myEditor != null && !myEditor.isUndoRedoInProgress()) {
+          final Object value = editor.getValue();
+          setValueAt(value, editingRow, editingColumn);
+        }
       }
-    }
-    catch (final Exception exc) {
-      showInvalidInput(exc);
-    }
-    finally {
-      removeEditor();
-      myStoppingEditing = false;
-    }
+      catch (final Exception exc) {
+        showInvalidInput(exc);
+      }
+      finally {
+        removeEditor();
+        myStoppingEditing = false;
+      }
+    });
   }
 
   private static void showInvalidInput(final Exception exc) {
