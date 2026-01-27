@@ -84,6 +84,7 @@ private fun add(project: Project, path: String = ".") = git(project, "add --verb
 
 fun GitRepository.addCommit(message: String) = cd { addCommit(project, message) }
 fun GitPlatformTest.addCommit(message: String) = addCommit(project, message)
+fun GitPlatformTestContext.addCommit(message: String) = addCommit(project, message)
 private fun addCommit(project: Project, message: String): String {
   add(project)
   return commit(project, message)
@@ -98,6 +99,7 @@ private fun branch(project: Project, name: String) = git(project, "branch $name"
 
 fun GitRepository.checkout(vararg params: String) = cd { checkout(project, *params) }
 fun GitPlatformTest.checkout(vararg params: String) = checkout(project, *params)
+fun GitPlatformTestContext.checkout(vararg params: String) = checkout(project, *params)
 private fun checkout(project: Project, vararg params: String) = git(project, "checkout ${params.joinToString(" ")}")
 
 fun GitRepository.checkoutNew(branchName: String, startPoint: String = "") = cd { checkoutNew(project, branchName, startPoint) }

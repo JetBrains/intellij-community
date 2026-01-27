@@ -5,6 +5,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.ExecutorContext
 import com.intellij.openapi.vcs.ExecutorContextImpl
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.TestVcsNotifier
@@ -12,7 +13,9 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.stateStore
+import com.intellij.testFramework.HeavyTestHelper
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.replacedServiceFixture
@@ -21,12 +24,12 @@ import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import org.junit.jupiter.api.Assertions.fail
 import java.nio.file.Path
 
-interface VcsPlatformTestContext {
+interface VcsPlatformTestContext : ExecutorContext {
   val project: Project
+  val projectRoot: VirtualFile
   val projectNioRoot: Path
   val projectPath: String
   val changeListManager: ChangeListManagerImpl
-  val executor: ExecutorContextImpl
   val vcsManager: ProjectLevelVcsManagerImpl
   val vcsNotifier: TestVcsNotifier
 }
@@ -42,14 +45,16 @@ fun TestFixture<Project>.vcsPlatformFixture(): TestFixture<VcsPlatformTestContex
     TestVcsNotifier(project)
   }.init()
   val projectNioRoot = project.stateStore.projectBasePath
+  val projectRoot = HeavyTestHelper.getOrCreateProjectBaseDir(project)
   val projectPath = FileUtil.toSystemIndependentName(projectNioRoot.toString())
+  val executor = ExecutorContextImpl(projectNioRoot)
 
-  val context = object : VcsPlatformTestContext {
+  val context = object : VcsPlatformTestContext, ExecutorContext by executor {
     override val project = project
+    override val projectRoot = projectRoot
     override val projectNioRoot = projectNioRoot
     override val projectPath: String = projectPath
     override val changeListManager = changeListManager
-    override val executor = ExecutorContextImpl(projectNioRoot)
     override val vcsManager = vcsManager
     override val vcsNotifier = vcsNotifier
   }
