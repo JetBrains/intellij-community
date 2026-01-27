@@ -195,7 +195,7 @@ internal class EditorCellActionsToolbarController(
     }
 
     if (NotebookSettings.getInstance().cellToolbarStickyVisible) {
-      yCoordinate = max(yCoordinate, editor.contentComponent.visibleRect.y + JBUI.scale(2))
+      yCoordinate = max(yCoordinate, editor.contentComponent.visibleRect.y + JBUI.scale(2) + editor.stickyLinesPanelHeight)
 
       val bounds = cell.view?.calculateBounds()
       if (bounds != null) {
