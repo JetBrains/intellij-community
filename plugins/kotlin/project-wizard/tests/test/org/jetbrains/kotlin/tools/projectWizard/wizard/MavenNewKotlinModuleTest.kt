@@ -320,7 +320,7 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
 
     private fun substituteVersionForArtifact(fileContents: String, artifactId: String, needMoreSpaces: Boolean = false): String {
         val regex =
-            Regex("<artifactId>$artifactId</artifactId>\n( )*<version>(([a-zA-Z]|(\\.)|(\\d)|-)+)")
+            Regex("<artifactId>$artifactId</artifactId>\n( )*<version>(([a-zA-Z]|(\\.)|(\\d)|-)+)</version>")
         var result = fileContents
         if (result.contains(regex)) {
             val additionalSpaces = if (needMoreSpaces) {
@@ -330,32 +330,32 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
             }
             result = result.replace(
                 regex, "<artifactId>$artifactId</artifactId>\n" +
-                        "$additionalSpaces            <version>VERSION"
+                        "$additionalSpaces            <version>VERSION</version>"
             )
         }
         return result
     }
 
     private fun substituteKotlinVersion(fileContents: String): String {
-        val kotlinVersionRegex = Regex("<kotlin.version>\\d\\.\\d\\.(\\d)+")
+        val kotlinVersionRegex = Regex("<kotlin.version>\\d\\.\\d\\.(\\d)+</kotlin.version>")
         var result = fileContents
         if (result.contains(kotlinVersionRegex)) {
             result = result.replace(
-                kotlinVersionRegex, "<kotlin.version>VERSION"
+                kotlinVersionRegex, "<kotlin.version>VERSION</kotlin.version>"
             )
         }
         return result
     }
 
     private fun substituteCompilerSourceAndTargetLevels(fileContents: String): String {
-        val compilerSourceRegex = Regex("<maven.compiler.source>(\\d\\d)")
-        val compilerTargetRegex = Regex("<maven.compiler.target>(\\d\\d)")
+        val compilerSourceRegex = Regex("<maven.compiler.source>(\\d\\d)</maven.compiler.source>")
+        val compilerTargetRegex = Regex("<maven.compiler.target>(\\d\\d)</maven.compiler.source>")
         var result = fileContents
         if (result.contains(compilerSourceRegex)) {
-            result = result.replace(compilerSourceRegex, "<maven.compiler.source>VERSION")
+            result = result.replace(compilerSourceRegex, "<maven.compiler.source>VERSION</maven.compiler.source>")
         }
         if (result.contains(compilerTargetRegex)) {
-            result = result.replace(compilerTargetRegex, "<maven.compiler.target>VERSION")
+            result = result.replace(compilerTargetRegex, "<maven.compiler.target>VERSION</maven.compiler.source>")
         }
         return result
     }
