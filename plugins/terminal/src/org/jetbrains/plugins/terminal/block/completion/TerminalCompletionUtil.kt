@@ -104,4 +104,17 @@ object TerminalCompletionUtil {
   fun throwUnsupportedInExpTerminalException(): Nothing {
     throw UnsupportedOperationException("This API is not supported in Experimental 2024 Terminal")
   }
+
+  /**
+   * [tokens] - the words of the command text.
+   * Considers the last token as the currently typed prefix without starting quotes.
+   */
+  fun getTypedPrefix(tokens: List<String>): String {
+    check(tokens.isNotEmpty()) { "tokens should not be empty" }
+    val last = tokens.last()
+    return if (last.startsWith("'") || last.startsWith('"')) {
+      last.drop(1)
+    }
+    else last
+  }
 }

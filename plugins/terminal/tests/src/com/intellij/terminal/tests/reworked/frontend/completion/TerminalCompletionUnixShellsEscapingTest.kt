@@ -21,7 +21,7 @@ internal class TerminalCompletionUnixShellsEscapingTest : BasePlatformTestCase()
   fun `suggestion is inserted as is if there is a starting quote`() {
     doTest { fixture ->
       fixture.mockSuggestions(
-        prefixReplacementIndex = 8,
+        prefixReplacementIndex = 7,
         "with spaces",
         "dummy"
       )

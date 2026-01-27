@@ -103,7 +103,7 @@ internal class TerminalCommandSpecCompletionContributorGen1 : CompletionContribu
     shellType: ShellType,
   ) {
     val prefixReplacementIndex = suggestions.firstOrNull()?.prefixReplacementIndex ?: 0
-    val prefix = allTokens.last().substring(prefixReplacementIndex)
+    val prefix = TerminalCompletionUtil.getTypedPrefix(allTokens).substring(prefixReplacementIndex)
     val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(prefix, true))
 
     val elements = suggestions.map { it.toLookupElement(shellType) }

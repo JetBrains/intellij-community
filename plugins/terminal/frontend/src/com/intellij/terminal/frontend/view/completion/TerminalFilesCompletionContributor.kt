@@ -1,6 +1,7 @@
 package com.intellij.terminal.frontend.view.completion
 
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
 
@@ -15,7 +16,7 @@ internal class TerminalFilesCompletionContributor : TerminalCommandCompletionCon
       return null
     }
 
-    val prefix = commandTokens.last()
+    val prefix = TerminalCompletionUtil.getTypedPrefix(commandTokens)
     val completionServices = context.editor.getUserData(TerminalCommandCompletionServices.KEY) ?: return null
     val suggestions = computeFileSuggestions(commandTokens, completionServices)
     return TerminalCommandCompletionResult(suggestions, prefix)

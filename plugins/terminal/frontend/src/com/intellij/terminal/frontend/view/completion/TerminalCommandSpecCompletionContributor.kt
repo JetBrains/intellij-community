@@ -7,6 +7,7 @@ import com.intellij.terminal.completion.ShellCommandSpecsManager
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.plugins.terminal.util.ShellType
@@ -20,7 +21,7 @@ internal class TerminalCommandSpecCompletionContributor : TerminalCommandComplet
       return null
     }
 
-    val prefix = commandTokens.last()
+    val prefix = TerminalCompletionUtil.getTypedPrefix(commandTokens)
     if (context.isAutoPopup && prefix.startsWith("-") && prefix.length <= 2) {
       // Do not show the completion popup automatically for short options like `-a` or `-h`
       // Most probably, it will cause only distraction.

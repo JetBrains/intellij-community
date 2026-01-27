@@ -52,7 +52,7 @@ object ShellDataGenerators {
   ): List<ShellCompletionSuggestion> {
     val path = getParentPath(pathPrefix)
     val files: List<ShellFileInfo> = context.getChildFiles(path, onlyDirectories)
-    val prefixReplacementIndex = path.length + (if (isStartWithQuote(context.typedPrefix)) 1 else 0) + replacementIndexDelta
+    val prefixReplacementIndex = path.length + replacementIndexDelta
     val suggestions = files.flatMap {
       val type = if (it.type == ShellFileInfo.Type.DIRECTORY) ShellSuggestionType.FOLDER else ShellSuggestionType.FILE
       val name = it.name + if (type == ShellSuggestionType.FOLDER) File.separator else ""
@@ -74,7 +74,7 @@ object ShellDataGenerators {
         listOf(suggestion, hiddenSuggestion)
       }
     }
-    val adjustedPrefix = pathPrefix.removePrefix("\"").removeSuffix("'")
+    val adjustedPrefix = pathPrefix.removeSuffix("\"").removeSuffix("'")
     // If the base path is the same as the typed prefix, then add an empty suggestion.
     // Because the current typed prefix is already a valid value of the file argument.
     // It is necessary for the parser to consider the current typed prefix as a valid file suggestion.
@@ -151,28 +151,10 @@ object ShellDataGenerators {
       charArrayOf('\\', '/')
     }
     else charArrayOf('/')
-    // Remove possible quotes before and after
-    // TODO: quotes should not be handled there, typed prefix should already contain no quotes.
-    val adjustedPrefix = typedPrefix.removePrefix(DOUBLE_QUOTE).removeSuffix(DOUBLE_QUOTE)
-      .removePrefix(SINGLE_QUOTE).removeSuffix(SINGLE_QUOTE)
-    val lastSeparatorIndex = adjustedPrefix.lastIndexOfAny(pathSeparators)
+    val lastSeparatorIndex = typedPrefix.lastIndexOfAny(pathSeparators)
     return if (lastSeparatorIndex != -1) {
-      adjustedPrefix.substring(0, lastSeparatorIndex + 1)
+      typedPrefix.substring(0, lastSeparatorIndex + 1)
     }
     else ""
   }
-
-  /**
-   * Modern shells supports wrapping command arguments in single or double quotes.
-   * For example,
-   * 1. `ls "<dir_path>"`
-   * 2. `cat '<file_path>'`
-   * It is expected to skip the quote, because actually it is not part of the path.
-   * @see [com.intellij.terminal.completion.spec.ShellCompletionSuggestion.prefixReplacementIndex]
-   * @return true if [typedPrefix] starts with single or double quote, false otherwise
-   */
-  fun isStartWithQuote(typedPrefix: String): Boolean = typedPrefix.startsWith(DOUBLE_QUOTE) || typedPrefix.startsWith(SINGLE_QUOTE)
-
-  private const val SINGLE_QUOTE = "'"
-  private const val DOUBLE_QUOTE = "\""
 }

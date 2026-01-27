@@ -444,6 +444,31 @@ internal class ShellCommandSpecSuggestionsTest(private val engine: TerminalEngin
   }
 
   @Test
+  fun `suggest subcommands after quote`() {
+    assertSameElements(
+      getSuggestions(arguments = listOf("reqSub"), incompleteToken = "'"),
+      listOf("abc")
+    )
+  }
+
+  @Test
+  fun `suggest options after quote`() {
+    assertSameElements(
+      getSuggestions(arguments = listOf("sub"), incompleteToken = "'"),
+      listOf("-o", "--opt1", "-a", "--long", "--withReqArg", "--withOptArg", "--bcde", "file")
+    )
+  }
+
+  @Test
+  fun `suggest filenames and options after quote`() {
+    mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
+    assertSameElements(
+      getSuggestions(arguments = listOf("cdWithSuggestions"), incompleteToken = "'"),
+      listOf("dir$separator", "folder$separator", "-", "~", "--bcde")
+    )
+  }
+
+  @Test
   fun `suggest filenames for path in single quotes`() {
     mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
     assertSameElements(

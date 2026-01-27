@@ -54,7 +54,7 @@ internal class TerminalCompletionPowerShellEscapingTest : BasePlatformTestCase()
   fun `suggestion is inserted as is if there is a starting quote`() {
     doTest { fixture ->
       fixture.mockSuggestions(
-        prefixReplacementIndex = 4,
+        prefixReplacementIndex = 3,
         "with spaces",
         "dummy"
       )
@@ -85,7 +85,7 @@ internal class TerminalCompletionPowerShellEscapingTest : BasePlatformTestCase()
   fun `closing quote is not duplicated when starting with quote`() {
     doTest { fixture ->
       fixture.mockSuggestions(
-        prefixReplacementIndex = 4,
+        prefixReplacementIndex = 3,
         "with spaces",
         "dummy"
       )

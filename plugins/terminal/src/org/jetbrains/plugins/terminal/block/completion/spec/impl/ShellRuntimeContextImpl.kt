@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.block.completion.spec.impl
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.terminal.completion.spec.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.throwUnsupportedInExpTerminalException
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessExecutor
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellFileSystemSupport
@@ -18,7 +19,7 @@ class ShellRuntimeContextImpl(
   private val generatorProcessExecutor: ShellDataGeneratorProcessExecutor? = null,
   private val fileSystemSupport: ShellFileSystemSupport? = null,
 ) : ShellRuntimeContext, UserDataHolderBase() {
-  override val typedPrefix: String = commandTokens.last()
+  override val typedPrefix: String = TerminalCompletionUtil.getTypedPrefix(commandTokens)
 
   override val shellName: ShellName
     get() = definedShellName ?: throw UnsupportedOperationException("Not supported in Reworked Terminal")

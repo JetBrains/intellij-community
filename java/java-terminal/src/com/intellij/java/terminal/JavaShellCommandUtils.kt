@@ -34,14 +34,11 @@ object JavaShellCommandUtils {
     val separator = getClassPathSeparator()
     val typedPrefix = context.typedPrefix
     val separatorIndex = typedPrefix.lastIndexOf(separator)
-    val isStartWithQuote = ShellDataGenerators.isStartWithQuote(typedPrefix)
-    val quoteOffset = if (isStartWithQuote) 1 else 0
 
     return if (separatorIndex == SEPARATOR_NOT_FOUND_INDEX) {
-      PathInfo(typedPrefix.substring(quoteOffset))
+      PathInfo(typedPrefix)
     } else {
-      val adjustedSeparatorIndex = if (isStartWithQuote) separatorIndex else separatorIndex + 1
-      PathInfo(typedPrefix.substring(separatorIndex + 1), adjustedSeparatorIndex)
+      PathInfo(typedPrefix.substring(separatorIndex + 1), separatorIndex + 1)
     }
   }
 

@@ -93,9 +93,10 @@ private fun calculateInsertionInfo(
   val prefixStartOffset = outputModel.cursorOffset - typedPrefixLength.toLong()
   val tokenStartOffset = prefixStartOffset - suggestion.prefixReplacementIndex.toLong()
   val tokenText = outputModel.getText(tokenStartOffset, prefixStartOffset).toString()
+  val beforeTokenText = outputModel.getText((tokenStartOffset - 1).coerceAtLeast(outputModel.startOffset), tokenStartOffset).toString()
 
-  if (tokenText.startsWith("'") || tokenText.startsWith("\"")) {
-    // Token already starts with a quote, so let's insert the token as is.
+  if (beforeTokenText == "'" || beforeTokenText == "\"") {
+    // There is a quote before the token, so let's insert it as is.
     return CompletionItemInsertionInfo(baseInsertValue, initialBeforeReplacementLength, initialAfterReplacementLength)
   }
 

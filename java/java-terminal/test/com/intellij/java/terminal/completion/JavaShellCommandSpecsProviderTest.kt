@@ -70,7 +70,7 @@ class JavaShellCommandSpecsProviderTest(private val engine: TerminalEngine) : Ba
     val fixture = createFixture()
     val completion =  fixture.getCompletions("java -cp '")
     assertSameElements(completion.map { it.name  }, listOf("file1.jar", "file2.jar", "dir1/"))
-    assertTrue(completion.all { it.prefixReplacementIndex == 1})
+    assertTrue(completion.all { it.prefixReplacementIndex == 0 })
   }
 
   @Test
@@ -80,7 +80,7 @@ class JavaShellCommandSpecsProviderTest(private val engine: TerminalEngine) : Ba
     val argument = "'file1.jar$separator"
     val completion =  fixture.getCompletions("java -cp $argument")
     assertSameElements(completion.map { it.name  }, listOf("file1.jar", "file2.jar", "dir1/"))
-    assertTrue(completion.all { it.prefixReplacementIndex == argument.length })
+    assertTrue(completion.all { it.prefixReplacementIndex == argument.length - 1 })
   }
 
   @Test
@@ -88,7 +88,7 @@ class JavaShellCommandSpecsProviderTest(private val engine: TerminalEngine) : Ba
     val fixture = createFixture()
     val completion =  fixture.getCompletions("java -cp \"")
     assertSameElements(completion.map { it.name  }, listOf("file1.jar", "file2.jar", "dir1/"))
-    assertTrue(completion.all { it.prefixReplacementIndex == 1})
+    assertTrue(completion.all { it.prefixReplacementIndex == 0 })
   }
 
   @Test
@@ -98,7 +98,7 @@ class JavaShellCommandSpecsProviderTest(private val engine: TerminalEngine) : Ba
     val argument = "\"file1.jar$separator"
     val completion =  fixture.getCompletions("java -cp $argument")
     assertSameElements(completion.map { it.name  }, listOf("file1.jar", "file2.jar", "dir1/"))
-    assertTrue(completion.all { it.prefixReplacementIndex == argument.length })
+    assertTrue(completion.all { it.prefixReplacementIndex == argument.length - 1 })
   }
 
 
