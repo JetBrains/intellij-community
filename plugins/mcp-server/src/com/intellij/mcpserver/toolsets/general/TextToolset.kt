@@ -103,9 +103,6 @@ class TextToolset : McpToolset {
     @McpDescription("Case-sensitive search")
     caseSensitive: Boolean = true,
   ) {
-    // Validate that oldText is not empty to prevent endless loop
-    if (oldText.isEmpty()) mcpFail("oldText is empty")
-    
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.replacing.text.in.file", pathInProject, oldText, newText))
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(pathInProject)
@@ -116,16 +113,29 @@ class TextToolset : McpToolset {
       val rangeMarkers = mutableListOf<RangeMarker>()
       val document = FileDocumentManager.getInstance().getDocument(file) ?: mcpFail("Could not get document for $file")
       val text = document.text
-      var currentStartIndex = 0
 
-      while (true) {
-        Cancellation.checkCancelled()
-        val occurrenceStart = text.indexOf(oldText, currentStartIndex, !caseSensitive)
-        if (occurrenceStart < 0) break
-        val rangeMarker = document.createRangeMarker(occurrenceStart, occurrenceStart + oldText.length, true)
-        rangeMarkers.add(rangeMarker)
-        if (!replaceAll) break // only the first occurence
-        currentStartIndex = occurrenceStart + oldText.length
+      // Special handling for empty oldText
+      if (oldText.isEmpty()) {
+        if (text.isEmpty()) {
+          // Allow setting newText on empty file (LLM create-then-fill workflow)
+          val rangeMarker = document.createRangeMarker(0, 0, true)
+          rangeMarkers.add(rangeMarker)
+        } else {
+          // Fail if file is not empty to prevent endless loop
+          mcpFail("oldText is empty but file is not empty")
+        }
+      } else {
+        // Normal case: search for oldText
+        var currentStartIndex = 0
+        while (true) {
+          Cancellation.checkCancelled()
+          val occurrenceStart = text.indexOf(oldText, currentStartIndex, !caseSensitive)
+          if (occurrenceStart < 0) break
+          val rangeMarker = document.createRangeMarker(occurrenceStart, occurrenceStart + oldText.length, true)
+          rangeMarkers.add(rangeMarker)
+          if (!replaceAll) break // only the first occurence
+          currentStartIndex = occurrenceStart + oldText.length
+        }
       }
       document to rangeMarkers.toList()
     }
