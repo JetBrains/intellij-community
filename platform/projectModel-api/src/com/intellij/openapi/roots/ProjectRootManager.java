@@ -123,6 +123,13 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
   @RequiresWriteLock
   public abstract void setProjectSdkName(@NotNull String name, @NotNull String sdkTypeName);
 
+  /**
+   * It throws {{@link com.intellij.util.IncorrectOperationException}} if module is disposed.
+   * It is recommended to wrap a call with a read action and check if module isn't disposed before calling this method
+   *
+   * @throws com.intellij.util.IncorrectOperationException if module is disposed
+   */
+  @NotNull
   @ApiStatus.Internal
   public abstract ModuleRootManager getModuleRootManager(@NotNull Module module);
 }

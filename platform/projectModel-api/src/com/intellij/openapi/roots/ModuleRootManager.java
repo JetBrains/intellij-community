@@ -14,10 +14,14 @@ import org.jetbrains.annotations.NotNull;
 public abstract class ModuleRootManager implements ModuleRootModel, ProjectModelElement {
   /**
    * Returns the module root manager instance for the specified module.
+   * It throws {{@link com.intellij.util.IncorrectOperationException}} if module is disposed.
+   * It is recommended to wrap a call with a read action and check if module isn't disposed before calling this method
    *
    * @param module the module for which the root manager is requested.
    * @return the root manager instance.
+   * @throws com.intellij.util.IncorrectOperationException if module is disposed
    */
+  @NotNull
   public static ModuleRootManager getInstance(@NotNull Module module) {
     ProjectRootManager projectRootManager = ProjectRootManager.getInstance(module.getProject());
     return projectRootManager.getModuleRootManager(module);
