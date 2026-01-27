@@ -116,6 +116,7 @@ class RangeBlinker(
 
   fun stopBlinking() {
     blinkingJob?.cancel()
+    removeHighlights()
     blinkingJob = null
   }
 }
