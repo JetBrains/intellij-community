@@ -12,15 +12,19 @@ import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.withRetries
 import java.awt.Point
 import javax.swing.JList
+import kotlin.time.Duration.Companion.seconds
 
 fun IdeaFrameUI.runConfigurationsPopup(f: PopupUiComponent.() -> Unit = {}) {
-  withRetries("Single popup is present", 2) {
-    mainToolbar.runWidget.click()
-    popup().waitFound()
+  withRetries("Single popup is present", 2, onError = {mainToolbar.runWidget.click()}) {
+    popup().waitFound(2.seconds)
   }.apply(f)
+  if (popup().present()) {
+    keyboard { escape() }
+  }
+
 }
 
-fun PopupUiComponent.runConfigurationsList(locator: String = xQuery { byType(JList::class.java) }, f: RunConfigurationsPopupList.() -> Unit = {}) =
+fun PopupUiComponent.runConfigurationsList(locator: String = xQuery { byType(JList::class.java) }, f: RunConfigurationsPopupList.() -> Unit = {}): RunConfigurationsPopupList =
   x(locator, RunConfigurationsPopupList::class.java).apply(f)
 
 class RunConfigurationsPopupList(data: ComponentData) : JListUiComponent(data) {
@@ -67,9 +71,9 @@ class RunConfigurationsPopupList(data: ComponentData) : JListUiComponent(data) {
     private const val STOP_BUTTON_HORIZONTAL_OFFSET = DEBUG_BUTTON_HORIZONTAL_OFFSET + ICON_WIDTH
     private const val RERUN_BUTTON_HORIZONTAL_OFFSET = STOP_BUTTON_HORIZONTAL_OFFSET + ICON_WIDTH
 
-    const val ICON_DEBUG = "debug.svg"
-    const val ICON_RUN = "run.svg"
-    const val ICON_MORE = "moreVertical.svg"
-    const val ICON_STOP = "stop.svg"
+    const val ICON_DEBUG: String = "debug.svg"
+    const val ICON_RUN: String = "run.svg"
+    const val ICON_MORE: String = "moreVertical.svg"
+    const val ICON_STOP: String = "stop.svg"
   }
 }
