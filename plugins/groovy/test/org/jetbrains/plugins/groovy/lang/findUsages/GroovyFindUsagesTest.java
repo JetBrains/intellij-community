@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class FindUsagesTest extends LightGroovyTestCase {
+public class GroovyFindUsagesTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "findUsages/" + getTestName(true) + "/";
