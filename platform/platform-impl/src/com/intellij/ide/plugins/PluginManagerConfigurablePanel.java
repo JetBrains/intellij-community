@@ -102,12 +102,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   private MarketplacePluginsTab myMarketplaceTab;
   private InstalledPluginsTab myInstalledTab;
 
-  private PluginsGroupComponentWithProgress myMarketplacePanel;
-
-  private Runnable myMarketplaceRunnable;
-
-  private SearchResultPanel myMarketplaceSearchPanel;
-
   private final CoroutineScope myCoroutineScope;
 
   private final PluginModelFacade myPluginModelFacade;
@@ -311,14 +305,8 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
     myPluginUpdatesService.recalculateUpdates();
 
-    if (myMarketplacePanel != null) {
-      int selectionTab = myTabHeaderComponent.getSelectionTab();
-      if (selectionTab == MARKETPLACE_TAB) {
-        myMarketplaceRunnable.run();
-      }
-      else {
-        myMarketplacePanel.setOnBecomingVisibleCallback(myMarketplaceRunnable);
-      }
+    if (myMarketplaceTab != null) {
+      myMarketplaceTab.onPanelReset(myTabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB);
     }
   }
 
@@ -488,12 +476,10 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       myInstalledTab.dispose();
     }
 
-    if (myMarketplacePanel != null) {
-      myMarketplacePanel.dispose();
+    if (myMarketplaceTab != null) {
+      myMarketplaceTab.dispose();
     }
-    if (myMarketplaceSearchPanel != null) {
-      myMarketplaceSearchPanel.dispose();
-    }
+
     if (myInstalledTab.getInstalledSearchPanel() != null) {
       myInstalledTab.getInstalledSearchPanel().dispose();
     }
@@ -723,6 +709,10 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     private final @NotNull CoroutineScope myCoroutineScope;
     private final @Nullable PluginManagerCustomizer myPluginManagerCustomizer;
     private final @NotNull PluginUpdatesService myPluginUpdatesService;
+
+    private PluginsGroupComponentWithProgress myMarketplacePanel;
+    private SearchResultPanel myMarketplaceSearchPanel;
+    private Runnable myMarketplaceRunnable;
 
     private final DefaultActionGroup myMarketplaceSortByGroup;
     private LinkComponent myMarketplaceSortByAction;
@@ -1450,6 +1440,28 @@ public final class PluginManagerConfigurablePanel implements Disposable {
                errors,
                installedPluginIds,
                installationStates);
+    }
+
+    @Override
+    public void dispose() {
+      if (myMarketplacePanel != null) {
+        myMarketplacePanel.dispose();
+      }
+      if (myMarketplaceSearchPanel != null) {
+        myMarketplaceSearchPanel.dispose();
+      }
+      super.dispose();
+    }
+
+    void onPanelReset(boolean isMarketplaceTabSelected) {
+      if (myMarketplacePanel != null) {
+        if (isMarketplaceTabSelected) {
+          myMarketplaceRunnable.run();
+        }
+        else {
+          myMarketplacePanel.setOnBecomingVisibleCallback(myMarketplaceRunnable);
+        }
+      }
     }
 
     private final class MarketplaceSortByAction extends ToggleAction implements DumbAware {
