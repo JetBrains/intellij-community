@@ -353,7 +353,7 @@ public class UsageViewImpl implements UsageViewEx {
 
     myTree.setCellRenderer(myUsageViewTreeCellRenderer);
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       if (!isDisposed()) {
         collapseAll();
       }
