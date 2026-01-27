@@ -70,6 +70,19 @@ import kotlin.time.Duration
 private interface MavenSyncFileReader {
   suspend operator fun invoke(wrappers: MavenEmbedderWrappers): MavenProjectsTreeUpdateResult
 }
+
+private class MavenFullSyncFileReader(
+  val projectsTree: MavenProjectsTree,
+  val spec: MavenSyncSpec,
+  val generalSettings: MavenGeneralSettings,
+) : MavenSyncFileReader {
+  override suspend fun invoke(wrappers: MavenEmbedderWrappers): MavenProjectsTreeUpdateResult {
+    return reportRawProgress { reporter ->
+      projectsTree.updateAll(spec.forceReading(), generalSettings, wrappers, reporter)
+    }
+  }
+}
+
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
   fun scheduleUpdateAllMavenProjects(spec: MavenSyncSpec)
@@ -442,11 +455,10 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
     val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
     mavenEmbedderWrappers.use {
-      return doUpdateMavenProjects(spec, modelsProvider, mavenEmbedderWrappers, object : MavenSyncFileReader {
-        override suspend fun invoke(wrappers: MavenEmbedderWrappers): MavenProjectsTreeUpdateResult {
-          return readAllMavenProjects(spec, wrappers)
-        }
-      })
+      return doUpdateMavenProjects(spec,
+                                   modelsProvider,
+                                   mavenEmbedderWrappers,
+                                   MavenFullSyncFileReader(projectsTree, spec, generalSettings))
     }
   }
 
@@ -672,15 +684,6 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
         project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).pomReadingFinished()
         result
       }
-    }
-  }
-
-  protected suspend fun readAllMavenProjects(
-    spec: MavenSyncSpec,
-    mavenEmbedderWrappers: MavenEmbedderWrappers,
-  ): MavenProjectsTreeUpdateResult {
-    return reportRawProgress { reporter ->
-      projectsTree.updateAll(spec.forceReading(), generalSettings, mavenEmbedderWrappers, reporter)
     }
   }
 
