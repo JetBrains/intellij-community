@@ -39,7 +39,7 @@ private class OsDataLogger(val coroutineScope: CoroutineScope) {
       UnixDesktopEnv.CURRENT?.let { currentEnv ->
         info += "; desktop: " + currentEnv.name
         withContext(Dispatchers.IO) {
-          ExecUtil.execAndReadLine(GeneralCommandLine(listOf(currentEnv.versionTool) + currentEnv.versionToolArguments))?.also { line ->
+          ExecUtil.execAndReadLine(GeneralCommandLine(currentEnv.versionCommand))?.let { line ->
             info += " ($line)"
           }
         }

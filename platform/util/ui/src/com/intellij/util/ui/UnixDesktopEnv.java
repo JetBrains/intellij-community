@@ -14,41 +14,40 @@ public enum UnixDesktopEnv {
   CINNAMON("X-Cinnamon", "cinnamon"),
   DEEPIN("Deepin", "dde-desktop"),
   GNOME("GNOME", "gnome-shell"),
-  HYPRLAND("Hyprland", "hyprctl", List.of("version")),
+  @SuppressWarnings("SpellCheckingInspection")
+  HYPRLAND("Hyprland", "hyprctl", "version"),
+  @SuppressWarnings("SpellCheckingInspection")
   KDE("KDE", "plasmashell"),
+  @SuppressWarnings("SpellCheckingInspection")
   LXDE("LXDE", "lxsession"),
+  @SuppressWarnings("SpellCheckingInspection")
   LXQT("LXQt", "lxqt-session"),
   MATE("MATE", "mate-session"),
   PANTHEON("Pantheon", "gala"),
   UNITY("Unity", "unity"),
+  @SuppressWarnings("SpellCheckingInspection")
   XFCE("XFCE", "xfce4-session"),
   I3("i3", "i3"),
   SWAY("sway", "sway");
 
   public static final @Nullable UnixDesktopEnv CURRENT = getDesktop();
 
-  private final @NotNull String myXdgDesktopSubstring;
-  private final @NotNull String myVersionTool;
-  private final @NotNull List<String> myVersionToolArguments;
+  private final String myXdgDesktopSubstring;
+  private final String myVersionTool, myVersionArg;
 
-  UnixDesktopEnv(@NotNull String xdgDesktopSubstring, @NotNull String versionTool, @NotNull List<String> versionToolArguments) {
+  UnixDesktopEnv(String xdgDesktopSubstring, String versionTool) {
+    this(xdgDesktopSubstring, versionTool, "--version");
+  }
+
+  UnixDesktopEnv(String xdgDesktopSubstring, String versionTool, String versionArg) {
     myXdgDesktopSubstring = xdgDesktopSubstring;
     myVersionTool = versionTool;
-    myVersionToolArguments = versionToolArguments;
-  }
-
-  UnixDesktopEnv(@NotNull String xdgDesktopSubstring, @NotNull String versionTool) {
-    this(xdgDesktopSubstring, versionTool, List.of("--version"));
+    myVersionArg = versionArg;
   }
 
   @ApiStatus.Internal
-  public @NotNull String getVersionTool() {
-    return myVersionTool;
-  }
-
-  @ApiStatus.Internal
-  public @NotNull List<String> getVersionToolArguments() {
-    return myVersionToolArguments;
+  public @NotNull List<String> getVersionCommand() {
+    return List.of(myVersionTool, myVersionArg);
   }
 
   private static @Nullable UnixDesktopEnv getDesktop() {
@@ -58,7 +57,7 @@ public enum UnixDesktopEnv {
     var knownEnvironments = new ArrayList<>(List.of(values()));
     // sort by descending length of substring, so that longer substrings are checked first, because we have {@code GNOME} and {@code Budgie:GNOME}
     knownEnvironments.sort(Comparator.comparing(it -> -it.myXdgDesktopSubstring.length()));
-    for (UnixDesktopEnv env : knownEnvironments) {
+    for (var env : knownEnvironments) {
       if (desktop != null && desktop.contains(env.myXdgDesktopSubstring)) return env;
     }
 
