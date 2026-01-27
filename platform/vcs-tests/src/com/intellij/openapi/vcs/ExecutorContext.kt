@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.utils.io.createFile
 import com.intellij.util.io.delete
 import com.intellij.vcsUtil.VcsUtil
-import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -17,9 +16,9 @@ import kotlin.io.path.*
 private val LOG = Logger.getInstance(Executor::class.java)
 
 /**
- * After eliminating all usages of [Executor] singleton, this class can hold the current directory.
+ * TODO After eliminating all usages of [Executor] singleton, this class can hold execution context, namely the current directory.
  */
-class ExecutorContextImpl(initialCurrentDir: Path) : ExecutorContext {
+internal class ExecutorContextImpl(initialCurrentDir: Path) : ExecutorContext {
   init {
       Executor.cd(initialCurrentDir)
   }
@@ -69,17 +68,12 @@ interface ExecutorContext {
   }
 
   fun touch(filePath: String): Path {
-    try {
-      val file = child(filePath)
-      assert(!file.exists()) { "File " + file + " shouldn't exist yet" }
-      file.parent.createDirectories() // ensure to create the directories
-      file.createFile()
-      debug("# touch " + filePath)
-      return file
-    }
-    catch (e: IOException) {
-      throw RuntimeException(e)
-    }
+    val file = child(filePath)
+    assert(!file.exists()) { "File " + file + " shouldn't exist yet" }
+    file.parent.createDirectories() // ensure to create the directories
+    file.createFile()
+    debug("# touch " + filePath)
+    return file
   }
 
   fun touch(fileName: String, content: String): Path {
@@ -89,30 +83,21 @@ interface ExecutorContext {
   }
 
   fun echo(fileName: String, content: String) {
-    try {
-      Files.write(child(fileName), content.toByteArray(StandardCharsets.UTF_8), StandardOpenOption.APPEND, StandardOpenOption.CREATE)
-    }
-    catch (e: IOException) {
-      throw RuntimeException(e)
-    }
+    Files.write(child(fileName), content.toByteArray(StandardCharsets.UTF_8), StandardOpenOption.APPEND, StandardOpenOption.CREATE)
   }
 
-  @Throws(IOException::class)
   fun overwrite(fileName: String, content: String) {
     overwrite(child(fileName), content)
   }
 
-  @Throws(IOException::class)
   fun overwrite(file: Path, content: String) {
     Files.write(file, content.toByteArray(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
   }
 
-  @Throws(IOException::class)
   fun append(file: Path, content: String) {
     Files.write(file, content.toByteArray(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND)
   }
 
-  @Throws(IOException::class)
   fun append(fileName: String, content: String) {
     append(child(fileName), content)
   }
@@ -134,23 +119,13 @@ interface ExecutorContext {
   }
 
   fun cat(fileName: String): String {
-    try {
-      val content = child(fileName).readText()
-      debug("# cat " + fileName)
-      return content
-    }
-    catch (e: IOException) {
-      throw RuntimeException(e)
-    }
+    val content = child(fileName).readText()
+    debug("# cat " + fileName)
+    return content
   }
 
   fun cp(fileName: String, destinationDir: Path) {
-    try {
-      Files.copy(child(fileName), destinationDir.resolve(fileName))
-    }
-    catch (e: IOException) {
-      throw RuntimeException(e)
-    }
+    Files.copy(child(fileName), destinationDir.resolve(fileName))
   }
 
   fun splitCommandInParameters(command: String): MutableList<String?> {
@@ -196,7 +171,7 @@ interface ExecutorContext {
 
 
   private fun shortenPath(path: String): String {
-    val split: Array<String?> = path.split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+    val split: Array<String?> = path.split("/").dropLastWhile { it.isEmpty() }.toTypedArray()
     if (split.size > 3) {
       // split[0] is empty, because the path starts from /
       return String.format("/%s/.../%s/%s", split[1], split[split.size - 2], split[split.size - 1])

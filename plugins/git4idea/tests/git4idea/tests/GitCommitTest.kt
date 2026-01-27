@@ -26,6 +26,7 @@ import git4idea.test.*
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.params.ParameterizedClass
 import java.io.File
 import kotlin.io.path.exists
@@ -1071,9 +1072,9 @@ private class MyExplicitMovementProvider : GitCheckinExplicitMovementProvider() 
 
 internal class GitCommitTest {
 
-  @TestApplicationWithEel
+  @TestApplicationWithEel(osesMayNotHaveRemoteEels = [OS.WINDOWS, OS.LINUX, OS.MAC])
   @ParameterizedClass
-  @DockerTest(image = "alpine/git")
+  @DockerTest(image = "alpine/git", mandatory = false)
   @Nested
   inner class GitCommitWithResetAddTest(eelHolder: EelHolder) : GitCommitTestBase(eelHolder, gitCommitFixture(false)) {
     override fun `verify test commit case rename & don't commit a file which is both staged and unstaged, should reset and restore unstaged`() = with(gitCommitFixture.get()) {
@@ -1098,9 +1099,9 @@ internal class GitCommitTest {
     }
   }
 
-  @TestApplicationWithEel
+  @TestApplicationWithEel(osesMayNotHaveRemoteEels = [OS.WINDOWS, OS.LINUX, OS.MAC])
   @ParameterizedClass
-  @DockerTest(image = "alpine/git")
+  @DockerTest(image = "alpine/git", mandatory = false)
   @Nested
   inner class GitCommitWithIndexInfoTest(eelHolder: EelHolder) : GitCommitTestBase(eelHolder, gitCommitFixture(true)) {
     override fun `verify test commit case rename & don't commit a file which is both staged and unstaged, should reset and restore unstaged`() = with(gitCommitFixture.get()) {

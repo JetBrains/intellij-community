@@ -37,6 +37,10 @@ interface VcsPlatformTestContext : ExecutorContext {
 fun TestFixture<Project>.vcsPlatformFixture(): TestFixture<VcsPlatformTestContext> = testFixture {
   val project = init()
 
+  // TODO adapt here fine logging level adjustment from VcsPlatformTest
+  //VfsUtil.markDirtyAndRefresh(false, true, false, testRoot)
+  //enableDebugLogging()
+
   val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
   val vcsManager = (ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl).apply {
     waitForInitialized()

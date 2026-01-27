@@ -119,7 +119,10 @@ private fun commit(project: Project, message: String): String {
 fun GitRepository.tac(file: String, content: String = "content" + Math.random()) = cd { tac(project, file, content) }
 
 fun GitPlatformTest.tac(file: String, content: String = "content" + Math.random()) = tac(project, file, content)
-fun GitPlatformTestContext.tac(file: String, content: String = "content" + Math.random()) = tac(project, file, content)
+fun GitPlatformTestContext.tac(file: String, content: String = "content" + Math.random()): String {
+  touch(file, content)
+  return addCommit(project, "Touched $file")
+}
 private fun tac(project: Project, file: String, content: String): String {
   touch(file, content)
   return addCommit(project, "Touched $file")

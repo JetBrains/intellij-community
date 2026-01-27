@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.junit.AssumptionViolatedException;
+import org.junit.jupiter.api.Assertions;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -24,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.text.Normalizer;
 import java.util.*;
 import java.util.function.Consumer;
@@ -122,6 +124,21 @@ public final class IoTestUtil {
 
   public static void assumeCaseInsensitiveFS() throws AssumptionViolatedException {
     assumeFalse("Assumed case-insensitive FS but got " + OS.CURRENT, SystemInfo.isFileSystemCaseSensitive);
+  }
+
+  public static void assumeCaseInsensitiveFS(@NotNull Path directory) throws AssumptionViolatedException {
+    try {
+      var attributes = Files.readAttributes(directory, BasicFileAttributes.class);
+      if (attributes instanceof CaseSensitivityAttribute sensitivity && sensitivity.getCaseSensitivity().isKnown()) {
+        assumeTrue("Assumed case-insensitive directory but got " + directory, sensitivity.getCaseSensitivity().isInsensitive());
+      }
+      else {
+        assumeFalse("Assumed case-insensitive FS but got " + OS.CURRENT, SystemInfo.isFileSystemCaseSensitive);
+      }
+    }
+    catch (IOException e) {
+      Assertions.fail("Failed to read case sensitivity attribute of " + directory, e);
+    }
   }
 
   public static void assumeWslPresence() throws AssumptionViolatedException {
