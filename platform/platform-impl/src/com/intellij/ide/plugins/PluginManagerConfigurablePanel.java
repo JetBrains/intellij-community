@@ -354,7 +354,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   }
 
   private void createInstalledTab() {
-    myInstalledTab = new InstalledPluginsTab(myPluginModelFacade, myCoroutineScope);
+    myInstalledTab = new InstalledPluginsTab(myPluginModelFacade, myPluginUpdatesService, myCoroutineScope);
 
     myPluginModelFacade.getModel().setCancelInstallCallback(descriptor -> {
       if (myInstalledTab.getInstalledSearchPanel() == null) {
@@ -816,7 +816,9 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     private boolean myInstalledSearchSetState = true;
 
     private final @NotNull PluginModelFacade myPluginModelFacade;
+    private final @NotNull PluginUpdatesService myPluginUpdatesService;
     private final @NotNull CoroutineScope myCoroutineScope;
+
     private @Nullable PluginsGroupComponentWithProgress myInstalledPanel = null;
     private @Nullable SearchResultPanel myInstalledSearchPanel = null;
 
@@ -828,9 +830,12 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     private final JLabel myUpdateCounter = new CountComponent();
     private final JLabel myUpdateCounterBundled = new CountComponent();
 
-    InstalledPluginsTab(@NotNull PluginModelFacade facade, @NotNull CoroutineScope scope) {
+    InstalledPluginsTab(@NotNull PluginModelFacade facade,
+                        @NotNull PluginUpdatesService service,
+                        @NotNull CoroutineScope scope) {
       super();
       myPluginModelFacade = facade;
+      myPluginUpdatesService = service;
       myCoroutineScope = scope;
       myInstalledSearchGroup = new DefaultActionGroup();
       for (InstalledSearchOption option : InstalledSearchOption.values()) {
