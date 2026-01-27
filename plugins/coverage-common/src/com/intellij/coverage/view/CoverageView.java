@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -148,7 +149,9 @@ public class CoverageView extends BorderLayoutPanel implements UiDataProvider, D
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(@NotNull MouseEvent e) {
-        enterSelected(false);
+        WriteIntentReadAction.run(() -> {
+          enterSelected(false);
+        });
         return true;
       }
     }.installOn(myTable.getTree());
