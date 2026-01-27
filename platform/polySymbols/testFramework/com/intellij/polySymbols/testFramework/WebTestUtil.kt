@@ -568,8 +568,7 @@ private fun CodeInsightTestFixture.checkEditorNavigation(action: String, fromSig
       targetSignature) != targetEditor.caretModel.offset) {
     assertEquals("For go to from: $actualSignature",
                  targetSignature + if (!targetSignature.contains("<caret>")) ""
-                 else (" [" + InjectedLanguageManager.getInstance(project).getTopLevelFile(file)
-                   .findOffsetBySignature(targetSignature) + "]"),
+                 else (" [" + targetFile.findOffsetBySignature(targetSignature) + "]"),
                  targetEditor.currentPositionSignature + "[${targetEditor.caretModel.offset}]")
   }
 }
