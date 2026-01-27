@@ -1,18 +1,17 @@
-package com.intellij.settingsSync.jba.performanceTesting
+package com.intellij.settingsSync.performanceTesting
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
-import com.intellij.settingsSync.core.UpdateResult
 import com.intellij.settingsSync.core.config.SettingsSyncEnabler
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 
-class GetSettingsFromServerCommand(text: @NonNls String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+class PushSettingsToServerCommand(text: @NonNls String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
-    const val PREFIX: @NonNls String = CMD_PREFIX + "getSettingsFromServer"
+    const val PREFIX: @NonNls String = CMD_PREFIX + "pushSettingsToServer"
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
@@ -20,16 +19,11 @@ class GetSettingsFromServerCommand(text: @NonNls String, line: Int) : PlaybackCo
       val settingsSyncEnabler = SettingsSyncEnabler()
       val serverResponded = CompletableDeferred<Boolean>()
       settingsSyncEnabler.addListener(object : SettingsSyncEnabler.Listener {
-        override fun updateFromServerFinished(result: UpdateResult) {
-          if (result is UpdateResult.Success) {
-            serverResponded.complete(true)
-          }
-          else {
-            throw Exception(result.toString())
-          }
+        override fun serverRequestFinished() {
+          serverResponded.complete(true)
         }
       })
-      settingsSyncEnabler.getSettingsFromServer()
+      settingsSyncEnabler.pushSettingsToServer()
       serverResponded.await()
     }
   }

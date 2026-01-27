@@ -1,4 +1,4 @@
-package com.intellij.settingsSync.jba.performanceTesting
+package com.intellij.settingsSync.performanceTesting
 
 import com.jetbrains.performancePlugin.CommandProvider
 import com.jetbrains.performancePlugin.CreateCommand

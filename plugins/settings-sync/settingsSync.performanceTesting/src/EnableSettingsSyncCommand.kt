@@ -1,4 +1,4 @@
-package com.intellij.settingsSync.jba.performanceTesting
+package com.intellij.settingsSync.performanceTesting
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.playback.PlaybackContext

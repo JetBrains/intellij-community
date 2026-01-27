@@ -3,6 +3,6 @@
     <plugin id="com.jetbrains.performancePlugin"/>
   </dependencies>
   <extensions defaultExtensionNs="com.jetbrains">
-    <performancePlugin.commandProvider implementation="com.intellij.settingsSync.jba.performanceTesting.SettingsSyncCommandProvider"/>
+    <performancePlugin.commandProvider implementation="com.intellij.settingsSync.performanceTesting.SettingsSyncCommandProvider"/>
   </extensions>
 </idea-plugin>

@@ -1404,6 +1404,7 @@ plugins/search-everywhere-ml/ranking/yaml
 plugins/search-everywhere-ml/typos
 plugins/settings-repository
 plugins/settings-sync/jba
+plugins/settings-sync/settingsSync.performanceTesting
 plugins/sh/backend
 plugins/sh/copyright
 plugins/sh/core
