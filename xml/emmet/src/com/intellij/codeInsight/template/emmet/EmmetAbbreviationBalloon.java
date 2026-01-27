@@ -6,6 +6,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -95,11 +96,13 @@ public class EmmetAbbreviationBalloon {
     final DocumentAdapter documentListener = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        if (!isValid(customTemplateCallback)) {
-          balloon.hide();
-          return;
-        }
-        validateTemplateKey(field, balloon, field.getText(), customTemplateCallback);
+        WriteIntentReadAction.run(() -> {
+          if (!isValid(customTemplateCallback)) {
+            balloon.hide();
+            return;
+          }
+          validateTemplateKey(field, balloon, field.getText(), customTemplateCallback);
+        });
       }
     };
     field.addDocumentListener(documentListener);
@@ -115,13 +118,15 @@ public class EmmetAbbreviationBalloon {
 
           switch (e.getKeyCode()) {
             case KeyEvent.VK_ENTER -> {
-              final String abbreviation = field.getText();
-              if (validateTemplateKey(field, balloon, abbreviation, customTemplateCallback)) {
-                myCallback.onEnter(abbreviation);
-                PropertiesComponent.getInstance().setValue(myLastAbbreviationKey, abbreviation);
-                field.addCurrentTextToHistory();
-                balloon.hide();
-              }
+              WriteIntentReadAction.run(() -> {
+                final String abbreviation = field.getText();
+                if (validateTemplateKey(field, balloon, abbreviation, customTemplateCallback)) {
+                  myCallback.onEnter(abbreviation);
+                  PropertiesComponent.getInstance().setValue(myLastAbbreviationKey, abbreviation);
+                  field.addCurrentTextToHistory();
+                  balloon.hide();
+                }
+              });
             }
             case KeyEvent.VK_ESCAPE -> balloon.hide(false);
           }
