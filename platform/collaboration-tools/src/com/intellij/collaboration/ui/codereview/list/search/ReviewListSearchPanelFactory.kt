@@ -70,7 +70,7 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
       vm.quickFilters,
       quickFilterListener,
       { it.getQuickFilterTitle() },
-      { vm.searchState.update { it } },
+      { newQuery -> vm.searchState.update { newQuery } },
       { vm.searchState.update { vm.emptySearch } }
     )
 

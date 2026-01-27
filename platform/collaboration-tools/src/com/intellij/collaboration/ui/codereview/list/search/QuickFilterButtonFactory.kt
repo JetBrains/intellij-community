@@ -7,6 +7,7 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -16,8 +17,10 @@ import com.intellij.ui.BadgeIconSupplier
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
@@ -65,7 +68,9 @@ internal object QuickFilterButtonFactory {
 
     toolbar.component.launchOnShow("ReviewFilterToolbar") {
       searchState.collect {
-        toolbar.updateActionsAsync()
+        withContext(Dispatchers.EDT) {
+          toolbar.updateActionsAsync()
+        }
       }
     }
 
