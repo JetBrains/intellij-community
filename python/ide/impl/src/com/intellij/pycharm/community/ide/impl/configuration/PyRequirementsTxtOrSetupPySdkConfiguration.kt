@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.VirtualEnvResult
 import com.intellij.python.common.tools.ToolId
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -22,7 +23,7 @@ internal class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigur
 
   override val toolId: ToolId = PY_REQ_TOOL_ID // This is nonsense, but will be dropped soon
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? = prepareSdkCreator(
     { checkManageableEnv(module) },
   ) { { createAndAddSdk(module) } }
 

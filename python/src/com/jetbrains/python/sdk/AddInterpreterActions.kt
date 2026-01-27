@@ -25,6 +25,8 @@ import com.intellij.openapi.util.*
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.ParameterizedCachedValue
+import com.intellij.python.pyproject.model.api.ModuleCreateInfo
+import com.intellij.python.pyproject.model.api.getModuleInfo
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.allowCreationTargetOfThisType
@@ -34,7 +36,6 @@ import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterDialog
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterPresenter
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
-import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.target.PythonLanguageRuntimeType
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.CompletableDeferred
@@ -182,7 +183,9 @@ private class ToolDetectionService(project: Project, val coroutineScope: Corouti
   )
 
   private fun detectBestToolAsync(module: Module): CachedValueProvider.Result<Deferred<CreateSdkInfoWithTool?>> {
-    val result = coroutineScope.async { PyProjectSdkConfigurationExtension.findAllSortedForModule(module).firstOrNull() }
+    val result = coroutineScope.async {
+      (module.getModuleInfo() as? ModuleCreateInfo.CreateSdkInfoWrapper)?.let { CreateSdkInfoWithTool(it.createSdkInfo, it.toolId) }
+    }
     result.invokeOnCompletion { getOrCreateModificationTracker(module).incModificationCount() }
     return CachedValueProvider.Result.create(result, getOrCreateModificationTracker(module))
   }

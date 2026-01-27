@@ -17,6 +17,7 @@ import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.execService.ZeroCodeStdoutParserTransformer
 import com.intellij.python.community.impl.pipenv.pipenvPath
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.basePath
@@ -41,7 +42,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override val toolId: ToolId = PIPENV_TOOL_ID
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? = prepareSdkCreator(
     { checkManageableEnv(module, it) }
   ) { { createAndAddSdk(module) } }
 

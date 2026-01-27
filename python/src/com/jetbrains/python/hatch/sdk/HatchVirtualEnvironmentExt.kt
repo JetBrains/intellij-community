@@ -32,7 +32,7 @@ suspend fun HatchVirtualEnvironment.createSdk(workingDirectoryPath: Path): PyRes
   val hatchSdkAdditionalData = HatchSdkAdditionalData(workingDirectoryPath, this.hatchEnvironment.name)
   val sdk = createSdk(
     pythonBinaryPath = PathHolder.Eel(pythonBinary),
-    associatedProjectPath = workingDirectoryPath.toString(),
+    associatedModulePath = workingDirectoryPath.toString(),
     suggestedSdkName = existingPythonEnvironment.suggestHatchSdkName(),
     sdkAdditionalData = hatchSdkAdditionalData
   ).getOr { return it }

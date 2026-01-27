@@ -5,8 +5,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.readText
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.findEnvOrNull
@@ -15,12 +13,15 @@ import com.intellij.python.community.impl.uv.common.UV_TOOL_ID
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.api.SuggestedSdk
 import com.intellij.python.pyproject.model.api.suggestSdk
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onSuccess
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.*
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
+import com.jetbrains.python.sdk.persist
+import com.jetbrains.python.sdk.pyvenvContains
+import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
@@ -33,18 +34,16 @@ import java.nio.file.Path
 private val logger = fileLogger()
 
 internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
-  private val existingSdks by lazy { PythonSdkUtil.getAllSdks() }
-  private val context = UserDataHolderBase()
-
   override val toolId: ToolId = UV_TOOL_ID
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    { checkExistence -> checkManageableEnv(module, checkExistence, true) }
-  ) { envExists -> { createUv(module, envExists) } }
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+    prepareSdkCreator(
+      { checkExistence -> checkManageableEnv(module, venvsInModule, checkExistence, true) }
+    ) { envExists -> { createUv(module, venvsInModule, envExists) } }
 
-  override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    { checkExistence -> checkManageableEnv(module, checkExistence, false) }
-  ) { envExists -> { createUv(module, envExists) } }
+  override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? = prepareSdkCreator(
+    { checkExistence -> checkManageableEnv(module, venvsInModule, checkExistence, false) }
+  ) { envExists -> { createUv(module, venvsInModule, envExists) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension = this
 
@@ -57,7 +56,12 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
    *       if we found existing uv environment, we will use it
    *   - If pyproject.toml check shouldn't be performed, then we just check whether the environment exists
    */
-  private suspend fun checkManageableEnv(module: Module, checkExistence: CheckExistence, checkToml: CheckToml): EnvCheckerResult {
+  private suspend fun checkManageableEnv(
+    module: Module,
+    venvsInModule: List<PythonBinary>,
+    checkExistence: CheckExistence,
+    checkToml: CheckToml,
+  ): EnvCheckerResult {
     getUvExecutable() ?: return EnvCheckerResult.CannotConfigure
 
     val (canManage, projectName) = if (checkToml) {
@@ -87,15 +91,14 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
 
     return when {
       checkExistence -> {
-        val detectedSdk = getUvEnv(if (checkToml) module else module.getSdkAssociatedModule())
-        detectedSdk?.findEnvOrNull(intentionName) ?: if (canManage) envNotFound else EnvCheckerResult.CannotConfigure
+        getUvEnv(venvsInModule)?.findEnvOrNull(intentionName) ?: if (canManage) envNotFound else EnvCheckerResult.CannotConfigure
       }
       canManage -> envNotFound
       else -> EnvCheckerResult.CannotConfigure
     }
   }
 
-  private fun getUvEnv(module: Module): PyDetectedSdk? = detectAssociatedEnvironments(module, existingSdks, context).firstOrNull {
+  private suspend fun getUvEnv(venvsInModule: List<PythonBinary>): PythonBinary? = venvsInModule.firstOrNull {
     it.pyvenvContains("uv = ")
   }
 
@@ -106,7 +109,7 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
       null, is SuggestedSdk.PyProjectIndependent -> null
     } ?: this
 
-  private suspend fun createUv(module: Module, envExists: Boolean): PyResult<Sdk> {
+  private suspend fun createUv(module: Module, venvsInModule: List<PythonBinary>, envExists: Boolean): PyResult<Sdk> {
     val sdkAssociatedModule = module.getSdkAssociatedModule()
     val workingDir: Path? = tryResolvePath(sdkAssociatedModule.basePath)
     if (workingDir == null) {
@@ -114,7 +117,7 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
     }
 
     val sdkSetupResult = if (envExists) {
-      getUvEnv(sdkAssociatedModule)?.homePath?.toNioPathOrNull()?.let {
+      getUvEnv(venvsInModule)?.let {
         setupExistingEnvAndSdk(it, workingDir, false, workingDir)
       } ?: run {
         logger.warn("Can't find existing uv environment in project, but it was expected. " +

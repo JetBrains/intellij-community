@@ -21,6 +21,7 @@ import com.intellij.python.community.execService.BinOnEel
 import com.intellij.util.FileName
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
@@ -62,7 +63,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
 
   override val toolId: ToolId = CONDA_TOOL_ID
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? = prepareSdkCreator(
     { checkManageableEnv(module, it) }
   ) { envExists -> { createAndAddSdk(module, envExists) } }
 

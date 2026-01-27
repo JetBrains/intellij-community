@@ -60,11 +60,11 @@ suspend fun setupExistingEnvAndSdk(
   envExecutable: Path,
   envWorkingDir: Path,
   usePip: Boolean,
-  projectDir: Path,
+  moduleDir: Path,
 ): PyResult<Sdk> {
   val sdk = createSdk(
     pythonBinaryPath = PathHolder.Eel(envExecutable),
-    associatedProjectPath = projectDir.toString(),
+    associatedModulePath = moduleDir.toString(),
     suggestedSdkName = suggestedSdkName(envWorkingDir),
     sdkAdditionalData = UvSdkAdditionalData(envWorkingDir, usePip)
   )

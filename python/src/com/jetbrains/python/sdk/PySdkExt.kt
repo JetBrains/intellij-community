@@ -31,6 +31,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.EDT
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.isCondaVirtualEnv
@@ -237,16 +238,23 @@ fun createSdkByGenerateTask(
 @Internal
 suspend fun createSdk(
   pythonBinaryPath: PathHolder.Eel,
-  associatedProjectPath: String?,
+  associatedModulePath: String,
   suggestedSdkName: String?,
   sdkAdditionalData: PythonSdkAdditionalData? = null,
 ): PyResult<Sdk> {
+  val pythonBinaryPathAsString = pythonBinaryPath.path.pathString
+  val existingSdks = PythonSdkUtil.getAllSdks()
+  existingSdks.find {
+    it.sdkAdditionalData?.javaClass == sdkAdditionalData?.javaClass &&
+    it.homePath == pythonBinaryPathAsString &&
+    it.associatedModulePath == associatedModulePath
+  }?.let { return PyResult.success(it) }
+
   val pythonBinaryVirtualFile = withContext(Dispatchers.IO) {
-    StandardFileSystems.local().refreshAndFindFileByPath(pythonBinaryPath.path.pathString)
+    StandardFileSystems.local().refreshAndFindFileByPath(pythonBinaryPathAsString)
   } ?: return PyResult.localizedError(PyBundle.message("python.sdk.python.executable.not.found", pythonBinaryPath))
 
-  val sdkName = suggestedSdkName ?: suggestAssociatedSdkName(pythonBinaryPath.path.pathString, associatedProjectPath)
-  val existingSdks = PythonSdkUtil.getAllSdks()
+  val sdkName = suggestedSdkName ?: suggestAssociatedSdkName(pythonBinaryPathAsString, associatedModulePath)
   val sdk = SdkConfigurationUtil.setupSdk(
     existingSdks.toTypedArray(),
     pythonBinaryVirtualFile,
@@ -493,15 +501,11 @@ private fun Sdk.isLocatedInsideBaseDir(baseDir: Path?): Boolean {
 }
 
 @Internal
-@RequiresBackgroundThread
-fun PyDetectedSdk.pyvenvContains(pattern: String): Boolean = runReadAction {
+suspend fun PythonBinary.pyvenvContains(pattern: String): Boolean = withContext(Dispatchers.IO) {
   // TODO: Support for remote targets as well
   //  (probably the best way is to prepare a helper python script to check config file and run using exec service)
-  if (isTargetBased()) {
-    return@runReadAction false
-  }
-  val pyvenvFile = homeDirectory?.parent?.parent?.findFile("pyvenv.cfg") ?: return@runReadAction false
-  val text = FileDocumentManager.getInstance().getDocument(pyvenvFile)?.text ?: return@runReadAction false
+  val pyvenvFile = this@pyvenvContains.parent?.parent?.resolve("pyvenv.cfg")?.refreshAndFindVirtualFile() ?: return@withContext false
+  val text = readAction { FileDocumentManager.getInstance().getDocument(pyvenvFile)?.text } ?: return@withContext false
   pattern in text
 }
 

@@ -44,7 +44,7 @@ suspend fun createPoetrySdk(
   pythonBinaryPath: PathHolder.Eel,
 ): PyResult<Sdk> = createSdk(
   pythonBinaryPath = pythonBinaryPath,
-  associatedProjectPath = basePath.toString(),
+  associatedModulePath = basePath.toString(),
   suggestedSdkName = suggestedSdkName(basePath),
   sdkAdditionalData = PyPoetrySdkAdditionalData(basePath)
 )

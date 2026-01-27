@@ -64,7 +64,7 @@ internal class UvExistingEnvironmentSelector<P : PathHolder>(model: PythonMutabl
       envExecutable = selectedInterpreterPath.path,
       envWorkingDir = workingDirectory,
       usePip = existingSdk?.isUv == true,
-      projectDir = projectDir,
+      moduleDir = projectDir,
     )
   }
 

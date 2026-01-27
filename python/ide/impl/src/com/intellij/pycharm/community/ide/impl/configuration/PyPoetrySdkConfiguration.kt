@@ -16,6 +16,7 @@ import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.pyproject.PyProjectToml
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.poetry.findPoetryLock
 import com.jetbrains.python.poetry.getPyProjectTomlForPoetry
@@ -41,11 +42,12 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
 
   override val toolId: ToolId = POETRY_TOOL_ID
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    { checkExistence -> checkManageableEnv(module, checkExistence, true) },
-  ) { { createPoetry(module) } }
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+    prepareSdkCreator(
+      { checkExistence -> checkManageableEnv(module, checkExistence, true) },
+    ) { { createPoetry(module) } }
 
-  override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module): CreateSdkInfo? = prepareSdkCreator(
+  override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? = prepareSdkCreator(
     { checkExistence -> checkManageableEnv(module, checkExistence, false) },
   ) { { createPoetry(module) } }
 

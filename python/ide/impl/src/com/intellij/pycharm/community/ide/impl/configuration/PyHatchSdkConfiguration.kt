@@ -12,6 +12,7 @@ import com.intellij.python.hatch.PythonVirtualEnvironment
 import com.intellij.python.hatch.cli.HatchEnvironment
 import com.intellij.python.hatch.getHatchService
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.onSuccess
@@ -28,11 +29,12 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
 
   override val toolId: ToolId = HATCH_TOOL_ID
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    { checkExistence -> checkManageableEnv(module, checkExistence, true) },
-  ) { envExists -> { createSdk(module, envExists) } }
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+    prepareSdkCreator(
+      { checkExistence -> checkManageableEnv(module, checkExistence, true) },
+    ) { envExists -> { createSdk(module, envExists) } }
 
-  override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module): CreateSdkInfo? = prepareSdkCreator(
+  override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? = prepareSdkCreator(
     { checkExistence -> checkManageableEnv(module, checkExistence, false) },
   ) { envExists -> { createSdk(module, envExists) } }
 

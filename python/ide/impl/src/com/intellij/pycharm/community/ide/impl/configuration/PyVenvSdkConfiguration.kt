@@ -3,12 +3,13 @@ package com.intellij.pycharm.community.ide.impl.configuration
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.vfs.refreshAndFindVirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.findEnvOrNull
 import com.intellij.python.common.tools.ToolId
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.projectCreation.createVenvAndSdk
@@ -17,51 +18,53 @@ import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
+import com.jetbrains.python.sdk.impl.resolvePythonHome
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.io.path.name
 
 internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
-  private val existingSdks by lazy { PythonSdkUtil.getAllSdks() }
-  private val context = UserDataHolderBase()
-
   override val toolId: ToolId = VENV_TOOL_ID
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
-    { checkManageableEnv(module) }
-  ) { envExists -> { setupVenv(module, envExists) } }
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? = prepareSdkCreator(
+    { checkManageableEnv(module, venvsInModule) }
+  ) { envExists -> { setupVenv(module, venvsInModule, envExists) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
 
   private suspend fun checkManageableEnv(
     module: Module,
+    venvsInModule: List<PythonBinary>,
   ): EnvCheckerResult = withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
     withContext(Dispatchers.IO) {
-      getVirtualEnv(module)?.let {
-        it.findEnvOrNull(PyCharmCommunityCustomizationBundle.message("sdk.use.existing.venv", it.name))
+      getVirtualEnv(venvsInModule)?.let {
+        it.findEnvOrNull(PyCharmCommunityCustomizationBundle.message("sdk.use.existing.venv", it.resolvePythonHome().name))
       } ?: EnvCheckerResult.EnvNotFound(PyCharmCommunityCustomizationBundle.message("sdk.create.venv.suggestion.no.arg"))
     }
   }
 
-  private fun getVirtualEnv(module: Module): PyDetectedSdk? = detectAssociatedEnvironments(module, existingSdks, context)
-    .firstOrNull { !it.pyvenvContains("uv = ") }
+  private suspend fun getVirtualEnv(venvsInModule: List<PythonBinary>): PythonBinary? = venvsInModule.firstOrNull {
+    !it.pyvenvContains("uv = ")
+  }
 
-  private suspend fun setupVenv(module: Module, envExists: EnvExists): PyResult<Sdk> =
+  private suspend fun setupVenv(module: Module, venvsInModule: List<PythonBinary>, envExists: EnvExists): PyResult<Sdk> =
     if (envExists) {
-      setupExistingVenv(module)
+      setupExistingVenv(module, venvsInModule)
     }
     else {
       createVenvAndSdk(ModuleOrProject.ModuleAndProject(module))
     }
 
-  private suspend fun setupExistingVenv(module: Module): PyResult<Sdk> {
-    val env = withContext(Dispatchers.IO) {
-      getVirtualEnv(module)
+  private suspend fun setupExistingVenv(module: Module, venvsInModule: List<PythonBinary>): PyResult<Sdk> {
+    val pythonBinary = withContext(Dispatchers.IO) {
+      getVirtualEnv(venvsInModule)?.refreshAndFindVirtualFile()
     } ?: return PyResult.failure(MessageError("Can't find venv for the module"))
 
-    val sdk = env.setupAssociated(
-      existingSdks,
+    val pyDetectedSdk = PyDetectedSdk(pythonBinary.toString())
+    val sdk = pyDetectedSdk.setupAssociated(
+      PythonSdkUtil.getAllSdks(),
       module.basePath,
       true,
       PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance())
