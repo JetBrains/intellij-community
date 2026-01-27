@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.editors;
 
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 
@@ -51,7 +52,9 @@ public abstract class ComboBoxPropertyEditor<V> extends PropertyEditor<V> {
     @Override
     public void popupMenuWillBecomeInvisible(final PopupMenuEvent e){
       if(!myCancelled){
-        fireValueCommitted(true, true);
+        WriteIntentReadAction.run(() -> {
+          fireValueCommitted(true, true);
+        });
       }
     }
 
