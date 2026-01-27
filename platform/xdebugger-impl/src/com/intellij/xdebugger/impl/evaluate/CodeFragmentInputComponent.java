@@ -64,7 +64,7 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
 
   @Override
   public void addComponent(JPanel contentPanel, JPanel resultPanel) {
-    final JBSplitter splitter = new JBSplitter(true, 0.3f, 0.2f, 0.7f);
+    final JBSplitter splitter = new JBSplitter(true, 0.5f, 0.2f, 0.7f);
     splitter.setSplitterProportionKey(mySplitterProportionKey);
     contentPanel.add(splitter, BorderLayout.CENTER);
     splitter.setFirstComponent(myMainForm.getMainPanel());
