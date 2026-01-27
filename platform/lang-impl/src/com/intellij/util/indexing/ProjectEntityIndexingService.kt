@@ -342,20 +342,9 @@ class ProjectEntityIndexingService(
           uncheckedProvider as (IndexableEntityProvider<E>)
           val generated = when (change) {
             Change.Added -> uncheckedProvider.getAddedEntityIteratorBuilders(newEntity!!, project)
-            Change.Replaced -> uncheckedProvider.getReplacedEntityIteratorBuilders(oldEntity!!, newEntity!!, project)
-            Change.Removed -> uncheckedProvider.getRemovedEntityIteratorBuilders(oldEntity!!, project)
+            else -> { emptyList() }
           }
           builders.addAll(generated)
-        }
-
-        if (change == Change.Replaced && uncheckedProvider is Enforced<*>) {
-          for (dependency in uncheckedProvider.dependencies) {
-            if (entityClass == dependency.getParentClass()) {
-              @Suppress("UNCHECKED_CAST")
-              dependency as DependencyOnParent<E>
-              builders.addAll(dependency.getReplacedEntityIteratorBuilders(oldEntity!!, newEntity!!))
-            }
-          }
         }
       }
     }

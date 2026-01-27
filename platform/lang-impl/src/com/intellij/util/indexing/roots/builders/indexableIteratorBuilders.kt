@@ -8,7 +8,6 @@ import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -35,12 +34,6 @@ internal object IndexableIteratorBuilders {
                        dependencyChecked: Boolean,
                        roots: IndexingUrlSourceRootHolder): Collection<IndexableIteratorBuilder> =
     listOf(LibraryIdIteratorBuilder(libraryId, null, null, roots, dependencyChecked))
-
-
-  @JvmOverloads
-  fun forSdk(sdkName: String, sdkType: String, file: Collection<VirtualFile>? = null): IndexableIteratorBuilder = SdkIteratorBuilder(sdkName, sdkType, file)
-
-  fun forSdk(sdkId: SdkId, file: Collection<VirtualFile>? = null): IndexableIteratorBuilder = forSdk(sdkId.name, sdkId.type, file)
 
   fun forModuleContent(moduleId: ModuleId): Collection<IndexableIteratorBuilder> = listOf(FullModuleContentIteratorBuilder(moduleId))
 
@@ -87,13 +80,6 @@ internal data class LibraryIdIteratorBuilder(val libraryId: LibraryId,
                                              val sourceRoots: Collection<VirtualFile>? = null,
                                              val rootUrls: IndexingUrlSourceRootHolder? = null,
                                              val dependencyChecked: Boolean = false) : IndexableIteratorBuilder
-
-internal data class SdkIteratorBuilder(val sdkName: String,
-                                       val sdkType: String,
-                                       val roots: Collection<VirtualFile>? = null,
-                                       val rootsUrls: IndexingUrlRootHolder? = null) : IndexableIteratorBuilder
-
-internal object InheritedSdkIteratorBuilder : IndexableIteratorBuilder
 
 internal data class FullModuleContentIteratorBuilder(val moduleId: ModuleId) : IndexableIteratorBuilder
 

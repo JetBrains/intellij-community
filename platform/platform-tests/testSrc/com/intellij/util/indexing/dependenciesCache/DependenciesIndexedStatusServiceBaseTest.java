@@ -558,17 +558,6 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
         urls.add(sourcesDir.getUrl());
       });
       assertNothingToRescanAndFinishIndexing();
-
-      updateExcludedRoots(urls -> urls.clear());
-      assertRescanningSdkContent(UNSURE, classesDir, sourcesDir);
-
-      updateExcludedRoots(urls -> {
-        urls.add(sourcesDir.getUrl());
-      });
-      assertRescanningSdkContent(YES, classesDir);
-
-      updateExcludedRoots(urls -> urls.clear());
-      assertRescanningSdkContent(YES, sourcesDir);
     }
 
     @Test
@@ -614,17 +603,6 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
         roots.add(sourcesExcludedDir);
       });
       assertNothingToRescanAndFinishIndexing();
-
-      updateExcludedFromSdkRoots(urls -> urls.clear());
-      assertRescanningSdkContent(UNSURE, classesExcludedDir, sourcesExcludedDir);
-
-      updateExcludedFromSdkRoots(roots -> {
-        roots.add(sourcesExcludedDir);
-      });
-      assertRescanningSdkContent(YES, classesExcludedDir);
-
-      updateExcludedFromSdkRoots(roots -> roots.clear());
-      assertRescanningSdkContent(YES, sourcesExcludedDir);
     }
 
     @Test
@@ -742,21 +720,6 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
           VirtualFile file = VirtualFileUrls.getVirtualFile(url);
           actualRoots.add(file);
         }
-      }
-      assertContainsElements(actualRoots, roots);
-
-      finishIndexing(finishIndexingWithStatus, statusPair.getSecond(), statusService);
-    }
-
-    private void assertRescanningSdkContent(ThreeState finishIndexingWithStatus, VirtualFile... roots) {
-      DependenciesIndexedStatusService statusService = DependenciesIndexedStatusService.getInstance(getProject());
-      @Nullable Pair<@NotNull Collection<? extends IndexableIteratorBuilder>, @NotNull StatusMark> statusPair;
-      statusPair = statusService.getDeltaWithLastIndexedStatus();
-      Collection<? extends IndexableIteratorBuilder> builders = statusPair.getFirst();
-      List<VirtualFile> actualRoots = new ArrayList<>();
-      for (IndexableIteratorBuilder builder : builders) {
-        assertInstanceOf(builder, SdkIteratorBuilder.class);
-        actualRoots.addAll(((SdkIteratorBuilder)builder).getRoots());
       }
       assertContainsElements(actualRoots, roots);
 
