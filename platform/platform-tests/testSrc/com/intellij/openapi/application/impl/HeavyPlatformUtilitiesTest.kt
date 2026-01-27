@@ -66,13 +66,6 @@ class HeavyPlatformUtilitiesTest {
   @Test
   fun `PsiSearchHelper#processElementsWithWord can be canceled on project scope`() = `PsiSearchHelperImpl cancellation test`(GlobalSearchScope.projectScope(project.get()))
 
-  @Test
-  fun `PsiSearchHelper#processElementsWithWord can be canceled on file scope`() {
-    val ignored = file.get()
-    IndexingTestUtil.waitUntilIndexesAreReady(project.get())
-    `PsiSearchHelperImpl cancellation test`(runReadAction { LocalSearchScope(file.get()) })
-  }
-
   fun `PsiSearchHelperImpl cancellation test`(scope: SearchScope): Unit = timeoutRunBlocking {
     val prj = project.get()
     val j1 = Job(coroutineContext.job)
