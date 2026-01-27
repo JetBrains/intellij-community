@@ -345,7 +345,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   }
 
   private void createMarketplaceTab() {
-    myMarketplaceTab = new MarketplacePluginsTab(myPluginModelFacade);
+    myMarketplaceTab = new MarketplacePluginsTab(myPluginModelFacade, myCoroutineScope);
   }
 
   private void createInstalledTab() {
@@ -813,6 +813,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
   private class MarketplacePluginsTab extends PluginsTab {
     private final @NotNull PluginModelFacade myPluginModelFacade;
+    private final @NotNull CoroutineScope myCoroutineScope;
 
     private final DefaultActionGroup myMarketplaceSortByGroup;
     private LinkComponent myMarketplaceSortByAction;
@@ -820,9 +821,10 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     private List<String> myTagsSorted;
     private List<String> myVendorsSorted;
 
-    MarketplacePluginsTab(@NotNull PluginModelFacade facade) {
+    MarketplacePluginsTab(@NotNull PluginModelFacade facade, @NotNull CoroutineScope scope) {
       super();
       myPluginModelFacade = facade;
+      myCoroutineScope = scope;
 
       myMarketplaceSortByGroup = new DefaultActionGroup();
       for (MarketplaceTabSearchSortByOptions option : MarketplaceTabSearchSortByOptions.getEntries()) {
