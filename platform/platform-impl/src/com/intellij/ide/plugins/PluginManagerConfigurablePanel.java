@@ -103,10 +103,9 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   private MultiPanel myCardPanel;
 
   private MarketplacePluginsTab myMarketplaceTab;
-  private PluginsTab myInstalledTab;
+  private InstalledPluginsTab myInstalledTab;
 
   private PluginsGroupComponentWithProgress myMarketplacePanel;
-  private PluginsGroupComponentWithProgress myInstalledPanel;
 
   private final PluginsGroup myBundledUpdateGroup =
     new PluginsGroup(IdeBundle.message("plugins.configurable.bundled.updates"), PluginsGroupType.BUNDLED_UPDATE);
@@ -114,7 +113,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   private Runnable myMarketplaceRunnable;
 
   private SearchResultPanel myMarketplaceSearchPanel;
-  private SearchResultPanel myInstalledSearchPanel;
 
   private final LinkLabel<Object> myUpdateAll = new LinkLabelButton<>(IdeBundle.message("plugin.manager.update.all"), null);
   private final LinkLabel<Object> myUpdateAllBundled = new LinkLabelButton<>(IdeBundle.message("plugin.manager.update.all"), null);
@@ -377,22 +375,22 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   }
 
   private void createInstalledTab() {
-    myInstalledTab = new InstalledPluginsTab();
+    myInstalledTab = new InstalledPluginsTab(myPluginModelFacade, myCoroutineScope);
 
     myPluginModelFacade.getModel().setCancelInstallCallback(descriptor -> {
-      if (myInstalledSearchPanel == null) {
+      if (myInstalledTab.getInstalledSearchPanel() == null) {
         return null;
       }
 
-      PluginsGroup group = myInstalledSearchPanel.getGroup();
+      PluginsGroup group = myInstalledTab.getInstalledSearchPanel().getGroup();
 
       if (group.ui != null && group.ui.findComponent(descriptor.getPluginId()) != null) {
-        myInstalledSearchPanel.getPanel().removeFromGroup(group, descriptor);
+        myInstalledTab.getInstalledSearchPanel().getPanel().removeFromGroup(group, descriptor);
         group.titleWithCount();
-        myInstalledSearchPanel.fullRepaint();
+        myInstalledTab.getInstalledSearchPanel().fullRepaint();
 
         if (group.getModels().isEmpty()) {
-          myInstalledSearchPanel.removeGroup();
+          myInstalledTab.getInstalledSearchPanel().removeGroup();
         }
       }
       return null;
@@ -477,13 +475,13 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   private void applyBundledUpdates(@Nullable Collection<? extends PluginUiModel> updates) {
     if (ContainerUtil.isEmpty(updates)) {
       if (myBundledUpdateGroup.ui != null) {
-        myInstalledPanel.removeGroup(myBundledUpdateGroup);
-        myInstalledPanel.doLayout();
+        myInstalledTab.getInstalledPanel().removeGroup(myBundledUpdateGroup);
+        myInstalledTab.getInstalledPanel().doLayout();
       }
     }
     else if (myBundledUpdateGroup.ui == null) {
       for (PluginUiModel descriptor : updates) {
-        for (UIPluginGroup group : myInstalledPanel.getGroups()) {
+        for (UIPluginGroup group : myInstalledTab.getInstalledPanel().getGroups()) {
           ListPluginComponent component = group.findComponent(descriptor.getPluginId());
           if (component != null && component.getPluginModel().isBundled()) {
             myBundledUpdateGroup.addModel(component.getPluginModel());
@@ -492,7 +490,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
         }
       }
       if (!myBundledUpdateGroup.getModels().isEmpty()) {
-        myInstalledPanel.addGroup(myBundledUpdateGroup, 0);
+        myInstalledTab.getInstalledPanel().addGroup(myBundledUpdateGroup, 0);
         myBundledUpdateGroup.ui.excluded = true;
 
         for (PluginUiModel descriptor : updates) {
@@ -502,7 +500,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
           }
         }
 
-        myInstalledPanel.doLayout();
+        myInstalledTab.getInstalledPanel().doLayout();
       }
     }
     else {
@@ -522,7 +520,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       }
 
       for (ListPluginComponent component : toDelete) {
-        myInstalledPanel.removeFromGroup(myBundledUpdateGroup, component.getPluginModel());
+        myInstalledTab.getInstalledPanel().removeFromGroup(myBundledUpdateGroup, component.getPluginModel());
       }
 
       for (PluginUiModel update : updates) {
@@ -530,20 +528,20 @@ public final class PluginManagerConfigurablePanel implements Disposable {
         if (exist != null) {
           continue;
         }
-        for (UIPluginGroup group : myInstalledPanel.getGroups()) {
+        for (UIPluginGroup group : myInstalledTab.getInstalledPanel().getGroups()) {
           if (group == myBundledUpdateGroup.ui) {
             continue;
           }
           ListPluginComponent component = group.findComponent(update.getPluginId());
           if (component != null && component.getPluginModel().isBundled()) {
-            myInstalledPanel.addToGroup(myBundledUpdateGroup, component.getPluginModel());
+            myInstalledTab.getInstalledPanel().addToGroup(myBundledUpdateGroup, component.getPluginModel());
             break;
           }
         }
       }
 
       if (myBundledUpdateGroup.getModels().isEmpty()) {
-        myInstalledPanel.removeGroup(myBundledUpdateGroup);
+        myInstalledTab.getInstalledPanel().removeGroup(myBundledUpdateGroup);
       }
       else {
         for (PluginUiModel descriptor : updates) {
@@ -554,7 +552,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
         }
       }
 
-      myInstalledPanel.doLayout();
+      myInstalledTab.getInstalledPanel().doLayout();
     }
 
     myUpdateAll.setVisible(myUpdateAll.isVisible() && myBundledUpdateGroup.ui == null);
@@ -697,8 +695,8 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     if (myMarketplaceSearchPanel != null) {
       myMarketplaceSearchPanel.dispose();
     }
-    if (myInstalledSearchPanel != null) {
-      myInstalledSearchPanel.dispose();
+    if (myInstalledTab.getInstalledSearchPanel() != null) {
+      myInstalledTab.getInstalledSearchPanel().dispose();
     }
 
     myPluginUpdatesService.dispose();
@@ -794,7 +792,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     }
 
     if (!components.isEmpty()) {
-      myInstalledPanel.setSelection(components);
+      myInstalledTab.getInstalledPanel().setSelection(components);
     }
   }
 
@@ -803,7 +801,8 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   }
 
   public @Nullable Runnable enableSearch(String option, boolean ignoreTagMarketplaceTab) {
-    if (StringUtil.isEmpty(option) && (myTabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB || myInstalledSearchPanel.isEmpty())) {
+    if (StringUtil.isEmpty(option) &&
+        (myTabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB || myInstalledTab.getInstalledSearchPanel().isEmpty())) {
       return null;
     }
 
@@ -859,7 +858,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   private void updateAfterPluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData, List<HtmlChunk> errors) {
     myPluginModelFacade.getModel().pluginInstalledFromDisk(callbackData, errors);
 
-    boolean select = myInstalledPanel == null;
+    boolean select = myInstalledTab.getInstalledPanel() == null;
     updateSelectionTab(INSTALLED_TAB);
 
     myInstalledTab.clearSearchPanel("");
@@ -868,7 +867,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
                                     findInstalledPluginById(callbackData.getPluginDescriptor().getPluginId()) :
                                     null;
     if (component != null) {
-      myInstalledPanel.setSelection(component);
+      myInstalledTab.getInstalledPanel().setSelection(component);
     }
   }
 
@@ -879,7 +878,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   }
 
   private @NotNull List<UIPluginGroup> getInstalledGroups() {
-    return myInstalledPanel.getGroups();
+    return myInstalledTab.getInstalledPanel().getGroups();
   }
 
   private @Nullable ListPluginComponent findInstalledPluginById(@NotNull PluginId pluginId) {
@@ -928,8 +927,15 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     private final DefaultActionGroup myInstalledSearchGroup;
     private boolean myInstalledSearchSetState = true;
 
-    InstalledPluginsTab() {
+    private final @NotNull PluginModelFacade myPluginModelFacade;
+    private final @NotNull CoroutineScope myCoroutineScope;
+    private @Nullable PluginsGroupComponentWithProgress myInstalledPanel = null;
+    private @Nullable SearchResultPanel myInstalledSearchPanel = null;
+
+    InstalledPluginsTab(@NotNull PluginModelFacade facade, @NotNull CoroutineScope scope) {
       super();
+      myPluginModelFacade = facade;
+      myCoroutineScope = scope;
       myInstalledSearchGroup = new DefaultActionGroup();
       for (InstalledSearchOption option : InstalledSearchOption.values()) {
         myInstalledSearchGroup.add(new InstalledSearchOptionAction(option));
@@ -952,6 +958,14 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       textField.putClientProperty("JTextField.variant", "search");
 
       searchTextField.setHistoryPropertyName("InstalledPluginsSearchHistory");
+    }
+
+    public @Nullable PluginsGroupComponentWithProgress getInstalledPanel() {
+      return myInstalledPanel;
+    }
+
+    public @Nullable SearchResultPanel getInstalledSearchPanel() {
+      return myInstalledSearchPanel;
     }
 
     @Override
