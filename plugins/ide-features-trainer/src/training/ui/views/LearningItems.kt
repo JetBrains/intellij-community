@@ -3,6 +3,7 @@ package training.ui.views
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.VerticalLayout
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor
@@ -184,7 +185,9 @@ private class LearningItemPanel(clickAction: () -> Unit) : JPanel() {
     addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent) {
         if (!visibleRect.contains(e.point)) return
-        clickAction()
+        WriteIntentReadAction.run {
+          clickAction()
+        }
       }
 
       override fun mouseEntered(e: MouseEvent) {
