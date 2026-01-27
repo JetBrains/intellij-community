@@ -56,7 +56,6 @@ final class UndoClientState implements Disposable {
   private final @NotNull CommandBuilder commandBuilder;
   private final @NotNull UndoRedoStacksHolder undoStacksHolder;
   private final @NotNull UndoRedoStacksHolder redoStacksHolder;
-
   private final @NotNull UndoCapabilities undoCapabilities;
 
   private final @NotNull UndoSharedState sharedState;
