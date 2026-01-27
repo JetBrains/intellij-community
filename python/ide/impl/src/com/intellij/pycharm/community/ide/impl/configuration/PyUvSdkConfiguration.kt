@@ -5,12 +5,10 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.vfs.readText
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.findEnvOrNull
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.impl.uv.common.UV_TOOL_ID
-import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.api.SuggestedSdk
 import com.intellij.python.pyproject.model.api.suggestSdk
 import com.jetbrains.python.PythonBinary
@@ -18,9 +16,9 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.*
-import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.pyvenvContains
+import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
@@ -28,7 +26,6 @@ import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.IOException
 import java.nio.file.Path
 
 private val logger = fileLogger()
@@ -38,12 +35,13 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(
-      { checkExistence -> checkManageableEnv(module, venvsInModule, checkExistence, true) }
+      { checkExistence -> checkManageableEnv(module, venvsInModule, checkExistence) }
     ) { envExists -> { createUv(module, venvsInModule, envExists) } }
 
-  override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? = prepareSdkCreator(
-    { checkExistence -> checkManageableEnv(module, venvsInModule, checkExistence, false) }
-  ) { envExists -> { createUv(module, venvsInModule, envExists) } }
+  override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+    prepareSdkCreator(
+      { checkExistence -> checkManageableEnv(module, venvsInModule, checkExistence) }
+    ) { envExists -> { createUv(module, venvsInModule, envExists) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension = this
 
@@ -60,42 +58,14 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
     module: Module,
     venvsInModule: List<PythonBinary>,
     checkExistence: CheckExistence,
-    checkToml: CheckToml,
   ): EnvCheckerResult {
     getUvExecutable() ?: return EnvCheckerResult.CannotConfigure
 
-    val (canManage, projectName) = if (checkToml) {
-      val tomlFile = PyProjectToml.findFile(module)
+    val intentionName = PyCharmCommunityCustomizationBundle.message("sdk.set.up.uv.environment", module.name)
 
-      val projectName = tomlFile?.let {
-        val tomlFileContent = withContext(Dispatchers.IO) {
-          try {
-            tomlFile.readText()
-          }
-          catch (e: IOException) {
-            logger.debug("Can't read ${tomlFile}", e)
-            null
-          }
-        } ?: return EnvCheckerResult.CannotConfigure
-        val tomlContentResult = withContext(Dispatchers.Default) { PyProjectToml.parse(tomlFileContent) }
-        val project = tomlContentResult.project ?: return EnvCheckerResult.CannotConfigure
-        project.name ?: module.name
-      }
+    val envFound = if (checkExistence) getUvEnv(venvsInModule)?.findEnvOrNull(intentionName) else null
 
-      projectName?.let { true to it } ?: (false to module.name)
-    }
-    else true to module.name
-
-    val intentionName = PyCharmCommunityCustomizationBundle.message("sdk.set.up.uv.environment", projectName)
-    val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
-
-    return when {
-      checkExistence -> {
-        getUvEnv(venvsInModule)?.findEnvOrNull(intentionName) ?: if (canManage) envNotFound else EnvCheckerResult.CannotConfigure
-      }
-      canManage -> envNotFound
-      else -> EnvCheckerResult.CannotConfigure
-    }
+    return envFound ?: EnvCheckerResult.EnvNotFound(intentionName)
   }
 
   private suspend fun getUvEnv(venvsInModule: List<PythonBinary>): PythonBinary? = venvsInModule.firstOrNull {
