@@ -102,6 +102,7 @@ internal class JpsModuleToBazel {
         ultimateRoot = ultimateRoot,
         communityRoot = communityRoot,
         project = project,
+        projectDir = projectDir,
         urlCache = urlCache,
         customModules = if (defaultCustomModules.toBooleanStrict()) DEFAULT_CUSTOM_MODULES else emptyMap(),
       )
