@@ -4,6 +4,7 @@ package com.intellij.tasks.actions;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -124,7 +125,9 @@ public class SwitchTaskAction extends ExpandableComboAction implements DumbAware
       @Override
       public PopupStep<?> onChosen(List<TaskListItem> selectedValues, boolean finalChoice) {
         if (finalChoice) {
-          selectedValues.get(0).select();
+          WriteIntentReadAction.run(() -> {
+            selectedValues.get(0).select();
+          });
           return FINAL_CHOICE;
         }
         ActionGroup group = createActionsStep(selectedValues, project, shiftPressed);
