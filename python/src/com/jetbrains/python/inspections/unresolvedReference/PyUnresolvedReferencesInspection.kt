@@ -27,6 +27,7 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
+import com.intellij.python.pyproject.model.api.isPyProjectTomlBased
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
@@ -131,6 +132,9 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       val project = node.getProject()
       val scope = GlobalSearchScope.projectScope(project)
       val module = ModuleUtilCore.findModuleForPsiElement(node) ?: return null
+      if (module.isPyProjectTomlBased) {
+        return null
+      }
 
       val importObjectsFQNs = importStatementBase.getFullyQualifiedObjectNames()
 
