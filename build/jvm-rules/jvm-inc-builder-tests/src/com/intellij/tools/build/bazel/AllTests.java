@@ -8,7 +8,8 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
   JvmIncBuilderTest.class,
   ZipBuilderTest.class,
-  DependencyGraphTest.class
+  DependencyGraphTest.class,
+  KotlinCriTest.class
 })
 public class AllTests {
 }

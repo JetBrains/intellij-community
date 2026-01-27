@@ -2,6 +2,7 @@
 
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl
 
+import org.jetbrains.annotations.TestOnly
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import org.jetbrains.jps.dependency.BackDependencyIndex
@@ -74,15 +75,20 @@ internal fun prepareSerializedData(graph: DependencyGraph): ByteArray {
  * - `com/example/Foo$$Lambda$3` → `com.example.Foo.$Lambda`
  */
 private fun ReferenceID.toFqName(): String {
-  val jvmName = (this as? JvmNodeReferenceID)?.nodeName ?: return toString()
+  val jvmName: String = (this as? JvmNodeReferenceID)?.nodeName ?: return toString()
 
-  return jvmName
-    .replace('/', '.')
+  return jvmName.normalizeJvmName()
+}
+
+private fun String.normalizeJvmName(): String =
+  this.replace('/', '.')
     .replace("$$", DOUBLE_DOLLAR_PLACEHOLDER)
     .removeAnonymousSuffix()
     .replace('$', '.')
     .replace(DOUBLE_DOLLAR_PLACEHOLDER, ".$")
-}
+
+@TestOnly
+fun String.normalizeJvmNameForTests(): String = normalizeJvmName()
 
 private const val DOUBLE_DOLLAR_PLACEHOLDER = "\u0000DOUBLE_DOLLAR\u0000"
 private fun String.removeAnonymousSuffix(): String {
