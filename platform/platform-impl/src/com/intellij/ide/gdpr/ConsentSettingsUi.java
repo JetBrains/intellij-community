@@ -4,6 +4,7 @@ package com.intellij.ide.gdpr;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.gdpr.localConsents.LocalConsentOptions;
 import com.intellij.ide.gdpr.ui.consents.*;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,7 +41,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
   private final boolean myIsJetBrainsVendor;
 
   public ConsentSettingsUi(boolean preferencesMode) {
-    this(preferencesMode, false);
+    this(preferencesMode, ApplicationInfoImpl.getShadowInstance().isVendorJetBrains());
   }
 
   @ApiStatus.Internal
