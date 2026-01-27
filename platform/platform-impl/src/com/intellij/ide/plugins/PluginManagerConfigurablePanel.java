@@ -94,21 +94,18 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
   private static final int ITEMS_PER_GROUP = 9;
 
-  private TabbedPaneHeaderComponent myTabHeaderComponent;
-  private final CountIcon myInstalledTabHeaderUpdatesCountIcon = new CountIcon();
-
-  private MultiPanel myCardPanel;
-
-  private MarketplacePluginsTab myMarketplaceTab;
-  private InstalledPluginsTab myInstalledTab;
-
   private final CoroutineScope myCoroutineScope;
 
   private final PluginModelFacade myPluginModelFacade;
-
   private PluginUpdatesService myPluginUpdatesService;
-
   private final @Nullable PluginManagerCustomizer myPluginManagerCustomizer;
+
+  private TabbedPaneHeaderComponent myTabHeaderComponent;
+  private final CountIcon myInstalledTabHeaderUpdatesCountIcon = new CountIcon();
+
+  private MarketplacePluginsTab myMarketplaceTab;
+  private InstalledPluginsTab myInstalledTab;
+  private MultiPanel myCardPanel;
 
   private String myLaterSearchQuery;
   private boolean myForceShowInstalledTabForTag = false;
