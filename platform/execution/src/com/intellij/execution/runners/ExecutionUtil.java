@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -157,7 +158,9 @@ public final class ExecutionUtil {
         notification.setListener((_notification, event) -> {
           if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
             _notification.expire();
-            _listener.hyperlinkUpdate(event);
+            WriteIntentReadAction.run(() -> {
+              _listener.hyperlinkUpdate(event);
+            });
           }
         });
       }
