@@ -1,243 +1,231 @@
 # JVM Incremental Compilation Benchmark
 
-This benchmark tool compares jvm-inc-builder's incremental compilation against non-incremental mode for the same targets.
+Benchmark tool comparing jvm-inc-builder's incremental compilation against non-incremental mode.
 
-## Overview
+## Prerequisites
 
-The existing `jvm_library` rule supports both incremental and non-incremental compilation modes via threshold flags. This benchmark measures the performance difference between:
-
-- **Incremental mode**: Default behavior with dependency graph tracking
-- **Non-incremental mode**: Forces full recompilation (vanilla-like behavior)
+- Bazel installed and available in PATH
+- Working directory: `build/jvm-rules/`
 
 ## Quick Start
 
+Run the benchmark in 3 steps:
+
 ```bash
-# Generate test projects
-./benchmark.sh generate --files=200
+cd build/jvm-rules
 
-# Run full benchmark suite
-./benchmark.sh run --output=results.json
+# 1. Generate a test project (100 Java files)
+bazel run //jvm-inc-builder-benchmark:benchmark -- generate \
+  --files=100 \
+  --language=java \
+  --output=$(pwd)/jvm-inc-builder-benchmark/generated
 
-# Run specific scenario
-./benchmark.sh run --scenario=impl_change --language=kotlin
+# 2. Run the benchmark
+bazel run //jvm-inc-builder-benchmark:benchmark -- run \
+  --project=$(pwd)/jvm-inc-builder-benchmark/generated/java-benchmark \
+  --target=//jvm-inc-builder-benchmark/generated/java-benchmark:java-benchmark \
+  --warmup=2 \
+  --iterations=3
+
+# 3. (Optional) Save results to JSON
+bazel run //jvm-inc-builder-benchmark:benchmark -- run \
+  --project=$(pwd)/jvm-inc-builder-benchmark/generated/java-benchmark \
+  --target=//jvm-inc-builder-benchmark/generated/java-benchmark:java-benchmark \
+  --output=results.json
 ```
 
-## Project Structure
+## Example Output
 
 ```
-jvm-inc-builder-benchmark/
-├── BUILD.bazel                              # Build targets
-├── README.md                                # This file
-├── benchmark.sh                             # CLI entry point
-├── src/
-│   ├── generator/
-│   │   └── ProjectGenerator.kt              # Synthetic project generator
-│   ├── runner/
-│   │   ├── BenchmarkRunner.kt               # Main orchestrator
-│   │   ├── BenchmarkConfig.kt               # Configuration data class
-│   │   ├── BenchmarkResult.kt               # Result data structures
-│   │   └── MetricsCollector.kt              # Timing/metrics collection
-│   ├── scenarios/
-│   │   ├── Scenario.kt                      # Scenario interface
-│   │   ├── ColdBuildScenario.kt             # Initial build
-│   │   ├── NoOpScenario.kt                  # No changes rebuild
-│   │   ├── ImplChangeScenario.kt            # Implementation change
-│   │   ├── ApiChangeScenario.kt             # API change (cascading)
-│   │   └── MultiChangeScenario.kt           # Multiple file changes
-│   └── output/
-│       ├── JsonReporter.kt                  # JSON output
-│       └── CliReporter.kt                   # Terminal summary
-└── generated/                               # Generated test projects (gitignored)
+=== JVM Incremental Compilation Benchmark ===
+
+Project: java-benchmark (100 files, java)
+Iterations: 3 (2 warmup)
+
++--------------+--------------+--------------+---------+
+| Scenario     | Incremental  | Non-Inc      | Speedup |
++--------------+--------------+--------------+---------+
+| cold build   | 3.1s ±0.0s   | 3.2s ±0.0s   | 1.03x   |
+| no op        | 174ms ±6ms   | 1.1s ±0.0s   | 6.62x   |
+| impl change  | 400ms ±21ms  | 1.3s ±0.0s   | 3.48x   |
+| api change   | 277ms ±28ms  | 1.2s ±0.0s   | 4.38x   |
+| multi chang  | 379ms ±29ms  | 1.5s ±0.2s   | 3.98x   |
++--------------+--------------+--------------+---------+
+
+Average speedup: 3.90x
 ```
 
-## Benchmark Scenarios
-
-| Scenario | Setup | Expected Behavior |
-|----------|-------|-------------------|
-| `cold_build` | `bazel clean` | Both modes similar (no cache) |
-| `no_op` | No changes | Incremental = instant, Non-inc = full rebuild |
-| `impl_change` | Modify `Impl001` body | Incremental = 1 file, Non-inc = all |
-| `api_change` | Add method to `Api001` | Incremental = API + dependents, Non-inc = all |
-| `multi_change` | Modify 10% of files | Incremental < Non-inc (varies by deps) |
-
-## Usage
+## Commands
 
 ### Generate Test Projects
 
 ```bash
-# Generate a Java-only project with 200 files
-./benchmark.sh generate --files=200 --language=java
+# Java project (default)
+bazel run //jvm-inc-builder-benchmark:benchmark -- generate \
+  --files=100 --language=java --output=$(pwd)/jvm-inc-builder-benchmark/generated
 
-# Generate a Kotlin-only project
-./benchmark.sh generate --files=200 --language=kotlin
+# Kotlin project
+bazel run //jvm-inc-builder-benchmark:benchmark -- generate \
+  --files=100 --language=kotlin --output=$(pwd)/jvm-inc-builder-benchmark/generated
 
-# Generate a mixed Java/Kotlin project
-./benchmark.sh generate --files=200 --language=mixed
+# Mixed Java/Kotlin project
+bazel run //jvm-inc-builder-benchmark:benchmark -- generate \
+  --files=100 --language=mixed --output=$(pwd)/jvm-inc-builder-benchmark/generated
 ```
 
 ### Run Benchmarks
 
 ```bash
-# Run full benchmark suite
-./benchmark.sh run --output=results.json
+# Full benchmark suite
+bazel run //jvm-inc-builder-benchmark:benchmark -- run \
+  --project=<path-to-project> \
+  --target=<bazel-target>
 
-# Run with custom warmup and measurement iterations
-./benchmark.sh run --warmup=5 --iterations=10
+# Single scenario only
+bazel run //jvm-inc-builder-benchmark:benchmark -- run \
+  --project=<path-to-project> \
+  --target=<bazel-target> \
+  --scenario=no_op
 
-# Run specific scenario only
-./benchmark.sh run --scenario=impl_change
+# With verbose output
+bazel run //jvm-inc-builder-benchmark:benchmark -- run \
+  --project=<path-to-project> \
+  --target=<bazel-target> \
+  --verbose
 
-# Verbose output
-./benchmark.sh run --verbose
+# Custom iterations
+bazel run //jvm-inc-builder-benchmark:benchmark -- run \
+  --project=<path-to-project> \
+  --target=<bazel-target> \
+  --warmup=5 \
+  --iterations=10
 ```
 
-### Benchmark Real Modules
+### Available Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--project=PATH` | Path to project directory | required |
+| `--target=TARGET` | Bazel target to build | required |
+| `--scenario=NAME` | Run specific scenario only | all |
+| `--warmup=N` | Warmup iterations | 3 |
+| `--iterations=N` | Measurement iterations | 5 |
+| `--output=FILE` | Output JSON file | none |
+| `--bazel=PATH` | Path to bazel binary | bazel |
+| `--verbose` | Verbose output | false |
+
+### Show Help
 
 ```bash
-# Benchmark against real IntelliJ modules
-./benchmark.sh run --target=//platform/util:util
-./benchmark.sh run --target=//platform/core-api:core-api
-./benchmark.sh run --target=//platform/editor-ui-api:editor-ui-api
+bazel run //jvm-inc-builder-benchmark:benchmark -- help
 ```
 
-### Compare Results
+## Benchmark Scenarios
 
-```bash
-./benchmark.sh compare results-v1.json results-v2.json
-```
-
-## Output Format
-
-### CLI Summary
-
-```
-=== JVM Incremental Compilation Benchmark ===
-
-Project: java-only (200 files)
-Iterations: 10 (5 warmup)
-
-+--------------+--------------+-------------+---------+
-| Scenario     | Incremental  | Non-Inc     | Speedup |
-+--------------+--------------+-------------+---------+
-| Cold Build   | 12.3s ±0.5s  | 12.1s ±0.4s | 0.98x   |
-| No-Op        | 0.8s ±0.1s   | 11.9s ±0.3s | 14.9x   |
-| Impl Change  | 1.2s ±0.2s   | 12.0s ±0.4s | 10.0x   |
-| API Change   | 3.5s ±0.3s   | 12.2s ±0.5s | 3.5x    |
-| Multi (10%)  | 4.8s ±0.4s   | 12.1s ±0.4s | 2.5x    |
-+--------------+--------------+-------------+---------+
-```
-
-### JSON Output
-
-```json
-{
-  "timestamp": "2024-01-26T10:30:00Z",
-  "config": {
-    "project": "java-only",
-    "files": 200,
-    "warmupIterations": 5,
-    "measurementIterations": 10
-  },
-  "results": [
-    {
-      "scenario": "cold_build",
-      "incremental": {
-        "mean_ms": 12300,
-        "median_ms": 12250,
-        "std_dev_ms": 500,
-        "min_ms": 11800,
-        "max_ms": 13200
-      },
-      "non_incremental": { ... },
-      "speedup": 0.98
-    }
-  ]
-}
-```
+| Scenario | Description | Expected Result |
+|----------|-------------|-----------------|
+| `cold_build` | Build after `bazel clean` | Both modes similar (~1x) |
+| `no_op` | Rebuild with no changes | Incremental much faster (5-15x) |
+| `impl_change` | Modify implementation file body | Incremental faster (3-10x) |
+| `api_change` | Add method to API class | Incremental faster (3-5x) |
+| `multi_change` | Modify 10% of files | Incremental faster (2-4x) |
 
 ## How It Works
 
 The benchmark controls incremental vs non-incremental behavior using threshold flags:
 
 ```bash
-# Incremental mode (enabled)
+# Incremental mode (enabled) - recompiles only changed files
 --@rules_jvm//:koltin_inc_threshold=1
 --@rules_jvm//:java_inc_threshold=1
 
-# Non-incremental mode (disabled)
+# Non-incremental mode (disabled) - always full rebuild
 --@rules_jvm//:koltin_inc_threshold=-1
 --@rules_jvm//:java_inc_threshold=-1
 ```
 
-When the threshold is set to 1, incremental compilation is enabled and will recompile only changed files and their dependents. When set to -1, all files are recompiled regardless of changes.
+Each scenario:
+1. Sets up the test state (modify files, clean cache, etc.)
+2. Runs incremental build and measures time
+3. Resets state
+4. Runs non-incremental build and measures time
+5. Reports the speedup ratio
 
 ## Generated Project Structure
 
-Synthetic projects are generated with:
-
-- **API classes** (20%): Public interfaces/classes
-- **Implementation classes** (50%): Classes that implement APIs
-- **Utility classes** (30%): Helper classes used by implementations
-
-Dependencies flow: API → Impl ← Util
+Projects are generated with a realistic dependency graph:
 
 ```
 generated/java-benchmark/
 ├── BUILD.bazel
 └── src/
-    ├── api/
+    ├── api/          # 20% - Public interfaces
     │   ├── Api001.java
     │   └── ...
-    ├── impl/
-    │   ├── Impl001.java     # Depends on api/ and util/
+    ├── impl/         # 50% - Implementations (depend on api/ and util/)
+    │   ├── Impl001.java
     │   └── ...
-    └── util/
+    └── util/         # 30% - Utilities (used by impl/)
         ├── Util001.java
         └── ...
 ```
 
-## Verification
+## JSON Output Format
 
-### Correctness
-The benchmark can verify that incremental and non-incremental modes produce identical output JARs:
-
-```kotlin
-metricsCollector.verifyOutputEquivalence(target)
+```json
+{
+  "timestamp": "2024-01-26T10:30:00Z",
+  "config": {
+    "project": "java-benchmark",
+    "files": 100,
+    "language": "java",
+    "warmupIterations": 3,
+    "measurementIterations": 5
+  },
+  "results": [
+    {
+      "scenario": "no_op",
+      "incremental": {
+        "mean_ms": 174,
+        "median_ms": 170,
+        "std_dev_ms": 6,
+        "min_ms": 170,
+        "max_ms": 184,
+        "success_rate": 1.0
+      },
+      "non_incremental": {
+        "mean_ms": 1152,
+        "median_ms": 1144,
+        "std_dev_ms": 12,
+        "min_ms": 1136,
+        "max_ms": 1164,
+        "success_rate": 1.0
+      },
+      "speedup": 6.62
+    }
+  ]
+}
 ```
 
-### Reproducibility
-Run multiple iterations to verify low variance in measurements.
+## Tips
 
-### Scaling
-Test with different project sizes: 100, 250, 500 files.
+1. **Warm up first**: Use at least 2-3 warmup iterations for stable results
+2. **Multiple measurements**: Use 5+ measurement iterations to reduce noise
+3. **Larger projects**: Test with 200-500 files to see more pronounced differences
+4. **Verbose mode**: Use `--verbose` to see individual build commands and times
+5. **Compare runs**: Save JSON output and compare across code changes
 
-## Configuration
+## Troubleshooting
 
-### ProjectConfig
+**Build fails with "target not found"**
+- Ensure the generated project path is absolute
+- Check that the target matches the project name in BUILD.bazel
 
-```kotlin
-data class ProjectConfig(
-    val name: String,
-    val language: Language,      // JAVA, KOTLIN, MIXED
-    val totalFiles: Int,         // 100, 250, 500
-    val apiClassPercent: Int,    // 20% - public API classes
-    val implClassPercent: Int,   // 50% - implementation classes
-    val utilClassPercent: Int,   // 30% - utility classes
-    val avgDepsPerClass: Int,    // 3-5 internal dependencies
-)
-```
+**High variance in results**
+- Increase warmup iterations
+- Close other applications
+- Run on a quiet machine
 
-### BenchmarkConfig
-
-```kotlin
-data class BenchmarkConfig(
-    val projectPath: Path,
-    val target: String,
-    val scenarios: List<Scenario>,
-    val warmupIterations: Int = 3,
-    val measurementIterations: Int = 5,
-    val bazelPath: String = "bazel",
-    val outputPath: Path? = null,
-    val verbose: Boolean = false,
-)
-```
+**API change scenario shows build failures**
+- This is expected - adding interface methods breaks implementors
+- The timing is still captured correctly
