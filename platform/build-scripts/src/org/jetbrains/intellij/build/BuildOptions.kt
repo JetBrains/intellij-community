@@ -397,6 +397,11 @@ data class BuildOptions(
   var useLocalNSIS: String? = null
 
   /**
+   * When `true`, builds and uses a local version of `jetbraind`.
+   */
+  var useLocalJetbrainsDaemon: Boolean = getBooleanProperty("intellij.build.local.jetbrainsd", false)
+
+  /**
    * When `true`, cross-platform distribution will be packed using zip64 in AlwaysWithCompatibility mode.
    */
   var useZip64ForCrossPlatformDistribution: Boolean = getBooleanProperty("intellij.build.cross.platform.dist.zip64", false)
