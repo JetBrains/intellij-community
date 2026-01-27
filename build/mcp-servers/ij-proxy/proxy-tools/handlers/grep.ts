@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import path from 'node:path'
+import picomatch from 'picomatch'
 import {RegExpParser} from '@eslint-community/regexpp'
 import {
   extractEntries,
@@ -27,6 +28,13 @@ export async function handleGrepTool(args, projectPath, callUpstreamTool, isCode
     ? `*.${args.type.trim()}`
     : undefined
   const fileMask = glob || include || typeFilter
+  const fileMaskSource = glob ? 'glob' : include ? 'include' : typeFilter ? 'type' : null
+  // IntelliJ fileMask matches filenames only; handle path-aware globs locally.
+  const pathGlob = (fileMaskSource === 'glob' || fileMaskSource === 'include') && fileMask && isPathAwareGlob(fileMask)
+    ? normalizeGlobPattern(fileMask)
+    : undefined
+  // Use a safe tail mask to reduce scan without risking false negatives.
+  const derivedMask = pathGlob ? deriveFileMaskFromPathGlob(pathGlob) : undefined
 
   const rawLimit = isCodexStyle
     ? args.limit
@@ -43,7 +51,7 @@ export async function handleGrepTool(args, projectPath, callUpstreamTool, isCode
   const includeLineNumbers = Boolean(args['-n'] ?? false)
 
   let directoryToSearch = relative || undefined
-  let resolvedMask = fileMask
+  let resolvedMask = pathGlob ? derivedMask : fileMask
   const hasExplicitFileMask = Boolean(fileMask)
   let treatAsFile = false
 
@@ -75,17 +83,37 @@ export async function handleGrepTool(args, projectPath, callUpstreamTool, isCode
   )
   const entries = extractEntries(result)
   const filteredEntries = filterEntriesByPath(entries, projectPath, relative, treatAsFile)
+  // Apply path glob filtering after search_in_files_* since upstream ignores path globs.
+  let finalEntries = pathGlob
+    ? filterEntriesByPathGlob(filteredEntries, projectPath, pathGlob)
+    : filteredEntries
 
-  if (filteredEntries.length === 0) {
+  if (finalEntries.length === 0 && useRegex) {
+    // Some IDE regex searches miss top-level alternations; retry per alternative as a fallback.
+    const fallbackEntries = await searchAlternativesWhenRegexEmpty(
+      pattern,
+      {directoryToSearch, fileMask: resolvedMask, caseSensitive, maxUsageCount: FULL_SCAN_USAGE_COUNT},
+      projectPath,
+      relative,
+      treatAsFile,
+      pathGlob,
+      callUpstreamTool
+    )
+    if (fallbackEntries.length > 0) {
+      finalEntries = fallbackEntries
+    }
+  }
+
+  if (finalEntries.length === 0) {
     return 'No matches found.'
   }
 
   if (outputMode === 'count') {
-    return String(filteredEntries.length)
+    return String(finalEntries.length)
   }
 
   if (outputMode === 'content') {
-    return filteredEntries.slice(0, limit).map((entry) => {
+    return finalEntries.slice(0, limit).map((entry) => {
       const filePath = normalizeEntryPath(projectPath, entry.filePath)
       const lineNumber = entry.lineNumber
       const lineText = typeof entry['lineText'] === 'string' ? entry['lineText'] : ''
@@ -102,7 +130,7 @@ export async function handleGrepTool(args, projectPath, callUpstreamTool, isCode
 
   const seen = new Set()
   const results = []
-  for (const entry of filteredEntries) {
+  for (const entry of finalEntries) {
     const filePath = normalizeEntryPath(projectPath, entry.filePath)
     if (seen.has(filePath)) continue
     seen.add(filePath)
@@ -146,9 +174,69 @@ function isWithinDirectory(filePath, directoryPath) {
   return !relative.startsWith('..') && !path.isAbsolute(relative)
 }
 
+function entryKey(entry) {
+  const filePath = typeof entry?.filePath === 'string' ? entry.filePath : ''
+  const lineNumber = typeof entry?.lineNumber === 'number' ? entry.lineNumber : ''
+  const lineText = typeof entry?.lineText === 'string' ? entry.lineText : ''
+  return `${filePath}:${lineNumber}:${lineText}`
+}
+
+function filterEntriesByPathGlob(entries, projectPath, pathGlob) {
+  const matcher = createPathGlobMatcher(pathGlob)
+  if (!matcher) return entries
+  return entries.filter((entry) => {
+    const entryPath = resolveEntryPath(projectPath, entry)
+    if (!entryPath) return false
+    const relativePath = path.relative(projectPath, entryPath)
+    if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) return false
+    // Match against normalized project-relative paths (POSIX separators).
+  return matcher(normalizePathForGlob(relativePath))
+  })
+}
+
+async function searchAlternativesWhenRegexEmpty(
+  pattern,
+  toolArgs,
+  projectPath,
+  relative,
+  treatAsFile,
+  pathGlob,
+  callUpstreamTool
+) {
+  const alternatives = getTopLevelAlternatives(pattern)
+  if (!alternatives || alternatives.length < 2) return []
+  const seen = new Set()
+  const merged = []
+
+  for (const alternative of alternatives) {
+    const trimmed = alternative.trim()
+    if (!trimmed) continue
+    const result = await callUpstreamTool('search_in_files_by_regex', {
+      ...toolArgs,
+      regexPattern: trimmed
+    })
+    for (const entry of extractEntries(result)) {
+      const key = entryKey(entry)
+      if (seen.has(key)) continue
+      seen.add(key)
+      merged.push(entry)
+    }
+  }
+
+  if (merged.length === 0) return []
+  const filtered = filterEntriesByPath(merged, projectPath, relative, treatAsFile)
+  return pathGlob ? filterEntriesByPathGlob(filtered, projectPath, pathGlob) : filtered
+}
+
 function getLiteralSearchText(pattern) {
   const ast = parsePatternSafe(pattern)
   return ast ? extractLiteralFromPattern(ast) : null
+}
+
+function getTopLevelAlternatives(pattern) {
+  const ast = parsePatternSafe(pattern)
+  if (!ast || !Array.isArray(ast.alternatives) || ast.alternatives.length < 2) return null
+  return ast.alternatives.map((alternative) => pattern.slice(alternative.start, alternative.end))
 }
 
 function parsePatternSafe(pattern) {
@@ -208,6 +296,44 @@ function extractLiteralFromPattern(patternAst) {
 
 function endsWithSeparator(input) {
   return input.endsWith(path.sep) || input.endsWith('/') || input.endsWith('\\')
+}
+
+function isPathAwareGlob(pattern) {
+  return pattern.includes('/') || pattern.includes('\\')
+}
+
+function normalizeGlobPattern(pattern) {
+  let normalized = pattern.replace(/\\/g, '/')
+  if (normalized.startsWith('./')) {
+    normalized = normalized.slice(2)
+  }
+  if (normalized.startsWith('/')) {
+    normalized = normalized.slice(1)
+  }
+  return normalized
+}
+
+function normalizePathForGlob(candidate) {
+  return candidate.replace(/\\/g, '/')
+}
+
+function deriveFileMaskFromPathGlob(pattern) {
+  if (pattern.includes(';')) return undefined
+  const normalized = normalizeGlobPattern(pattern)
+  const tail = normalized.split('/').pop()
+  if (!tail || tail === '**' || tail.includes('**')) return undefined
+  // Skip complex tail patterns to avoid accidental narrowing.
+  if (/[{}()[\]]/.test(tail)) return undefined
+  return tail
+}
+
+function createPathGlobMatcher(pattern) {
+  const normalized = normalizeGlobPattern(pattern)
+  const patterns = normalized.split(';').map((entry) => entry.trim()).filter(Boolean)
+  if (patterns.length === 0) return null
+  const nocase = path.sep === '\\'
+  const matchers = patterns.map((entry) => picomatch(entry, {dot: true, nocase}))
+  return (candidate) => matchers.some((matcher) => matcher(candidate))
 }
 
 async function isExistingFilePath(relativePath, callUpstreamTool) {

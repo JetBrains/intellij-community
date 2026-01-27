@@ -201,4 +201,84 @@ describe('grep handler (edge cases)', () => {
 
     strictEqual(calls[0].args.fileMask, '*.ts')
   })
+
+  it('falls back to top-level alternation when regex returns empty', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      search_in_files_by_regex: ({regexPattern}) => {
+        if (regexPattern === 'class\\s+TargetName|inline class\\s+TargetName') {
+          return {structuredContent: {entries: []}}
+        }
+        if (regexPattern === 'class\\s+TargetName') {
+          return {
+            structuredContent: {
+              entries: [{filePath: 'src/a.kt', lineNumber: 4, lineText: 'class TargetName'}]
+            }
+          }
+        }
+        if (regexPattern === 'inline class\\s+TargetName') {
+          return {structuredContent: {entries: []}}
+        }
+        return {structuredContent: {entries: []}}
+      }
+    })
+
+    const result = await handleGrepTool({
+      pattern: 'class\\s+TargetName|inline class\\s+TargetName',
+      output_mode: 'content',
+      '-n': true
+    }, projectPath, callUpstreamTool, false)
+
+    strictEqual(result, `${path.resolve(projectPath, 'src/a.kt')}:4: class TargetName`)
+    strictEqual(calls.length, 3)
+  })
+
+  it('filters entries with path-aware glob', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      search_in_files_by_text: () => ({
+        structuredContent: {
+          entries: [
+            {filePath: 'src/foo.iml'},
+            {filePath: 'src/sub/foo2.iml'},
+            {filePath: 'other/foo.iml'}
+          ]
+        }
+      })
+    })
+
+    const result = await handleGrepTool({
+      pattern: 'alpha',
+      glob: 'src/**/foo*.iml'
+    }, projectPath, callUpstreamTool, false)
+
+    deepStrictEqual(result.split('\n'), [
+      path.resolve(projectPath, 'src/foo.iml'),
+      path.resolve(projectPath, 'src/sub/foo2.iml')
+    ])
+    strictEqual(calls[0].args.fileMask, 'foo*.iml')
+  })
+
+  it('filters entries with path-aware include in codex mode', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      search_in_files_by_text: () => ({
+        structuredContent: {
+          entries: [
+            {filePath: 'src/foo.kt'},
+            {filePath: 'src/sub/foo2.kt'},
+            {filePath: 'other/foo.kt'}
+          ]
+        }
+      })
+    })
+
+    const result = await handleGrepTool({
+      pattern: 'alpha',
+      include: 'src/**/foo*.kt'
+    }, projectPath, callUpstreamTool, true)
+
+    deepStrictEqual(result.split('\n'), [
+      path.resolve(projectPath, 'src/foo.kt'),
+      path.resolve(projectPath, 'src/sub/foo2.kt')
+    ])
+    strictEqual(calls[0].args.fileMask, 'foo*.kt')
+  })
 })

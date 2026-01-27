@@ -16,6 +16,7 @@
     "is-port-reachable": "^4.0.0",
     "p-retry": "^7.1.1",
     "p-timeout": "^7.0.1",
+    "picomatch": "^4.0.3",
     "zod": "^4.3.6"
   },
   "devDependencies": {
