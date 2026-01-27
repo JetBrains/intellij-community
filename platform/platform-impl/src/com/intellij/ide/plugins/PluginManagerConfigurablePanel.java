@@ -376,34 +376,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     });
   }
 
-  private void addSuggestedGroup(@NotNull List<? super PluginsGroup> groups,
-                                 @NotNull Map<@NotNull PluginId,
-                                   @NotNull List<@NotNull HtmlChunk>> errors,
-                                 @NotNull List<@NotNull PluginUiModel> plugins,
-                                 @NotNull Map<@NotNull PluginId, @NotNull PluginUiModel> installedPlugins,
-                                 @NotNull Map<@NotNull PluginId, @NotNull PluginInstallationState> installationStates) {
-    String groupName = IdeBundle.message("plugins.configurable.suggested");
-    LOG.info("Marketplace tab: '" + groupName + "' group load started");
-
-    for (PluginUiModel plugin : plugins) {
-      if (plugin.isFromMarketplace()) {
-        plugin.setInstallSource(FUSEventSource.PLUGINS_SUGGESTED_GROUP);
-      }
-
-      FUSEventSource.PLUGINS_SUGGESTED_GROUP.logPluginSuggested(plugin.getPluginId());
-    }
-    addGroup(groups,
-             groupName,
-             PluginsGroupType.SUGGESTED,
-             "",
-             plugins,
-             group -> false,
-             errors,
-             installedPlugins,
-             installationStates);
-  }
-
-
   /** Modifies the state of the plugin list, excluding Ultimate plugins when the Ultimate license is not active. */
   static void setState(PluginModelFacade pluginModelFacade, Collection<PluginUiModel> models, boolean isEnable) {
     if (models.isEmpty()) return;
@@ -495,71 +467,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       panel.initialSelection();
     }
     return pane;
-  }
-
-  private void addGroup(@NotNull List<? super PluginsGroup> groups,
-                        @NotNull @Nls String name,
-                        @NotNull PluginsGroupType type,
-                        @NotNull String showAllQuery,
-                        @NotNull List<PluginUiModel> customPlugins,
-                        @NotNull Predicate<? super PluginsGroup> showAllPredicate,
-                        @NotNull Map<PluginId, List<HtmlChunk>> errors,
-                        @NotNull Map<PluginId, PluginUiModel> installedPlugins,
-                        @NotNull Map<PluginId, PluginInstallationState> installationStates) {
-    PluginsGroup group = new PluginsGroup(name, type);
-    group.getPreloadedModel().setErrors(errors);
-    group.getPreloadedModel().setInstalledPlugins(installedPlugins);
-    group.getPreloadedModel().setPluginInstallationStates(installationStates);
-    int i = 0;
-    for (Iterator<PluginUiModel> iterator = customPlugins.iterator(); iterator.hasNext() && i < ITEMS_PER_GROUP; i++) {
-      group.addModel(iterator.next());
-    }
-
-    if (showAllPredicate.test(group)) {
-      group.rightAction = new LinkLabelButton<>(IdeBundle.message("plugins.configurable.show.all"),
-                                                null,
-                                                myMarketplaceTab.searchListener,
-                                                showAllQuery);
-      group.rightAction.setBorder(JBUI.Borders.emptyRight(5));
-    }
-
-    if (!group.getModels().isEmpty()) {
-      groups.add(group);
-    }
-    LOG.info("Marketplace tab: '" + name + "' group load finished");
-  }
-
-  private void addGroupViaLightDescriptor(@NotNull List<? super PluginsGroup> groups,
-                                          @NotNull @Nls String name,
-                                          @NotNull PluginsGroupType type,
-                                          @NotNull @NonNls String query,
-                                          @NotNull @NonNls String showAllQuery,
-                                          @NotNull Map<String, PluginSearchResult> marketplaceData,
-                                          @NotNull Map<PluginId, List<HtmlChunk>> errors,
-                                          @NotNull Map<PluginId, PluginUiModel> installedPluginIds,
-                                          @NotNull Map<PluginId, PluginInstallationState> installationStates)
-    throws IOException {
-    LOG.info("Marketplace tab: '" + name + "' group load started");
-    PluginSearchResult searchResult = marketplaceData.get(query);
-    if (searchResult.getError() != null) {
-      throw new IOException(searchResult.getError());
-    }
-
-    List<PluginUiModel> plugins = searchResult.getPlugins();
-    for (PluginUiModel plugin : plugins) {
-      plugin.setInstallSource(FUSEventSource.PLUGINS_STAFF_PICKS_GROUP);
-      FUSEventSource.PLUGINS_STAFF_PICKS_GROUP.logPluginSuggested(plugin.getPluginId());
-    }
-
-    addGroup(groups,
-             name,
-             type,
-             showAllQuery,
-             plugins,
-             __ -> plugins.size() >= ITEMS_PER_GROUP,
-             errors,
-             installedPluginIds,
-             installationStates);
   }
 
   @Override
@@ -1442,6 +1349,98 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     @Override
     protected void onSearchReset() {
       PluginManagerUsageCollector.INSTANCE.searchReset();
+    }
+
+    private void addSuggestedGroup(@NotNull List<? super PluginsGroup> groups,
+                                   @NotNull Map<@NotNull PluginId,
+                                     @NotNull List<@NotNull HtmlChunk>> errors,
+                                   @NotNull List<@NotNull PluginUiModel> plugins,
+                                   @NotNull Map<@NotNull PluginId, @NotNull PluginUiModel> installedPlugins,
+                                   @NotNull Map<@NotNull PluginId, @NotNull PluginInstallationState> installationStates) {
+      String groupName = IdeBundle.message("plugins.configurable.suggested");
+      LOG.info("Marketplace tab: '" + groupName + "' group load started");
+
+      for (PluginUiModel plugin : plugins) {
+        if (plugin.isFromMarketplace()) {
+          plugin.setInstallSource(FUSEventSource.PLUGINS_SUGGESTED_GROUP);
+        }
+
+        FUSEventSource.PLUGINS_SUGGESTED_GROUP.logPluginSuggested(plugin.getPluginId());
+      }
+      addGroup(groups,
+               groupName,
+               PluginsGroupType.SUGGESTED,
+               "",
+               plugins,
+               group -> false,
+               errors,
+               installedPlugins,
+               installationStates);
+    }
+
+    private void addGroup(@NotNull List<? super PluginsGroup> groups,
+                          @NotNull @Nls String name,
+                          @NotNull PluginsGroupType type,
+                          @NotNull String showAllQuery,
+                          @NotNull List<PluginUiModel> customPlugins,
+                          @NotNull Predicate<? super PluginsGroup> showAllPredicate,
+                          @NotNull Map<PluginId, List<HtmlChunk>> errors,
+                          @NotNull Map<PluginId, PluginUiModel> installedPlugins,
+                          @NotNull Map<PluginId, PluginInstallationState> installationStates) {
+      PluginsGroup group = new PluginsGroup(name, type);
+      group.getPreloadedModel().setErrors(errors);
+      group.getPreloadedModel().setInstalledPlugins(installedPlugins);
+      group.getPreloadedModel().setPluginInstallationStates(installationStates);
+      int i = 0;
+      for (Iterator<PluginUiModel> iterator = customPlugins.iterator(); iterator.hasNext() && i < ITEMS_PER_GROUP; i++) {
+        group.addModel(iterator.next());
+      }
+
+      if (showAllPredicate.test(group)) {
+        group.rightAction = new LinkLabelButton<>(IdeBundle.message("plugins.configurable.show.all"),
+                                                  null,
+                                                  myMarketplaceTab.searchListener,
+                                                  showAllQuery);
+        group.rightAction.setBorder(JBUI.Borders.emptyRight(5));
+      }
+
+      if (!group.getModels().isEmpty()) {
+        groups.add(group);
+      }
+      LOG.info("Marketplace tab: '" + name + "' group load finished");
+    }
+
+    private void addGroupViaLightDescriptor(@NotNull List<? super PluginsGroup> groups,
+                                            @NotNull @Nls String name,
+                                            @NotNull PluginsGroupType type,
+                                            @NotNull @NonNls String query,
+                                            @NotNull @NonNls String showAllQuery,
+                                            @NotNull Map<String, PluginSearchResult> marketplaceData,
+                                            @NotNull Map<PluginId, List<HtmlChunk>> errors,
+                                            @NotNull Map<PluginId, PluginUiModel> installedPluginIds,
+                                            @NotNull Map<PluginId, PluginInstallationState> installationStates)
+      throws IOException {
+      LOG.info("Marketplace tab: '" + name + "' group load started");
+      PluginSearchResult searchResult = marketplaceData.get(query);
+      if (searchResult.getError() != null) {
+        throw new IOException(searchResult.getError());
+      }
+
+      List<PluginUiModel> plugins = searchResult.getPlugins();
+      for (PluginUiModel plugin : plugins) {
+        plugin.setInstallSource(FUSEventSource.PLUGINS_STAFF_PICKS_GROUP);
+        FUSEventSource.PLUGINS_STAFF_PICKS_GROUP.logPluginSuggested(plugin.getPluginId());
+      }
+
+      addGroup(groups,
+               name,
+               type,
+               showAllQuery,
+               plugins,
+               __ -> plugins.size() >= ITEMS_PER_GROUP,
+               errors,
+               installedPluginIds,
+               installationStates);
     }
 
     private final class MarketplaceSortByAction extends ToggleAction implements DumbAware {
