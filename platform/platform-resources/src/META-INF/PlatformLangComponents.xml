@@ -202,7 +202,8 @@
                         serviceImplementation="com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.wm.ex.WelcomeScreenTabService"
-                    serviceImplementation="com.intellij.openapi.wm.ex.NoWelcomeScreenTabService"/>
+                    serviceImplementation="com.intellij.openapi.wm.ex.NoWelcomeScreenTabService"
+                    open="true"/>
 
     <!--XNext-->
     <applicationService serviceInterface="com.intellij.openapi.application.impl.InternalUICustomization"
