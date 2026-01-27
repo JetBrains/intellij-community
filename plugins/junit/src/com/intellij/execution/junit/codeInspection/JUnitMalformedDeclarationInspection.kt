@@ -862,7 +862,8 @@ private class JUnitMalformedSignatureVisitor(
       holder.registerProblem(anchor.navigationElement, message, *quickFixes)
     }
     else {
-      val componentType = getComponentType(sourceProvider.type, method.javaPsi)
+      val type = PsiUtil.substituteTypeParameter(sourceProvider.type, JAVA_UTIL_FUNCTION_SUPPLIER, 0, true) ?: sourceProvider.type
+      val componentType = getComponentType(type, method.javaPsi)
       if (componentType == null) {
         val message = JUnitBundle.message(
           "jvm.inspections.junit.malformed.param.field.source.return.type.descriptor", providerName
