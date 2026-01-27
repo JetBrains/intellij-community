@@ -92,7 +92,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     }
   }
 
-  private fun getEnvironmentYml(module: Module) = listOf(
+  private suspend fun getEnvironmentYml(module: Module) = listOf(
     CondaEnvironmentYmlSdkUtils.ENV_YAML_FILE_NAME,
     CondaEnvironmentYmlSdkUtils.ENV_YML_FILE_NAME,
   ).firstNotNullOfOrNull { findAmongRoots(module, it) }

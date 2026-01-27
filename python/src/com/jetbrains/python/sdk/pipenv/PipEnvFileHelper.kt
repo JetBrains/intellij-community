@@ -7,8 +7,6 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.findAmongRoots
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -19,5 +17,5 @@ object PipEnvFileHelper {
   fun getPipFileLock(sdk: Sdk): VirtualFile? =
     sdk.associatedModulePath?.let { StandardFileSystems.local().findFileByPath(it)?.findChild(PIP_FILE_LOCK) }
 
-  suspend fun pipFile(module: Module): VirtualFile? = withContext(Dispatchers.IO) { findAmongRoots(module, PIP_FILE) }
+  suspend fun pipFile(module: Module): VirtualFile? = findAmongRoots(module, PIP_FILE)
 }
