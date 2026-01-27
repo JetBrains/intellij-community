@@ -6855,7 +6855,6 @@ c:com.intellij.find.impl.FindInProjectUtil$StringUsageTarget
 - showSettings():V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.find.impl.FindManagerImpl
-- com.intellij.find.FindManager
 - <init>(com.intellij.openapi.project.Project):V
 - canFindUsages(com.intellij.psi.PsiElement):Z
 - clearFindingNextUsageInFile():V
@@ -6863,20 +6862,15 @@ f:com.intellij.find.impl.FindManagerImpl
 - createReplaceInFileModel():com.intellij.find.FindModel
 - findNextUsageInEditor(com.intellij.openapi.editor.Editor):Z
 - findPreviousUsageInEditor(com.intellij.openapi.editor.Editor):Z
-- findString(java.lang.CharSequence,I,com.intellij.find.FindModel):com.intellij.find.FindResult
-- findString(java.lang.CharSequence,I,com.intellij.find.FindModel,com.intellij.openapi.vfs.VirtualFile):com.intellij.find.FindResult
 - findUsages(com.intellij.psi.PsiElement):V
 - findUsages(com.intellij.psi.PsiElement,Z):V
 - findUsagesInEditor(com.intellij.psi.PsiElement,com.intellij.openapi.fileEditor.FileEditor):V
 - findUsagesInScope(com.intellij.psi.PsiElement,com.intellij.psi.search.SearchScope):V
 - findWasPerformed():Z
-- getFindInFileModel():com.intellij.find.FindModel
-- getFindInProjectModel():com.intellij.find.FindModel
 - getFindNextModel():com.intellij.find.FindModel
 - getFindNextModel(com.intellij.openapi.editor.Editor):com.intellij.find.FindModel
 - getFindUsagesManager():com.intellij.find.findUsages.FindUsagesManager
 - getPreviousFindModel():com.intellij.find.FindModel
-- getStringToReplace(java.lang.String,com.intellij.find.FindModel,I,java.lang.CharSequence):java.lang.String
 - selectNextOccurrenceWasPerformed():Z
 - setFindNextModel(com.intellij.find.FindModel):V
 - setFindWasPerformed():V

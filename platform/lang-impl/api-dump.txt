@@ -545,6 +545,19 @@ com.intellij.find.actions.ShowUsagesActionHandler
 com.intellij.find.editorHeaderActions.ContextAwareShortcutProvider
 - a:getShortcut(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.ShortcutSet
 com.intellij.find.editorHeaderActions.Embeddable
+a:com.intellij.find.impl.FindManagerBase
+- com.intellij.find.FindManager
+- pf:myFindInFileModel:com.intellij.find.FindModel
+- pf:myFindInProjectModel:com.intellij.find.FindModel
+- pf:myProject:com.intellij.openapi.project.Project
+- <init>(com.intellij.openapi.project.Project):V
+- findString(java.lang.CharSequence,I,com.intellij.find.FindModel):com.intellij.find.FindResult
+- findString(java.lang.CharSequence,I,com.intellij.find.FindModel,com.intellij.openapi.vfs.VirtualFile):com.intellij.find.FindResult
+- getFindInFileModel():com.intellij.find.FindModel
+- getFindInProjectModel():com.intellij.find.FindModel
+- getStringToReplace(java.lang.String,com.intellij.find.FindModel,I,java.lang.CharSequence):java.lang.String
+f:com.intellij.find.impl.FindManagerImpl
+- com.intellij.find.impl.FindManagerBase
 com.intellij.find.impl.FindPopupScopeUI
 - a:applyTo(com.intellij.find.FindModel,com.intellij.find.impl.FindPopupScopeUI$ScopeType):V
 - a:applyTo(com.intellij.find.FindSettings,com.intellij.find.impl.FindPopupScopeUI$ScopeType):V
