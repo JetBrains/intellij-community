@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -356,6 +356,7 @@ public class InvokeIntention extends ActionOnFile {
                       .filter(myPolicy::trackComment)
                       .map(PsiElement::getText)
                       .map(text -> text.replaceAll("[\\s*]+", " "))
+                      .map(text -> text.replaceAll("\\{@link .*?}", "{@link}"))
                       .collect(Collectors.toList());
   }
 
