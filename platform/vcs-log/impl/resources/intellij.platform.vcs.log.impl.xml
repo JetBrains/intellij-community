@@ -67,6 +67,8 @@
     <projectService serviceInterface="com.intellij.vcs.log.impl.VcsProjectLog"
                     serviceImplementation="com.intellij.vcs.log.impl.IdeVcsProjectLog"/>
     <postStartupActivity implementation="com.intellij.vcs.log.impl.IdeVcsProjectLog$InitLogStartupActivity"/>
+    <registryKey key="vcs.log.tabs.restore.without.filters" defaultValue="false"
+                 description="Restore VCS Log tabs with empty filters when project is re-opened"/>
 
     <postStartupActivity implementation="com.intellij.vcs.log.impl.VcsLogToolWindowMaximizedStateHandler"/>
 

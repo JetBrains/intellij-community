@@ -35,6 +35,10 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
     return MyVcsLogUiPropertiesImpl(id)
   }
 
+  fun checkTabHasFilters(id: String): Boolean {
+    return _state.tabStates[id]?.filters?.isNotEmpty() ?: false
+  }
+
   fun addTab(tabId: String, location: VcsLogTabLocation) {
     _state.openTabs[tabId] = location
   }
