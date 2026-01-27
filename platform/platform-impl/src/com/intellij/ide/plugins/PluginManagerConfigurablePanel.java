@@ -109,17 +109,9 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
   private PluginsGroupComponentWithProgress myMarketplacePanel;
 
-  private final PluginsGroup myBundledUpdateGroup =
-    new PluginsGroup(IdeBundle.message("plugins.configurable.bundled.updates"), PluginsGroupType.BUNDLED_UPDATE);
-
   private Runnable myMarketplaceRunnable;
 
   private SearchResultPanel myMarketplaceSearchPanel;
-
-  private final LinkLabel<Object> myUpdateAll = new LinkLabelButton<>(IdeBundle.message("plugin.manager.update.all"), null);
-  private final LinkLabel<Object> myUpdateAllBundled = new LinkLabelButton<>(IdeBundle.message("plugin.manager.update.all"), null);
-  private final JLabel myUpdateCounter = new CountComponent();
-  private final JLabel myUpdateCounterBundled = new CountComponent();
 
   private final CoroutineScope myCoroutineScope;
 
@@ -171,10 +163,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     };
     createGearGotIt();
     myLaterSearchQuery = searchQuery;
-    myUpdateAll.setVisible(false);
-    myUpdateAllBundled.setVisible(false);
-    myUpdateCounter.setVisible(false);
-    myUpdateCounterBundled.setVisible(false);
 
     myTabHeaderComponent.addTab(IdeBundle.message("plugin.manager.tab.marketplace"), null);
     myTabHeaderComponent.addTab(IdeBundle.message("plugin.manager.tab.installed"), myInstalledTabHeaderUpdatesCountIcon);
@@ -342,22 +330,11 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   private void onPluginUpdatesRecalculation(Integer updatesCount) {
     int count = updatesCount == null ? 0 : updatesCount;
     String text = Integer.toString(count);
-    boolean visible = count > 0;
 
     String tooltip = PluginUpdatesService.getUpdatesTooltip();
     myTabHeaderComponent.setTabTooltip(INSTALLED_TAB, tooltip);
 
-    myUpdateAll.setEnabled(true);
-    myUpdateAllBundled.setEnabled(true);
-    myUpdateAll.setVisible(visible && myBundledUpdateGroup.ui == null);
-    myUpdateAllBundled.setVisible(visible);
-
-    myUpdateCounter.setText(text);
-    myUpdateCounter.setToolTipText(tooltip);
-    myUpdateCounterBundled.setText(text);
-    myUpdateCounterBundled.setToolTipText(tooltip);
-    myUpdateCounter.setVisible(visible && myBundledUpdateGroup.ui == null);
-    myUpdateCounterBundled.setVisible(visible);
+    myInstalledTab.onPluginUpdatesRecalculation(updatesCount, tooltip);
 
     myInstalledTabHeaderUpdatesCountIcon.setText(text);
     myTabHeaderComponent.update();
@@ -847,6 +824,14 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     private @Nullable PluginsGroupComponentWithProgress myInstalledPanel = null;
     private @Nullable SearchResultPanel myInstalledSearchPanel = null;
 
+    private final PluginsGroup myBundledUpdateGroup =
+      new PluginsGroup(IdeBundle.message("plugins.configurable.bundled.updates"), PluginsGroupType.BUNDLED_UPDATE);
+
+    private final LinkLabel<Object> myUpdateAll = new LinkLabelButton<>(IdeBundle.message("plugin.manager.update.all"), null);
+    private final LinkLabel<Object> myUpdateAllBundled = new LinkLabelButton<>(IdeBundle.message("plugin.manager.update.all"), null);
+    private final JLabel myUpdateCounter = new CountComponent();
+    private final JLabel myUpdateCounterBundled = new CountComponent();
+
     InstalledPluginsTab(@NotNull PluginModelFacade facade, @NotNull CoroutineScope scope) {
       super();
       myPluginModelFacade = facade;
@@ -963,6 +948,12 @@ public final class PluginManagerConfigurablePanel implements Disposable {
               }
             }
           };
+
+          myUpdateAll.setVisible(false);
+          myUpdateAllBundled.setVisible(false);
+          myUpdateCounter.setVisible(false);
+          myUpdateCounterBundled.setVisible(false);
+
           myUpdateAll.setListener(updateAllListener, null);
           downloaded.addRightAction(myUpdateAll);
           downloaded.addRightAction(myUpdateCounter);
@@ -1367,6 +1358,24 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
       myUpdateAll.setVisible(myUpdateAll.isVisible() && myBundledUpdateGroup.ui == null);
       myUpdateCounter.setVisible(myUpdateCounter.isVisible() && myBundledUpdateGroup.ui == null);
+    }
+
+    void onPluginUpdatesRecalculation(Integer updatesCount, @Nls String tooltip) {
+      int count = updatesCount == null ? 0 : updatesCount;
+      String text = Integer.toString(count);
+      boolean visible = count > 0;
+
+      myUpdateAll.setEnabled(true);
+      myUpdateAllBundled.setEnabled(true);
+      myUpdateAll.setVisible(visible && myBundledUpdateGroup.ui == null);
+      myUpdateAllBundled.setVisible(visible);
+
+      myUpdateCounter.setText(text);
+      myUpdateCounter.setToolTipText(tooltip);
+      myUpdateCounterBundled.setText(text);
+      myUpdateCounterBundled.setToolTipText(tooltip);
+      myUpdateCounter.setVisible(visible && myBundledUpdateGroup.ui == null);
+      myUpdateCounterBundled.setVisible(visible);
     }
 
     private final class InstalledSearchOptionAction extends ToggleAction implements DumbAware {
