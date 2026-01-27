@@ -90,10 +90,10 @@ internal open class WorkspaceProjectImporter(
     val storageBeforeImport = project.serviceAsync<WorkspaceModel>().currentSnapshot
 
     val projectChangesInfo = tracer.spanBuilder("collectProjectChanges").use {
-      collectProjectChanges(storageBeforeImport, projectsToImport, migratedToExternalStorage)
+      collectProjectChanges(storageBeforeImport, projectsToImport)
     }
 
-    if (!projectChangesInfo.hasChanges) {
+    if (!migratedToExternalStorage && !projectChangesInfo.hasChanges) {
       return emptyList()
     }
 
@@ -111,7 +111,12 @@ internal open class WorkspaceProjectImporter(
 
     val projectsWithModuleEntities = stats.recordPhase(MavenImportCollector.WORKSPACE_POPULATE_PHASE) {
       tracer.spanBuilder("populateWorkspace").use {
-        importModules(storageBeforeImport, builder, allProjectsToChanges, mavenProjectToModuleName, contextData, stats).also { projectWithModules ->
+        importModules(storageBeforeImport,
+                      builder,
+                      allProjectsToChanges,
+                      mavenProjectToModuleName,
+                      contextData,
+                      stats).also { projectWithModules ->
           tracer.spanBuilder("beforeModelApplied").use {
             beforeModelApplied(projectWithModules, builder, contextData, stats)
           }
@@ -173,8 +178,9 @@ internal open class WorkspaceProjectImporter(
     return true
   }
 
-  private data class ProjectChangesInfo(val hasChanges: Boolean, val allProjectsToChanges: Map<MavenProject, MavenProjectModifications>) {
+  private data class ProjectChangesInfo(val allProjectsToChanges: Map<MavenProject, MavenProjectModifications>) {
     val projectFilePaths: List<String> get() = allProjectsToChanges.keys.map { it.path }
+    val hasChanges: Boolean = allProjectsToChanges.values.any { it == MavenProjectModifications.ALL }
     val changedProjectsOnly: Iterable<MavenProject>
       get() = allProjectsToChanges
         .asSequence()
@@ -186,7 +192,6 @@ internal open class WorkspaceProjectImporter(
   private fun collectProjectChanges(
     storageBeforeImport: EntityStorage,
     originalProjectsChanges: List<MavenProject>,
-    migratedToExternalStorage: Boolean,
   ): ProjectChangesInfo {
     val mavenProjectsTreeSettingsEntity = storageBeforeImport.entities(MavenProjectsTreeSettingsEntity::class.java).firstOrNull()
     val projectFilesFromPreviousImport = mavenProjectsTreeSettingsEntity?.importedFilePaths?.toSet() ?: setOf()
@@ -207,10 +212,8 @@ internal open class WorkspaceProjectImporter(
         if (newProjectToImport || originalProjectsChanges.contains(it)) MavenProjectModifications.ALL else MavenProjectModifications.NONE
       }
     }
-
-    val hasChanges = allProjectsToChanges.values.any { it == MavenProjectModifications.ALL } || migratedToExternalStorage
-
-    return ProjectChangesInfo(hasChanges, allProjectsToChanges)
+    
+    return ProjectChangesInfo(allProjectsToChanges)
   }
 
   private fun sameProjects(
@@ -358,7 +361,9 @@ internal open class WorkspaceProjectImporter(
     //  -> User thinks that either resolve or import is broken.
     val importedContentRootUrlsToModule by lazy {
       mavenProjectsWithModules
-        .flatMapTo(mutableSetOf()) { it.modules.asSequence().flatMap { it.module.contentRoots.asSequence() }.map { it.url to it.module.name } }.toMap()
+        .flatMapTo(mutableSetOf()) {
+          it.modules.asSequence().flatMap { it.module.contentRoots.asSequence() }.map { it.url to it.module.name }
+        }.toMap()
     }
     val modulesWithDuplicatingRoots: MutableSet<String> = mutableSetOf()
 
