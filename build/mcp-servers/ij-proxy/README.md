@@ -73,23 +73,23 @@ Each proxy command maps to one or more JetBrains MCP tools:
 
 ### codex mode
 
-| Proxy command | Why this name | JetBrains MCP under the hood |
-|---|---|---|
-| `read_file` | Matches Codex `read_file` (line-numbered output + indentation mode). | `get_file_text_by_path` |
-| `grep` | Codex-style content search. The closest Codex upstream tool is `grep_files`; we expose `grep` with Codex-like args. | `search_in_files_by_regex` (plus `find_files_by_glob` when probing file paths) |
-| `find` | Convenience file-discovery command used by Codex flows (not present in Codex upstream). | `find_files_by_glob` or `find_files_by_name_keyword` |
-| `list_dir` | Matches Codex `list_dir`. | `list_directory_tree` |
-| `apply_patch` | Matches Codex `apply_patch`. | `get_file_text_by_path` + `create_new_file`; uses `git rm`/`git mv` for delete/move |
+| Proxy command | Why this name                                                                                                       | JetBrains MCP under the hood                                                        |
+|---------------|---------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|
+| `read_file`   | Matches Codex `read_file` (line-numbered output + indentation mode).                                                | `get_file_text_by_path`                                                             |
+| `grep`        | Codex-style content search. The closest Codex upstream tool is `grep_files`; we expose `grep` with Codex-like args. | `search_in_files_by_regex` (plus `find_files_by_glob` when probing file paths)      |
+| `find`        | Convenience file-discovery command used by Codex flows (not present in Codex upstream).                             | `find_files_by_glob` or `find_files_by_name_keyword`                                |
+| `list_dir`    | Matches Codex `list_dir`.                                                                                           | `list_directory_tree`                                                               |
+| `apply_patch` | Matches Codex `apply_patch`.                                                                                        | `get_file_text_by_path` + `create_new_file`; uses `git rm`/`git mv` for delete/move |
 
 ### cc mode
 
-| Proxy command | Why this name | JetBrains MCP under the hood |
-|---|---|---|
-| `read` | Matches Claude Code `read` (raw text). | `get_file_text_by_path` |
-| `write` | Matches Claude Code `write`. | `create_new_file` (overwrite) |
-| `edit` | Matches Claude Code `edit`. | `get_file_text_by_path` + `create_new_file` |
-| `glob` | Matches Claude Code `glob`. | `find_files_by_glob` |
-| `grep` | Matches Claude Code `grep`. | `search_in_files_by_regex` |
+| Proxy command | Why this name                          | JetBrains MCP under the hood                |
+|---------------|----------------------------------------|---------------------------------------------|
+| `read`        | Matches Claude Code `read` (raw text). | `get_file_text_by_path`                     |
+| `write`       | Matches Claude Code `write`.           | `create_new_file` (overwrite)               |
+| `edit`        | Matches Claude Code `edit`.            | `get_file_text_by_path` + `create_new_file` |
+| `glob`        | Matches Claude Code `glob`.            | `find_files_by_glob`                        |
+| `grep`        | Matches Claude Code `grep`.            | `search_in_files_by_regex`                  |
 
 Example `.mcp.toml` entry (Codex):
 

@@ -2,7 +2,27 @@
 
 import {ok} from 'node:assert/strict'
 import {describe, it} from 'bun:test'
+import {BLOCKED_TOOL_NAMES, getProxyToolNames, getReplacedToolNames, TOOL_MODES} from '../proxy-tools/registry'
 import {debug, SUITE_TIMEOUT_MS, withProxy} from '../test-utils'
+
+function assertContainsAll(names, expected) {
+  for (const name of expected) {
+    ok(names.includes(name), `Expected ${name}`)
+  }
+}
+
+function assertExcludesAll(names, excluded) {
+  for (const name of excluded) {
+    ok(!names.includes(name), `Unexpected ${name}`)
+  }
+}
+
+function getOtherModeOnlyNames(mode) {
+  const otherMode = mode === TOOL_MODES.CC ? TOOL_MODES.CODEX : TOOL_MODES.CC
+  const current = getProxyToolNames(mode)
+  const other = getProxyToolNames(otherMode)
+  return new Set([...other].filter((name) => !current.has(name)))
+}
 
 describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
   it('exposes proxy tools and hides replaced/blocked upstream tools', async () => {
@@ -12,24 +32,11 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
       debug('test: tools/list response received')
       const names = listResponse.result.tools.map((tool) => tool.name)
 
-      ok(names.includes('read_file'))
-      ok(names.includes('grep'))
-      ok(names.includes('find'))
-      ok(names.includes('list_dir'))
-      ok(names.includes('apply_patch'))
-      ok(!names.includes('read'))
-      ok(!names.includes('edit'))
-      ok(!names.includes('write'))
-      ok(!names.includes('glob'))
+      assertContainsAll(names, getProxyToolNames(TOOL_MODES.CODEX))
+      assertExcludesAll(names, getOtherModeOnlyNames(TOOL_MODES.CODEX))
+      assertExcludesAll(names, BLOCKED_TOOL_NAMES)
+      assertExcludesAll(names, getReplacedToolNames())
       ok(!names.includes('grep_files'))
-      ok(!names.includes('get_file_text_by_path'))
-      ok(!names.includes('replace_text_in_file'))
-      ok(!names.includes('find_files_by_glob'))
-      ok(!names.includes('search_in_files_by_regex'))
-      ok(!names.includes('search_in_files_by_text'))
-      ok(!names.includes('list_directory_tree'))
-      ok(!names.includes('create_new_file'))
-      ok(!names.includes('execute_terminal_command'))
     })
   })
 
@@ -48,24 +55,11 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
       const listResponse = await proxyClient.send('tools/list')
       const names = listResponse.result.tools.map((tool) => tool.name)
 
-      ok(names.includes('read'))
-      ok(names.includes('write'))
-      ok(names.includes('edit'))
-      ok(names.includes('glob'))
-      ok(names.includes('grep'))
-      ok(!names.includes('read_file'))
+      assertContainsAll(names, getProxyToolNames(TOOL_MODES.CC))
+      assertExcludesAll(names, getOtherModeOnlyNames(TOOL_MODES.CC))
+      assertExcludesAll(names, BLOCKED_TOOL_NAMES)
+      assertExcludesAll(names, getReplacedToolNames())
       ok(!names.includes('grep_files'))
-      ok(!names.includes('list_dir'))
-      ok(!names.includes('find'))
-      ok(!names.includes('apply_patch'))
-      ok(!names.includes('get_file_text_by_path'))
-      ok(!names.includes('replace_text_in_file'))
-      ok(!names.includes('find_files_by_glob'))
-      ok(!names.includes('search_in_files_by_regex'))
-      ok(!names.includes('search_in_files_by_text'))
-      ok(!names.includes('list_directory_tree'))
-      ok(!names.includes('create_new_file'))
-      ok(!names.includes('execute_terminal_command'))
     })
   })
 

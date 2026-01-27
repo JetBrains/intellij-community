@@ -1,13 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-function buildToolSpec(name, description, inputSchema) {
-  return {
-    name,
-    description,
-    inputSchema
-  }
-}
-
 function objectSchema(properties, required) {
   return {
     type: 'object',
@@ -17,7 +9,7 @@ function objectSchema(properties, required) {
   }
 }
 
-function createReadSchema(includeIndentation) {
+export function createReadSchema(includeIndentation) {
   const properties = {
     file_path: {
       type: 'string',
@@ -68,7 +60,7 @@ function createReadSchema(includeIndentation) {
   return objectSchema(properties, ['file_path'])
 }
 
-function createWriteSchema() {
+export function createWriteSchema() {
   return objectSchema(
     {
       file_path: {
@@ -84,7 +76,7 @@ function createWriteSchema() {
   )
 }
 
-function createEditSchema() {
+export function createEditSchema() {
   return objectSchema(
     {
       file_path: {
@@ -108,7 +100,7 @@ function createEditSchema() {
   )
 }
 
-function createGlobSchema() {
+export function createGlobSchema() {
   return objectSchema(
     {
       pattern: {
@@ -124,7 +116,7 @@ function createGlobSchema() {
   )
 }
 
-function createGrepSchema() {
+export function createGrepSchema() {
   return objectSchema(
     {
       pattern: {
@@ -180,7 +172,7 @@ function createGrepSchema() {
   )
 }
 
-function createGrepSchemaCodex() {
+export function createGrepSchemaCodex() {
   return objectSchema(
     {
       pattern: {
@@ -218,13 +210,13 @@ function createGrepSchemaCodex() {
       limit: {
         type: 'number',
         description: 'Maximum number of results to return.'
-      },
+      }
     },
     ['pattern']
   )
 }
 
-function createListDirSchema() {
+export function createListDirSchema() {
   return objectSchema(
     {
       dir_path: {
@@ -248,7 +240,7 @@ function createListDirSchema() {
   )
 }
 
-function createFindSchema() {
+export function createFindSchema() {
   return objectSchema(
     {
       pattern: {
@@ -276,7 +268,7 @@ function createFindSchema() {
   )
 }
 
-function createApplyPatchSchema() {
+export function createApplyPatchSchema() {
   return objectSchema(
     {
       input: {
@@ -288,62 +280,22 @@ function createApplyPatchSchema() {
   )
 }
 
-export function buildCodexToolSpecs() {
-  return [
-    buildToolSpec(
-      'read_file',
-      'Reads a local file with 1-indexed line numbers, supporting slice and indentation-aware block modes.',
-      createReadSchema(true)
-    ),
-    buildToolSpec(
-      'grep',
-      'Searches file contents for a regex pattern and returns matching files or lines.',
-      createGrepSchemaCodex()
-    ),
-    buildToolSpec(
-      'find',
-      'Finds file paths by name keyword or glob pattern.',
-      createFindSchema()
-    ),
-    buildToolSpec(
-      'list_dir',
-      'Lists entries in a local directory with 1-indexed entry numbers and simple type labels.',
-      createListDirSchema()
-    ),
-    buildToolSpec(
-      'apply_patch',
-      'Apply a patch using the Codex apply_patch format.',
-      createApplyPatchSchema()
-    )
-  ]
-}
-
-export function buildCcToolSpecs() {
-  return [
-    buildToolSpec(
-      'read',
-      'Read a local file using absolute or project-relative paths. Returns raw text.',
-      createReadSchema(false)
-    ),
-    buildToolSpec(
-      'write',
-      'Write a local file using an absolute or project-relative path.',
-      createWriteSchema()
-    ),
-    buildToolSpec(
-      'edit',
-      'Replace text in a local file. Fails if the target string is missing.',
-      createEditSchema()
-    ),
-    buildToolSpec(
-      'glob',
-      'Return file paths matching a glob pattern.',
-      createGlobSchema()
-    ),
-    buildToolSpec(
-      'grep',
-      'Search files for a regex pattern and return matching file paths.',
-      createGrepSchema()
-    )
-  ]
+export function createRenameSchema() {
+  return objectSchema(
+    {
+      pathInProject: {
+        type: 'string',
+        description: 'Absolute or project-relative path to the file containing the symbol (for example, src/app.ts).'
+      },
+      symbolName: {
+        type: 'string',
+        description: 'Exact, case-sensitive name of the symbol to rename.'
+      },
+      newName: {
+        type: 'string',
+        description: 'New, case-sensitive name for the symbol.'
+      }
+    },
+    ['pathInProject', 'symbolName', 'newName']
+  )
 }

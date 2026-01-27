@@ -5470,7 +5470,7 @@ var require_dist = __commonJS((exports, module) => {
 });
 
 // ij-mcp-proxy.ts
-import path9 from "path";
+import path10 from "path";
 import { cwd, env } from "process";
 
 // node_modules/zod/v4/core/index.js
@@ -21067,272 +21067,6 @@ function createStreamTransport({
   });
 }
 
-// proxy-tools/specs.ts
-function buildToolSpec(name, description, inputSchema) {
-  return {
-    name,
-    description,
-    inputSchema
-  };
-}
-function objectSchema(properties, required2) {
-  return {
-    type: "object",
-    properties,
-    required: required2 && required2.length > 0 ? required2 : void 0,
-    additionalProperties: !1
-  };
-}
-function createReadSchema(includeIndentation) {
-  let properties = {
-    file_path: {
-      type: "string",
-      description: "Absolute or project-relative path to the file."
-    },
-    offset: {
-      type: "number",
-      description: "The line number to start reading from. Must be 1 or greater."
-    },
-    limit: {
-      type: "number",
-      description: "The maximum number of lines to return."
-    }
-  };
-  if (includeIndentation)
-    properties.mode = {
-      type: "string",
-      description: 'Optional mode selector: "slice" for simple ranges (default) or "indentation" to expand around an anchor line.'
-    }, properties.indentation = objectSchema({
-      anchor_line: {
-        type: "number",
-        description: "Anchor line to center the indentation lookup on (defaults to offset)."
-      },
-      max_levels: {
-        type: "number",
-        description: "How many parent indentation levels (smaller indents) to include."
-      },
-      include_siblings: {
-        type: "boolean",
-        description: "When true, include additional blocks that share the anchor indentation."
-      },
-      include_header: {
-        type: "boolean",
-        description: "Include doc comments or attributes directly above the selected block."
-      },
-      max_lines: {
-        type: "number",
-        description: "Hard cap on the number of lines returned when using indentation mode."
-      }
-    }, []);
-  return objectSchema(properties, ["file_path"]);
-}
-function createWriteSchema() {
-  return objectSchema({
-    file_path: {
-      type: "string",
-      description: "Absolute or project-relative path to the file."
-    },
-    content: {
-      type: "string",
-      description: "The contents to write to the file."
-    }
-  }, ["file_path", "content"]);
-}
-function createEditSchema() {
-  return objectSchema({
-    file_path: {
-      type: "string",
-      description: "Absolute or project-relative path to the file."
-    },
-    old_string: {
-      type: "string",
-      description: "Text to replace."
-    },
-    new_string: {
-      type: "string",
-      description: "Replacement text."
-    },
-    replace_all: {
-      type: "boolean",
-      description: "When true, replace all occurrences. Otherwise replace only the first."
-    }
-  }, ["file_path", "old_string", "new_string"]);
-}
-function createGlobSchema() {
-  return objectSchema({
-    pattern: {
-      type: "string",
-      description: "Glob pattern to match."
-    },
-    path: {
-      type: "string",
-      description: "Optional base directory (absolute or project-relative)."
-    }
-  }, ["pattern"]);
-}
-function createGrepSchema() {
-  return objectSchema({
-    pattern: {
-      type: "string",
-      description: "Regular expression to search for."
-    },
-    path: {
-      type: "string",
-      description: "Optional base directory (absolute or project-relative)."
-    },
-    glob: {
-      type: "string",
-      description: "Optional glob filter for matched files."
-    },
-    type: {
-      type: "string",
-      description: 'Optional file extension filter (for example, "ts" for TypeScript files).'
-    },
-    output_mode: {
-      type: "string",
-      description: 'Output mode: "files_with_matches", "content", or "count".'
-    },
-    "-i": {
-      type: "boolean",
-      description: "Case-insensitive search."
-    },
-    "-n": {
-      type: "boolean",
-      description: "Include line numbers in output when in content mode."
-    },
-    "-A": {
-      type: "number",
-      description: "Lines of context after each match (not currently supported)."
-    },
-    "-B": {
-      type: "number",
-      description: "Lines of context before each match (not currently supported)."
-    },
-    "-C": {
-      type: "number",
-      description: "Lines of context around each match (not currently supported)."
-    },
-    head_limit: {
-      type: "number",
-      description: "Maximum number of results to return."
-    },
-    multiline: {
-      type: "boolean",
-      description: "Whether to search across line boundaries (not currently supported)."
-    }
-  }, ["pattern"]);
-}
-function createGrepSchemaCodex() {
-  return objectSchema({
-    pattern: {
-      type: "string",
-      description: "Regular expression pattern to search for."
-    },
-    path: {
-      type: "string",
-      description: "Directory or file path to search. Defaults to the session working directory."
-    },
-    include: {
-      type: "string",
-      description: "Optional glob that limits which files are searched."
-    },
-    glob: {
-      type: "string",
-      description: "Optional glob filter for matched files."
-    },
-    type: {
-      type: "string",
-      description: 'Optional file extension filter (for example, "ts" for TypeScript files).'
-    },
-    output_mode: {
-      type: "string",
-      description: 'Output mode: "files_with_matches", "content", or "count".'
-    },
-    "-i": {
-      type: "boolean",
-      description: "Case-insensitive search."
-    },
-    "-n": {
-      type: "boolean",
-      description: "Include line numbers in output when in content mode."
-    },
-    limit: {
-      type: "number",
-      description: "Maximum number of results to return."
-    }
-  }, ["pattern"]);
-}
-function createListDirSchema() {
-  return objectSchema({
-    dir_path: {
-      type: "string",
-      description: "Absolute or project-relative path to the directory to list."
-    },
-    offset: {
-      type: "number",
-      description: "The entry number to start listing from. Must be 1 or greater."
-    },
-    limit: {
-      type: "number",
-      description: "The maximum number of entries to return."
-    },
-    depth: {
-      type: "number",
-      description: "The maximum directory depth to traverse. Must be 1 or greater."
-    }
-  }, ["dir_path"]);
-}
-function createFindSchema() {
-  return objectSchema({
-    pattern: {
-      type: "string",
-      description: "Filename substring or glob pattern to search for."
-    },
-    path: {
-      type: "string",
-      description: "Optional base directory (absolute or project-relative)."
-    },
-    limit: {
-      type: "number",
-      description: "Maximum number of file paths to return."
-    },
-    mode: {
-      type: "string",
-      description: 'Optional mode: "auto" (default), "glob", or "name".'
-    },
-    add_excluded: {
-      type: "boolean",
-      description: "Whether to include excluded/ignored files when using glob mode."
-    }
-  }, ["pattern"]);
-}
-function createApplyPatchSchema() {
-  return objectSchema({
-    input: {
-      type: "string",
-      description: "Patch text in the apply_patch format, including Begin/End markers."
-    }
-  }, ["input"]);
-}
-function buildCodexToolSpecs() {
-  return [
-    buildToolSpec("read_file", "Reads a local file with 1-indexed line numbers, supporting slice and indentation-aware block modes.", createReadSchema(!0)),
-    buildToolSpec("grep", "Searches file contents for a regex pattern and returns matching files or lines.", createGrepSchemaCodex()),
-    buildToolSpec("find", "Finds file paths by name keyword or glob pattern.", createFindSchema()),
-    buildToolSpec("list_dir", "Lists entries in a local directory with 1-indexed entry numbers and simple type labels.", createListDirSchema()),
-    buildToolSpec("apply_patch", "Apply a patch using the Codex apply_patch format.", createApplyPatchSchema())
-  ];
-}
-function buildCcToolSpecs() {
-  return [
-    buildToolSpec("read", "Read a local file using absolute or project-relative paths. Returns raw text.", createReadSchema(!1)),
-    buildToolSpec("write", "Write a local file using an absolute or project-relative path.", createWriteSchema()),
-    buildToolSpec("edit", "Replace text in a local file. Fails if the target string is missing.", createEditSchema()),
-    buildToolSpec("glob", "Return file paths matching a glob pattern.", createGlobSchema()),
-    buildToolSpec("grep", "Search files for a regex pattern and return matching file paths.", createGrepSchema())
-  ];
-}
-
 // proxy-tools/handlers/apply-patch.ts
 import { copyFile, mkdir, rename, rm } from "fs/promises";
 import path2 from "path";
@@ -24540,8 +24274,21 @@ function normalizeUsageLine(lineText) {
   return lineText.slice(2, tailIndex);
 }
 
-// proxy-tools/handlers/write.ts
+// proxy-tools/handlers/rename.ts
 import path8 from "path";
+async function handleRenameTool(args, projectPath, callUpstreamTool) {
+  let toolArgs = args ?? {}, filePath = requireString(toolArgs.pathInProject, "pathInProject"), symbolName = requireString(toolArgs.symbolName, "symbolName"), newName = requireString(toolArgs.newName, "newName"), { relative } = resolvePathInProject(projectPath, filePath, "pathInProject"), result = await callUpstreamTool("rename_refactoring", {
+    pathInProject: relative,
+    symbolName,
+    newName
+  }), message = extractTextFromResult(result);
+  if (message)
+    return message;
+  return `Renamed ${symbolName} to ${newName} in ${path8.resolve(projectPath, relative)}`;
+}
+
+// proxy-tools/handlers/write.ts
+import path9 from "path";
 async function handleWriteTool(args, projectPath, callUpstreamTool) {
   let filePath = requireString(args.file_path, "file_path"), content = typeof args.content === "string" ? args.content : null;
   if (content === null)
@@ -24551,14 +24298,401 @@ async function handleWriteTool(args, projectPath, callUpstreamTool) {
     pathInProject: relative,
     text: content,
     overwrite: !0
-  }), `Wrote ${path8.resolve(projectPath, relative)}`;
+  }), `Wrote ${path9.resolve(projectPath, relative)}`;
 }
 
-// proxy-tools/tooling.ts
+// proxy-tools/schemas.ts
+function objectSchema(properties, required2) {
+  return {
+    type: "object",
+    properties,
+    required: required2 && required2.length > 0 ? required2 : void 0,
+    additionalProperties: !1
+  };
+}
+function createReadSchema(includeIndentation) {
+  let properties = {
+    file_path: {
+      type: "string",
+      description: "Absolute or project-relative path to the file."
+    },
+    offset: {
+      type: "number",
+      description: "The line number to start reading from. Must be 1 or greater."
+    },
+    limit: {
+      type: "number",
+      description: "The maximum number of lines to return."
+    }
+  };
+  if (includeIndentation)
+    properties.mode = {
+      type: "string",
+      description: 'Optional mode selector: "slice" for simple ranges (default) or "indentation" to expand around an anchor line.'
+    }, properties.indentation = objectSchema({
+      anchor_line: {
+        type: "number",
+        description: "Anchor line to center the indentation lookup on (defaults to offset)."
+      },
+      max_levels: {
+        type: "number",
+        description: "How many parent indentation levels (smaller indents) to include."
+      },
+      include_siblings: {
+        type: "boolean",
+        description: "When true, include additional blocks that share the anchor indentation."
+      },
+      include_header: {
+        type: "boolean",
+        description: "Include doc comments or attributes directly above the selected block."
+      },
+      max_lines: {
+        type: "number",
+        description: "Hard cap on the number of lines returned when using indentation mode."
+      }
+    }, []);
+  return objectSchema(properties, ["file_path"]);
+}
+function createWriteSchema() {
+  return objectSchema({
+    file_path: {
+      type: "string",
+      description: "Absolute or project-relative path to the file."
+    },
+    content: {
+      type: "string",
+      description: "The contents to write to the file."
+    }
+  }, ["file_path", "content"]);
+}
+function createEditSchema() {
+  return objectSchema({
+    file_path: {
+      type: "string",
+      description: "Absolute or project-relative path to the file."
+    },
+    old_string: {
+      type: "string",
+      description: "Text to replace."
+    },
+    new_string: {
+      type: "string",
+      description: "Replacement text."
+    },
+    replace_all: {
+      type: "boolean",
+      description: "When true, replace all occurrences. Otherwise replace only the first."
+    }
+  }, ["file_path", "old_string", "new_string"]);
+}
+function createGlobSchema() {
+  return objectSchema({
+    pattern: {
+      type: "string",
+      description: "Glob pattern to match."
+    },
+    path: {
+      type: "string",
+      description: "Optional base directory (absolute or project-relative)."
+    }
+  }, ["pattern"]);
+}
+function createGrepSchema() {
+  return objectSchema({
+    pattern: {
+      type: "string",
+      description: "Regular expression to search for."
+    },
+    path: {
+      type: "string",
+      description: "Optional base directory (absolute or project-relative)."
+    },
+    glob: {
+      type: "string",
+      description: "Optional glob filter for matched files."
+    },
+    type: {
+      type: "string",
+      description: 'Optional file extension filter (for example, "ts" for TypeScript files).'
+    },
+    output_mode: {
+      type: "string",
+      description: 'Output mode: "files_with_matches", "content", or "count".'
+    },
+    "-i": {
+      type: "boolean",
+      description: "Case-insensitive search."
+    },
+    "-n": {
+      type: "boolean",
+      description: "Include line numbers in output when in content mode."
+    },
+    "-A": {
+      type: "number",
+      description: "Lines of context after each match (not currently supported)."
+    },
+    "-B": {
+      type: "number",
+      description: "Lines of context before each match (not currently supported)."
+    },
+    "-C": {
+      type: "number",
+      description: "Lines of context around each match (not currently supported)."
+    },
+    head_limit: {
+      type: "number",
+      description: "Maximum number of results to return."
+    },
+    multiline: {
+      type: "boolean",
+      description: "Whether to search across line boundaries (not currently supported)."
+    }
+  }, ["pattern"]);
+}
+function createGrepSchemaCodex() {
+  return objectSchema({
+    pattern: {
+      type: "string",
+      description: "Regular expression pattern to search for."
+    },
+    path: {
+      type: "string",
+      description: "Directory or file path to search. Defaults to the session working directory."
+    },
+    include: {
+      type: "string",
+      description: "Optional glob that limits which files are searched."
+    },
+    glob: {
+      type: "string",
+      description: "Optional glob filter for matched files."
+    },
+    type: {
+      type: "string",
+      description: 'Optional file extension filter (for example, "ts" for TypeScript files).'
+    },
+    output_mode: {
+      type: "string",
+      description: 'Output mode: "files_with_matches", "content", or "count".'
+    },
+    "-i": {
+      type: "boolean",
+      description: "Case-insensitive search."
+    },
+    "-n": {
+      type: "boolean",
+      description: "Include line numbers in output when in content mode."
+    },
+    limit: {
+      type: "number",
+      description: "Maximum number of results to return."
+    }
+  }, ["pattern"]);
+}
+function createListDirSchema() {
+  return objectSchema({
+    dir_path: {
+      type: "string",
+      description: "Absolute or project-relative path to the directory to list."
+    },
+    offset: {
+      type: "number",
+      description: "The entry number to start listing from. Must be 1 or greater."
+    },
+    limit: {
+      type: "number",
+      description: "The maximum number of entries to return."
+    },
+    depth: {
+      type: "number",
+      description: "The maximum directory depth to traverse. Must be 1 or greater."
+    }
+  }, ["dir_path"]);
+}
+function createFindSchema() {
+  return objectSchema({
+    pattern: {
+      type: "string",
+      description: "Filename substring or glob pattern to search for."
+    },
+    path: {
+      type: "string",
+      description: "Optional base directory (absolute or project-relative)."
+    },
+    limit: {
+      type: "number",
+      description: "Maximum number of file paths to return."
+    },
+    mode: {
+      type: "string",
+      description: 'Optional mode: "auto" (default), "glob", or "name".'
+    },
+    add_excluded: {
+      type: "boolean",
+      description: "Whether to include excluded/ignored files when using glob mode."
+    }
+  }, ["pattern"]);
+}
+function createApplyPatchSchema() {
+  return objectSchema({
+    input: {
+      type: "string",
+      description: "Patch text in the apply_patch format, including Begin/End markers."
+    }
+  }, ["input"]);
+}
+function createRenameSchema() {
+  return objectSchema({
+    pathInProject: {
+      type: "string",
+      description: "Absolute or project-relative path to the file containing the symbol (for example, src/app.ts)."
+    },
+    symbolName: {
+      type: "string",
+      description: "Exact, case-sensitive name of the symbol to rename."
+    },
+    newName: {
+      type: "string",
+      description: "New, case-sensitive name for the symbol."
+    }
+  }, ["pathInProject", "symbolName", "newName"]);
+}
+
+// proxy-tools/registry.ts
 var TOOL_MODES = {
   CODEX: "codex",
   CC: "cc"
-};
+}, BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set(["create_new_file", "execute_terminal_command"]), EXTRA_REPLACED_TOOL_NAMES = ["search_in_files_by_text", "execute_terminal_command"], RENAME_TOOL_DESCRIPTION = "Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use edit/apply_patch for renames.";
+function buildToolSpec(name, description, inputSchema) {
+  return {
+    name,
+    description,
+    inputSchema
+  };
+}
+var TOOL_VARIANTS = [
+  {
+    mode: TOOL_MODES.CODEX,
+    name: "read_file",
+    description: "Reads a local file with 1-indexed line numbers, supporting slice and indentation-aware block modes.",
+    schemaFactory: () => createReadSchema(!0),
+    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleReadTool(args, projectPath, callUpstreamTool, { format: "numbered" }),
+    upstreamNames: ["get_file_text_by_path"]
+  },
+  {
+    mode: TOOL_MODES.CC,
+    name: "read",
+    description: "Read a local file using absolute or project-relative paths. Returns raw text.",
+    schemaFactory: () => createReadSchema(!1),
+    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleReadTool(args, projectPath, callUpstreamTool, { format: "raw" }),
+    upstreamNames: ["get_file_text_by_path"]
+  },
+  {
+    mode: TOOL_MODES.CODEX,
+    name: "grep",
+    description: "Searches file contents for a regex pattern and returns matching files or lines.",
+    schemaFactory: () => createGrepSchemaCodex(),
+    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleGrepTool(args, projectPath, callUpstreamTool, !0),
+    upstreamNames: ["search_in_files_by_regex"]
+  },
+  {
+    mode: TOOL_MODES.CC,
+    name: "grep",
+    description: "Search files for a regex pattern and return matching file paths.",
+    schemaFactory: () => createGrepSchema(),
+    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleGrepTool(args, projectPath, callUpstreamTool, !1),
+    upstreamNames: ["search_in_files_by_regex"]
+  },
+  {
+    mode: TOOL_MODES.CODEX,
+    name: "find",
+    description: "Finds file paths by name keyword or glob pattern.",
+    schemaFactory: () => createFindSchema(),
+    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleFindTool(args, projectPath, callUpstreamTool),
+    upstreamNames: ["find_files_by_glob", "find_files_by_name_keyword"]
+  },
+  {
+    mode: TOOL_MODES.CODEX,
+    name: "list_dir",
+    description: "Lists entries in a local directory with 1-indexed entry numbers and simple type labels.",
+    schemaFactory: () => createListDirSchema(),
+    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleListDirTool(args, projectPath, callUpstreamTool),
+    upstreamNames: ["list_directory_tree"]
+  },
+  {
+    mode: TOOL_MODES.CODEX,
+    name: "apply_patch",
+    description: "Apply a patch using the Codex apply_patch format.",
+    schemaFactory: () => createApplyPatchSchema(),
+    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleApplyPatchTool(args, projectPath, callUpstreamTool),
+    upstreamNames: ["get_file_text_by_path"]
+  },
+  {
+    mode: TOOL_MODES.CC,
+    name: "write",
+    description: "Write a local file using an absolute or project-relative path.",
+    schemaFactory: () => createWriteSchema(),
+    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleWriteTool(args, projectPath, callUpstreamTool),
+    upstreamNames: ["create_new_file"]
+  },
+  {
+    mode: TOOL_MODES.CC,
+    name: "edit",
+    description: "Replace text in a local file. Fails if the target string is missing.",
+    schemaFactory: () => createEditSchema(),
+    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleEditTool(args, projectPath, callUpstreamTool),
+    upstreamNames: ["replace_text_in_file"]
+  },
+  {
+    mode: TOOL_MODES.CC,
+    name: "glob",
+    description: "Return file paths matching a glob pattern.",
+    schemaFactory: () => createGlobSchema(),
+    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleGlobTool(args, projectPath, callUpstreamTool),
+    upstreamNames: ["find_files_by_glob"]
+  },
+  {
+    mode: TOOL_MODES.CODEX,
+    name: "rename",
+    description: RENAME_TOOL_DESCRIPTION,
+    schemaFactory: () => createRenameSchema(),
+    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleRenameTool(args, projectPath, callUpstreamTool),
+    upstreamNames: ["rename_refactoring"]
+  },
+  {
+    mode: TOOL_MODES.CC,
+    name: "rename",
+    description: RENAME_TOOL_DESCRIPTION,
+    schemaFactory: () => createRenameSchema(),
+    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleRenameTool(args, projectPath, callUpstreamTool),
+    upstreamNames: ["rename_refactoring"]
+  }
+];
+function getProxyToolVariants(mode) {
+  return TOOL_VARIANTS.filter((tool) => tool.mode === mode);
+}
+function buildProxyToolingData(mode, context) {
+  let variants = getProxyToolVariants(mode), handlers = /* @__PURE__ */ new Map;
+  for (let tool of variants)
+    handlers.set(tool.name, tool.handlerFactory(context));
+  return {
+    proxyToolSpecs: variants.map((tool) => buildToolSpec(tool.name, tool.description, tool.schemaFactory())),
+    proxyToolNames: new Set(variants.map((tool) => tool.name)),
+    handlers
+  };
+}
+function getReplacedToolNames() {
+  let replaced = new Set(EXTRA_REPLACED_TOOL_NAMES);
+  for (let tool of TOOL_VARIANTS) {
+    if (!tool.upstreamNames)
+      continue;
+    for (let name of tool.upstreamNames)
+      replaced.add(name);
+  }
+  return replaced;
+}
+
+// proxy-tools/tooling.ts
 function resolveToolMode(rawValue) {
   if (rawValue === void 0 || rawValue === null || rawValue === "")
     return { mode: TOOL_MODES.CODEX };
@@ -24573,11 +24707,10 @@ function resolveToolMode(rawValue) {
   };
 }
 function createProxyTooling({ projectPath, callUpstreamTool, toolMode }) {
-  let resolvedMode = toolMode === TOOL_MODES.CC ? TOOL_MODES.CC : TOOL_MODES.CODEX, proxyToolSpecs = resolvedMode === TOOL_MODES.CC ? buildCcToolSpecs() : buildCodexToolSpecs(), proxyToolNames = new Set(proxyToolSpecs.map((tool) => tool.name)), handlers = /* @__PURE__ */ new Map;
-  if (resolvedMode === TOOL_MODES.CC)
-    handlers.set("read", (args) => handleReadTool(args, projectPath, callUpstreamTool, { format: "raw" })), handlers.set("write", (args) => handleWriteTool(args, projectPath, callUpstreamTool)), handlers.set("edit", (args) => handleEditTool(args, projectPath, callUpstreamTool)), handlers.set("glob", (args) => handleGlobTool(args, projectPath, callUpstreamTool)), handlers.set("grep", (args) => handleGrepTool(args, projectPath, callUpstreamTool, !1));
-  else
-    handlers.set("read_file", (args) => handleReadTool(args, projectPath, callUpstreamTool, { format: "numbered" })), handlers.set("grep", (args) => handleGrepTool(args, projectPath, callUpstreamTool, !0)), handlers.set("find", (args) => handleFindTool(args, projectPath, callUpstreamTool)), handlers.set("list_dir", (args) => handleListDirTool(args, projectPath, callUpstreamTool)), handlers.set("apply_patch", (args) => handleApplyPatchTool(args, projectPath, callUpstreamTool));
+  let resolvedMode = toolMode === TOOL_MODES.CC ? TOOL_MODES.CC : TOOL_MODES.CODEX, { proxyToolSpecs, proxyToolNames, handlers } = buildProxyToolingData(resolvedMode, {
+    projectPath,
+    callUpstreamTool
+  });
   async function runProxyToolCall(toolName, args) {
     let handler = handlers.get(toolName);
     if (!handler)
@@ -24613,16 +24746,7 @@ function parseEnvSeconds(name, fallbackSeconds) {
 function buildStreamUrl(port) {
   return `http://${defaultHost}:${port}${defaultPath}`;
 }
-var projectPath = path9.resolve(cwd()), defaultProjectPathKey = "project_path", projectPathManager = createProjectPathManager({ projectPath, defaultProjectPathKey }), toolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE), BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set(["create_new_file", "execute_terminal_command"]), REPLACED_TOOL_NAMES = /* @__PURE__ */ new Set([
-  "get_file_text_by_path",
-  "replace_text_in_file",
-  "find_files_by_name_keyword",
-  "find_files_by_glob",
-  "search_in_files_by_regex",
-  "search_in_files_by_text",
-  "list_directory_tree",
-  "execute_terminal_command"
-]);
+var projectPath = path10.resolve(cwd()), defaultProjectPathKey = "project_path", projectPathManager = createProjectPathManager({ projectPath, defaultProjectPathKey }), toolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE), REPLACED_TOOL_NAMES = getReplacedToolNames();
 function blockedToolMessage(toolName) {
   if (toolName === "create_new_file") {
     if (toolModeInfo.mode === TOOL_MODES.CC)

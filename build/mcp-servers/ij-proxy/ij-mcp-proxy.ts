@@ -13,6 +13,7 @@ import {
 import {clearLogFile, logProgress, logToFile} from '../shared/mcp-rpc.mjs'
 import {createProjectPathManager} from './project-path'
 import {createStreamTransport} from './stream-transport'
+import {BLOCKED_TOOL_NAMES, getReplacedToolNames} from './proxy-tools/registry'
 import {createProxyTooling, resolveToolMode, TOOL_MODES} from './proxy-tools/tooling'
 import {extractTextFromResult} from './proxy-tools/shared'
 
@@ -72,17 +73,7 @@ const projectPathManager = createProjectPathManager({projectPath, defaultProject
 
 const toolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE)
 
-const BLOCKED_TOOL_NAMES = new Set(['create_new_file', 'execute_terminal_command'])
-const REPLACED_TOOL_NAMES = new Set([
-  'get_file_text_by_path',
-  'replace_text_in_file',
-  'find_files_by_name_keyword',
-  'find_files_by_glob',
-  'search_in_files_by_regex',
-  'search_in_files_by_text',
-  'list_directory_tree',
-  'execute_terminal_command'
-])
+const REPLACED_TOOL_NAMES = getReplacedToolNames()
 
 function blockedToolMessage(toolName) {
   if (toolName === 'create_new_file') {

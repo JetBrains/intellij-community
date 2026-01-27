@@ -9,6 +9,7 @@ import {fileURLToPath} from 'node:url'
 import {Server} from '@modelcontextprotocol/sdk/server/index.js'
 import {StreamableHTTPServerTransport} from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import {CallToolRequestSchema, ListToolsRequestSchema} from '@modelcontextprotocol/sdk/types.js'
+import {BLOCKED_TOOL_NAMES, getReplacedToolNames} from './proxy-tools/registry'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -96,82 +97,23 @@ export class McpTestClient {
   }
 }
 
-export function buildUpstreamTool(name, properties, required) {
+export function buildUpstreamTool(name, properties = {}, required) {
   return {
     name,
     description: `Upstream tool ${name}`,
     inputSchema: {
       type: 'object',
       properties,
-      required
+      required: required && required.length > 0 ? required : undefined
     }
   }
 }
 
-export const defaultUpstreamTools = [
-  buildUpstreamTool(
-    'get_file_text_by_path',
-    {
-      project_path: {type: 'string'},
-      pathInProject: {type: 'string'},
-      maxLinesCount: {type: 'number'},
-      truncateMode: {type: 'string'}
-    },
-    ['project_path', 'pathInProject']
-  ),
-  buildUpstreamTool(
-    'create_new_file',
-    {
-      project_path: {type: 'string'},
-      pathInProject: {type: 'string'},
-      text: {type: 'string'},
-      overwrite: {type: 'boolean'}
-    },
-    ['project_path', 'pathInProject', 'text']
-  ),
-  buildUpstreamTool(
-    'replace_text_in_file',
-    {
-      project_path: {type: 'string'},
-      pathInProject: {type: 'string'},
-      oldText: {type: 'string'},
-      newText: {type: 'string'}
-    },
-    ['project_path', 'pathInProject', 'oldText', 'newText']
-  ),
-  buildUpstreamTool(
-    'find_files_by_glob',
-    {
-      project_path: {type: 'string'},
-      globPattern: {type: 'string'}
-    },
-    ['project_path', 'globPattern']
-  ),
-  buildUpstreamTool(
-    'search_in_files_by_regex',
-    {
-      project_path: {type: 'string'},
-      regexPattern: {type: 'string'},
-      directoryToSearch: {type: 'string'},
-      fileMask: {type: 'string'},
-      caseSensitive: {type: 'boolean'},
-      maxUsageCount: {type: 'number'}
-    },
-    ['project_path', 'regexPattern']
-  ),
-  buildUpstreamTool(
-    'search_in_files_by_text',
-    {
-      project_path: {type: 'string'},
-      searchText: {type: 'string'},
-      directoryToSearch: {type: 'string'},
-      fileMask: {type: 'string'},
-      caseSensitive: {type: 'boolean'},
-      maxUsageCount: {type: 'number'}
-    },
-    ['project_path', 'searchText']
-  )
-]
+const DEFAULT_UPSTREAM_TOOL_NAMES = new Set([...BLOCKED_TOOL_NAMES, ...getReplacedToolNames()])
+
+export const defaultUpstreamTools = [...DEFAULT_UPSTREAM_TOOL_NAMES].map((name) =>
+  buildUpstreamTool(name, {project_path: {type: 'string'}}, ['project_path'])
+)
 
 export async function startFakeMcpServer({tools = defaultUpstreamTools, onToolCall, responseMode = 'json'} = {}) {
   const toolCallQueue = []
