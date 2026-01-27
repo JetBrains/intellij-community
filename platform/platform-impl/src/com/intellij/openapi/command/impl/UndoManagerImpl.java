@@ -308,7 +308,7 @@ public class UndoManagerImpl extends UndoManager {
 
   @ApiStatus.Internal
   public UndoCapabilities getUndoCapabilities() {
-    return new LocalUndoCapabilities();
+    return UndoCapabilities.Default.INSTANCE;
   }
 
   @ApiStatus.Internal
@@ -527,44 +527,5 @@ public class UndoManagerImpl extends UndoManager {
   @Override
   public String toString() {
     return "UndoManager for " + ObjectUtils.notNull(myProject, "application");
-  }
-
-  @ApiStatus.Internal
-  protected static class LocalUndoCapabilities implements UndoCapabilities {
-    @Override
-    public boolean isTransparentSupported() {
-      return true;
-    }
-
-    @Override
-    public boolean isConfirmationSupported() {
-      return true;
-    }
-
-    @Override
-    public boolean isCompactSupported() {
-      return true;
-    }
-
-    @Override
-    public boolean isGlobalSplitSupported() {
-      return true;
-    }
-
-    @Override
-    public boolean isPerClientSupported() {
-      return true;
-    }
-
-    // TODO: IT IS A PRIORITY ONE
-    @Override
-    public boolean isCommandRestartSupported() {
-      return true;
-    }
-
-    @Override
-    public boolean isEditorStateRestoreSupported() {
-      return true;
-    }
   }
 }
