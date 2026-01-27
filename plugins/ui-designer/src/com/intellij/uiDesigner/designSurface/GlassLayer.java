@@ -2,6 +2,7 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.ui.popup.PopupOwner;
@@ -91,7 +92,9 @@ public final class GlassLayer extends JComponent implements UiDataProvider, Popu
       requestFocusInWindow();
     }
     try {
-      myEditor.myProcessor.processMouseEvent(e);
+      WriteIntentReadAction.run(() -> {
+        myEditor.myProcessor.processMouseEvent(e);
+      });
     }
     catch (ProcessCanceledException ex) {
       throw ex;
