@@ -67,7 +67,7 @@ public class FileMessageEventImpl extends MessageEventImpl implements FileMessag
       }
 
       @Override
-      public Kind getKind() {
+      public @NotNull Kind getKind() {
         return FileMessageEventImpl.this.getKind();
       }
 

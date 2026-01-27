@@ -73,7 +73,7 @@ public class BuildIssueEventImpl extends AbstractBuildEvent implements BuildIssu
   public @NotNull MessageEventResult getResult() {
     return new MessageEventResult() {
       @Override
-      public Kind getKind() {
+      public @NotNull Kind getKind() {
         return myKind;
       }
 

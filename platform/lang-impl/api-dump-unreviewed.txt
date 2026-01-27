@@ -389,13 +389,6 @@ f:com.intellij.build.BuildContentDescriptor
 - isActivateToolWindowWhenFailed():Z
 - isNavigateToError():com.intellij.util.ThreeState
 f:com.intellij.build.BuildTextConsoleView
-- <init>(com.intellij.openapi.project.Project,Z,java.util.List):V
-- append(com.intellij.build.events.Failure):Z
-- append(java.lang.String,Z):V
-- appendEventResult(com.intellij.build.events.EventResult):Z
-- coloredTextAvailable(java.lang.String,com.intellij.openapi.util.Key):V
-- onEvent(com.intellij.build.events.OutputBuildEvent):V
-- onEvent(java.lang.Object,com.intellij.build.events.BuildEvent):V
 f:com.intellij.build.BuildTreeConsoleView
 - <init>(com.intellij.openapi.project.Project,com.intellij.build.BuildDescriptor,com.intellij.execution.ui.ExecutionConsole):V
 - addFilter(java.util.function.Predicate):V

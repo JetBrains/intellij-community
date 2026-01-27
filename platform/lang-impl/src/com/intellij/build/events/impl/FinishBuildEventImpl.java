@@ -6,6 +6,8 @@ import com.intellij.build.events.BuildEventsNls.Hint;
 import com.intellij.build.events.BuildEventsNls.Message;
 import com.intellij.build.events.EventResult;
 import com.intellij.build.events.FinishBuildEvent;
+import com.intellij.lang.LangBundle;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,5 +43,14 @@ public final class FinishBuildEventImpl extends FinishEventImpl implements Finis
     @NotNull EventResult result
   ) {
     this(eventId, parentId, eventTime, message, null, null, result);
+  }
+
+  @Override
+  public @NotNull String getHint() {
+    var hint = super.getHint();
+    var time = DateFormatUtil.formatDateTime(getEventTime());
+    return hint == null ?
+           LangBundle.message("build.event.message.at", time) :
+           LangBundle.message("build.event.message.0.at.1", hint, time);
   }
 }

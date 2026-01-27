@@ -213,7 +213,10 @@ f:com.intellij.build.BuildContentDescriptor
 f:com.intellij.build.BuildTextConsoleView
 - com.intellij.execution.impl.ConsoleViewImpl
 - com.intellij.build.BuildConsoleView
-- com.intellij.execution.process.AnsiEscapeDecoder$ColoredTextAcceptor
+- <init>(com.intellij.openapi.project.Project,Z,java.util.List):V
+- append(java.lang.String,Z):V
+- onEvent(java.lang.Object,com.intellij.build.events.BuildEvent):V
+- print(java.lang.String,com.intellij.openapi.util.Key):V
 f:com.intellij.build.BuildTreeConsoleView
 - com.intellij.build.BuildConsoleView
 - com.intellij.build.Filterable
@@ -253,7 +256,9 @@ c:com.intellij.build.ExecutionNode
 - add(com.intellij.build.ExecutionNode):V
 - getChildList():java.util.List
 - getDuration():java.lang.String
+- getHint():java.lang.String
 - getName():java.lang.String
+- getNavigatable():com.intellij.pom.Navigatable
 - getParent():com.intellij.build.ExecutionNode
 - getResult():com.intellij.build.events.EventResult
 - getStartTime():J
