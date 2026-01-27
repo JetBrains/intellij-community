@@ -354,7 +354,12 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   }
 
   private void createInstalledTab() {
-    myInstalledTab = new InstalledPluginsTab(myPluginModelFacade, myPluginUpdatesService, myCoroutineScope);
+    myInstalledTab = new InstalledPluginsTab(
+      myPluginModelFacade,
+      myPluginUpdatesService,
+      myCoroutineScope,
+      query -> myTabHeaderComponent.setSelectionWithEvents(MARKETPLACE_TAB)
+    );
 
     myPluginModelFacade.getModel().setCancelInstallCallback(descriptor -> {
       if (myInstalledTab.getInstalledSearchPanel() == null) {
@@ -819,6 +824,8 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     private final @NotNull PluginUpdatesService myPluginUpdatesService;
     private final @NotNull CoroutineScope myCoroutineScope;
 
+    private final @Nullable Consumer<String> mySearchInMarketplaceTabHandler;
+
     private @Nullable PluginsGroupComponentWithProgress myInstalledPanel = null;
     private @Nullable SearchResultPanel myInstalledSearchPanel = null;
 
@@ -832,11 +839,13 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
     InstalledPluginsTab(@NotNull PluginModelFacade facade,
                         @NotNull PluginUpdatesService service,
-                        @NotNull CoroutineScope scope) {
+                        @NotNull CoroutineScope scope,
+                        @Nullable Consumer<String> handler) {
       super();
       myPluginModelFacade = facade;
       myPluginUpdatesService = service;
       myCoroutineScope = scope;
+      mySearchInMarketplaceTabHandler = handler;
       myInstalledSearchGroup = new DefaultActionGroup();
       for (InstalledSearchOption option : InstalledSearchOption.values()) {
         myInstalledSearchGroup.add(new InstalledSearchOptionAction(option));
@@ -1098,9 +1107,11 @@ public final class PluginManagerConfigurablePanel implements Disposable {
               query.contains("/invalid") || query.contains("/bundled")) {
             return;
           }
-          myPanel.getEmptyText().appendSecondaryText(IdeBundle.message("plugins.configurable.search.in.marketplace"),
-                                                     SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-                                                     e -> myTabHeaderComponent.setSelectionWithEvents(MARKETPLACE_TAB));
+          if (mySearchInMarketplaceTabHandler != null) {
+            myPanel.getEmptyText().appendSecondaryText(IdeBundle.message("plugins.configurable.search.in.marketplace"),
+                                                       SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+                                                       e -> mySearchInMarketplaceTabHandler.accept(query));
+          }
         }
 
         @Override
