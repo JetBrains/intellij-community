@@ -17,6 +17,11 @@ import kotlin.io.path.absolutePathString
 
 abstract class AbstractIrKotlinScriptEvaluateExpressionTest : AbstractIrKotlinEvaluateExpressionTest() {
 
+    override fun setUp() {
+        super.setUp()
+        SerializationPluginRegistrar.registerSerializationPlugin(project)
+    }
+
     override fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>, testAppDirectory: File) {
         val scriptsSrcPath = listOf(testAppPath, SCRIPT_SOURCES_DIR).joinToString(File.separator)
         val virtualFile = File(scriptsSrcPath).refreshAndToVirtualFile()

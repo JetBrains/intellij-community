@@ -9,4 +9,9 @@ abstract class AbstractK1IrKotlinEvaluateExpressionTest : AbstractIrKotlinEvalua
             KotlinCodeBlockModificationListener.Companion.getInstance(project).incModificationCount()
         }
     }
+
+    override fun setUp() {
+        super.setUp()
+        SerializationPluginRegistrar.registerSerializationPlugin(project)
+    }
 }

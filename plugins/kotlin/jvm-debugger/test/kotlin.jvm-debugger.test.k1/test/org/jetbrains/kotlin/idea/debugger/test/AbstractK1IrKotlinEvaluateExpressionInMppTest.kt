@@ -3,6 +3,11 @@ package org.jetbrains.kotlin.idea.debugger.test
 
 abstract class AbstractK1IrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEvaluateExpressionInMppTest() {
 
+    override fun setUp() {
+        super.setUp()
+        SerializationPluginRegistrar.registerSerializationPlugin(project)
+    }
+
     override fun getMainClassName(compilerFacility: DebuggerTestCompilerFacility): String {
         return K1DebuggerTestCompilerFacility.analyzeAndFindMainClass(project, sourcesKtFiles.jvmKtFiles) ?: error("No main class found")
     }
