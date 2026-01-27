@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.compose.hotreload
 
+import com.intellij.devkit.compose.COMPOSE_HOT_RELOAD_ENABLED_MARKER
 import com.intellij.devkit.compose.DevkitComposeBundle
 import com.intellij.devkit.compose.hasCompose
 import com.intellij.devkit.compose.icons.DevkitComposeIcons
@@ -21,8 +22,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
 import java.util.function.Function
 import javax.swing.JComponent
-
-private const val COMPOSE_HOT_RELOAD_ENABLED_MARKER = "plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations"
 
 internal class DevkitHotReloadSuggester : EditorNotificationProvider, DumbAware {
   private val SUGGESTION_DISMISSED_KEY = "COMPOSE_HOT_RELOAD_GOT_IT"

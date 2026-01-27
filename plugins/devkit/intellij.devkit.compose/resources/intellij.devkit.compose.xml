@@ -60,6 +60,10 @@
       <action id="JewelWizardDialog" class="com.intellij.devkit.compose.demo.dialog.JewelWizardDialogAction"/>
       <action id="ComposeSandbox" class="com.intellij.devkit.compose.sandbox.ComposeSandboxAction" icon="AllIcons.FileTypes.UiForm"/>
 
+      <action id="AddComposeToIJModule"
+              class="com.intellij.devkit.compose.AddComposeToIJModuleAction"
+              icon="com.intellij.devkit.compose.icons.DevkitComposeIcons.ComposeToolWindow"/>
+
       <action id="ComposePerformanceDemo" class="com.intellij.devkit.compose.showcase.ComposePerformanceDemoAction"
               internal="true"/> <!-- only needed for the JetBrains team -->
       <separator/>
