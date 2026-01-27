@@ -4,7 +4,6 @@ import com.google.gson.Gson
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.testFramework.registerServiceInstance
-import com.intellij.util.io.delete
 import com.intellij.util.io.write
 import com.jetbrains.python.Result
 import com.jetbrains.python.fixtures.PyTestCase
@@ -41,10 +40,6 @@ class PypiPackageCacheTest : PyTestCase() {
     val cache = PypiPackageCache()
     runBlocking { cache.reloadCache().orThrow() }
     assertThat(cache.packages).contains("c-pkg", "a-pkg", "b-pkg")
-  }
-
-  private fun withEmptyCacheStorage() {
-    service<PypiPackageCache>().filePath.delete()
   }
 
   private fun withLocalStoredPackages(pypiPackages: List<String>, modifiedAt: Instant) {

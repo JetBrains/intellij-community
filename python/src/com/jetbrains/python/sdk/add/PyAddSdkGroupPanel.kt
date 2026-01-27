@@ -17,7 +17,9 @@ import kotlin.collections.iterator
 
 @Deprecated(
   "Custom Python SDKs support was removed from python plugin for IDEA because of UI/UX unification with PyCharm",
+  level = DeprecationLevel.ERROR
 )
+@Suppress("DEPRECATION_ERROR")
 class PyAddSdkGroupPanel(private val nameGetter: Supplier<@Nls String>,
                          panelIcon: Icon,
                          val panels: List<PyAddSdkPanel>,
