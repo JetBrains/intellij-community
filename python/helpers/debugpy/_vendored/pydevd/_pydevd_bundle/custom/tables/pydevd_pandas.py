@@ -303,16 +303,8 @@ def __analyze_categorical_column(column):
     if len(value_counts) <= 3 or float(len(value_counts)) / all_values * 100 <= ColumnVisualisationUtils.UNIQUE_VALUES_PERCENT:
         # If column contains <= 3 unique values no `Other` category is shown, but all of these values and their percentages
         num_unique_values_to_show_in_vis = ColumnVisualisationUtils.MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS - (0 if len(value_counts) == 3 else 1)
-        pd_version_major, pd_version_minor = __get_pandas_version_safe()
-        if (pd_version_major, pd_version_minor) >= (0, 21):
-            top_values = value_counts.iloc[:num_unique_values_to_show_in_vis].apply(lambda v_c_share: round(v_c_share * 100, 1)).to_dict(into=OrderedDict)
-        else:
-            top_values = value_counts.iloc[:num_unique_values_to_show_in_vis].apply(lambda v_c_share: round(v_c_share * 100, 1)).to_dict()
-            try:
-                from collections import OrderedDict
-                top_values = OrderedDict(top_values)
-            except:
-                top_values = top_values
+        top_values = value_counts.iloc[:num_unique_values_to_show_in_vis].apply(lambda v_c_share: round(v_c_share * 100, 1)).to_dict()
+        top_values = OrderedDict(top_values)
         if len(value_counts) == 3:
             top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = -1
         else:
@@ -526,12 +518,3 @@ def __create_all_details(value):
         InspectionResultsDict.KEY_DETAILS_TYPE: InspectionResultsDict.VALUE_DETAILS_TYPE_ALL,
         InspectionResultsDict.KEY_DETAILS_VALUE: value
     }
-
-
-def __get_pandas_version_safe():
-    try:
-        major, minor = map(int, pd.__version__.split(".")[:2])
-    except:
-        major = map(int, pd.__version__.split(".")[0])
-        minor = 1
-    return major, minor
