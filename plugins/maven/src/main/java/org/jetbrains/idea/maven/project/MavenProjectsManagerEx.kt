@@ -83,6 +83,22 @@ private class MavenFullSyncFileReader(
   }
 }
 
+private class MavenPartialSyncFileReader(
+  val projectsTree: MavenProjectsTree,
+  val spec: MavenSyncSpec,
+  val generalSettings: MavenGeneralSettings,
+  val filesToUpdate: List<VirtualFile>,
+  val filesToDelete: List<VirtualFile>,
+) : MavenSyncFileReader {
+  override suspend fun invoke(wrappers: MavenEmbedderWrappers): MavenProjectsTreeUpdateResult {
+    return reportRawProgress { reporter ->
+      val deleted = projectsTree.delete(filesToDelete, generalSettings, wrappers, reporter)
+      val updated = projectsTree.update(filesToUpdate, spec.forceReading(), generalSettings, wrappers, reporter)
+      deleted + updated
+    }
+  }
+}
+
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
   fun scheduleUpdateAllMavenProjects(spec: MavenSyncSpec)
@@ -354,30 +370,8 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   ): List<Module> {
     val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
     mavenEmbedderWrappers.use {
-      return doUpdateMavenProjects(spec, null, mavenEmbedderWrappers, object : MavenSyncFileReader {
-        override suspend fun invoke(wrappers: MavenEmbedderWrappers): MavenProjectsTreeUpdateResult {
-          return readMavenProjects(spec,
-                                   filesToUpdate,
-                                   filesToDelete,
-                                   wrappers
-          )
-        }
-
-      })
-    }
-  }
-
-  private suspend fun readMavenProjects(
-    spec: MavenSyncSpec,
-    filesToUpdate: List<VirtualFile>,
-    filesToDelete: List<VirtualFile>,
-    mavenEmbedderWrappers: MavenEmbedderWrappers,
-  ): MavenProjectsTreeUpdateResult {
-    return reportRawProgress { reporter ->
-      val progressReporter = reporter
-      val deleted = projectsTree.delete(filesToDelete, generalSettings, mavenEmbedderWrappers, progressReporter)
-      val updated = projectsTree.update(filesToUpdate, spec.forceReading(), generalSettings, mavenEmbedderWrappers, progressReporter)
-      deleted + updated
+      return doUpdateMavenProjects(spec, null, mavenEmbedderWrappers, MavenPartialSyncFileReader(
+        projectsTree, spec, generalSettings, filesToUpdate, filesToDelete))
     }
   }
 
@@ -466,7 +460,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     spec: MavenSyncSpec,
     modelsProvider: IdeModifiableModelsProvider?,
     mavenEmbedderWrappers: MavenEmbedderWrappers,
-    read: MavenSyncFileReader
+    read: MavenSyncFileReader,
   ): List<Module> {
     return tracer.spanBuilder("syncMavenProject").useWithScope {
       // display all import activities using the same build progress
