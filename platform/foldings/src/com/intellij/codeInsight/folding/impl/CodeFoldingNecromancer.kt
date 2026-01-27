@@ -87,8 +87,10 @@ private class CodeFoldingNecromancer(
     val codeFoldingManager = project.serviceAsync<CodeFoldingManager>()
     val psiDocumentManager = project.serviceAsync<PsiDocumentManager>()
     val editor = recipe.editorSupplier()
+    var modStamp:Long = 0
     val foldingState = readAction {
       if (psiDocumentManager.isCommitted(document)) {
+        modStamp = document.modificationStamp
         catchingExceptions {
           blockingContextToIndicator {
             codeFoldingManager.updateFoldRegionsAsync(editor, true)
@@ -100,7 +102,7 @@ private class CodeFoldingNecromancer(
     }
     if (foldingState != null) {
       withContext(Dispatchers.EDT) {
-        if (editor.foldingModel.isFoldingEnabled) {
+        if (editor.foldingModel.isFoldingEnabled && modStamp == document.modificationStamp) {
           runReadAction { // set to editor with RA IJPL-159083
             SlowOperations.knownIssue("IJPL-165088").use {
               foldingState.run()
