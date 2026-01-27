@@ -3,8 +3,6 @@
 package org.jetbrains.kotlin.parcelize.ide.test
 
 import com.intellij.testFramework.common.runAll
-import org.jetbrains.kotlin.analysis.api.impl.base.extensions.FirExtensionRegistrarAdapterPointDescriptor
-import org.jetbrains.kotlin.compiler.plugin.registerExtension
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
 import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2QuickFixTest
 import org.jetbrains.kotlin.parcelize.ParcelizeNames
@@ -14,12 +12,10 @@ abstract class AbstractParcelizeK2QuickFixTest : AbstractK2QuickFixTest() {
     override fun setUp() {
         super.setUp()
         addParcelizeLibraries(module)
-        if (!project.extensionArea.hasExtensionPoint(FirExtensionRegistrarAdapterPointDescriptor.extensionPointName)) {
-            FirExtensionRegistrarAdapterPointDescriptor.registerExtensionPoint(project)
-        }
-        FirExtensionRegistrarAdapterPointDescriptor.registerExtension(
-            project,
-            FirParcelizeExtensionRegistrar(ParcelizeNames.PARCELIZE_CLASS_FQ_NAMES)
+        val extensionPoint = project.extensionArea.getExtensionPoint<FirExtensionRegistrarAdapter>(FirExtensionRegistrarAdapter.name)
+        extensionPoint.registerExtension(
+            FirParcelizeExtensionRegistrar(ParcelizeNames.PARCELIZE_CLASS_FQ_NAMES),
+            project
         )
     }
 
@@ -27,10 +23,9 @@ abstract class AbstractParcelizeK2QuickFixTest : AbstractK2QuickFixTest() {
         runAll(
             {
                 project.extensionArea
-                    .getExtensionPoint(FirExtensionRegistrarAdapterPointDescriptor.extensionPointName)
+                    .getExtensionPoint<FirExtensionRegistrarAdapter>(FirExtensionRegistrarAdapter.name)
                     .unregisterExtension(FirParcelizeExtensionRegistrar::class.java)
             },
-            { project.extensionArea.unregisterExtensionPoint(FirExtensionRegistrarAdapterPointDescriptor.extensionPointName.name) },
             { removeParcelizeLibraries(module) },
             { super.tearDown() },
         )
