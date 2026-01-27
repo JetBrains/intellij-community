@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.refactoring.RefactoringBundle
@@ -14,6 +15,7 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
+import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -52,11 +54,15 @@ class RenamePsiFileDumbProcessor : RenamePsiElementProcessor(), DumbAware {
  * This dialog should only be created by [RenamePsiFileDumbProcessor] in dumb mode
  */
 private class PsiFileDumbRenameDialog(project: Project, element: PsiElement, nameSuggestionContext: PsiElement?, editor: Editor?) :
-  RenamePsiFileProcessor.PsiFileRenameDialog(project, element, nameSuggestionContext, editor), DumbAware {
+  RenameWithOptionalReferencesDialog(project, element, nameSuggestionContext, editor), DumbAware {
   override fun createRenameProcessor(newName: String): RenameProcessor {
     return FileRenameRefactoringProcessor(
       project, psiElement, newName, getRefactoringScope(), isSearchInComments, isSearchInNonJavaFiles
     )
+  }
+
+  override fun getLabelText(): @NlsContexts.Label String {
+    return RefactoringBundle.message("rename.0.to", fullName)
   }
 
   override fun createNorthPanel(): JComponent? {
@@ -80,7 +86,17 @@ private class PsiFileDumbRenameDialog(project: Project, element: PsiElement, nam
 
   override fun createCheckboxes(panel: JPanel, gbConstraints: GridBagConstraints) {
     super.createCheckboxes(panel, gbConstraints)
-    cbSearchInComments.isEnabled = false
+    panel.components.filterIsInstance<JCheckBox>().forEach { checkbox ->
+      checkbox.isSelected = false
+      checkbox.isEnabled = false
+    }
+  }
+
+  override fun getSearchForReferences(): Boolean {
+    return false
+  }
+
+  override fun setSearchForReferences(value: Boolean) {
   }
 
   override fun createSearchScopePanel(): JComponent? {
@@ -89,8 +105,15 @@ private class PsiFileDumbRenameDialog(project: Project, element: PsiElement, nam
     }
   }
 
-  override fun createSearchForReferencesCheckbox(panel: JPanel, gbConstraints: GridBagConstraints) {
-    super.createSearchForReferencesCheckbox(panel, gbConstraints)
-    cbSearchForReferences.isEnabled = false
+  override fun hasPreviewButton(): Boolean {
+    return true
+  }
+
+  override fun isToSearchForTextOccurrencesForRename(): Boolean {
+    return false
+  }
+
+  override fun isToSearchInCommentsForRename(): Boolean {
+    return false
   }
 }
