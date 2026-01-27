@@ -12,6 +12,7 @@ import com.intellij.internal.statistic.eventLog.events.FusInputEvent
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*
 import com.intellij.openapi.editor.Editor
@@ -151,7 +152,9 @@ object TemplateInlayUtil {
         .setRequestFocus(true)
         .addListener(object : JBPopupListener {
           override fun onClosed(event: LightweightWindowEvent) {
-            presentation.isSelected = false
+            WriteIntentReadAction.run {
+              presentation.isSelected = false
+            }
           }
         })
         .createPopup()
