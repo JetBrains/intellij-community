@@ -145,7 +145,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   }
 
   public @NotNull JComponent getTopComponent() {
-    return getCenterComponent(Configurable.TopComponentController.EMPTY);
+    return getCenterComponent(TopComponentController.EMPTY);
   }
 
   public void init(@Nullable String searchQuery) {
@@ -769,12 +769,8 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     }
   }
 
-  private @NotNull List<UIPluginGroup> getInstalledGroups() {
-    return myInstalledTab.getInstalledPanel().getGroups();
-  }
-
   private @Nullable ListPluginComponent findInstalledPluginById(@NotNull PluginId pluginId) {
-    for (UIPluginGroup group : getInstalledGroups()) {
+    for (UIPluginGroup group : myInstalledTab.getInstalledGroups()) {
       ListPluginComponent component = group.findComponent(pluginId);
       if (component != null) {
         return component;
@@ -866,6 +862,10 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
     public @Nullable SearchResultPanel getInstalledSearchPanel() {
       return myInstalledSearchPanel;
+    }
+
+    public @Nullable List<UIPluginGroup> getInstalledGroups() {
+      return getInstalledPanel() != null ? getInstalledPanel().getGroups() : null;
     }
 
     @Override
