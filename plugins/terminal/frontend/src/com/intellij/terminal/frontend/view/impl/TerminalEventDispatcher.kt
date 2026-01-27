@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
@@ -261,8 +262,10 @@ private class TerminalKeyListener(
 
   private fun handleEvent(e: KeyEvent) {
     if (settings.overrideIdeShortcuts()) return // handled by the dispatcher
-    eventsHandler.handleKeyEvent(TimedKeyEvent(e))
-    e.consume()
+    WriteIntentReadAction.run {
+      eventsHandler.handleKeyEvent(TimedKeyEvent(e))
+      e.consume()
+    }
   }
 }
 
