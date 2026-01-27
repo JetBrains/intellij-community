@@ -330,7 +330,7 @@ private class TextAutoResolver(private val mergeRequest: TextMergeRequest) {
     assert(change.conflictType.resolutionStrategy === MergeConflictResolutionStrategy.TEXT)
 
     val texts: List<CharSequence> = ThreeSide.map { side: ThreeSide ->
-      DiffUtil.getLinesContent(mergeRequest.getDocument(side), change.getStartLine(side), change.getEndLine(side))
+      DiffUtil.getLinesContent(mergeRequest.getDocumentWithOutputAsBase(side), change.getStartLine(side), change.getEndLine(side))
     }
 
     val leftText: CharSequence = ThreeSide.LEFT.select(texts)
@@ -351,6 +351,8 @@ private class TextAutoResolver(private val mergeRequest: TextMergeRequest) {
 }
 
 private fun TextMergeRequest.getDocument(side: ThreeSide): Document = side.select(contents).document
+private fun TextMergeRequest.getDocumentWithOutputAsBase(side: ThreeSide): Document =
+  if (side == ThreeSide.BASE) outputContent.document else side.select(contents).document
 
 private fun buildResultLineRanges(changesDatas: List<InitChangeData>): List<LineRange> = changesDatas
   .map {
