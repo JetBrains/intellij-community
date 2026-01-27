@@ -472,93 +472,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     }
   }
 
-  private void applyBundledUpdates(@Nullable Collection<? extends PluginUiModel> updates) {
-    if (ContainerUtil.isEmpty(updates)) {
-      if (myBundledUpdateGroup.ui != null) {
-        myInstalledTab.getInstalledPanel().removeGroup(myBundledUpdateGroup);
-        myInstalledTab.getInstalledPanel().doLayout();
-      }
-    }
-    else if (myBundledUpdateGroup.ui == null) {
-      for (PluginUiModel descriptor : updates) {
-        for (UIPluginGroup group : myInstalledTab.getInstalledPanel().getGroups()) {
-          ListPluginComponent component = group.findComponent(descriptor.getPluginId());
-          if (component != null && component.getPluginModel().isBundled()) {
-            myBundledUpdateGroup.addModel(component.getPluginModel());
-            break;
-          }
-        }
-      }
-      if (!myBundledUpdateGroup.getModels().isEmpty()) {
-        myInstalledTab.getInstalledPanel().addGroup(myBundledUpdateGroup, 0);
-        myBundledUpdateGroup.ui.excluded = true;
-
-        for (PluginUiModel descriptor : updates) {
-          ListPluginComponent component = myBundledUpdateGroup.ui.findComponent(descriptor.getPluginId());
-          if (component != null) {
-            component.setUpdateDescriptor(descriptor);
-          }
-        }
-
-        myInstalledTab.getInstalledPanel().doLayout();
-      }
-    }
-    else {
-      List<ListPluginComponent> toDelete = new ArrayList<>();
-
-      for (ListPluginComponent plugin : myBundledUpdateGroup.ui.plugins) {
-        boolean exist = false;
-        for (PluginUiModel update : updates) {
-          if (plugin.getPluginModel().getPluginId().equals(update.getPluginId())) {
-            exist = true;
-            break;
-          }
-        }
-        if (!exist) {
-          toDelete.add(plugin);
-        }
-      }
-
-      for (ListPluginComponent component : toDelete) {
-        myInstalledTab.getInstalledPanel().removeFromGroup(myBundledUpdateGroup, component.getPluginModel());
-      }
-
-      for (PluginUiModel update : updates) {
-        ListPluginComponent exist = myBundledUpdateGroup.ui.findComponent(update.getPluginId());
-        if (exist != null) {
-          continue;
-        }
-        for (UIPluginGroup group : myInstalledTab.getInstalledPanel().getGroups()) {
-          if (group == myBundledUpdateGroup.ui) {
-            continue;
-          }
-          ListPluginComponent component = group.findComponent(update.getPluginId());
-          if (component != null && component.getPluginModel().isBundled()) {
-            myInstalledTab.getInstalledPanel().addToGroup(myBundledUpdateGroup, component.getPluginModel());
-            break;
-          }
-        }
-      }
-
-      if (myBundledUpdateGroup.getModels().isEmpty()) {
-        myInstalledTab.getInstalledPanel().removeGroup(myBundledUpdateGroup);
-      }
-      else {
-        for (PluginUiModel descriptor : updates) {
-          ListPluginComponent component = myBundledUpdateGroup.ui.findComponent(descriptor.getPluginId());
-          if (component != null) {
-            component.setUpdateDescriptor(descriptor);
-          }
-        }
-      }
-
-      myInstalledTab.getInstalledPanel().doLayout();
-    }
-
-    myUpdateAll.setVisible(myUpdateAll.isVisible() && myBundledUpdateGroup.ui == null);
-    myUpdateCounter.setVisible(myUpdateCounter.isVisible() && myBundledUpdateGroup.ui == null);
-  }
-
   public static void registerCopyProvider(@NotNull PluginsGroupComponent component) {
     CopyProvider copyProvider = new CopyProvider() {
       @Override
@@ -1365,6 +1278,93 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       finally {
         myInstalledSearchSetState = true;
       }
+    }
+
+    private void applyBundledUpdates(@Nullable Collection<? extends PluginUiModel> updates) {
+      if (ContainerUtil.isEmpty(updates)) {
+        if (myBundledUpdateGroup.ui != null) {
+          getInstalledPanel().removeGroup(myBundledUpdateGroup);
+          getInstalledPanel().doLayout();
+        }
+      }
+      else if (myBundledUpdateGroup.ui == null) {
+        for (PluginUiModel descriptor : updates) {
+          for (UIPluginGroup group : getInstalledPanel().getGroups()) {
+            ListPluginComponent component = group.findComponent(descriptor.getPluginId());
+            if (component != null && component.getPluginModel().isBundled()) {
+              myBundledUpdateGroup.addModel(component.getPluginModel());
+              break;
+            }
+          }
+        }
+        if (!myBundledUpdateGroup.getModels().isEmpty()) {
+          getInstalledPanel().addGroup(myBundledUpdateGroup, 0);
+          myBundledUpdateGroup.ui.excluded = true;
+
+          for (PluginUiModel descriptor : updates) {
+            ListPluginComponent component = myBundledUpdateGroup.ui.findComponent(descriptor.getPluginId());
+            if (component != null) {
+              component.setUpdateDescriptor(descriptor);
+            }
+          }
+
+          getInstalledPanel().doLayout();
+        }
+      }
+      else {
+        List<ListPluginComponent> toDelete = new ArrayList<>();
+
+        for (ListPluginComponent plugin : myBundledUpdateGroup.ui.plugins) {
+          boolean exist = false;
+          for (PluginUiModel update : updates) {
+            if (plugin.getPluginModel().getPluginId().equals(update.getPluginId())) {
+              exist = true;
+              break;
+            }
+          }
+          if (!exist) {
+            toDelete.add(plugin);
+          }
+        }
+
+        for (ListPluginComponent component : toDelete) {
+          getInstalledPanel().removeFromGroup(myBundledUpdateGroup, component.getPluginModel());
+        }
+
+        for (PluginUiModel update : updates) {
+          ListPluginComponent exist = myBundledUpdateGroup.ui.findComponent(update.getPluginId());
+          if (exist != null) {
+            continue;
+          }
+          for (UIPluginGroup group : getInstalledPanel().getGroups()) {
+            if (group == myBundledUpdateGroup.ui) {
+              continue;
+            }
+            ListPluginComponent component = group.findComponent(update.getPluginId());
+            if (component != null && component.getPluginModel().isBundled()) {
+              getInstalledPanel().addToGroup(myBundledUpdateGroup, component.getPluginModel());
+              break;
+            }
+          }
+        }
+
+        if (myBundledUpdateGroup.getModels().isEmpty()) {
+          getInstalledPanel().removeGroup(myBundledUpdateGroup);
+        }
+        else {
+          for (PluginUiModel descriptor : updates) {
+            ListPluginComponent component = myBundledUpdateGroup.ui.findComponent(descriptor.getPluginId());
+            if (component != null) {
+              component.setUpdateDescriptor(descriptor);
+            }
+          }
+        }
+
+        getInstalledPanel().doLayout();
+      }
+
+      myUpdateAll.setVisible(myUpdateAll.isVisible() && myBundledUpdateGroup.ui == null);
+      myUpdateCounter.setVisible(myUpdateCounter.isVisible() && myBundledUpdateGroup.ui == null);
     }
 
     private final class InstalledSearchOptionAction extends ToggleAction implements DumbAware {
