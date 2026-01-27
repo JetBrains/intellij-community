@@ -10,12 +10,8 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.community.execService.Args
-import com.intellij.python.community.execService.BinOnEel
-import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.execGetStdout
+import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.impl.poetry.common.poetryPath
-import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.*
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackage
@@ -41,7 +37,6 @@ import kotlin.time.Duration.Companion.minutes
 /**
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
  */
-private const val REPLACE_PYTHON_VERSION = """import re,sys;f=open("$PY_PROJECT_TOML", "r+");orig=f.read();f.seek(0);f.write(re.sub(r"(python = \"\^)[^\"]+(\")", "\g<1>"+'.'.join(str(v) for v in sys.version_info[:2])+"\g<2>", orig))"""
 private val poetryNotFoundException: @Nls String = PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message")
 private val VERSION_2 = "2.0.0".toVersion()
 
@@ -91,14 +86,20 @@ suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): PyResult<String> {
 @Internal
 suspend fun setupPoetry(projectPath: Path, basePythonBinaryPath: PythonBinary?, installPackages: Boolean, init: Boolean): PyResult<PythonHomePath> {
   if (init) {
-    runPoetry(projectPath, *listOf("init", "-n").toTypedArray()).getOr { return it }
+    // Build poetry init command with Python version constraint if available
+    val initArgs = mutableListOf("init", "-n")
 
-    if (basePythonBinaryPath != null) { // Replace a python version in toml
-      ExecService().execGetStdout(
-        binary = BinOnEel(path = basePythonBinaryPath, workDir = projectPath),
-        args = Args("-c", REPLACE_PYTHON_VERSION)
-      ).getOr { return it }
+    if (basePythonBinaryPath != null) {
+      // Validate Python and get version info
+      val pythonInfo = basePythonBinaryPath.validatePythonAndGetInfo().getOr { return it }
+      val major = pythonInfo.languageLevel.majorVersion
+      val minor = pythonInfo.languageLevel.minorVersion
+      // Add --python flag with caret constraint (e.g., "^3.10")
+      initArgs.add("--python")
+      initArgs.add("^$major.$minor")
     }
+
+    runPoetry(projectPath, *initArgs.toTypedArray()).getOr { return it }
   }
 
   if (basePythonBinaryPath != null) {
