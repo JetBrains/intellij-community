@@ -24,6 +24,7 @@ jvm_library(
     "//libraries/junit5-params",
     "//libraries/kotlin/test:libraries-kotlinTest",
     "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
+    "//libraries/kotlinx/coroutines/test",
     "//libraries/io",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
