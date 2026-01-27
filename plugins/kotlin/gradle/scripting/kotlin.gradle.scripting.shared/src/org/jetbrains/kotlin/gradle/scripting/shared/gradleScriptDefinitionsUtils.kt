@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.shared
 
 import KotlinGradleScriptingBundle
@@ -19,7 +19,7 @@ import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.ScriptCompilationConfigurationKeys
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.experimental.util.PropertiesCollection
@@ -131,7 +131,7 @@ private fun kotlinStdlibAndCompiler(gradleLibDir: Path): List<Path> {
     return listOfNotNull(stdlibPath, compilerPath)
 }
 
-private fun Path.findFirst(pattern: String): Path? = Files.newDirectoryStream(this, pattern).firstOrNull()
+private fun Path.findFirst(pattern: String): Path? = Files.newDirectoryStream(this, pattern).use { it.firstOrNull() }
 
 private val kotlinDslDependencySelector = Regex("^gradle-(?:kotlin-dsl|core|base-services).*\\.jar\$")
 
