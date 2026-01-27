@@ -328,6 +328,7 @@ private fun <R> withClassRoot(classRoot: Path, block: (root: Path) -> R): R {
         block(it.rootDirectories.single())
       }
     }
+    !classRoot.exists() -> error("Classes output root does not exist: $classRoot")
     else -> error("Unsupported classes output root: $classRoot")
   }
 }
