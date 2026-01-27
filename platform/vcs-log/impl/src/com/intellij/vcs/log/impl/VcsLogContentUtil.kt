@@ -39,38 +39,22 @@ object VcsLogContentUtil {
   @Internal
   val DEFAULT_TAB_GROUP_ID: TabGroupId = TabGroupId(MAIN_LOG_TAB_NAME, VcsLogBundle.messagePointer("vcs.log.tab.name"), true)
 
-  private fun getLogUi(c: JComponent): VcsLogUiEx? {
+  internal fun getLogUi(c: JComponent): VcsLogUiEx? {
     val uis = VcsLogUiHolder.getLogUis(c)
     require(uis.size <= 1) { "Component $c has more than one log ui: $uis" }
     return uis.singleOrNull()
   }
 
-  private fun componentsSequence(toolWindow: ToolWindow): Sequence<JComponent> {
-    val contentManager = toolWindow.contentManagerIfCreated ?: return emptySequence()
-    return sequence {
-      for (content in contentManager.getContents()) {
-        if (content is TabbedContent) {
-          content.tabs.forEach { pair ->
-            pair.second?.let { yield(it) }
-          }
-        }
-        else {
-          yield(content.component)
-        }
-      }
-    }
-  }
-
   internal fun <U : VcsLogUi> findLogUi(toolWindow: ToolWindow, clazz: Class<U>, select: Boolean, condition: (U) -> Boolean): U? {
-    componentsSequence(toolWindow).forEach {
-      val logUi = getLogUi(it)
+    toolWindow.contentManagerIfCreated?.contentComponentSequence()?.forEach { (_, component) ->
+      val logUi = getLogUi(component)
 
       if (logUi != null && clazz.isInstance(logUi)) {
         @Suppress("UNCHECKED_CAST")
         logUi as U
         if (condition(logUi)) {
           if (select) {
-            ContentUtilEx.selectContent(toolWindow.contentManager, it, true)
+            ContentUtilEx.selectContent(toolWindow.contentManager, component, true)
             if (!toolWindow.isVisible) {
               toolWindow.activate(null)
             }
@@ -185,5 +169,25 @@ object VcsLogContentUtil {
 
   internal fun getToolWindow(project: Project): ToolWindow? {
     return ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
+  }
+}
+
+/**
+ * Because of the presence of [TabbedContent]s, we can't just iterate over the content components
+ *
+ * !NB: must be iterated synchronously on EDT
+ */
+internal fun ContentManager.contentComponentSequence(): Sequence<Pair<Content, JComponent>> = sequence {
+  sequence {
+    for (content in getContents()) {
+      if (content is TabbedContent) {
+        content.tabs.forEach { pair ->
+          pair.second?.let { yield(content to it) }
+        }
+      }
+      else {
+        yield(content to content.component)
+      }
+    }
   }
 }

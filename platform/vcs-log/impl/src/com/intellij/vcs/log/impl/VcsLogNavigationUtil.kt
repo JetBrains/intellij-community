@@ -43,6 +43,9 @@ object VcsLogNavigationUtil {
   fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath? = null): CompletableFuture<Boolean> =
     VcsProjectLog.getInstance(project).showRevisionAsync(root, hash, filePath).asCompletableFuture()
 
+  /**
+   * Show a commit in the UI only if it is already loaded
+   */
   @Internal
   fun VcsLogUiEx.showCommitSync(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean {
     return when (jumpToCommitSyncInternal(hash, root, true, requestFocus)) {
@@ -55,6 +58,9 @@ object VcsLogNavigationUtil {
     }
   }
 
+  /**
+   * Show a commit in the UI, loading additional commits if necessary
+   */
   @Internal
   suspend fun VcsLogUiEx.showCommit(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean {
     return when (jumpToCommitInternal(hash, root, true, requestFocus).await()) {
