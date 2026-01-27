@@ -104,28 +104,28 @@ internal open class WorkspaceProjectImporter(
     val externalSystemModuleEntities = storageBeforeImport.entities(ExternalSystemModuleOptionsEntity::class.java)
     val mavenProjectToModuleName = buildModuleNameMap(externalSystemModuleEntities, allProjectsToChanges)
 
-    val builder = MutableEntityStorage.create()
-    builder.addEntity(MavenProjectsTreeSettingsEntity(projectChangesInfo.projectFilePaths, MavenEntitySource))
+    val newStorage = MutableEntityStorage.create()
+    newStorage.addEntity(MavenProjectsTreeSettingsEntity(projectChangesInfo.projectFilePaths, MavenEntitySource))
 
     val contextData = UserDataHolderBase()
 
     val projectsWithModuleEntities = stats.recordPhase(MavenImportCollector.WORKSPACE_POPULATE_PHASE) {
       tracer.spanBuilder("populateWorkspace").use {
         importModules(storageBeforeImport,
-                      builder,
+                      newStorage,
                       allProjectsToChanges,
                       mavenProjectToModuleName,
                       contextData,
                       stats).also { projectWithModules ->
           tracer.spanBuilder("beforeModelApplied").use {
-            beforeModelApplied(projectWithModules, builder, contextData, stats)
+            beforeModelApplied(projectWithModules, newStorage, contextData, stats)
           }
         }
       }
     }
     val appliedProjectsWithModules = stats.recordPhase(MavenImportCollector.WORKSPACE_COMMIT_PHASE) {
       tracer.spanBuilder("commitWorkspace").useWithScope {
-        commitModulesToWorkspaceModel(projectsWithModuleEntities, builder, contextData, stats)
+        commitModulesToWorkspaceModel(projectsWithModuleEntities, newStorage, contextData, stats)
       }
     }
 
@@ -326,7 +326,8 @@ internal open class WorkspaceProjectImporter(
   ): List<MavenProjectWithModulesData<Module>> {
     val appliedModulesResult = mutableListOf<MavenProjectWithModulesData<Module>>()
     updateProjectModelFastOrSlow(project, stats,
-                                 { snapshot -> applyToCurrentStorage(mavenProjectsWithModules, snapshot, newStorage, stats) },
+                                 { snapshot ->
+                                   applyToCurrentStorage(mavenProjectsWithModules, snapshot, newStorage, stats) },
                                  { applied ->
                                    mapEntitiesToModulesAndRunAfterModelApplied(applied,
                                                                                mavenProjectsWithModules,
@@ -489,16 +490,16 @@ internal open class WorkspaceProjectImporter(
 
   private fun beforeModelApplied(
     projectsWithModules: List<MavenWorkspaceConfigurator.MavenProjectWithModules<ModuleEntity>>,
-    builder: MutableEntityStorage,
+    newStorage: MutableEntityStorage,
     contextDataHolder: UserDataHolderBase,
     stats: WorkspaceImportStats,
   ) {
     val context = object : MavenWorkspaceConfigurator.MutableModelContext, UserDataHolderEx by contextDataHolder {
       override val project = this@WorkspaceProjectImporter.project
-      override val storage = builder
+      override val storage = newStorage
       override val mavenProjectsTree = myProjectsTree
       override val mavenProjectsWithModules = projectsWithModules.asSequence()
-      override fun <T : WorkspaceEntity> importedEntities(clazz: Class<T>): Sequence<T> = importedEntities(builder, clazz)
+      override fun <T : WorkspaceEntity> importedEntities(clazz: Class<T>): Sequence<T> = importedEntities(newStorage, clazz)
     }
     workspaceConfigurators().forEach { configurator ->
       stats.recordConfigurator(configurator, MavenImportCollector.BEFORE_APPLY_DURATION_MS) {
