@@ -20,6 +20,7 @@ import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.system.OS;
 import com.sun.jna.Native;
@@ -225,9 +226,14 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
         spawn(fmApp, toSelect != null ? toSelect : dir);
       }
     }
-    else if (PathEnvironmentVariableUtil.isOnPath("xdg-open")) {
-      var path = toSelect != null ? toSelect : dir;
-      spawn("xdg-open", path);
+    else if (toSelect != null && EnvironmentUtil.getValue("FLATPAK_ID") != null) {
+      spawn("gdbus", "call", "--session", "--dest", "org.freedesktop.FileManager1", "--object-path", 
+            "/org/freedesktop/FileManager1", "--method", "org.freedesktop.FileManager1.ShowItems", 
+            "['file://" + toSelect + "']", ""
+      );
+    }
+    else if (toSelect == null && PathEnvironmentVariableUtil.isOnPath("xdg-open")) {
+      spawn("xdg-open", dir);
     }
     else {
       var message = IdeBundle.message("reveal.unsupported.message", requireNonNullElse(toSelect, dir));
