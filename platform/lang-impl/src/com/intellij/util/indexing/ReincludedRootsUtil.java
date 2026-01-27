@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.navigation.ItemPresentation;
@@ -13,14 +13,12 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
-import com.intellij.platform.workspace.jps.entities.LibraryId;
 import com.intellij.platform.workspace.jps.entities.ModuleId;
 import com.intellij.platform.workspace.storage.EntityPointer;
 import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.util.indexing.roots.builders.IndexableSetContributorFilesIteratorBuilder;
 import com.intellij.util.indexing.roots.builders.SyntheticLibraryIteratorBuilder;
@@ -80,8 +78,6 @@ public final class ReincludedRootsUtil {
     private final List<ContentRootData<?>> filesFromContent = new ArrayList<>();
     private final List<ExternalRootData<?>> filesFromExternal = new ArrayList<>();
     private final List<CustomKindRootData<?>> filesFromCustomKind = new ArrayList<>();
-    private final MultiMap<LibraryId, VirtualFile> sourceFilesFromLibraries = MultiMap.createSet();
-    private final MultiMap<LibraryId, VirtualFile> classFilesFromLibraries = MultiMap.createSet();
     private final List<VirtualFile> filesFromIndexableSetContributors = new ArrayList<>();
     private final List<VirtualFile> filesFromAdditionalLibraryRootsProviders = new ArrayList<>();
 
@@ -132,13 +128,6 @@ public final class ReincludedRootsUtil {
           continue;
         }
 
-
-        LibraryId libraryId = WorkspaceFileSetRecognizer.INSTANCE.getLibraryId(fileSet, entityStorage);
-        if (libraryId != null) {
-          addLibraryFile(libraryId, file, fileSet.getKind() == WorkspaceFileKind.EXTERNAL_SOURCE);
-          continue;
-        }
-
         LOG.assertTrue(entityPointer != null, "External element's fileSet without entity reference, " + fileSet);
         VirtualFileUrl url = VirtualFileUrls.toVirtualFileUrl(file, fileUrlManager);
         if (fileSet.getKind() == WorkspaceFileKind.EXTERNAL_SOURCE) {
@@ -167,15 +156,6 @@ public final class ReincludedRootsUtil {
 
     private void addCustomKindRoot(EntityPointer<?> entityPointer, VirtualFileUrl file) {
       filesFromCustomKind.add(new CustomKindRootData<>(entityPointer, file));
-    }
-
-    private void addLibraryFile(LibraryId id, VirtualFile file, boolean isSource) {
-      if (isSource) {
-        sourceFilesFromLibraries.putValue(id, file);
-      }
-      else {
-        classFilesFromLibraries.putValue(id, file);
-      }
     }
 
     private record ModuleRootData<E extends WorkspaceEntity>(@NotNull EntityPointer<E> entityPointer,
@@ -217,14 +197,6 @@ public final class ReincludedRootsUtil {
       }
       for (ContentRootData<?> data : filesFromContent) {
         result.addAll(data.createBuilders());
-      }
-      for (Map.Entry<LibraryId, Collection<VirtualFile>> entry : sourceFilesFromLibraries.entrySet()) {
-        result.addAll(IndexableIteratorBuilders.INSTANCE.
-                        forLibraryEntity(entry.getKey(), true, Collections.emptyList(), entry.getValue()));
-      }
-      for (Map.Entry<LibraryId, Collection<VirtualFile>> entry : classFilesFromLibraries.entrySet()) {
-        result.addAll(IndexableIteratorBuilders.INSTANCE.
-                        forLibraryEntity(entry.getKey(), true, entry.getValue(), Collections.emptyList()));
       }
       for (ExternalRootData<?> data : filesFromExternal) {
         result.addAll(data.createBuilders());

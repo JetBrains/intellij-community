@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -22,18 +21,6 @@ internal object IndexableIteratorBuilders {
 
   fun forModuleRootsFileBased(moduleId: ModuleId, rootHolder: IndexingUrlRootHolder): Collection<IndexableIteratorBuilder> =
     if (rootHolder.isEmpty()) emptyList() else listOf(ModuleRootsFileBasedIteratorBuilder(moduleId, rootHolder))
-
-  @JvmOverloads
-  fun forLibraryEntity(libraryId: LibraryId,
-                       dependencyChecked: Boolean,
-                       roots: Collection<VirtualFile>? = null,
-                       sourceRoots: Collection<VirtualFile>? = null): Collection<IndexableIteratorBuilder> =
-    listOf(LibraryIdIteratorBuilder(libraryId, roots, sourceRoots, null, dependencyChecked))
-
-  fun forLibraryEntity(libraryId: LibraryId,
-                       dependencyChecked: Boolean,
-                       roots: IndexingUrlSourceRootHolder): Collection<IndexableIteratorBuilder> =
-    listOf(LibraryIdIteratorBuilder(libraryId, null, null, roots, dependencyChecked))
 
   fun forModuleContent(moduleId: ModuleId): Collection<IndexableIteratorBuilder> = listOf(FullModuleContentIteratorBuilder(moduleId))
 
@@ -74,12 +61,6 @@ internal object IndexableIteratorBuilders {
     return result
   }
 }
-
-internal data class LibraryIdIteratorBuilder(val libraryId: LibraryId,
-                                             val roots: Collection<VirtualFile>? = null,
-                                             val sourceRoots: Collection<VirtualFile>? = null,
-                                             val rootUrls: IndexingUrlSourceRootHolder? = null,
-                                             val dependencyChecked: Boolean = false) : IndexableIteratorBuilder
 
 internal data class FullModuleContentIteratorBuilder(val moduleId: ModuleId) : IndexableIteratorBuilder
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependenciesCache;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -684,17 +684,6 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
         urls.add(sourcesDir.getUrl());
       });
       assertNothingToRescanAndFinishIndexing();
-
-      updateExcludedRoots(urls -> urls.clear());
-      assertRescanningLibraryContent(UNSURE, Collections.singletonList(classesDir), Collections.singletonList(sourcesDir));
-
-      updateExcludedRoots(urls -> {
-        urls.add(sourcesDir.getUrl());
-      });
-      assertRescanningLibraryContent(YES, Collections.singletonList(classesDir), Collections.emptyList());
-
-      updateExcludedRoots(urls -> urls.clear());
-      assertRescanningLibraryContent(YES, Collections.emptyList(), Collections.singletonList(sourcesDir));
     }
 
     private void updateExcludedRoots(Consumer<List<String>> urlsConsumer) {
@@ -722,26 +711,6 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
         }
       }
       assertContainsElements(actualRoots, roots);
-
-      finishIndexing(finishIndexingWithStatus, statusPair.getSecond(), statusService);
-    }
-
-    private void assertRescanningLibraryContent(ThreeState finishIndexingWithStatus,
-                                                Collection<VirtualFile> roots,
-                                                Collection<VirtualFile> sourceRoots) {
-      DependenciesIndexedStatusService statusService = DependenciesIndexedStatusService.getInstance(getProject());
-      @Nullable Pair<@NotNull Collection<? extends IndexableIteratorBuilder>, @NotNull StatusMark> statusPair;
-      statusPair = statusService.getDeltaWithLastIndexedStatus();
-      Collection<? extends IndexableIteratorBuilder> builders = statusPair.getFirst();
-      List<VirtualFile> actualRoots = new ArrayList<>();
-      List<VirtualFile> actualSourceRoots = new ArrayList<>();
-      for (IndexableIteratorBuilder builder : builders) {
-        assertInstanceOf(builder, LibraryIdIteratorBuilder.class);
-        actualRoots.addAll(((LibraryIdIteratorBuilder)builder).getRoots());
-        actualSourceRoots.addAll(((LibraryIdIteratorBuilder)builder).getSourceRoots());
-      }
-      assertContainsElements(actualRoots, roots);
-      assertContainsElements(actualSourceRoots, sourceRoots);
 
       finishIndexing(finishIndexingWithStatus, statusPair.getSecond(), statusService);
     }
