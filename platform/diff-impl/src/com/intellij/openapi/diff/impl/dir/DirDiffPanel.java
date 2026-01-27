@@ -15,6 +15,7 @@ import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
@@ -137,7 +138,9 @@ public class DirDiffPanel implements Disposable {
           selectionModel.addSelectionInterval(ind, ind);
         }
         else {
-          update(false);
+          WriteIntentReadAction.run(() -> {
+            update(false);
+          });
         }
         myDiffWindow.setTitle(myModel.getTitle());
       }
