@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.ide.palette.impl.PaletteToolWindowManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -42,27 +43,29 @@ class DesignDropTargetListener implements DropTargetListener {
 
   @Override
   public void dragEnter(DropTargetDragEvent dtde) {
-    try {
-      DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
-      if (dcl != null) {
-        myDraggedComponentList = dcl;
-        myComponentDragObject = dcl;
-        processDragEnter(dcl, dtde.getLocation(), dtde.getDropAction());
-        dtde.acceptDrag(dtde.getDropAction());
-        myLastPoint = dtde.getLocation();
-      }
-      else {
-        ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
-        if (componentItem != null) {
-          myComponentDragObject = new ComponentItemDragObject(componentItem);
+    WriteIntentReadAction.run(() -> {
+      try {
+        DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
+        if (dcl != null) {
+          myDraggedComponentList = dcl;
+          myComponentDragObject = dcl;
+          processDragEnter(dcl, dtde.getLocation(), dtde.getDropAction());
           dtde.acceptDrag(dtde.getDropAction());
           myLastPoint = dtde.getLocation();
         }
+        else {
+          ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
+          if (componentItem != null) {
+            myComponentDragObject = new ComponentItemDragObject(componentItem);
+            dtde.acceptDrag(dtde.getDropAction());
+            myLastPoint = dtde.getLocation();
+          }
+        }
       }
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    });
   }
 
   private void processDragEnter(final DraggedComponentList draggedComponentList, final Point location, final int dropAction) {
@@ -188,42 +191,44 @@ class DesignDropTargetListener implements DropTargetListener {
 
   @Override
   public void drop(final DropTargetDropEvent dtde) {
-    try {
-      ComponentTree componentTree = DesignerToolWindowManager.getInstance(myEditor).getComponentTree();
-      if (componentTree != null) {
-        componentTree.setDropTargetComponent(null);
-      }
-
-
-      final DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
-      if (dcl != null) {
-        CommandProcessor.getInstance().executeCommand(myEditor.getProject(),
-                                                      () -> {
-                                                        if (processDrop(dcl, dtde.getLocation(), dtde.getDropAction())) {
-                                                          myEditor.refreshAndSave(true);
-                                                        }
-                                                      }, UIDesignerBundle.message("command.drop.components"), null);
-      }
-      else {
-        ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
-        if (componentItem != null) {
-          myEditor.getMainProcessor().setInsertFeedbackEnabled(false);
-          new InsertComponentProcessor(myEditor).processComponentInsert(dtde.getLocation(), componentItem);
-          ApplicationManager.getApplication().invokeLater(() -> {
-            PaletteToolWindowManager.getInstance(myEditor).clearActiveItem();
-            myEditor.getActiveDecorationLayer().removeFeedback();
-            myEditor.getLayeredPane().setCursor(null);
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getGlassLayer(), true));
-            myEditor.getMainProcessor().setInsertFeedbackEnabled(true);
-          });
+    WriteIntentReadAction.run(() -> {
+      try {
+        ComponentTree componentTree = DesignerToolWindowManager.getInstance(myEditor).getComponentTree();
+        if (componentTree != null) {
+          componentTree.setDropTargetComponent(null);
         }
+
+
+        final DraggedComponentList dcl = DraggedComponentList.fromTransferable(dtde.getTransferable());
+        if (dcl != null) {
+          CommandProcessor.getInstance().executeCommand(myEditor.getProject(),
+                                                        () -> {
+                                                          if (processDrop(dcl, dtde.getLocation(), dtde.getDropAction())) {
+                                                            myEditor.refreshAndSave(true);
+                                                          }
+                                                        }, UIDesignerBundle.message("command.drop.components"), null);
+        }
+        else {
+          ComponentItem componentItem = SimpleTransferable.getData(dtde.getTransferable(), ComponentItem.class);
+          if (componentItem != null) {
+            myEditor.getMainProcessor().setInsertFeedbackEnabled(false);
+            new InsertComponentProcessor(myEditor).processComponentInsert(dtde.getLocation(), componentItem);
+            ApplicationManager.getApplication().invokeLater(() -> {
+              PaletteToolWindowManager.getInstance(myEditor).clearActiveItem();
+              myEditor.getActiveDecorationLayer().removeFeedback();
+              myEditor.getLayeredPane().setCursor(null);
+              IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getGlassLayer(), true));
+              myEditor.getMainProcessor().setInsertFeedbackEnabled(true);
+            });
+          }
+        }
+        myDraggedComponentsCopy = null;
+        myEditor.repaintLayeredPane();
       }
-      myDraggedComponentsCopy = null;
-      myEditor.repaintLayeredPane();
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    });
   }
 
   private boolean processDrop(final DraggedComponentList dcl, final Point dropPoint, final int dropAction) {
