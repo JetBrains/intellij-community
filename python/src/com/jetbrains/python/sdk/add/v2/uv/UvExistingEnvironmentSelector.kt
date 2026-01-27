@@ -65,7 +65,6 @@ internal class UvExistingEnvironmentSelector<P : PathHolder>(model: PythonMutabl
       envWorkingDir = workingDirectory,
       usePip = existingSdk?.isUv == true,
       projectDir = projectDir,
-      existingSdks = allSdk.toList()
     )
   }
 

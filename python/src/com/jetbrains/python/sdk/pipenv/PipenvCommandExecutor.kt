@@ -54,17 +54,16 @@ suspend fun getPipEnvExecutable(eel: EelApi = localEel): Path? =  PIP_TOOL.getTo
 @Internal
 suspend fun setupPipEnvSdkWithProgressReport(
   moduleBasePath: Path,
-  existingSdks: List<Sdk>,
   basePythonBinaryPath: PythonBinary?,
   installPackages: Boolean,
 ): PyResult<Sdk> {
   val pythonExecutablePath = setUpPipEnv(moduleBasePath, basePythonBinaryPath, installPackages).getOr { return it }
 
   return createSdk(
-    PathHolder.Eel(pythonExecutablePath),
-    existingSdks, moduleBasePath.pathString,
-    suggestedSdkName(moduleBasePath.pathString),
-    PyPipEnvSdkAdditionalData()
+    pythonBinaryPath = PathHolder.Eel(pythonExecutablePath),
+    associatedProjectPath = moduleBasePath.pathString,
+    suggestedSdkName = suggestedSdkName(moduleBasePath.pathString),
+    sdkAdditionalData = PyPipEnvSdkAdditionalData()
   )
 }
 

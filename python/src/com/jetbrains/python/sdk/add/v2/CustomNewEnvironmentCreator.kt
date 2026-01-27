@@ -16,7 +16,6 @@ import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
@@ -66,10 +65,6 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
-    // todo think about better error handling
-    val selectedBasePython = model.state.baseInterpreter.get()!!
-    val basePythonBinaryPath = model.installPythonIfNeeded(selectedBasePython)
-
     val module = when (moduleOrProject) {
       is ModuleOrProject.ModuleAndProject -> moduleOrProject.module
       is ModuleOrProject.ProjectOnly -> null
@@ -78,12 +73,7 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
                          ?: model.projectPathFlows.projectPath.first()
                          ?: error("module base path can't be recognized, both module and project are nulls")
 
-    val newSdk = setupEnvSdk(
-      moduleBasePath = moduleBasePath,
-      baseSdks = PythonSdkUtil.getAllSdks(),
-      basePythonBinaryPath = basePythonBinaryPath,
-      installPackages = false
-    ).getOr { return it }
+    val newSdk = setupEnvSdk(moduleBasePath).getOr { return it }
 
     newSdk.persist()
     if (module != null) {
@@ -178,12 +168,14 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
 
   internal open val installationVersion: String? = null
 
-  protected abstract suspend fun setupEnvSdk(moduleBasePath: Path, baseSdks: List<Sdk>, basePythonBinaryPath: P?, installPackages: Boolean): PyResult<Sdk>
+  protected abstract suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk>
 
   internal open fun onVenvSelectExisting() {}
 }
 
-  private suspend fun <P : PathHolder> PythonAddInterpreterModel<P>.installPythonIfNeeded(interpreter: PythonSelectableInterpreter<P>): P? {
+internal suspend fun <P : PathHolder> PythonMutableTargetAddInterpreterModel<P>.getOrInstallBasePython(): P? {
+  val interpreter = requireNotNull(state.baseInterpreter.get()) { "wrong state: base interpreter is not selected" }
+
   // todo use target config
   val path = if (interpreter is InstallableSelectableInterpreter<P>) {
     installBaseSdk(interpreter.sdk, existingSdks)?.let { fileSystem.wrapSdk(it) }?.homePath

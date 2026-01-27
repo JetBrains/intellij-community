@@ -69,12 +69,9 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
     return Result.success(Unit)
   }
 
-  override suspend fun setupEnvSdk(
-    moduleBasePath: Path,
-    baseSdks: List<Sdk>,
-    basePythonBinaryPath: P?,
-    installPackages: Boolean,
-  ): PyResult<Sdk> {
+  override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk> {
+    val basePythonBinaryPath = model.getOrInstallBasePython()
+
     val hatchEnv = model.hatchViewModel.selectedEnvFromAvailable.get()?.hatchEnvironment
                    ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
     val basePythonBinaryEelPath = when (basePythonBinaryPath) {

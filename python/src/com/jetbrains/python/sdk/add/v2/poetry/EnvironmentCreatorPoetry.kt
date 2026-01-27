@@ -104,11 +104,17 @@ internal class EnvironmentCreatorPoetry<P : PathHolder>(
     }
   }
 
-  override suspend fun setupEnvSdk(moduleBasePath: Path, baseSdks: List<Sdk>, basePythonBinaryPath: P?, installPackages: Boolean): PyResult<Sdk> {
+  override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk> {
+    val basePythonBinaryPath = model.getOrInstallBasePython()
+
     module?.let { service<PoetryConfigService>().setInProjectEnv(it) }
     return when (basePythonBinaryPath) {
-      is PathHolder.Eel -> createNewPoetrySdk(moduleBasePath, baseSdks, basePythonBinaryPath.path, installPackages)
-      else -> return PyResult.localizedError(PyBundle.message("target.is.not.supported", basePythonBinaryPath))
+      is PathHolder.Eel -> createNewPoetrySdk(
+        moduleBasePath = moduleBasePath,
+        basePythonBinaryPath = basePythonBinaryPath.path,
+        installPackages = false
+      )
+      else -> PyResult.localizedError(PyBundle.message("target.is.not.supported", basePythonBinaryPath))
     }
   }
 

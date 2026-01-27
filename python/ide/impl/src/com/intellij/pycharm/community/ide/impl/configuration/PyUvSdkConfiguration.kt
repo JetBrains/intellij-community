@@ -114,14 +114,14 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
 
     val sdkSetupResult = if (envExists) {
       getUvEnv(sdkAssociatedModule)?.homePath?.toNioPathOrNull()?.let {
-        setupExistingEnvAndSdk(it, workingDir, false, workingDir, existingSdks)
+        setupExistingEnvAndSdk(it, workingDir, false, workingDir)
       } ?: run {
         logger.warn("Can't find existing uv environment in project, but it was expected. " +
                     "Probably it was deleted. New environment will be created")
-        setupNewUvSdkAndEnv(workingDir, existingSdks, null)
+        setupNewUvSdkAndEnv(workingDir, null)
       }
     }
-    else setupNewUvSdkAndEnv(workingDir, existingSdks, null)
+    else setupNewUvSdkAndEnv(workingDir, null)
 
     sdkSetupResult.onSuccess {
       withContext(Dispatchers.EDT) {

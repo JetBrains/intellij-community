@@ -237,7 +237,6 @@ fun createSdkByGenerateTask(
 @Internal
 suspend fun createSdk(
   pythonBinaryPath: PathHolder.Eel,
-  existingSdks: List<Sdk>,
   associatedProjectPath: String?,
   suggestedSdkName: String?,
   sdkAdditionalData: PythonSdkAdditionalData? = null,
@@ -247,6 +246,7 @@ suspend fun createSdk(
   } ?: return PyResult.localizedError(PyBundle.message("python.sdk.python.executable.not.found", pythonBinaryPath))
 
   val sdkName = suggestedSdkName ?: suggestAssociatedSdkName(pythonBinaryPath.path.pathString, associatedProjectPath)
+  val existingSdks = PythonSdkUtil.getAllSdks()
   val sdk = SdkConfigurationUtil.setupSdk(
     existingSdks.toTypedArray(),
     pythonBinaryVirtualFile,

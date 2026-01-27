@@ -180,12 +180,10 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
     }
   }
 
-  override suspend fun setupEnvSdk(
-    moduleBasePath: Path,
-    baseSdks: List<Sdk>,
-    basePythonBinaryPath: P?,
-    installPackages: Boolean,
-  ): PyResult<Sdk> {
-    return setupNewUvSdkAndEnv(moduleBasePath, baseSdks, pythonVersion.get())
+  override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk> {
+    return setupNewUvSdkAndEnv(
+      workingDir = moduleBasePath,
+      version = pythonVersion.get(),
+    )
   }
 }

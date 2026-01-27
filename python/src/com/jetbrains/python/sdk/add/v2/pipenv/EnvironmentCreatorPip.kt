@@ -21,9 +21,15 @@ internal class EnvironmentCreatorPip<P : PathHolder>(model: PythonMutableTargetA
     savePathForEelOnly(pathHolder) { path -> PropertiesComponent.getInstance().pipenvPath = path.toString() }
   }
 
-  override suspend fun setupEnvSdk(moduleBasePath: Path, baseSdks: List<Sdk>, basePythonBinaryPath: P?, installPackages: Boolean): PyResult<Sdk> {
+  override suspend fun setupEnvSdk(moduleBasePath: Path): PyResult<Sdk> {
+    val basePythonBinaryPath = model.getOrInstallBasePython()
+
     return when (basePythonBinaryPath) {
-      is PathHolder.Eel -> setupPipEnvSdkWithProgressReport(moduleBasePath, baseSdks, basePythonBinaryPath.path, installPackages)
+      is PathHolder.Eel -> setupPipEnvSdkWithProgressReport(
+        moduleBasePath = moduleBasePath,
+        basePythonBinaryPath = basePythonBinaryPath.path,
+        installPackages = false
+      )
       else -> PyResult.localizedError(PyBundle.message("target.is.not.supported", basePythonBinaryPath))
     }
   }
