@@ -301,6 +301,12 @@ public class TestCaseLoader {
   public static List<Class<?>> loadClassesForWarmup() {
     var groupsTestCaseLoader = TestCaseLoader.Builder.fromDefaults().forWarmup().build();
     groupsTestCaseLoader.fillTestCases("", TestAll.getClassRoots(), true);
+    if (!groupsTestCaseLoader.getClassLoadingErrors().isEmpty()) {
+      RuntimeException e = new RuntimeException("Failed to load classes for warmup");
+      groupsTestCaseLoader.getClassLoadingErrors().forEach(e::addSuppressed);
+      throw e;
+    }
+
     var testCaseClasses = groupsTestCaseLoader.getClasses(false);
 
     System.out.printf("Finishing warmup initialization. Found %s classes%n", testCaseClasses.size());
