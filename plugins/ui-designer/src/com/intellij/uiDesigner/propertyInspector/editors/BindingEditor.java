@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -44,7 +45,9 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
       new ActionListener(){
         @Override
         public void actionPerformed(final ActionEvent e){
-          fireValueCommitted(true, false);
+          WriteIntentReadAction.run(() -> {
+            fireValueCommitted(true, false);
+          });
         }
       }
     );
