@@ -835,7 +835,8 @@ private suspend fun showResults(
       shownNotifications.remove(NotificationKind.PLUGINS)?.forEach { it.expire() }
     }
     val plugins = withContext(Dispatchers.IO) {
-      UiPluginManager.getInstance().findInstalledPlugins(downloaders.map { it.id }.toSet())
+      val pluginIds = downloaders.map { it.id } + pluginUpdates.map { it.pluginId }
+      UiPluginManager.getInstance().findInstalledPlugins(pluginIds.toSet())
     }
     // offer all updates in a dialog
     val showUpdateDialog: () -> Unit = {
