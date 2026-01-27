@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
@@ -102,7 +103,9 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
 
   public static void createAll(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    DebuggerSettings.getInstance().getCapturePoints().stream().filter(c -> c.myEnabled).forEach(c -> track(debugProcess, c));
+    if (Registry.is("debugger.async.stacks.via.breakpoints", false)) {
+      DebuggerSettings.getInstance().getCapturePoints().stream().filter(c -> c.myEnabled).forEach(c -> track(debugProcess, c));
+    }
   }
 
   public static void clearCaches(DebugProcessImpl debugProcess) {
