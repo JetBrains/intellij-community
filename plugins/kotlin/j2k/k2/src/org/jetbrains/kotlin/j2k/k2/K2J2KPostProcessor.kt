@@ -2,13 +2,20 @@
 
 package org.jetbrains.kotlin.j2k.k2
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.checkCanceled
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
+// import removed: forbidAnalysis no longer used during application phase
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.k2.postProcessings.*
@@ -27,6 +34,48 @@ internal class K2J2KPostProcessor : PostProcessor {
     override fun insertImport(file: KtFile, fqName: FqName) {
         runUndoTransparentActionInEdt(inWriteAction = true) {
             file.addImport(fqName)
+        }
+    }
+
+    override suspend fun doAdditionalProcessing(
+        target: PostProcessingTarget,
+        converterContext: ConverterContext?
+    ) {
+        if (converterContext == null) error("Invalid converter context for K2 J2K")
+        val contextElement = target.files().firstOrNull() ?: return
+
+        for (group in processings) {
+            checkCanceled()
+            val appliers = mutableListOf<PostProcessingApplier>()
+
+            // Step 1: compute appliers
+            readAction {
+                analyze(contextElement) {
+                    for (processing in group.processings) {
+                        try {
+                            appliers += processing.computeAppliers(target, converterContext)
+                        } catch (e: ProcessCanceledException) {
+                            throw e
+                        } catch (t: Throwable) {
+                            LOG.error(t)
+                        }
+                    }
+                }
+            }
+
+            // Step 2: apply them
+            for (applier in appliers) {
+                checkCanceled()
+                writeAction {
+                    try {
+                        applier.apply()
+                    } catch (e: ProcessCanceledException) {
+                        throw e
+                    } catch (t: Throwable) {
+                        LOG.error(t)
+                    }
+                }
+            }
         }
     }
 

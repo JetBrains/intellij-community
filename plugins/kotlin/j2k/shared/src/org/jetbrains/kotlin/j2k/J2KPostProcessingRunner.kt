@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.PieceOfCodePostProcessingTarget
@@ -14,13 +15,15 @@ object J2KPostProcessingRunner {
         postProcessor: PostProcessor,
         kotlinFile: KtFile,
         converterContext: ConverterContext? = null,
-        range: TextRange? = null,
-        onPhaseChanged: ((Int, String) -> Unit)? = null
+        range: TextRange? = null
     ) {
         val target =
             if (range != null) PieceOfCodePostProcessingTarget(kotlinFile, range.toRangeMarker(kotlinFile))
             else MultipleFilesPostProcessingTarget(listOf(kotlinFile))
-        postProcessor.doAdditionalProcessing(target, converterContext, onPhaseChanged)
+
+        runBlockingCancellable {
+            postProcessor.doAdditionalProcessing(target, converterContext)
+        }
     }
 }
 

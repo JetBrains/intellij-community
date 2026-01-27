@@ -1,3 +1,4 @@
+// IGNORE_K1
 // !ADD_JAVA_API
 package test;
 

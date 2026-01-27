@@ -35,14 +35,14 @@ class OldJavaToKotlinConverter(
     /**
      * Preprocessor and postprocessor extensions are only handled in [NewJavaToKotlinConverter]. Any passed in here will be ignored.
      */
-    override fun filesToKotlin(
+    override suspend fun filesToKotlin(
         files: List<PsiJavaFile>,
         postProcessor: PostProcessor,
-        progressIndicator: ProgressIndicator,
+        bodyFilter: ((PsiElement) -> Boolean)?,
         preprocessorExtensions: List<J2kPreprocessorExtension>,
         postprocessorExtensions: List<J2kPostprocessorExtension>
-    ): FilesResult {
-        val withProgressProcessor = OldWithProgressProcessor(progressIndicator, files)
+    ): ConvertionResult {
+        val withProgressProcessor = OldWithProgressProcessor(null, files)
         val (results, externalCodeProcessing) = ApplicationManager.getApplication().runReadAction(Computable {
             elementsToKotlin(files, withProgressProcessor)
         })
@@ -68,7 +68,7 @@ class OldJavaToKotlinConverter(
             }
         }
 
-        return FilesResult(texts, externalCodeProcessing)
+        return ConvertionResult(files.zip(texts).toMap(), externalCodeProcessing)
     }
 
     override fun elementsToKotlin(inputElements: List<PsiElement>, processor: WithProgressProcessor): Result {

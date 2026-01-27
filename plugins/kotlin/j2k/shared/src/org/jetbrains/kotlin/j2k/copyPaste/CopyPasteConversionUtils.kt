@@ -156,14 +156,7 @@ fun runPostProcessing(
     val postProcessor = J2kConverterExtension.extension(j2kKind).createPostProcessor()
     if (j2kKind != K1_OLD) {
         val runnable = {
-            val processor = J2kConverterExtension.extension(j2kKind).createWithProgressProcessor(
-                ProgressManager.getInstance().progressIndicator!!,
-                emptyList(),
-                postProcessor.phasesCount
-            )
-            J2KPostProcessingRunner.run(postProcessor, file, converterContext, bounds) { phase, description ->
-                processor.updateState(0, phase, description)
-            }
+            J2KPostProcessingRunner.run(postProcessor, file, converterContext, bounds)
         }
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
             runnable,

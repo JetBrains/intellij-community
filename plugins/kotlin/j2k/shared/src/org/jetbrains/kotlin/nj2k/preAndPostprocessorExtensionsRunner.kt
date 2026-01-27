@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.nj2k
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiFile
@@ -31,35 +31,15 @@ object PostprocessorExtensionsRunner :
     J2kExtensionsRunner<KtFile, J2kPostprocessorExtension>(KotlinNJ2KBundle.message("j2k.custom.postprocessing"))
 
 abstract class J2kExtensionsRunner<T : PsiFile, U : J2kExtension<T>>(@NlsContexts.ProgressText private val phaseName: String) {
-    fun runProcessors(project: Project, files: List<T>, processors: List<U>) {
-        if (processors.isEmpty()) return
-        val processorsCount = processors.size
-
-        for ((i, processor) in processors.withIndex()) {
-            ProgressManager.checkCanceled()
-            val processorName = processor::class.java.simpleName
-            ProgressManager.progress(
-                phaseName,
-                KotlinNJ2KBundle.message("j2k.custom.extensions.progress", processorName, i + 1, processorsCount)
-            )
+    suspend fun runProcessors(project: Project, files: List<T>, processors: List<U>) {
+        for (processor in processors) {
+            checkCanceled()
             try {
-                runBlockingCancellable {
-                    processor.processFiles(project, files)
-                }
-                commitAllDocuments(files)
+                processor.processFiles(project, files)
             } catch (e: ProcessCanceledException) {
                 throw e
             } catch (t: Throwable) {
                 Logger.getInstance(J2kExtensionsRunner::class.java).error(t)
-                commitAllDocuments(files)
-            }
-        }
-    }
-
-    private fun commitAllDocuments(files: List<T>) {
-        files.forEach {
-            runUndoTransparentActionInEdt(inWriteAction = true) {
-                it.commitAndUnblockDocument()
             }
         }
     }

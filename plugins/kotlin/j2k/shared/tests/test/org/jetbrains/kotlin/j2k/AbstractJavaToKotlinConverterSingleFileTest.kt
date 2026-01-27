@@ -2,20 +2,18 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.actions.JavaToKotlinAction
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
-import org.jetbrains.kotlin.idea.util.application.executeCommand
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.util.regex.Pattern
@@ -140,7 +138,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             "expression" -> expressionToKotlin(javaCode, settings)
             "statement" -> statementToKotlin(javaCode, settings)
             "method" -> methodToKotlin(javaCode, settings)
-            "file" -> fileToKotlin(javaCode, settings, preprocessorExtensions, postprocessorExtensions)
+            "file" -> fileToKotlin(javaCode, settings, preprocessorExtensions = preprocessorExtensions, postprocessorExtensions = postprocessorExtensions)
             else -> error("Specify what it is: method, statement or expression using the first line of test data file")
         }
     }
@@ -148,28 +146,30 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
     open fun fileToKotlin(
         text: String,
         settings: ConverterSettings,
+        bodyFilter: ((PsiElement) -> Boolean)? = null,
         preprocessorExtensions: List<J2kPreprocessorExtension> = J2kPreprocessorExtension.EP_NAME.extensionList,
         postprocessorExtensions: List<J2kPostprocessorExtension> = J2kPostprocessorExtension.EP_NAME.extensionList
     ): String {
         val file = createJavaFile(text)
-        val j2kKind = if (pluginMode === KotlinPluginMode.K2) K2 else K1_NEW
-        val extension = J2kConverterExtension.extension(j2kKind)
-        val converter = extension.createJavaToKotlinConverter(project, module, settings)
-        val postProcessor = extension.createPostProcessor()
-        var converterResult: FilesResult? = null
-        val process = {
-            converterResult = converter.filesToKotlin(
+        val path = file.virtualFile.path
+
+
+        runWithModalProgressBlocking(project, "") {
+
+            JavaToKotlinAction.Handler.convertFiles(
                 listOf(file),
-                postProcessor,
-                EmptyProgressIndicator(),
-                preprocessorExtensions,
-                postprocessorExtensions
+                project,
+                module,
+                askExternalCodeProcessing = false,
+                bodyFilter = bodyFilter,
+                settings = settings,
+                preprocessorExtensions = preprocessorExtensions,
+                postprocessorExtensions = postprocessorExtensions
             )
         }
-        project.executeCommand("J2K") {
-            ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "Testing J2K", /* canBeCanceled = */ true, project)
-        }
-        return checkNotNull(converterResult).results.single()
+        val ktFile = file.containingDirectory.findFile(file.name.replace(".java", ".kt")) as KtFile
+
+        return ktFile.text
     }
 
     private fun methodToKotlin(text: String, settings: ConverterSettings): String {

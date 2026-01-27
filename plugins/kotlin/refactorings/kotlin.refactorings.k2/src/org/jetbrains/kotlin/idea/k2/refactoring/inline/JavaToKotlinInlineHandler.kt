@@ -110,12 +110,11 @@ private fun NewJavaToKotlinConverter.convertToKotlinNamedDeclaration(
     )
 
     val (j2kResults, _, j2kContext) = ActionUtil.underModalProgress(project, KotlinBundle.message("action.j2k.name")) {
-      elementsToKotlin(
-        inputElements = listOf(referenced),
-        processor = processor,
-        bodyFilter = { it == referenced },
-        forInlining = true
-      )
+        elementsToKotlin(
+            inputElements = listOf(referenced),
+            bodyFilter = { it == referenced },
+            forInlining = true
+        )
     }
 
     val file = runReadAction {
@@ -179,10 +178,10 @@ class J2KInlineCache(private val strategy: UsageReplacementStrategy, private val
             javaMember.findUsageReplacementStrategy(withValidation = true)?.let { return it }
 
             val converter = NewJavaToKotlinConverter(
-              javaMember.project,
-              javaMember.module,
-              ConverterSettings.defaultSettings,
-              context.containingFile as? KtFile
+                javaMember.project,
+                javaMember.module,
+                ConverterSettings.defaultSettings,
+                context.containingFile as? KtFile
             )
 
             val declaration = converter.convertToKotlinNamedDeclaration(
@@ -205,25 +204,25 @@ private fun createUsageReplacementStrategyForNamedDeclaration(
     fallbackToSuperCall: Boolean,
 ): UsageReplacementStrategy? = when (namedDeclaration) {
     is KtNamedFunction -> createUsageReplacementStrategyForFunction(
-      function = namedDeclaration,
-      editor = editor,
-      fallbackToSuperCall = fallbackToSuperCall,
+        function = namedDeclaration,
+        editor = editor,
+        fallbackToSuperCall = fallbackToSuperCall,
     )
 
     is KtProperty -> createReplacementStrategyForProperty(
-      property = namedDeclaration,
-      editor = editor,
-      project = namedDeclaration.project,
-      { decl, fallback ->
-        CodeToInlineBuilder(
-            fallbackToSuperCall = fallback,
-            original = decl,
-        )
-      },
-      { readReplacement, writeReplacement ->
-        PropertyUsageReplacementStrategy(readReplacement, writeReplacement)
-      },
-      fallbackToSuperCall = fallbackToSuperCall
+        property = namedDeclaration,
+        editor = editor,
+        project = namedDeclaration.project,
+        { decl, fallback ->
+            CodeToInlineBuilder(
+                fallbackToSuperCall = fallback,
+                original = decl,
+            )
+        },
+        { readReplacement, writeReplacement ->
+            PropertyUsageReplacementStrategy(readReplacement, writeReplacement)
+        },
+        fallbackToSuperCall = fallbackToSuperCall
     )
 
     else -> null

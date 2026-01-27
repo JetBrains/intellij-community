@@ -108,7 +108,6 @@ private fun NewJavaToKotlinConverter.convertToKotlinNamedDeclaration(
     val (j2kResults, _, j2kContext) = ActionUtil.underModalProgress(project, KotlinBundle.message("action.j2k.name")) {
         elementsToKotlin(
             inputElements = listOf(referenced),
-            processor = processor,
             bodyFilter = { it == referenced },
             forInlining = true
         )

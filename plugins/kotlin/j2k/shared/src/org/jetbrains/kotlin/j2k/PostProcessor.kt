@@ -2,6 +2,10 @@
 
 package org.jetbrains.kotlin.j2k
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.progress.runBlockingCancellable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -15,4 +19,11 @@ interface PostProcessor {
         converterContext: ConverterContext?,
         onPhaseChanged: ((Int, String) -> Unit)?
     )
+
+    suspend fun doAdditionalProcessing(
+        target: PostProcessingTarget,
+        converterContext: ConverterContext?,
+    ): Unit = runBlockingCancellable {
+        doAdditionalProcessing(target, converterContext, null)
+    }
 }
