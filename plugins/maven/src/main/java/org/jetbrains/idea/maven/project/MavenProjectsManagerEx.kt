@@ -66,6 +66,10 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.withLazyProgressIndicator
 import kotlin.time.Duration
 
+
+private interface MavenSyncFileReader {
+  suspend operator fun invoke() : MavenProjectsTreeUpdateResult
+}
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
   fun scheduleUpdateAllMavenProjects(spec: MavenSyncSpec)
@@ -337,12 +341,15 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   ): List<Module> {
     val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
     mavenEmbedderWrappers.use {
-      return doUpdateMavenProjects(spec, null, mavenEmbedderWrappers) {
-        readMavenProjects(spec,
-                          filesToUpdate,
-                          filesToDelete,
-                          mavenEmbedderWrappers)
-      }
+      return doUpdateMavenProjects(spec, null, mavenEmbedderWrappers, object : MavenSyncFileReader{
+        override suspend fun invoke(): MavenProjectsTreeUpdateResult {
+         return readMavenProjects(spec,
+                            filesToUpdate,
+                            filesToDelete,
+                            mavenEmbedderWrappers)
+        }
+
+      })
     }
   }
 
@@ -434,15 +441,19 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
     val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
     mavenEmbedderWrappers.use {
-      return doUpdateMavenProjects(spec, modelsProvider, mavenEmbedderWrappers) { readAllMavenProjects(spec, mavenEmbedderWrappers) }
+      return doUpdateMavenProjects(spec, modelsProvider, mavenEmbedderWrappers, object : MavenSyncFileReader{
+        override suspend fun invoke(): MavenProjectsTreeUpdateResult {
+          return readAllMavenProjects(spec, mavenEmbedderWrappers)
+        }
+      })
     }
   }
 
-  protected open suspend fun doUpdateMavenProjects(
+  private suspend fun doUpdateMavenProjects(
     spec: MavenSyncSpec,
     modelsProvider: IdeModifiableModelsProvider?,
     mavenEmbedderWrappers: MavenEmbedderWrappers,
-    read: suspend () -> MavenProjectsTreeUpdateResult,
+    read: MavenSyncFileReader
   ): List<Module> {
     return tracer.spanBuilder("syncMavenProject").useWithScope {
       // display all import activities using the same build progress
@@ -521,7 +532,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
   private suspend fun doDynamicSync(
     syncActivity: StructuredIdeActivity,
-    read: suspend () -> MavenProjectsTreeUpdateResult,
+    read: MavenSyncFileReader,
     spec: MavenSyncSpec,
     modelsProvider: IdeModifiableModelsProvider?,
     mavenEmbedderWrappers: MavenEmbedderWrappers,
