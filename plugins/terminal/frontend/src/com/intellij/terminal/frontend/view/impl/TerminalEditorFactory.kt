@@ -44,6 +44,7 @@ object TerminalEditorFactory {
     val editor = createEditor(document, project, settings, coroutineScope)
     editor.putUserData(TerminalDataContextUtils.IS_OUTPUT_MODEL_EDITOR_KEY, true)
     addTopAndBottomInsets(editor)
+    configureSoftWraps(editor)
 
     BackgroundHighlightingUtil.disableBackgroundHighlightingForeverIn(editor)
     TextEditorProvider.putTextEditor(editor, TerminalOutputTextEditor(editor))
@@ -58,6 +59,10 @@ object TerminalEditorFactory {
     val document = createDocument(withLanguage = false)
     val editor = createEditor(document, project, settings, coroutineScope)
     editor.putUserData(TerminalDataContextUtils.IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY, true)
+
+    // Soft wraps are not needed in the alternate buffer editor because it's content is fully refreshed on resize.
+    // So, soft wraps will only create additional noise.
+    editor.settings.isUseSoftWraps = false
     editor.scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_NEVER
     editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
     return editor
@@ -110,7 +115,6 @@ object TerminalEditorFactory {
     editor.settings.isBlockCursor = false // we paint our own cursor, but this setting affects mouse selection subtly (IJPL-190533)
     editor.contentComponent.focusTraversalKeysEnabled = false
     editor.contextMenuGroupId = "Terminal.ReworkedTerminalContextMenu"
-    configureSoftWraps(editor)
     CopyOnSelectionHandler.install(editor, settings)
 
     coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
