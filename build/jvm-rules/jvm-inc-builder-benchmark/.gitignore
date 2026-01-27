@@ -1,0 +1,6 @@
+# Generated test projects
+generated/
+
+# Benchmark results
+*.json
+results/

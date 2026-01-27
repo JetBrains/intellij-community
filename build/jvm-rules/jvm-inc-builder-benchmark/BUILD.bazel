@@ -1,0 +1,22 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+    name = "benchmark-lib",
+    srcs = glob([
+        "src/**/*.kt",
+    ]),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//:annotations_import",
+        "//:kotlin-stdlib_import",
+    ],
+)
+
+java_binary(
+    name = "benchmark",
+    main_class = "com.intellij.tools.build.bazel.benchmark.runner.BenchmarkRunner",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":benchmark-lib"],
+)
