@@ -54,7 +54,9 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
       new ActionListener() {
         @Override
         public void actionPerformed(final ActionEvent e) {
-          fireValueCommitted(false, false);
+          WriteIntentReadAction.run(() -> {
+            fireValueCommitted(false, false);
+          });
         }
       }
     );
