@@ -667,8 +667,10 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
 
   @Override
   protected void doOKAction() {
-    doUpdatePsi();
-    focusTree();
+    WriteIntentReadAction.run(() -> {
+      doUpdatePsi();
+      focusTree();
+    });
   }
 
   private void doUpdatePsi() {
