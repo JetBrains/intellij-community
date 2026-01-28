@@ -4,6 +4,7 @@ package com.intellij.patterns;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,39 +41,19 @@ public final class StringPattern extends ObjectPattern<String, StringPattern> {
   }
 
   public @NotNull StringPattern startsWith(final @NonNls @NotNull String s) {
-    return with(new PatternCondition<String>("startsWith") {
-      @Override
-      public boolean accepts(final @NotNull String str, final ProcessingContext context) {
-        return StringUtil.startsWith(str, s);
-      }
-    });
+    return with(new StartsWithCondition(s));
   }
 
   public @NotNull StringPattern endsWith(final @NonNls @NotNull String s) {
-    return with(new PatternCondition<String>("endsWith") {
-      @Override
-      public boolean accepts(final @NotNull String str, final ProcessingContext context) {
-        return StringUtil.endsWith(str, s);
-      }
-    });
+    return with(new EndsWithCondition(s));
   }
 
   public @NotNull StringPattern contains(final @NonNls @NotNull String s) {
-    return with(new PatternCondition<String>("contains") {
-      @Override
-      public boolean accepts(final @NotNull String str, final ProcessingContext context) {
-        return StringUtil.contains(str, s);
-      }
-    });
+    return with(new ContainsCondition(s));
   }
 
   public @NotNull StringPattern containsChars(final @NonNls @NotNull String s) {
-    return with(new PatternCondition<String>("containsChars") {
-      @Override
-      public boolean accepts(final @NotNull String str, final ProcessingContext context) {
-        return StringUtil.containsAnyChar(str, s);
-      }
-    });
+    return with(new ContainsCharsCondition(s));
   }
 
   public @NotNull StringPattern matches(final @NonNls @NotNull String s) {
@@ -80,19 +61,7 @@ public final class StringPattern extends ObjectPattern<String, StringPattern> {
     if (escaped.equals(s)) {
       return equalTo(s);
     }
-    // may throw PatternSyntaxException here
-    final Pattern pattern = Pattern.compile(s);
-    return with(new ValuePatternCondition<String>("matches") {
-      @Override
-      public boolean accepts(final @NotNull String str, final ProcessingContext context) {
-        return pattern.matcher(newBombedCharSequence(str)).matches();
-      }
-
-      @Override
-      public @Unmodifiable Collection<String> getValues() {
-        return Collections.singleton(s);
-      }
-    });
+    return with(new MatchesCondition(s));
   }
 
   public @NotNull StringPattern contains(final @NonNls @NotNull ElementPattern<Character> pattern) {
@@ -108,30 +77,15 @@ public final class StringPattern extends ObjectPattern<String, StringPattern> {
   }
 
   public StringPattern longerThan(final int minLength) {
-    return with(new PatternCondition<String>("longerThan") {
-      @Override
-      public boolean accepts(final @NotNull String s, final ProcessingContext context) {
-        return s.length() > minLength;
-      }
-    });
+    return with(new LongerThanCondition(minLength));
   }
 
   public StringPattern shorterThan(final int maxLength) {
-    return with(new PatternCondition<String>("shorterThan") {
-      @Override
-      public boolean accepts(final @NotNull String s, final ProcessingContext context) {
-        return s.length() < maxLength;
-      }
-    });
+    return with(new ShorterThanCondition(maxLength));
   }
 
   public StringPattern withLength(final int length) {
-    return with(new PatternCondition<String>("withLength") {
-      @Override
-      public boolean accepts(final @NotNull String s, final ProcessingContext context) {
-        return s.length() == length;
-      }
-    });
+    return with(new WithLengthCondition(length));
   }
 
   @Override
@@ -156,5 +110,190 @@ public final class StringPattern extends ObjectPattern<String, StringPattern> {
         ProgressManager.checkCanceled();
       }
     };
+  }
+
+  // Named condition classes for serialization support
+
+  /**
+   * Condition that checks if a string starts with a given prefix.
+   */
+  @ApiStatus.Internal
+  public static final class StartsWithCondition extends PatternCondition<String> {
+    private final String prefix;
+
+    public StartsWithCondition(@NotNull String prefix) {
+      super("startsWith");
+      this.prefix = prefix;
+    }
+
+    public @NotNull String getPrefix() {
+      return prefix;
+    }
+
+    @Override
+    public boolean accepts(@NotNull String str, ProcessingContext context) {
+      return StringUtil.startsWith(str, prefix);
+    }
+  }
+
+  /**
+   * Condition that checks if a string ends with a given suffix.
+   */
+  @ApiStatus.Internal
+  public static final class EndsWithCondition extends PatternCondition<String> {
+    private final String suffix;
+
+    public EndsWithCondition(@NotNull String suffix) {
+      super("endsWith");
+      this.suffix = suffix;
+    }
+
+    public @NotNull String getSuffix() {
+      return suffix;
+    }
+
+    @Override
+    public boolean accepts(@NotNull String str, ProcessingContext context) {
+      return StringUtil.endsWith(str, suffix);
+    }
+  }
+
+  /**
+   * Condition that checks if a string contains a given substring.
+   */
+  @ApiStatus.Internal
+  public static final class ContainsCondition extends PatternCondition<String> {
+    private final String substring;
+
+    public ContainsCondition(@NotNull String substring) {
+      super("contains");
+      this.substring = substring;
+    }
+
+    public @NotNull String getSubstring() {
+      return substring;
+    }
+
+    @Override
+    public boolean accepts(@NotNull String str, ProcessingContext context) {
+      return StringUtil.contains(str, substring);
+    }
+  }
+
+  /**
+   * Condition that checks if a string contains any character from a given set.
+   */
+  @ApiStatus.Internal
+  public static final class ContainsCharsCondition extends PatternCondition<String> {
+    private final String chars;
+
+    public ContainsCharsCondition(@NotNull String chars) {
+      super("containsChars");
+      this.chars = chars;
+    }
+
+    public @NotNull String getChars() {
+      return chars;
+    }
+
+    @Override
+    public boolean accepts(@NotNull String str, ProcessingContext context) {
+      return StringUtil.containsAnyChar(str, chars);
+    }
+  }
+
+  /**
+   * Condition that checks if a string matches a given regex pattern.
+   */
+  @ApiStatus.Internal
+  public static final class MatchesCondition extends ValuePatternCondition<String> {
+    private final String regex;
+    private final Pattern pattern;
+
+    public MatchesCondition(@NotNull String regex) {
+      super("matches");
+      this.regex = regex;
+      this.pattern = Pattern.compile(regex);
+    }
+
+    public @NotNull String getRegex() {
+      return regex;
+    }
+
+    @Override
+    public boolean accepts(@NotNull String str, ProcessingContext context) {
+      return pattern.matcher(newBombedCharSequence(str)).matches();
+    }
+
+    @Override
+    public @Unmodifiable Collection<String> getValues() {
+      return Collections.singleton(regex);
+    }
+  }
+
+  /**
+   * Condition that checks if a string is longer than a given length.
+   */
+  @ApiStatus.Internal
+  public static final class LongerThanCondition extends PatternCondition<String> {
+    private final int minLength;
+
+    public LongerThanCondition(int minLength) {
+      super("longerThan");
+      this.minLength = minLength;
+    }
+
+    public int getMinLength() {
+      return minLength;
+    }
+
+    @Override
+    public boolean accepts(@NotNull String s, ProcessingContext context) {
+      return s.length() > minLength;
+    }
+  }
+
+  /**
+   * Condition that checks if a string is shorter than a given length.
+   */
+  @ApiStatus.Internal
+  public static final class ShorterThanCondition extends PatternCondition<String> {
+    private final int maxLength;
+
+    public ShorterThanCondition(int maxLength) {
+      super("shorterThan");
+      this.maxLength = maxLength;
+    }
+
+    public int getMaxLength() {
+      return maxLength;
+    }
+
+    @Override
+    public boolean accepts(@NotNull String s, ProcessingContext context) {
+      return s.length() < maxLength;
+    }
+  }
+
+  /**
+   * Condition that checks if a string has exactly a given length.
+   */
+  @ApiStatus.Internal
+  public static final class WithLengthCondition extends PatternCondition<String> {
+    private final int length;
+
+    public WithLengthCondition(int length) {
+      super("withLength");
+      this.length = length;
+    }
+
+    public int getLength() {
+      return length;
+    }
+
+    @Override
+    public boolean accepts(@NotNull String s, ProcessingContext context) {
+      return s.length() == length;
+    }
   }
 }
