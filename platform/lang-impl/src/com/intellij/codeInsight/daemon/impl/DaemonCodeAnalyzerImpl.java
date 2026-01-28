@@ -1825,8 +1825,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
    *             Injected fragments {@link InjectedGeneralHighlightingPass} highlighting and Inspections run after
    *             completion of Syntax analysis {@link GeneralHighlightingPass}.
    *             if {@code false} (default behavior) code insight passes are running in parallel
+   * @deprecated do not use, because it could slow down highlighting
    */
   @ApiStatus.Internal
+  @Deprecated
   public void serializeCodeInsightPasses(boolean flag) {
     ThreadingAssertions.assertEventDispatchThread();
     setUpdateByTimerEnabled(false);
