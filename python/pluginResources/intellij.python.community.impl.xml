@@ -719,6 +719,9 @@
     <registryKey defaultValue="true" description="Show value tooltip" key="python.debugger.show.value.tooltip"/>
 
     <registryKey defaultValue="3" description="Timeout to guess the best suitable SDK when adding new interpreter (seconds)" key="python.guess.sdk.timeout.seconds"/>
+
+    <statistics.counterUsagesCollector
+      implementationClass="com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector"/>
   </extensions>
 
   <extensionPoints>
@@ -960,6 +963,23 @@
     <inspectionExtension implementation="com.jetbrains.python.inspections.PyUnresolvedReferenceDefaultInspectionExtension" order="last"/>
 
     <runConfigurationEditorExtension implementation="com.jetbrains.python.run.PyRunConfigurationTargetOptions"/>
+
+    <projectSdkConfigurationExtension
+      implementation="com.jetbrains.python.sdk.configuration.PyRequirementsTxtOrSetupPySdkConfiguration"
+      id="requirementsTxtOrSetupPy" order="before uv"/>
+    <projectSdkConfigurationExtension
+      implementation="com.jetbrains.python.sdk.configuration.PyEnvironmentYmlSdkConfiguration"
+      id="environmentYml"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyPipfileSdkConfiguration"
+                                      id="pipfile" order="before requirementsTxtOrSetupPy"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyPoetrySdkConfiguration"
+                                      id="poetry"/>"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyHatchSdkConfiguration"
+                                      id="hatch" order="after poetry"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyUvSdkConfiguration"
+                                      id="uv" order="before venv"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyVenvSdkConfiguration"
+                                      id="venv" order="last"/>
 
   </extensions>
 

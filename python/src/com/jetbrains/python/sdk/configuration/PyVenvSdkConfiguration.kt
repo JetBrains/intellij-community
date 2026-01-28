@@ -1,12 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.pycharm.community.ide.impl.configuration
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.sdk.configuration
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.refreshAndFindVirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
-import com.intellij.pycharm.community.ide.impl.findEnvOrNull
 import com.intellij.python.common.tools.ToolId
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
@@ -14,7 +12,6 @@ import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
@@ -41,8 +38,8 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
   ): EnvCheckerResult = withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
     withContext(Dispatchers.IO) {
       getVirtualEnv(venvsInModule)?.let {
-        it.findEnvOrNull(PyCharmCommunityCustomizationBundle.message("sdk.use.existing.venv", it.resolvePythonHome().name))
-      } ?: EnvCheckerResult.EnvNotFound(PyCharmCommunityCustomizationBundle.message("sdk.create.venv.suggestion.no.arg"))
+        it.findEnvOrNull(PyBundle.message("sdk.use.existing.venv", it.resolvePythonHome().name))
+      } ?: EnvCheckerResult.EnvNotFound(PyBundle.message("sdk.create.venv.suggestion.no.arg"))
     }
   }
 

@@ -1,0 +1,17 @@
+{
+  "images": {
+    "intellij": {
+      "python": {
+        "community": {
+          "impl": {
+            "venv": {
+              "expui": {
+                "virtualEnv.svg": "images/intellij/python/community/impl/venv/virtualenv.svg"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -50,7 +50,7 @@ object PyProjectSdkConfiguration {
     val sdk = createSdkInfoWithTool.createSdkInfo.getSdkCreator(module).createSdk().getOr {
       ShowingMessageErrorSync.emit(it.error, module.project)
       return@withContext true
-    } ?: return@withContext false
+    }
 
     setReadyToUseSdk(module.project, module, sdk)
     thisLogger().debug("Successfully configured sdk using ${createSdkInfoWithTool.toolId}")

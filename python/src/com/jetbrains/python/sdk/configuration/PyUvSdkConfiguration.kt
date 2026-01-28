@@ -1,21 +1,19 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.pycharm.community.ide.impl.configuration
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.sdk.configuration
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
-import com.intellij.pycharm.community.ide.impl.findEnvOrNull
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.impl.uv.common.UV_TOOL_ID
 import com.intellij.python.pyproject.model.api.SuggestedSdk
 import com.intellij.python.pyproject.model.api.suggestSdk
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.baseDir
-import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.pyvenvContains
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
@@ -61,7 +59,7 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
   ): EnvCheckerResult {
     getUvExecutable() ?: return EnvCheckerResult.CannotConfigure
 
-    val intentionName = PyCharmCommunityCustomizationBundle.message("sdk.set.up.uv.environment", module.name)
+    val intentionName = PyBundle.message("sdk.set.up.uv.environment", module.name)
 
     val envFound = if (checkExistence) getUvEnv(venvsInModule)?.findEnvOrNull(intentionName) else null
 

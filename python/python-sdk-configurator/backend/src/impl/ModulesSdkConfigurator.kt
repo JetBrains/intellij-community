@@ -243,7 +243,7 @@ private suspend fun CreateSdkInfo.createAndSetToModule(module: Module) {
       logger.trace { "Failed to create sdk for ${module.name} : ${r.error}" }
     }
     is Result.Success -> {
-      val sdk = r.result!! // It can't be null: this is an old buggy API that will be fixed soon
+      val sdk = r.result
       module.pythonSdk = sdk
       logger.trace { "SDK creation result for  ${module.name} : $sdk" }
     }

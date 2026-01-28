@@ -1,23 +1,22 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.pycharm.community.ide.impl.configuration
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.sdk.configuration
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.util.progress.reportRawProgress
-import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.PythonVirtualEnvironment
 import com.intellij.python.hatch.cli.HatchEnvironment
 import com.intellij.python.hatch.getHatchService
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.orLogException
-import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.util.runWithModalBlockingOrInBackground
@@ -43,10 +42,10 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
   private suspend fun checkManageableEnv(
     module: Module, checkExistence: CheckExistence, checkToml: CheckToml,
   ): EnvCheckerResult = reportRawProgress {
-    it.text(PyCharmCommunityCustomizationBundle.message("sdk.set.up.hatch.project.analysis"))
+    it.text(PyBundle.message("sdk.set.up.hatch.project.analysis"))
     val hatchService = module.getHatchService().getOr { return EnvCheckerResult.CannotConfigure }
     val canManage = if (checkToml) hatchService.isHatchManagedProject() else true
-    val intentionName = PyCharmCommunityCustomizationBundle.message("sdk.set.up.hatch.environment")
+    val intentionName = PyBundle.message("sdk.set.up.hatch.environment")
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
     when {
@@ -70,7 +69,7 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
    */
   private fun createSdk(module: Module, envExists: EnvExists): PyResult<Sdk> = runWithModalBlockingOrInBackground(
     project = module.project,
-    msg = PyCharmCommunityCustomizationBundle.message("sdk.set.up.hatch.environment")
+    msg = PyBundle.message("sdk.set.up.hatch.environment")
   ) {
     val hatchService = module.getHatchService().getOr { return@runWithModalBlockingOrInBackground it }
 
@@ -81,7 +80,7 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
       when (defaultEnv) {
         is PythonVirtualEnvironment.Existing -> defaultEnv
         is PythonVirtualEnvironment.NotExisting, null -> return@runWithModalBlockingOrInBackground PyResult.localizedError(
-          PyCharmCommunityCustomizationBundle.message("sdk.could.not.find.valid.hatch.environment"))
+          PyBundle.message("sdk.could.not.find.valid.hatch.environment"))
       }
     }
     else {

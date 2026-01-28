@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.pycharm.community.ide.impl
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.sdk.configuration
 
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.diagnostic.fileLogger
@@ -10,7 +10,6 @@ import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.asBinToExecute
-import com.jetbrains.python.sdk.configuration.EnvCheckerResult
 
 internal suspend fun PythonBinary.findEnvOrNull(@IntentionName intentionName: String): EnvCheckerResult.EnvFound? =
   validatePythonAndGetInfo().findEnvOrNull(intentionName)

@@ -4,5 +4,11 @@
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.sdk"/>
+    <module name="intellij.python.common"/>
   </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <iconMapper mappingFile="PythonVenvIconMappings.json"/>
+    <python.common.toolToIconMapper implementation="com.intellij.python.community.impl.venv.PyReqToolIdToIconMapper"/>
+  </extensions>
 </idea-plugin>

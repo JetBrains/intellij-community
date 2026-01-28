@@ -1,12 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.pycharm.community.ide.impl.configuration
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.sdk.configuration
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
-import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.VirtualEnvResult
 import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.impl.venv.PY_REQ_TOOL_ID
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageUtil
@@ -15,9 +15,7 @@ import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUti
 import com.jetbrains.python.packaging.setupPy.SetupPyManager
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.configuration.*
-
-internal val PY_REQ_TOOL_ID = ToolId("requirements.txt")
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.VirtualEnvResult
 
 internal class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExtension {
 
@@ -31,7 +29,7 @@ internal class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigur
 
   private fun checkManageableEnv(module: Module): EnvCheckerResult {
     val configFile = getRequirementsTxtOrSetupPy(module) ?: return EnvCheckerResult.CannotConfigure
-    return EnvCheckerResult.EnvNotFound(PyCharmCommunityCustomizationBundle.message("sdk.create.venv.suggestion", configFile.name))
+    return EnvCheckerResult.EnvNotFound(PyBundle.message("sdk.create.venv.suggestion", configFile.name))
   }
 
   private suspend fun createAndAddSdk(module: Module): PyResult<Sdk> {

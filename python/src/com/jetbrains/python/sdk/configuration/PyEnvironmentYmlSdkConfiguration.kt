@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.pycharm.community.ide.impl.conda
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.sdk.configuration
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
@@ -12,10 +12,6 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
-import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector
-import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.CondaEnvResult
-import com.intellij.pycharm.community.ide.impl.findEnvOrNull
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.util.FileName
@@ -39,7 +35,7 @@ import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
 import com.jetbrains.python.sdk.conda.suggestCondaPath
-import com.jetbrains.python.sdk.configuration.*
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.CondaEnvResult
 import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
@@ -76,7 +72,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
         suggestCondaPath()?.let { LocalFileSystem.getInstance().findFileByPath(it) }
       }
       val canManage = condaPath != null
-      val intentionName = PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.suggestion")
+      val intentionName = PyBundle.message("sdk.create.condaenv.suggestion")
       val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
       when {
@@ -100,7 +96,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     val targetConfig = PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(module)
     if (targetConfig != null) {
       // Remote targets aren't supported yet
-      return PyResult.localizedError(PyCharmCommunityCustomizationBundle.message("sdk.remote.target.are.not.supported.for.conda.environment"))
+      return PyResult.localizedError(PyBundle.message("sdk.remote.target.are.not.supported.for.conda.environment"))
     }
 
     // Again: only local conda is supported for now
@@ -121,13 +117,13 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     }
     else {
       val environmentYml = getEnvironmentYml(module)
-                           ?: return PyResult.localizedError(PyCharmCommunityCustomizationBundle.message("sdk.cannot.create.conda.environment.yml.not.found"))
+                           ?: return PyResult.localizedError(PyBundle.message("sdk.cannot.create.conda.environment.yml.not.found"))
       createCondaEnv(module.project, condaExecutable, environmentYml).also {
         PySdkConfigurationCollector.logCondaEnv(module.project, CondaEnvResult.CREATED)
       }
     }.getOr { return it }
 
-    val shared = PyCondaSdkCustomizer.instance.sharedEnvironmentsByDefault
+    val shared = PyCondaSdkCustomizer.Companion.instance.sharedEnvironmentsByDefault
     val basePath = module.baseDir?.path
 
     withContext(Dispatchers.EDT) {
@@ -148,7 +144,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     val project = module.project
     return PyResult.success(PyCondaCommand(condaExecutable, null).createCondaSdkFromExistingEnv(
       getCondaEnvIdentity(module, condaExecutable)
-      ?: return PyResult.localizedError(PyCharmCommunityCustomizationBundle.message("sdk.cannot.use.existing.conda.environment")),
+      ?: return PyResult.localizedError(PyBundle.message("sdk.cannot.use.existing.conda.environment")),
       PyConfigurableInterpreterList.getInstance(project).model.sdks.toList(),
       project
     ))

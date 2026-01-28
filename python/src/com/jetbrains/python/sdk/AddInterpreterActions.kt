@@ -182,9 +182,16 @@ private class ToolDetectionService(project: Project, val coroutineScope: Corouti
     module
   )
 
+  private suspend fun detectBestToolForModule(module: Module): CreateSdkInfoWithTool? =
+    when (val i = module.getModuleInfo()) {
+      is ModuleCreateInfo.CreateSdkInfoWrapper -> CreateSdkInfoWithTool(i.createSdkInfo, i.toolId)
+      is ModuleCreateInfo.SameAs -> detectBestToolForModule(i.parentModule)
+      null -> null
+    }
+
   private fun detectBestToolAsync(module: Module): CachedValueProvider.Result<Deferred<CreateSdkInfoWithTool?>> {
     val result = coroutineScope.async {
-      (module.getModuleInfo() as? ModuleCreateInfo.CreateSdkInfoWrapper)?.let { CreateSdkInfoWithTool(it.createSdkInfo, it.toolId) }
+      detectBestToolForModule(module)
     }
     result.invokeOnCompletion { getOrCreateModificationTracker(module).incModificationCount() }
     return CachedValueProvider.Result.create(result, getOrCreateModificationTracker(module))

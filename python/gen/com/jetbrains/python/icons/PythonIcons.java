@@ -58,7 +58,6 @@ public final class PythonIcons {
     /** 16x16 */ public static final @NotNull Icon PythonTests = load("icons/com/jetbrains/pythonCore/python/expui/pythonTests.svg", "icons/com/jetbrains/pythonCore/python/pythonTests.svg", 1252990498, 0);
     /** 16x16 */ public static final @NotNull Icon ReferencedFile = load("icons/com/jetbrains/pythonCore/python/referencedFile.svg", 701028925, 2);
     /** 16x16 */ public static final @NotNull Icon RemoteInterpreter = load("icons/com/jetbrains/pythonCore/python/expui/remoteInterpreter.svg", "icons/com/jetbrains/pythonCore/python/RemoteInterpreter.svg", 60369309, 0);
-    /** 16x16 */ public static final @NotNull Icon Virtualenv = load("icons/com/jetbrains/pythonCore/python/expui/virtualEnv.svg", "icons/com/jetbrains/pythonCore/python/virtualenv.svg", 758230626, 0);
 
     /** @deprecated to be removed (use AllIcons.Debugger.AttacthToProcess) */
     @SuppressWarnings("unused")

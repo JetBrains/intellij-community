@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.pycharm.community.ide.impl.configuration
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.sdk.configuration
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
@@ -10,8 +10,6 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
-import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
-import com.intellij.pycharm.community.ide.impl.findEnvOrNull
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.pyproject.PyProjectToml
@@ -22,7 +20,6 @@ import com.jetbrains.python.poetry.findPoetryLock
 import com.jetbrains.python.poetry.getPyProjectTomlForPoetry
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.baseDir
-import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
@@ -67,7 +64,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
     else true
 
     val canManage = isPoetryProject && getPoetryExecutable() != null
-    val intentionName = PyCharmCommunityCustomizationBundle.message("sdk.set.up.poetry.environment")
+    val intentionName = PyBundle.message("sdk.set.up.poetry.environment")
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
     when {
@@ -85,7 +82,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
   }
 
   private suspend fun createPoetry(module: Module): PyResult<Sdk> =
-    withBackgroundProgress(module.project, PyCharmCommunityCustomizationBundle.message("sdk.progress.text.setting.up.poetry.environment")) {
+    withBackgroundProgress(module.project, PyBundle.message("sdk.progress.text.setting.up.poetry.environment")) {
       LOGGER.debug("Creating poetry environment")
 
       val basePath = module.baseDir?.path?.let { Path.of(it) }
