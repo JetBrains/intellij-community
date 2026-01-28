@@ -246,8 +246,7 @@ suspend fun createSdk(
   val existingSdks = PythonSdkUtil.getAllSdks()
   existingSdks.find {
     it.sdkAdditionalData?.javaClass == sdkAdditionalData?.javaClass &&
-    it.homePath == pythonBinaryPathAsString &&
-    it.associatedModulePath == associatedModulePath
+    it.homePath == pythonBinaryPathAsString
   }?.let { return PyResult.success(it) }
 
   val pythonBinaryVirtualFile = withContext(Dispatchers.IO) {
