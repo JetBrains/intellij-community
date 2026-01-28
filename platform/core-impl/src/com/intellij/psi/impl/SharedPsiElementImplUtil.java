@@ -110,9 +110,10 @@ public final class SharedPsiElementImplUtil {
     if (i != -1) {
       return i;
     }
+    PsiElement parent = child.getParent();
     LOG.error("Cannot find element among its parent' children." +
-              " element: '" + child + "';" +
-              " parent: '" + child.getParent() + "';" +
+              " element: '" + child + "'" + " isPhysical=" + child.isPhysical() + " isValid=" + child.isValid() + ";" +
+              " parent: '" + parent + "'" + " isPhysical=" + parent.isPhysical() + " isValid=" + parent.isValid() + ";" +
               " children: " + Arrays.asList(children) + "; " +
               " file:" + child.getContainingFile());
     return -1;
