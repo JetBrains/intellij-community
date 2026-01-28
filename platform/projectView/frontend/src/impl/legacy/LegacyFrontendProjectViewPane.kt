@@ -17,6 +17,9 @@ internal class LegacyFrontendProjectViewPaneProvider : FrontendProjectViewPanePr
 }
 
 internal class LegacyFrontendProjectViewPane(override val id: ProjectViewPaneId) : TreeBasedFrontendProjectViewPane() {
+  override val providerId: ProjectViewPaneProviderId
+    get() = LEGACY_PROVIDER_ID
+
   override val displayName: @NonNls String
     get() = id.idString
 }

@@ -34,6 +34,7 @@ jvm_library(
     "//platform/util:util-ui",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
+    "//platform/lang-core",
   ]
 )
 

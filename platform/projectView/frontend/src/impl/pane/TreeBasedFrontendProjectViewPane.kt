@@ -1,6 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.frontend.impl.pane
 
+import com.intellij.ide.ui.customization.CustomizationUtil
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.pane.*
@@ -17,14 +22,24 @@ import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
-internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPane {
+internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPane, UiDataProvider {
   private val treeModel = DefaultTreeModel(null)
   private val tree = Tree(treeModel).also {
     it.isRootVisible = false
+    CustomizationUtil.installPopupHandler(it, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.PROJECT_VIEW_POPUP)
   }
   private val scrollPane = ScrollPaneFactory.createScrollPane(tree, true)
-  private val contentPanel = SimpleToolWindowPanel(true).also { 
-    it.setContent(scrollPane)
+  private val contentPanel = ContentPanel(scrollPane)
+  
+  private inner class ContentPanel(content: JComponent) : SimpleToolWindowPanel(true), UiDataProvider {
+    init {
+      setContent(content)
+    }
+
+    override fun uiDataSnapshot(sink: DataSink) {
+      super.uiDataSnapshot(sink)
+      this@TreeBasedFrontendProjectViewPane.uiDataSnapshot(sink)
+    }
   }
   
   private val nodeById = hashMapOf<Long, Node>().also { 
@@ -114,6 +129,14 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
     nodeById.remove(node.projectViewNode.id)
     for (node in node.children()) {
       removeNode(node as Node)
+    }
+  }
+
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[ProjectViewPaneId.DATA_KEY] = id
+    sink[ProjectViewPaneProviderId.DATA_KEY] = providerId
+    sink[PROJECT_VIEW_SELECTED_NODE_IDS_KEY] = tree.selectionPaths?.mapNotNull { path ->
+      (path?.lastPathComponent as? Node)?.projectViewNode?.id
     }
   }
 }

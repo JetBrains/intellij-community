@@ -9,5 +9,8 @@
                 factoryClass="com.intellij.platform.projectView.window.ProjectViewToolWindowFactory"/>
     <registryKey key="project.view.toolwindow.split" defaultValue="false" restartRequired="true"
                  description="Enables the new experimental split Project View tool window" />
+    <remote.customDataContextSerializer implementation="com.intellij.platform.projectView.pane.ProjectViewPaneProviderIdDataContextSerializer" />
+    <remote.customDataContextSerializer implementation="com.intellij.platform.projectView.pane.ProjectViewPaneIdDataContextSerializer" />
+    <remote.customDataContextSerializer implementation="com.intellij.platform.projectView.pane.ProjectViewSelectedNodeIdsDataContextSerializer" />
   </extensions>
 </idea-plugin>

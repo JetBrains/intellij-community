@@ -2,7 +2,11 @@
 package com.intellij.platform.projectView.backend.impl.legacy
 
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane
+import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataSnapshot
+import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -20,6 +24,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.TreeNodePresentationBuilderImpl
 import com.intellij.ui.tree.buildPresentation
+import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.ui.treeStructure.TreeNodePresentation
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.*
@@ -34,6 +39,7 @@ import javax.swing.JTree
 import javax.swing.event.TreeModelEvent
 import javax.swing.event.TreeModelListener
 import javax.swing.tree.TreeModel
+import javax.swing.tree.TreePath
 
 internal class LegacyBackendProjectViewPaneProvider : BackendProjectViewPaneProvider {
   override val id: ProjectViewPaneProviderId
@@ -84,6 +90,11 @@ private class LegacyBackendProjectViewPane(
   override suspend fun getPaneStateFlow(): Flow<ProjectViewPaneStateEvent> {
     legacyPaneManager.subId = subId
     return legacyPaneManager.getStateFlow()
+  }
+
+  override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
+    val selectedIds = snapshot[PROJECT_VIEW_SELECTED_NODE_IDS_KEY] ?: return
+    legacyPaneManager.uiDataSnapshot(sink, selectedIds)
   }
 }
 
@@ -257,7 +268,7 @@ private class AbstractProjectViewPaneStateManager(
 
   private fun addNode(parentId: Long?, index: Int, modelNode: Any) {
     val newNodeId = nextNodeId++
-    val newNode = LegacyProjectViewNode(newNodeId, modelNode)
+    val newNode = LegacyProjectViewNode(newNodeId, parentId, modelNode)
     LOG.trace { "Adding $newNode" }
     nodeByModelNode[modelNode] = newNode
     nodeById[newNodeId] = newNode
@@ -293,6 +304,26 @@ private class AbstractProjectViewPaneStateManager(
         }.build()
       }
     }
+  }
+
+  fun uiDataSnapshot(sink: DataSink, selectedIds: List<Long>) {
+    val tree = legacyPane.tree ?: return
+    val selectedPaths = selectedIds.mapNotNull { id ->
+      nodeById[id]?.treePath()
+    }
+    tree.selectionPaths = selectedPaths.toTypedArray()
+    legacyPane.uiDataSnapshot(sink)
+    sink[LangDataKeys.IDE_VIEW] = IdeViewForProjectViewPane { legacyPane }
+  }
+  
+  private fun LegacyProjectViewNode.treePath(): TreePath? {
+    if (parentId == null) return CachingTreePath(modelNode)
+    val parent = nodeById[parentId]
+    if (parent == null) { // should not be possible
+      LOG.error("No parent found for node $this")
+      return null // can't really recover, skip this node and hope other are OK
+    }
+    return parent.treePath()?.pathByAddingChild(modelNode)
   }
 
   private inner class MyTreeModelListener : TreeModelListener {
@@ -350,6 +381,7 @@ private class AbstractProjectViewPaneStateManager(
 
 private data class LegacyProjectViewNode(
   val id: Long,
+  val parentId: Long?,
   val modelNode: Any,
   var loadChildren: Boolean = false,
 )

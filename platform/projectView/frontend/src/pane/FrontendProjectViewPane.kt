@@ -21,6 +21,8 @@ interface FrontendProjectViewPaneProvider {
 
 @ApiStatus.Internal
 interface FrontendProjectViewPane {
+  val providerId: ProjectViewPaneProviderId
+
   val id: ProjectViewPaneId
 
   val displayName: @NonNls String
