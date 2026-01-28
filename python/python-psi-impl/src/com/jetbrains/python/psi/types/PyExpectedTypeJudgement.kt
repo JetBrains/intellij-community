@@ -262,7 +262,18 @@ object PyExpectedTypeJudgement {
           fields = fields,
           dictClass = dictClass,
           isDefinition = false,
-          declaration = mapping.callableType?.declarationElement
+          // TODO: This is incorrect:
+          // `PyTypedDict` declaration is either a `PyClass` node:
+          // ```
+          // class TD(typing.TypedDict):
+          //   ...
+          // ```
+          //
+          // or a `PyTargetExpression` node:
+          // ```
+          // TD = typing.TypedDict("TD", {})
+          // ```
+          declaration = mapping.callableType?.callable ?: return null
         )
       }
       // TODO merge the type of `**kwargs` with the types of other mapped parameters here

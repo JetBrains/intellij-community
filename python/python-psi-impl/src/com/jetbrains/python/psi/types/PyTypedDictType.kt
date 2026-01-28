@@ -18,12 +18,12 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import org.jetbrains.annotations.ApiStatus
 import java.util.Objects
 
-class PyTypedDictType @JvmOverloads constructor(
+class PyTypedDictType(
   private val name: String,
   val fields: Map<String, FieldTypeAndTotality>,
   private val dictClass: PyClass,
   isDefinition: Boolean,
-  private val declaration: PyQualifiedNameOwner? = null,
+  private val declaration: PyQualifiedNameOwner,
 ) : PyClassTypeImpl(dictClass, isDefinition) {
   fun getElementType(key: String): PyType? {
     return fields[key]?.type
@@ -33,14 +33,14 @@ class PyTypedDictType @JvmOverloads constructor(
     return if (isDefinition) toInstance() else null
   }
 
-  override fun toInstance(): PyClassType {
+  override fun toInstance(): PyTypedDictType {
     return if (isDefinition)
       PyTypedDictType(name, fields, dictClass, false, declaration)
     else
       this
   }
 
-  override fun toClass(): PyClassType {
+  override fun toClass(): PyTypedDictType {
     return if (isDefinition)
       this
     else
@@ -73,19 +73,17 @@ class PyTypedDictType @JvmOverloads constructor(
   override fun equals(other: Any?): Boolean {
     if (other === this) return true
     if (other == null || javaClass != other.javaClass) return false
+    if (!super.equals(other)) return false
 
-    val otherTypedDict = other as? PyTypedDictType ?: return false
-    return name == otherTypedDict.name
-           && fields == otherTypedDict.fields
-           && isDefinition == otherTypedDict.isDefinition
-           && declaration == otherTypedDict.declaration
+    other as PyTypedDictType
+    return declaration == other.declaration
   }
 
   override fun hashCode(): Int {
-    return Objects.hash(super.hashCode(), name, fields, declaration)
+    return Objects.hash(super.hashCode(), declaration)
   }
 
-  override fun getDeclarationElement(): PyQualifiedNameOwner = declaration ?: super.getDeclarationElement()
+  override fun getDeclarationElement(): PyQualifiedNameOwner = declaration
 
   /**
    * @isRequired is true - if value type is Required, false - if it is NotRequired, and null if it does not have any type specification

@@ -138,7 +138,8 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
         )
       )
     );
-    return new PyTypedDictType("TypedDict", substitutedTDFields, typedDictType.myClass, false);
+    return new PyTypedDictType(typedDictType.getName(), substitutedTDFields, typedDictType.myClass, typedDictType.isDefinition(),
+                               typedDictType.getDeclarationElement());
   }
 
   @Override
