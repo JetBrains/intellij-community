@@ -34,7 +34,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.idea.IJIgnore;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.lang.LanguageFilter;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -2009,7 +2008,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertInvalidPSIElementHighlightingIsRemovedImmediatelyAfterRepairingChange(text, "';' expected", () -> backspace());
   }
 
-  @IJIgnore(issue = "IDEA-383615")
   public void testInvalidPSIElementsCreatedByTypingNearThemMustBeRemovedImmediatelyMeaningLongBeforeTheHighlightingPassFinished2() {
     @Language("JAVA")
     String text = """
