@@ -3065,6 +3065,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Ide
 - sf:FeedbackRatingOn:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:FeedbackRatingOnFocused:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Gift:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:GrayDot:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:HectorOff:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:HectorOn:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:HectorSyntax:org.jetbrains.jewel.ui.icon.IntelliJIconKey

@@ -724,6 +724,7 @@ public class AllIcons {
     /** 32x32 */ public static final @NotNull Icon FeedbackRatingOn = load("expui/ide/feedbackRatingOn.svg", "ide/feedbackRatingOn.svg", 1102075748, 0);
     /** 32x32 */ public static final @NotNull Icon FeedbackRatingOnFocused = load("ide/feedbackRatingOnFocused.svg", -1692491005, 0);
     /** 16x16 */ public static final @NotNull Icon Gift = load("expui/ide/gift.svg", "ide/gift.svg", -1423934596, 2);
+    /** 16x16 */ public static final @NotNull Icon GrayDot = load("ide/grayDot.svg", 699185880, 2);
     /** 16x16 */ public static final @NotNull Icon HectorOff = load("ide/hectorOff.svg", 756397077, 2);
     /** 16x16 */ public static final @NotNull Icon HectorOn = load("ide/hectorOn.svg", 1387966645, 2);
     /** 16x16 */ public static final @NotNull Icon HectorSyntax = load("ide/hectorSyntax.svg", -415840178, 2);
@@ -732,7 +733,6 @@ public class AllIcons {
     /** 20x20 */ public static final @NotNull Icon LikeDimmed = load("ide/likeDimmed.svg", 449955239, 2);
     /** 20x20 */ public static final @NotNull Icon LikeSelected = load("ide/likeSelected.svg", 1058551001, 2);
     /** 12x12 */ public static final @NotNull Icon Link = load("expui/general/chevronRight.svg", "ide/link.svg", 941220318, 2);
-    /** 16x16 */ public static final @NotNull Icon LocalChanges = load("ide/localChanges.svg", -455323487, 0);
     /** 16x16 */ public static final @NotNull Icon LocalScope = load("expui/ide/localScope.svg", "ide/localScope.svg", -204717233, 0);
     /** 16x16 */ public static final @NotNull Icon LocalScopeAction = load("expui/ide/localScope.svg", "ide/localScopeAction.svg", 1217252486, 2);
 

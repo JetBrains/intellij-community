@@ -685,6 +685,7 @@ f:com.intellij.icons.AllIcons$Ide
 - sf:FeedbackRatingOn:javax.swing.Icon
 - sf:FeedbackRatingOnFocused:javax.swing.Icon
 - sf:Gift:javax.swing.Icon
+- sf:GrayDot:javax.swing.Icon
 - sf:HectorOff:javax.swing.Icon
 - sf:HectorOn:javax.swing.Icon
 - sf:HectorSyntax:javax.swing.Icon

@@ -66,7 +66,7 @@ internal class SpinnerTabIconHolder(composite: EditorComposite, private val owne
 
   private suspend fun setLoadingSpinner() {
     if (Registry.`is`("editor.loading.spinner.static")) {
-      setIconImmediately(AllIcons.Ide.LocalChanges)
+      setIconImmediately(AllIcons.Ide.GrayDot)
     } else {
       delay(delayFromRegistry)
       setIconImmediately(AnimatedIcon.Default.INSTANCE)
