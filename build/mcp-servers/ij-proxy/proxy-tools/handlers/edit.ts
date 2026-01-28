@@ -1,12 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import path from 'node:path'
-import {readFileText, requireString, resolvePathInProject, TRUNCATION_MARKER} from '../shared'
+import {normalizeLineEndings, readFileText, requireString, resolvePathInProject} from '../shared'
+import {isTruncatedText} from '../truncation'
 
 export async function handleEditTool(args, projectPath, callUpstreamTool) {
   const filePath = requireString(args.file_path, 'file_path')
-  const oldString = requireString(args.old_string, 'old_string')
-  const newString = typeof args.new_string === 'string' ? args.new_string : null
+  const oldString = normalizeLineEndings(requireString(args.old_string, 'old_string'))
+  const newString = typeof args.new_string === 'string' ? normalizeLineEndings(args.new_string) : null
   if (newString === null) {
     throw new Error('new_string must be a string')
   }
@@ -16,10 +17,11 @@ export async function handleEditTool(args, projectPath, callUpstreamTool) {
 
   const replaceAllFlag = Boolean(args.replace_all ?? false)
   const {relative} = resolvePathInProject(projectPath, filePath, 'file_path')
-  const original = await readFileText(relative, {truncateMode: 'NONE'}, callUpstreamTool)
-  if (original.includes(TRUNCATION_MARKER)) {
+  const originalRaw = await readFileText(relative, {truncateMode: 'NONE'}, callUpstreamTool)
+  if (isTruncatedText(originalRaw)) {
     throw new Error('file content truncated while reading')
   }
+  const original = normalizeLineEndings(originalRaw)
 
   let updated
   if (replaceAllFlag) {

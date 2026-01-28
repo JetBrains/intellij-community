@@ -48,6 +48,38 @@ describe('ij MCP proxy edit', {timeout: SUITE_TIMEOUT_MS}, () => {
       strictEqual(realpathSync(writeCall.args.project_path), realpathSync(testDir))
     })
   })
+
+  it('normalizes CRLF content before matching and writing', async () => {
+    const calls = []
+    await withProxy({
+      proxyEnv: {JETBRAINS_MCP_TOOL_MODE: 'cc'},
+      onToolCall({name, args}) {
+        calls.push({name, args})
+        if (name === 'get_file_text_by_path') {
+          return {text: 'alpha\r\nbeta\r\ngamma\r\n'}
+        }
+        return {text: 'ok'}
+      }
+    }, async ({proxyClient, testDir}) => {
+      await proxyClient.send('tools/list')
+      const response = await proxyClient.send('tools/call', {
+        name: 'edit',
+        arguments: {
+          file_path: 'sample.txt',
+          old_string: 'alpha\nbeta\n',
+          new_string: 'alpha\r\nbeta-changed\r\n'
+        }
+      })
+
+      const resolvedRoot = realpathSync(testDir)
+      strictEqual(response.result.content[0].text, `Updated ${path.resolve(resolvedRoot, 'sample.txt')}`)
+      strictEqual(calls.length, 2)
+
+      const writeCall = calls[1]
+      strictEqual(writeCall.name, 'create_new_file')
+      strictEqual(writeCall.args.text, 'alpha\nbeta-changed\ngamma\n')
+    })
+  })
 })
 
 describe('edit handler (unit)', () => {
@@ -98,6 +130,22 @@ describe('edit handler (unit)', () => {
 
     strictEqual(result, `Updated ${path.resolve(projectPath, 'sample.txt')}`)
     strictEqual(calls[1].args.text, 'beta\nbeta\n')
+  })
+
+  it('normalizes CRLF line endings for matching and output', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: 'alpha\r\nbeta\r\ngamma\r\n'}),
+      create_new_file: () => ({text: 'ok'})
+    })
+
+    const result = await handleEditTool({
+      file_path: 'sample.txt',
+      old_string: 'alpha\nbeta\n',
+      new_string: 'alpha\r\nbeta-updated\r\n'
+    }, projectPath, callUpstreamTool)
+
+    strictEqual(result, `Updated ${path.resolve(projectPath, 'sample.txt')}`)
+    strictEqual(calls[1].args.text, 'alpha\nbeta-updated\ngamma\n')
   })
 
   it('fuzz: replaces a unique token without touching other content', async () => {

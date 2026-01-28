@@ -39,6 +39,31 @@ describe('ij MCP proxy write', {timeout: SUITE_TIMEOUT_MS}, () => {
       strictEqual(realpathSync(call.args.project_path), realpathSync(testDir))
     })
   })
+
+  it('normalizes CRLF content before writing', async () => {
+    const calls = []
+    await withProxy({
+      proxyEnv: {JETBRAINS_MCP_TOOL_MODE: 'cc'},
+      onToolCall({name, args}) {
+        calls.push({name, args})
+        return {text: 'ok'}
+      }
+    }, async ({proxyClient}) => {
+      await proxyClient.send('tools/list')
+      await proxyClient.send('tools/call', {
+        name: 'write',
+        arguments: {
+          file_path: 'output.txt',
+          content: 'alpha\r\nbeta\rgamma\r\n'
+        }
+      })
+
+      strictEqual(calls.length, 1)
+      const call = calls[0]
+      strictEqual(call.name, 'create_new_file')
+      strictEqual(call.args.text, 'alpha\nbeta\ngamma\n')
+    })
+  })
 })
 
 describe('write handler (unit)', () => {
@@ -59,6 +84,20 @@ describe('write handler (unit)', () => {
     strictEqual(calls[0].args.pathInProject, 'out.txt')
     strictEqual(calls[0].args.text, 'alpha')
     strictEqual(calls[0].args.overwrite, true)
+  })
+
+  it('normalizes CRLF content to LF before writing', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      create_new_file: () => ({text: 'ok'})
+    })
+
+    const result = await handleWriteTool({
+      file_path: 'out.txt',
+      content: 'alpha\r\nbeta\rgamma\r\n'
+    }, projectPath, callUpstreamTool)
+
+    strictEqual(result, `Wrote ${path.resolve(projectPath, 'out.txt')}`)
+    strictEqual(calls[0].args.text, 'alpha\nbeta\ngamma\n')
   })
 
   it('errors when content is not a string', async () => {

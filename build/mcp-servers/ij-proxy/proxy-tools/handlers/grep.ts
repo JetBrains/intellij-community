@@ -15,6 +15,7 @@ import {
 
 const CODEX_MAX_LIMIT = 2000
 const FULL_SCAN_USAGE_COUNT = 1_000_000
+const FALLBACK_MAX_ALTERNATIVES = 25
 const REGEXP_PARSER = new RegExpParser({ecmaVersion: 2024})
 
 export async function handleGrepTool(args, projectPath, callUpstreamTool, isCodexStyle) {
@@ -97,7 +98,10 @@ export async function handleGrepTool(args, projectPath, callUpstreamTool, isCode
       relative,
       treatAsFile,
       pathGlob,
-      callUpstreamTool
+      callUpstreamTool,
+      {
+        maxResults: outputMode === 'count' ? null : limit
+      }
     )
     if (fallbackEntries.length > 0) {
       finalEntries = fallbackEntries
@@ -148,6 +152,25 @@ export async function handleGrepTool(args, projectPath, callUpstreamTool, isCode
 function filterEntriesByPath(entries, projectPath, relativePath, treatAsFile) {
   const filter = createEntryPathFilter(projectPath, relativePath, treatAsFile)
   return filter ? entries.filter(filter) : entries
+}
+
+function createFallbackEntryFilter(projectPath, relativePath, treatAsFile, pathGlob) {
+  const pathFilter = createEntryPathFilter(projectPath, relativePath, treatAsFile)
+  const matcher = pathGlob ? createPathGlobMatcher(pathGlob) : null
+
+  if (!pathFilter && !matcher) {
+    return () => true
+  }
+
+  return (entry) => {
+    if (pathFilter && !pathFilter(entry)) return false
+    if (!matcher) return true
+    const entryPath = resolveEntryPath(projectPath, entry)
+    if (!entryPath) return false
+    const relative = path.relative(projectPath, entryPath)
+    if (relative.startsWith('..') || path.isAbsolute(relative)) return false
+    return matcher(normalizePathForGlob(relative))
+  }
 }
 
 function createEntryPathFilter(projectPath, relativePath, treatAsFile) {
@@ -201,14 +224,21 @@ async function searchAlternativesWhenRegexEmpty(
   relative,
   treatAsFile,
   pathGlob,
-  callUpstreamTool
+  callUpstreamTool,
+  {maxResults, maxAlternatives} = {}
 ) {
   const alternatives = getTopLevelAlternatives(pattern)
   if (!alternatives || alternatives.length < 2) return []
+  const maxAltCount = Number.isFinite(maxAlternatives) && maxAlternatives > 0
+    ? maxAlternatives
+    : FALLBACK_MAX_ALTERNATIVES
+  const cappedAlternatives = alternatives.slice(0, Math.max(1, maxAltCount))
+  const entryFilter = createFallbackEntryFilter(projectPath, relative, treatAsFile, pathGlob)
+  const maxEntries = Number.isFinite(maxResults) && maxResults > 0 ? maxResults : null
   const seen = new Set()
   const merged = []
 
-  for (const alternative of alternatives) {
+  for (const alternative of cappedAlternatives) {
     const trimmed = alternative.trim()
     if (!trimmed) continue
     const result = await callUpstreamTool('search_in_files_by_regex', {
@@ -216,16 +246,19 @@ async function searchAlternativesWhenRegexEmpty(
       regexPattern: trimmed
     })
     for (const entry of extractEntries(result)) {
+      if (!entryFilter(entry)) continue
       const key = entryKey(entry)
       if (seen.has(key)) continue
       seen.add(key)
       merged.push(entry)
+      if (maxEntries && merged.length >= maxEntries) {
+        return merged
+      }
     }
   }
 
   if (merged.length === 0) return []
-  const filtered = filterEntriesByPath(merged, projectPath, relative, treatAsFile)
-  return pathGlob ? filterEntriesByPathGlob(filtered, projectPath, pathGlob) : filtered
+  return merged
 }
 
 function getLiteralSearchText(pattern) {

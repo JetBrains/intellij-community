@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import {rejects, strictEqual} from 'node:assert/strict'
+import path from 'node:path'
 import {describe, it} from 'bun:test'
 import {handleEditTool} from './edit'
 import {TRUNCATION_MARKER} from '../shared'
@@ -32,6 +33,21 @@ describe('edit handler (edge cases)', () => {
         file_path: 'sample.txt',
         old_string: 'alpha',
         new_string: 'alpha'
+      }, projectPath, callUpstreamTool),
+      /old_string and new_string must differ/
+    )
+  })
+
+  it('errors when old_string and new_string differ only by line endings', async () => {
+    const {callUpstreamTool} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: 'alpha\r\nbeta\r\n'})
+    })
+
+    await rejects(
+      () => handleEditTool({
+        file_path: 'sample.txt',
+        old_string: 'alpha\nbeta\n',
+        new_string: 'alpha\r\nbeta\r\n'
       }, projectPath, callUpstreamTool),
       /old_string and new_string must differ/
     )
@@ -78,6 +94,23 @@ describe('edit handler (edge cases)', () => {
       }, projectPath, callUpstreamTool),
       /file content truncated while reading/
     )
+  })
+
+  it('allows files that mention the truncation marker inline', async () => {
+    const original = `const marker = '${TRUNCATION_MARKER}'\nalpha\n`
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: () => ({text: original}),
+      create_new_file: () => ({text: 'ok'})
+    })
+
+    const result = await handleEditTool({
+      file_path: 'sample.txt',
+      old_string: 'alpha',
+      new_string: 'beta'
+    }, projectPath, callUpstreamTool)
+
+    strictEqual(result, `Updated ${path.resolve(projectPath, 'sample.txt')}`)
+    strictEqual(calls[1].args.text, `const marker = '${TRUNCATION_MARKER}'\nbeta\n`)
   })
 
   it('property: replace_all=false updates exactly one occurrence', async () => {

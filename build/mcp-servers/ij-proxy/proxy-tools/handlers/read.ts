@@ -13,6 +13,7 @@ import {
   toPositiveInt,
   TRUNCATION_MARKER
 } from '../shared'
+import {findTruncationMarkerLine, findTruncationMarkerSuffix} from '../truncation'
 
 const DEFAULT_READ_LIMIT = 2000
 const MAX_LINE_LENGTH = 500
@@ -112,24 +113,24 @@ async function readSliceMode(relativePath, offset, limit, includeLineNumbers, ca
     truncateMode: 'START'
   }, callUpstreamTool)
   const {text: trimmedText, wasTruncated} = trimTruncation(text)
-  const lines = splitLines(trimmedText)
+  let lines = splitLines(trimmedText)
+  let truncated = wasTruncated
+
+  if (truncated && requestedLines > lines.length) {
+    const refreshed = await readFileText(relativePath, {
+      maxLinesCount: Math.max(3, requestedLines),
+      truncateMode: 'NONE'
+    }, callUpstreamTool)
+    const {text: refreshedText, wasTruncated: refreshedTruncated} = trimTruncation(refreshed)
+    lines = splitLines(refreshedText)
+    truncated = refreshedTruncated
+  }
+
+  if (truncated && requestedLines > lines.length) {
+    throw new Error(TRUNCATION_ERROR)
+  }
 
   if (offset > lines.length) {
-    if (wasTruncated) {
-      const refreshed = await readFileText(relativePath, {
-        maxLinesCount: Math.max(3, maxLinesCount),
-        truncateMode: 'NONE'
-      }, callUpstreamTool)
-      const {text: refreshedText, wasTruncated: refreshedTruncated} = trimTruncation(refreshed)
-      const refreshedLines = splitLines(refreshedText)
-      if (offset > refreshedLines.length) {
-        if (refreshedTruncated) {
-          throw new Error(TRUNCATION_ERROR)
-        }
-        throw new Error('offset exceeds file length')
-      }
-      return sliceLines(refreshedLines, offset, limit, includeLineNumbers)
-    }
     throw new Error('offset exceeds file length')
   }
 
@@ -521,38 +522,6 @@ function trimTruncation(text) {
   }
   const trimmed = stripTrailingLineBreak(text.slice(0, markerIndex))
   return {text: trimmed, wasTruncated: true}
-}
-
-function findTruncationMarkerSuffix(text) {
-  if (text.endsWith(TRUNCATION_MARKER)) {
-    return text.length - TRUNCATION_MARKER.length
-  }
-  if (text.endsWith(`${TRUNCATION_MARKER}\n`)) {
-    return text.length - TRUNCATION_MARKER.length - 1
-  }
-  if (text.endsWith(`${TRUNCATION_MARKER}\r\n`)) {
-    return text.length - TRUNCATION_MARKER.length - 2
-  }
-  return -1
-}
-
-function findTruncationMarkerLine(text) {
-  let index = text.indexOf(TRUNCATION_MARKER)
-  while (index >= 0) {
-    const beforeIndex = index - 1
-    const afterIndex = index + TRUNCATION_MARKER.length
-    const beforeOk = beforeIndex < 0 || isLineBreakChar(text.charCodeAt(beforeIndex))
-    const afterOk = afterIndex >= text.length || isLineBreakChar(text.charCodeAt(afterIndex))
-    if (beforeOk && afterOk) {
-      return index
-    }
-    index = text.indexOf(TRUNCATION_MARKER, index + TRUNCATION_MARKER.length)
-  }
-  return -1
-}
-
-function isLineBreakChar(code) {
-  return code === 10 || code === 13
 }
 
 function stripTrailingLineBreak(text) {

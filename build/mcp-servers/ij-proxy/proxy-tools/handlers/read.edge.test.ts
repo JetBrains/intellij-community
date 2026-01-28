@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import {rejects, strictEqual} from 'node:assert/strict'
+import {deepStrictEqual, rejects, strictEqual} from 'node:assert/strict'
 import {describe, it} from 'bun:test'
 import {handleReadTool} from './read'
 import {TRUNCATION_MARKER} from '../shared'
@@ -71,13 +71,37 @@ describe('read handler (edge cases)', () => {
       get_file_text_by_path: () => ({text: `alpha\n${TRUNCATION_MARKER}\nomega\n`})
     })
 
+    await rejects(
+      () => handleReadTool({
+        file_path: 'sample.txt',
+        offset: 1,
+        limit: 3
+      }, projectPath, callUpstreamTool, {format: 'numbered'}),
+      /file content truncated while reading/
+    )
+  })
+
+  it('refreshes truncated reads when the requested range exceeds the slice', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: (args) => {
+        if (args.truncateMode === 'NONE') {
+          return {text: 'alpha\nbeta\ngamma\n'}
+        }
+        return {text: `alpha\n${TRUNCATION_MARKER}\n`}
+      }
+    })
+
     const result = await handleReadTool({
       file_path: 'sample.txt',
       offset: 1,
       limit: 3
     }, projectPath, callUpstreamTool, {format: 'numbered'})
 
-    strictEqual(result, 'L1: alpha')
+    strictEqual(result, 'L1: alpha\nL2: beta\nL3: gamma')
+    deepStrictEqual(
+      calls.map((call) => call.args.truncateMode),
+      ['START', 'NONE']
+    )
   })
 
   it('respects include_siblings=false in indentation mode', async () => {

@@ -3,7 +3,8 @@
 import {copyFile, mkdir, rename, rm} from 'node:fs/promises'
 import path from 'node:path'
 import {isTrackedPath, runGitCommand, toGitPath} from '../git-utils'
-import {readFileText, resolvePathInProject, splitLines, TRUNCATION_MARKER} from '../shared'
+import {readFileText, resolvePathInProject, splitLines} from '../shared'
+import {isTruncatedText} from '../truncation'
 
 const BEGIN_MARKER = '*** Begin Patch'
 const END_MARKER = '*** End Patch'
@@ -41,7 +42,7 @@ export async function handleApplyPatchTool(args, projectPath, callUpstreamTool) 
 
     if (op.type === 'update') {
       const original = await readFileText(relative, {truncateMode: 'NONE'}, callUpstreamTool)
-      if (original.includes(TRUNCATION_MARKER)) {
+      if (isTruncatedText(original)) {
         throw new Error('file content truncated while reading')
       }
       const updated = applyHunks(original, op.hunks)

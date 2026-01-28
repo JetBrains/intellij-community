@@ -22310,6 +22310,11 @@ function extractEntries(result) {
   }
   return [];
 }
+function normalizeLineEndings(text) {
+  return text.replace(/\r\n/g, `
+`).replace(/\r/g, `
+`);
+}
 async function readFileText(relativePath, { maxLinesCount, truncateMode } = {}, callUpstreamTool) {
   let args = { pathInProject: relativePath };
   if (maxLinesCount !== void 0 && maxLinesCount !== null)
@@ -22322,13 +22327,40 @@ async function readFileText(relativePath, { maxLinesCount, truncateMode } = {}, 
   return text;
 }
 function splitLines2(text) {
-  let lines = text.replace(/\r\n/g, `
-`).replace(/\r/g, `
-`).split(`
+  let lines = normalizeLineEndings(text).split(`
 `);
   if (lines.length > 0 && lines[lines.length - 1] === "")
     lines.pop();
   return lines;
+}
+
+// proxy-tools/truncation.ts
+function isTruncatedText(text) {
+  return findTruncationMarkerSuffix(text) >= 0 || findTruncationMarkerLine(text) >= 0;
+}
+function findTruncationMarkerSuffix(text) {
+  if (text.endsWith(TRUNCATION_MARKER))
+    return text.length - TRUNCATION_MARKER.length;
+  if (text.endsWith(`${TRUNCATION_MARKER}
+`))
+    return text.length - TRUNCATION_MARKER.length - 1;
+  if (text.endsWith(`${TRUNCATION_MARKER}\r
+`))
+    return text.length - TRUNCATION_MARKER.length - 2;
+  return -1;
+}
+function findTruncationMarkerLine(text) {
+  let index = text.indexOf(TRUNCATION_MARKER);
+  while (index >= 0) {
+    let beforeIndex = index - 1, afterIndex = index + TRUNCATION_MARKER.length, beforeOk = beforeIndex < 0 || isLineBreakChar(text.charCodeAt(beforeIndex)), afterOk = afterIndex >= text.length || isLineBreakChar(text.charCodeAt(afterIndex));
+    if (beforeOk && afterOk)
+      return index;
+    index = text.indexOf(TRUNCATION_MARKER, index + TRUNCATION_MARKER.length);
+  }
+  return -1;
+}
+function isLineBreakChar(code) {
+  return code === 10 || code === 13;
 }
 
 // proxy-tools/handlers/apply-patch.ts
@@ -22352,7 +22384,7 @@ async function handleApplyPatchTool(args, projectPath, callUpstreamTool) {
     }
     if (op.type === "update") {
       let original = await readFileText(relative, { truncateMode: "NONE" }, callUpstreamTool);
-      if (original.includes(TRUNCATION_MARKER))
+      if (isTruncatedText(original))
         throw Error("file content truncated while reading");
       let updated = applyHunks(original, op.hunks), resolvedTarget = op.moveTo ? resolvePathInProject(projectPath, op.moveTo, "path") : null, moveTarget = resolvedTarget && resolvedTarget.relative !== relative ? resolvedTarget : null;
       if (moveTarget)
@@ -22655,15 +22687,15 @@ function findSequence(haystack, needle, startIndex = 0, preferEnd = !1) {
 // proxy-tools/handlers/edit.ts
 import path3 from "path";
 async function handleEditTool(args, projectPath, callUpstreamTool) {
-  let filePath = requireString(args.file_path, "file_path"), oldString = requireString(args.old_string, "old_string"), newString = typeof args.new_string === "string" ? args.new_string : null;
+  let filePath = requireString(args.file_path, "file_path"), oldString = normalizeLineEndings(requireString(args.old_string, "old_string")), newString = typeof args.new_string === "string" ? normalizeLineEndings(args.new_string) : null;
   if (newString === null)
     throw Error("new_string must be a string");
   if (oldString === newString)
     throw Error("old_string and new_string must differ");
-  let replaceAllFlag = Boolean(args.replace_all ?? !1), { relative } = resolvePathInProject(projectPath, filePath, "file_path"), original = await readFileText(relative, { truncateMode: "NONE" }, callUpstreamTool);
-  if (original.includes(TRUNCATION_MARKER))
+  let replaceAllFlag = Boolean(args.replace_all ?? !1), { relative } = resolvePathInProject(projectPath, filePath, "file_path"), originalRaw = await readFileText(relative, { truncateMode: "NONE" }, callUpstreamTool);
+  if (isTruncatedText(originalRaw))
     throw Error("file content truncated while reading");
-  let updated;
+  let original = normalizeLineEndings(originalRaw), updated;
   if (replaceAllFlag) {
     let parts = original.split(oldString);
     if (parts.length === 1)
@@ -24739,7 +24771,7 @@ class RegExpParser {
 }
 
 // proxy-tools/handlers/grep.ts
-var CODEX_MAX_LIMIT = 2000, FULL_SCAN_USAGE_COUNT = 1e6, REGEXP_PARSER = new RegExpParser({ ecmaVersion: 2024 });
+var CODEX_MAX_LIMIT = 2000, FULL_SCAN_USAGE_COUNT = 1e6, FALLBACK_MAX_ALTERNATIVES = 25, REGEXP_PARSER = new RegExpParser({ ecmaVersion: 2024 });
 async function handleGrepTool(args, projectPath, callUpstreamTool, isCodexStyle) {
   let pattern = requireString(args.pattern, "pattern"), basePath = args.path, { relative } = resolveSearchPath(projectPath, basePath), glob = typeof args.glob === "string" ? args.glob : void 0, include = typeof args.include === "string" ? args.include : void 0, typeFilter = typeof args.type === "string" && args.type.trim() !== "" ? `*.${args.type.trim()}` : void 0, fileMask = glob || include || typeFilter, fileMaskSource = glob ? "glob" : include ? "include" : typeFilter ? "type" : null, pathGlob = (fileMaskSource === "glob" || fileMaskSource === "include") && fileMask && isPathAwareGlob(fileMask) ? normalizeGlobPattern(fileMask) : void 0, derivedMask = pathGlob ? deriveFileMaskFromPathGlob(pathGlob) : void 0, rawLimit = isCodexStyle ? args.limit : args.head_limit ?? args.limit, limitInput = toPositiveInt(rawLimit, 100, isCodexStyle ? "limit" : "head_limit"), limit = isCodexStyle ? Math.min(limitInput, CODEX_MAX_LIMIT) : limitInput, outputMode = (typeof args.output_mode === "string" ? args.output_mode : "files_with_matches").trim().toLowerCase(), caseSensitive = !args["-i"], includeLineNumbers = Boolean(args["-n"] ?? !1), directoryToSearch = relative || void 0, resolvedMask = pathGlob ? derivedMask : fileMask, hasExplicitFileMask = Boolean(fileMask), treatAsFile = !1;
   if (relative && looksLikeFilePath(basePath ?? "", relative))
@@ -24756,7 +24788,9 @@ async function handleGrepTool(args, projectPath, callUpstreamTool, isCodexStyle)
     ...useRegex ? { regexPattern: pattern } : { searchText: literalSearchText }
   }, result = await callUpstreamTool(useRegex ? "search_in_files_by_regex" : "search_in_files_by_text", toolArgs), entries = extractEntries(result), filteredEntries = filterEntriesByPath(entries, projectPath, relative, treatAsFile), finalEntries = pathGlob ? filterEntriesByPathGlob(filteredEntries, projectPath, pathGlob) : filteredEntries;
   if (finalEntries.length === 0 && useRegex) {
-    let fallbackEntries = await searchAlternativesWhenRegexEmpty(pattern, { directoryToSearch, fileMask: resolvedMask, caseSensitive, maxUsageCount: FULL_SCAN_USAGE_COUNT }, projectPath, relative, treatAsFile, pathGlob, callUpstreamTool);
+    let fallbackEntries = await searchAlternativesWhenRegexEmpty(pattern, { directoryToSearch, fileMask: resolvedMask, caseSensitive, maxUsageCount: FULL_SCAN_USAGE_COUNT }, projectPath, relative, treatAsFile, pathGlob, callUpstreamTool, {
+      maxResults: outputMode === "count" ? null : limit
+    });
     if (fallbackEntries.length > 0)
       finalEntries = fallbackEntries;
   }
@@ -24790,6 +24824,24 @@ async function handleGrepTool(args, projectPath, callUpstreamTool, isCodexStyle)
 function filterEntriesByPath(entries, projectPath, relativePath, treatAsFile) {
   let filter = createEntryPathFilter(projectPath, relativePath, treatAsFile);
   return filter ? entries.filter(filter) : entries;
+}
+function createFallbackEntryFilter(projectPath, relativePath, treatAsFile, pathGlob) {
+  let pathFilter = createEntryPathFilter(projectPath, relativePath, treatAsFile), matcher = pathGlob ? createPathGlobMatcher(pathGlob) : null;
+  if (!pathFilter && !matcher)
+    return () => !0;
+  return (entry) => {
+    if (pathFilter && !pathFilter(entry))
+      return !1;
+    if (!matcher)
+      return !0;
+    let entryPath = resolveEntryPath(projectPath, entry);
+    if (!entryPath)
+      return !1;
+    let relative = path6.relative(projectPath, entryPath);
+    if (relative.startsWith("..") || path6.isAbsolute(relative))
+      return !1;
+    return matcher(normalizePathForGlob(relative));
+  };
 }
 function createEntryPathFilter(projectPath, relativePath, treatAsFile) {
   if (!relativePath)
@@ -24832,12 +24884,12 @@ function filterEntriesByPathGlob(entries, projectPath, pathGlob) {
     return matcher(normalizePathForGlob(relativePath));
   });
 }
-async function searchAlternativesWhenRegexEmpty(pattern, toolArgs, projectPath, relative, treatAsFile, pathGlob, callUpstreamTool) {
+async function searchAlternativesWhenRegexEmpty(pattern, toolArgs, projectPath, relative, treatAsFile, pathGlob, callUpstreamTool, { maxResults, maxAlternatives } = {}) {
   let alternatives = getTopLevelAlternatives(pattern);
   if (!alternatives || alternatives.length < 2)
     return [];
-  let seen = /* @__PURE__ */ new Set, merged = [];
-  for (let alternative of alternatives) {
+  let maxAltCount = Number.isFinite(maxAlternatives) && maxAlternatives > 0 ? maxAlternatives : FALLBACK_MAX_ALTERNATIVES, cappedAlternatives = alternatives.slice(0, Math.max(1, maxAltCount)), entryFilter = createFallbackEntryFilter(projectPath, relative, treatAsFile, pathGlob), maxEntries = Number.isFinite(maxResults) && maxResults > 0 ? maxResults : null, seen = /* @__PURE__ */ new Set, merged = [];
+  for (let alternative of cappedAlternatives) {
     let trimmed = alternative.trim();
     if (!trimmed)
       continue;
@@ -24846,16 +24898,18 @@ async function searchAlternativesWhenRegexEmpty(pattern, toolArgs, projectPath, 
       regexPattern: trimmed
     });
     for (let entry of extractEntries(result)) {
+      if (!entryFilter(entry))
+        continue;
       let key = entryKey(entry);
       if (seen.has(key))
         continue;
-      seen.add(key), merged.push(entry);
+      if (seen.add(key), merged.push(entry), maxEntries && merged.length >= maxEntries)
+        return merged;
     }
   }
   if (merged.length === 0)
     return [];
-  let filtered = filterEntriesByPath(merged, projectPath, relative, treatAsFile);
-  return pathGlob ? filterEntriesByPathGlob(filtered, projectPath, pathGlob) : filtered;
+  return merged;
 }
 function getLiteralSearchText(pattern) {
   let ast = parsePatternSafe(pattern);
@@ -25098,22 +25152,18 @@ async function readSliceMode(relativePath, offset, limit, includeLineNumbers, ca
   let maxLinesCount = Math.max(3, requestedLines), text = await readFileText(relativePath, {
     maxLinesCount,
     truncateMode: "START"
-  }, callUpstreamTool), { text: trimmedText, wasTruncated } = trimTruncation(text), lines = splitLines2(trimmedText);
-  if (offset > lines.length) {
-    if (wasTruncated) {
-      let refreshed = await readFileText(relativePath, {
-        maxLinesCount: Math.max(3, maxLinesCount),
-        truncateMode: "NONE"
-      }, callUpstreamTool), { text: refreshedText, wasTruncated: refreshedTruncated } = trimTruncation(refreshed), refreshedLines = splitLines2(refreshedText);
-      if (offset > refreshedLines.length) {
-        if (refreshedTruncated)
-          throw Error(TRUNCATION_ERROR);
-        throw Error("offset exceeds file length");
-      }
-      return sliceLines(refreshedLines, offset, limit, includeLineNumbers);
-    }
-    throw Error("offset exceeds file length");
+  }, callUpstreamTool), { text: trimmedText, wasTruncated } = trimTruncation(text), lines = splitLines2(trimmedText), truncated = wasTruncated;
+  if (truncated && requestedLines > lines.length) {
+    let refreshed = await readFileText(relativePath, {
+      maxLinesCount: Math.max(3, requestedLines),
+      truncateMode: "NONE"
+    }, callUpstreamTool), { text: refreshedText, wasTruncated: refreshedTruncated } = trimTruncation(refreshed);
+    lines = splitLines2(refreshedText), truncated = refreshedTruncated;
   }
+  if (truncated && requestedLines > lines.length)
+    throw Error(TRUNCATION_ERROR);
+  if (offset > lines.length)
+    throw Error("offset exceeds file length");
   return sliceLines(lines, offset, limit, includeLineNumbers);
 }
 async function readSliceModeFromSearch(projectPath, relativePath, absolutePath, offset, limit, includeLineNumbers, callUpstreamTool) {
@@ -25350,30 +25400,6 @@ function trimTruncation(text) {
   }
   return { text: stripTrailingLineBreak(text.slice(0, markerIndex)), wasTruncated: !0 };
 }
-function findTruncationMarkerSuffix(text) {
-  if (text.endsWith(TRUNCATION_MARKER))
-    return text.length - TRUNCATION_MARKER.length;
-  if (text.endsWith(`${TRUNCATION_MARKER}
-`))
-    return text.length - TRUNCATION_MARKER.length - 1;
-  if (text.endsWith(`${TRUNCATION_MARKER}\r
-`))
-    return text.length - TRUNCATION_MARKER.length - 2;
-  return -1;
-}
-function findTruncationMarkerLine(text) {
-  let index = text.indexOf(TRUNCATION_MARKER);
-  while (index >= 0) {
-    let beforeIndex = index - 1, afterIndex = index + TRUNCATION_MARKER.length, beforeOk = beforeIndex < 0 || isLineBreakChar(text.charCodeAt(beforeIndex)), afterOk = afterIndex >= text.length || isLineBreakChar(text.charCodeAt(afterIndex));
-    if (beforeOk && afterOk)
-      return index;
-    index = text.indexOf(TRUNCATION_MARKER, index + TRUNCATION_MARKER.length);
-  }
-  return -1;
-}
-function isLineBreakChar(code) {
-  return code === 10 || code === 13;
-}
 function stripTrailingLineBreak(text) {
   if (text.endsWith(`\r
 `))
@@ -25440,10 +25466,10 @@ async function handleWriteTool(args, projectPath, callUpstreamTool) {
   let filePath = requireString(args.file_path, "file_path"), content = typeof args.content === "string" ? args.content : null;
   if (content === null)
     throw Error("content must be a string");
-  let { relative } = resolvePathInProject(projectPath, filePath, "file_path");
+  let { relative } = resolvePathInProject(projectPath, filePath, "file_path"), normalizedContent = normalizeLineEndings(content);
   return await callUpstreamTool("create_new_file", {
     pathInProject: relative,
-    text: content,
+    text: normalizedContent,
     overwrite: !0
   }), `Wrote ${path9.resolve(projectPath, relative)}`;
 }

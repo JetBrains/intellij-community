@@ -131,6 +131,10 @@ export function extractEntries(result) {
   return []
 }
 
+export function normalizeLineEndings(text) {
+  return text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+}
+
 export async function readFileText(relativePath, {maxLinesCount, truncateMode} = {}, callUpstreamTool) {
   const args = {pathInProject: relativePath}
   if (maxLinesCount !== undefined && maxLinesCount !== null) {
@@ -148,7 +152,7 @@ export async function readFileText(relativePath, {maxLinesCount, truncateMode} =
 }
 
 export function splitLines(text) {
-  const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  const normalized = normalizeLineEndings(text)
   const lines = normalized.split('\n')
   if (lines.length > 0 && lines[lines.length - 1] === '') {
     lines.pop()
@@ -157,7 +161,7 @@ export function splitLines(text) {
 }
 
 export function splitLinesWithTrailing(text) {
-  const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  const normalized = normalizeLineEndings(text)
   const trailingNewline = normalized.endsWith('\n')
   const lines = normalized.split('\n')
   if (trailingNewline) {
