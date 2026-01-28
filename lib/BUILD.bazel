@@ -3012,17 +3012,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.github.oshi/oshi-core-6.8.2.jar_copy",
-  src = "@com_github_oshi-oshi-core-6_8_2_http//file",
-  out = "com.github.oshi/oshi-core-6.8.2.jar",
+  name = "com.github.oshi/oshi-core-6.9.2.jar_copy",
+  src = "@com_github_oshi-oshi-core-6_9_2_http//file",
+  out = "com.github.oshi/oshi-core-6.9.2.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "github-oshi-core",
-  jar = "@com_github_oshi-oshi-core-6_8_2_http//file",
-  source_jar = "@com_github_oshi-oshi-core-6_8_2-sources_http//file",
+  jar = "@com_github_oshi-oshi-core-6_9_2_http//file",
+  source_jar = "@com_github_oshi-oshi-core-6_9_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
