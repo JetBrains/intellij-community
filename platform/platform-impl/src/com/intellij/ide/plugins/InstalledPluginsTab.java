@@ -105,13 +105,13 @@ class InstalledPluginsTab extends PluginsTab {
     ((SearchUpDownPopupController)myInstalledSearchPanel.controller).setEventHandler(eventHandler);
     myInstalledPanel.showLoadingIcon();
 
-    PluginsGroup downloaded =
-      new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
+    PluginsGroup userInstalled =
+      new PluginsGroup(IdeBundle.message("plugins.configurable.userInstalled"), PluginsGroupType.INSTALLED);
 
     PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
     PluginManagerPanelFactory.INSTANCE.createInstalledPanel(myCoroutineScope, myPluginModelFacade.getModel(), model -> {
       try {
-        myPluginModelFacade.getModel().setDownloadedGroup(myInstalledPanel, downloaded, installing);
+        myPluginModelFacade.getModel().setDownloadedGroup(myInstalledPanel, userInstalled, installing);
         installing.getPreloadedModel().setErrors(model.getErrors());
         installing.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
         installing.addModels(MyPluginModel.getInstallingPlugins());
@@ -121,9 +121,9 @@ class InstalledPluginsTab extends PluginsTab {
           myInstalledPanel.addGroup(installing);
         }
 
-        downloaded.getPreloadedModel().setErrors(model.getErrors());
-        downloaded.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
-        downloaded.addModels(model.getInstalledPlugins());
+        userInstalled.getPreloadedModel().setErrors(model.getErrors());
+        userInstalled.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
+        userInstalled.addModels(model.getInstalledPlugins());
 
         myBundledUpdateGroup.getPreloadedModel().setErrors(model.getErrors());
         myBundledUpdateGroup.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
@@ -140,7 +140,7 @@ class InstalledPluginsTab extends PluginsTab {
         List<PluginId> installedPluginIds = ContainerUtil.map(model.getInstalledPlugins(), it -> it.getPluginId());
         List<PluginUiModel> nonBundledPlugins =
           ContainerUtil.filter(visibleNonBundledPlugins, it -> !installedPluginIds.contains(it.getPluginId()));
-        downloaded.addModels(nonBundledPlugins);
+        userInstalled.addModels(nonBundledPlugins);
 
         LinkListener<Object> updateAllListener = new LinkListener<>() {
           @Override
@@ -165,20 +165,20 @@ class InstalledPluginsTab extends PluginsTab {
         myUpdateCounterBundled.setVisible(false);
 
         myUpdateAll.setListener(updateAllListener, null);
-        downloaded.addRightAction(myUpdateAll);
-        downloaded.addRightAction(myUpdateCounter);
+        userInstalled.addRightAction(myUpdateAll);
+        userInstalled.addRightAction(myUpdateCounter);
 
-        if (!downloaded.getModels().isEmpty()) {
-          downloaded.sortByName();
+        if (!userInstalled.getModels().isEmpty()) {
+          userInstalled.sortByName();
 
           long enabledNonBundledCount = nonBundledPlugins.stream()
             .filter(descriptor -> !myPluginModelFacade.getModel().isDisabled(descriptor.getPluginId()))
             .count();
-          downloaded.titleWithCount(Math.toIntExact(enabledNonBundledCount));
-          if (downloaded.ui == null) {
-            myInstalledPanel.addGroup(downloaded);
+          userInstalled.titleWithCount(Math.toIntExact(enabledNonBundledCount));
+          if (userInstalled.ui == null) {
+            myInstalledPanel.addGroup(userInstalled);
           }
-          myPluginModelFacade.getModel().addEnabledGroup(downloaded);
+          myPluginModelFacade.getModel().addEnabledGroup(userInstalled);
         }
 
         String defaultCategory = IdeBundle.message("plugins.configurable.other.bundled");

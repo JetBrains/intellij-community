@@ -57,7 +57,7 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project), PluginEnabler {
   private var myInstalledPanel: PluginsGroupComponent? = null
-  var downloadedGroup: PluginsGroup? = null
+  var userInstalled: PluginsGroup? = null
     private set
   private var myInstalling: PluginsGroup? = null
   private var myTopController: TopComponentController? = null
@@ -470,8 +470,8 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       if (success) {
         appendOrUpdateDescriptor(installedDescriptor ?: descriptor, restartRequired, errorList)
         appendDependsAfterInstall(success, restartRequired, errors, installedDescriptor)
-        if (installedDescriptor == null && descriptor.isFromMarketplace && this.downloadedGroup != null && downloadedGroup!!.ui != null) {
-          val component = downloadedGroup!!.ui.findComponent(descriptor.pluginId)
+        if (installedDescriptor == null && descriptor.isFromMarketplace && this.userInstalled != null && userInstalled!!.ui != null) {
+          val component = userInstalled!!.ui.findComponent(descriptor.pluginId)
           component?.setInstalledPluginMarketplaceModel(descriptor)
         }
       }
@@ -480,8 +480,8 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       }
     }
     else if (success) {
-      if (this.downloadedGroup != null && downloadedGroup!!.ui != null && restartRequired) {
-        val component = downloadedGroup!!.ui.findComponent(pluginId)
+      if (this.userInstalled != null && userInstalled!!.ui != null && restartRequired) {
+        val component = userInstalled!!.ui.findComponent(pluginId)
         component?.enableRestart()
       }
     }
@@ -553,11 +553,11 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   fun setDownloadedGroup(
     panel: PluginsGroupComponent,
-    downloaded: PluginsGroup,
+    userInstalled: PluginsGroup,
     installing: PluginsGroup,
   ) {
     myInstalledPanel = panel
-    this.downloadedGroup = downloaded
+    this.userInstalled = userInstalled
     myInstalling = installing
   }
 
@@ -567,12 +567,12 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     errors: Map<PluginId, List<HtmlChunk>>,
     installedDescriptor: PluginUiModel?,
   ) {
-    if (this.downloadedGroup == null || downloadedGroup!!.ui == null) {
+    if (this.userInstalled == null || userInstalled!!.ui == null) {
       return
     }
     for (descriptor in InstalledPluginsState.getInstance().installedPlugins) {
       val pluginId = descriptor.getPluginId()
-      if (downloadedGroup!!.ui.findComponent(pluginId) != null) {
+      if (userInstalled!!.ui.findComponent(pluginId) != null) {
         continue
       }
 
@@ -616,25 +616,25 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
     needRestart = needRestart or restartNeeded
 
-    if (this.downloadedGroup == null) {
+    if (this.userInstalled == null) {
       return
     }
 
     _vendorsSortedByPluginCountDescending = null
     myTags = null
 
-    if (downloadedGroup!!.ui == null) {
-      downloadedGroup!!.addModel(descriptor)
-      downloadedGroup!!.titleWithEnabled(PluginModelFacade(this))
+    if (userInstalled!!.ui == null) {
+      userInstalled!!.addModel(descriptor)
+      userInstalled!!.titleWithEnabled(PluginModelFacade(this))
 
-      myInstalledPanel!!.addGroup(this.downloadedGroup!!, if (myInstalling == null || myInstalling!!.ui == null) 0 else 1)
-      myInstalledPanel!!.setSelection(downloadedGroup!!.ui.plugins[0])
+      myInstalledPanel!!.addGroup(this.userInstalled!!, if (myInstalling == null || myInstalling!!.ui == null) 0 else 1)
+      myInstalledPanel!!.setSelection(userInstalled!!.ui.plugins[0])
       myInstalledPanel!!.doLayout()
 
-      addEnabledGroup(this.downloadedGroup!!)
+      addEnabledGroup(this.userInstalled!!)
     }
     else {
-      val component = downloadedGroup!!.ui.findComponent(id)
+      val component = userInstalled!!.ui.findComponent(id)
       if (component != null) {
         if (restartNeeded) {
           myInstalledPanel!!.setSelection(component)
@@ -642,11 +642,11 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
         }
         return
       }
-      downloadedGroup!!.preloadedModel.setErrors(descriptor.pluginId, errors)
+      userInstalled!!.preloadedModel.setErrors(descriptor.pluginId, errors)
       val pluginInstallationState = pluginManager.getPluginInstallationState(descriptor.pluginId)
-      downloadedGroup!!.preloadedModel.setPluginInstallationState(descriptor.pluginId, pluginInstallationState)
-      myInstalledPanel!!.addToGroup(this.downloadedGroup!!, descriptor)
-      downloadedGroup!!.titleWithEnabled(PluginModelFacade(this))
+      userInstalled!!.preloadedModel.setPluginInstallationState(descriptor.pluginId, pluginInstallationState)
+      myInstalledPanel!!.addToGroup(this.userInstalled!!, descriptor)
+      userInstalled!!.titleWithEnabled(PluginModelFacade(this))
       myInstalledPanel!!.doLayout()
     }
   }
