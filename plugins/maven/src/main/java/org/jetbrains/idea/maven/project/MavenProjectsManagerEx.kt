@@ -462,7 +462,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     mavenEmbedderWrappers: MavenEmbedderWrappers,
     read: MavenSyncFileReader,
   ): List<Module> {
-    return tracer.spanBuilder("syncMavenProject").useWithScope {
+    return tracer.spanBuilder("syncMavenProject").useWithScope doUpdateMavenProjects@{
       // display all import activities using the same build progress
       logDebug("Start update ${project.name}, $spec ${myProject.name}")
       ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC).syncStarted(myProject)
@@ -474,8 +474,8 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
       try {
         console.startImport(spec.isExplicit)
         if (MavenUtil.enablePreimport()) {
-          tracer.spanBuilder("doStaticSync").useWithScope {
-            val result = MavenProjectStaticImporter.getInstance(myProject)
+          val result = tracer.spanBuilder("doStaticSync").useWithScope doStaticSync@{
+            MavenProjectStaticImporter.getInstance(myProject)
               .syncStatic(
                 projectsTree.existingManagedFiles,
                 modelsProvider,
@@ -485,33 +485,33 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                 SimpleStructureProjectVisitor(),
                 syncActivity,
                 true)
-            if (MavenUtil.enablePreimportOnly()) return@useWithScope result.modules
+          }
+          if (MavenUtil.enablePreimportOnly()) return@doUpdateMavenProjects result.modules
 
-            if (!TrustedProjects.isProjectTrusted(project)) {
-              projectsTree.updater().copyFrom(result.projectTree)
-              showUntrustedProjectNotification(myProject)
-              return@useWithScope result.modules
-            }
-            incompleteState = tracer.spanBuilder("enterIncompleteState").useWithScope {
-              edtWriteAction {
-                project.service<IncompleteDependenciesService>().enterIncompleteState(this@MavenProjectsManagerEx)
-              }
+          if (!TrustedProjects.isProjectTrusted(project)) {
+            projectsTree.updater().copyFrom(result.projectTree)
+            showUntrustedProjectNotification(myProject)
+            return@doUpdateMavenProjects result.modules
+          }
+          incompleteState = tracer.spanBuilder("enterIncompleteState").useWithScope {
+            edtWriteAction {
+              project.service<IncompleteDependenciesService>().enterIncompleteState(this@MavenProjectsManagerEx)
             }
           }
         }
         if (!checkMavenEnvironment(spec)) {
           MavenLog.LOG.warn("Will not continue import, bad environment")
-          return@useWithScope emptyList()
+          return@doUpdateMavenProjects emptyList()
         }
         val result = tracer.spanBuilder("doDynamicSync").useWithScope {
           doDynamicSync(syncActivity, read, spec, modelsProvider, mavenEmbedderWrappers)
         }
 
-        return@useWithScope result
+        return@doUpdateMavenProjects result
       }
       catch (e: Throwable) {
         logImportErrorIfNotControlFlow(e)
-        return@useWithScope emptyList()
+        return@doUpdateMavenProjects emptyList()
       }
       finally {
         logDebug("Finish update ${project.name}, $spec ${myProject.name}")
