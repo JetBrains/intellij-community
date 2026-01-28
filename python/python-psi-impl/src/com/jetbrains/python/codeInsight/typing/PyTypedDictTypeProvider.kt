@@ -18,13 +18,11 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.TYPED_DICT_E
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.getType
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.resolveToQualifiedNames
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyBoolLiteralExpression
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyExpression
-import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyRecursiveElementVisitor
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PySubscriptionExpression
@@ -61,7 +59,12 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
   }
 
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
-    return PyTypeUtil.notNullToRef(getTypedDictTypeForResolvedCallee(referenceTarget, context))
+    val type = when (referenceTarget) {
+      is PyClass -> getTypedDictTypeForClass(referenceTarget, true, context)
+      is PyTargetExpression -> getTypedDictTypeForTarget(referenceTarget, context)
+      else -> null
+    }
+    return PyTypeUtil.notNullToRef(type)
   }
 
   override fun prepareCalleeTypeForCall(type: PyType?, call: PyCallExpression, context: TypeEvalContext): Ref<PyCallableType?>? {
@@ -135,14 +138,6 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       return null
     }
 
-    private fun getTypedDictTypeForResolvedCallee(referenceTarget: PsiElement, context: TypeEvalContext): PyTypedDictType? {
-      return when (referenceTarget) {
-        is PyClass -> getTypedDictTypeForTypingTDInheritorAsCallee(referenceTarget, context, false)
-        is PyTargetExpression -> getTypedDictTypeForTarget(referenceTarget, context)
-        else -> null
-      }
-    }
-
     private fun getTypedDictTypeForCallee(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {
       if (PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) == null) return null
 
@@ -175,16 +170,16 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       return null
     }
 
-    private fun getTypedDictTypeForTypingTDInheritorAsCallee(
+    private fun getTypedDictTypeForClass(
       cls: PyClass,
+      isDefinition: Boolean,
       context: TypeEvalContext,
-      isInstance: Boolean,
     ): PyTypedDictType? {
       if (isTypingTypedDictInheritor(cls, context)) {
         return PyTypedDictType(cls.name ?: return null,
                                TDFields(collectFields(cls, context)),
                                PyBuiltinCache.getInstance(cls).dictType?.pyClass ?: return null,
-                               !isInstance,
+                               isDefinition,
                                cls)
       }
 
@@ -312,15 +307,9 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
 
     fun getTypedDictTypeForResolvedElement(resolved: PsiElement, context: TypeEvalContext): PyTypedDictType? {
       return Ref.deref(PyUtil.getParameterizedCachedValue(resolved, context) { typeEvalContext ->
-        return@getParameterizedCachedValue Ref.create(calculateTypeDictType(resolved, typeEvalContext))
+        val type = if (resolved is PyClass) getTypedDictTypeForClass(resolved, false, typeEvalContext) else null
+        Ref.create(type)
       })
-    }
-
-    private fun calculateTypeDictType(resolved: PsiElement, context: TypeEvalContext): PyTypedDictType? {
-      if (resolved is PyClass) {
-        return getTypedDictTypeForTypingTDInheritorAsCallee(resolved, context, true)
-      }
-      return null
     }
 
     private fun getTypedDictTypeFromStub(
