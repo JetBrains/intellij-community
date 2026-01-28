@@ -1,16 +1,16 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.completion;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.completion.modcommand;
 
-import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
-import com.intellij.modcompletion.ModCompletionItemProvider;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.modcompletion.ModCompletionItem;
+import com.intellij.modcompletion.ModCompletionItemPresentation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
@@ -26,14 +26,17 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.JavaNameSuggestionUtil;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -41,7 +44,8 @@ import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiField;
 import static com.intellij.patterns.StandardPatterns.or;
 
-public final class JavaMemberNameCompletionContributor extends CompletionContributor implements DumbAware {
+@NotNullByDefault
+final class MemberNameItemProvider extends JavaModCompletionItemProvider {
   public static final ElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN = psiElement().
     afterLeaf(psiElement().withText("?").andOr(
       psiElement().afterLeaf("<", ","),
@@ -50,51 +54,47 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
   private static final int MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED = 50000;
 
   @Override
-  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    if (ModCompletionItemProvider.modCommandCompletionEnabled()) return;
-    if (parameters.getCompletionType() != CompletionType.BASIC && parameters.getCompletionType() != CompletionType.SMART) {
-      return;
-    }
-
-    if (parameters.getInvocationCount() == 0 && TemplateManagerImpl.getTemplateState(parameters.getEditor()) != null) {
+  public void provideItems(CompletionContext parameters, Consumer<ModCompletionItem> sink) {
+    if (parameters.getCompletionType() != CompletionType.BASIC && parameters.getCompletionType() != CompletionType.SMART ||
+        parameters.getInvocationCount() == 0) {
       return;
     }
 
     PsiElement position = parameters.getPosition();
-    Set<LookupElement> lookupSet = new HashSet<>();
+    Set<ModCompletionItem> lookupSet = new LinkedHashSet<>(); // LinkedHashSet for test stability
+    PrefixMatcher matcher = parameters.matcher();
     if (psiElement(PsiIdentifier.class).andNot(INSIDE_TYPE_PARAMS_PATTERN).withParent(
       or(psiElement(PsiLocalVariable.class), psiElement(PsiParameter.class))).accepts(position)) {
-      completeLocalVariableName(lookupSet, result.getPrefixMatcher(), (PsiVariable)parameters.getPosition().getParent(),
+      completeLocalVariableName(lookupSet, matcher, (PsiVariable)parameters.getPosition().getParent(),
                                 parameters.getInvocationCount() >= 1);
-      for (LookupElement item : lookupSet) {
-        if (item instanceof LookupItem) {
-          ((LookupItem<?>)item).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
-        }
-      }
+      lookupSet = StreamEx.of(lookupSet)
+        .map(item -> item instanceof CommonCompletionItem cci ? cci.withAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE) : item)
+        .toCollection(LinkedHashSet::new);
     }
 
     if (psiElement(PsiIdentifier.class).withParent(PsiField.class).andNot(INSIDE_TYPE_PARAMS_PATTERN).accepts(position)) {
       PsiField variable = (PsiField)parameters.getPosition().getParent();
-      completeMethodName(lookupSet, variable, result.getPrefixMatcher());
-      completeFieldName(lookupSet, variable, result.getPrefixMatcher(), parameters.getInvocationCount() >= 1);
+      completeMethodName(lookupSet, variable, matcher);
+      completeFieldName(lookupSet, variable, matcher, parameters.getInvocationCount() >= 1);
     }
 
     if (psiElement(PsiIdentifier.class).withParent(PsiRecordComponent.class).andNot(INSIDE_TYPE_PARAMS_PATTERN).accepts(position)) {
       PsiRecordComponent component = (PsiRecordComponent)parameters.getPosition().getParent();
-      completeComponentName(lookupSet, component, result.getPrefixMatcher());
+      completeComponentName(lookupSet, component, matcher);
     }
 
     if (PsiJavaPatterns.psiElement().nameIdentifierOf(PsiJavaPatterns.psiMethod().withParent(PsiClass.class)).accepts(position) &&
         !(PsiUtil.isJavaToken(PsiTreeUtil.prevVisibleLeaf(position), JavaTokenType.DOT))) {
-      completeMethodName(lookupSet, parameters.getPosition().getParent(), result.getPrefixMatcher());
+      completeMethodName(lookupSet, parameters.getPosition().getParent(), matcher);
     }
 
-    for (LookupElement item : lookupSet) {
-      result.addElement(item);
-    }
+    lookupSet.forEach(sink);
   }
 
-  private static void completeLocalVariableName(Set<LookupElement> set, PrefixMatcher matcher, @NotNull PsiVariable var, boolean includeOverlapped) {
+  private static void completeLocalVariableName(Set<ModCompletionItem> set,
+                                                PrefixMatcher matcher,
+                                                PsiVariable var,
+                                                boolean includeOverlapped) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
     Project project = var.getProject();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
@@ -112,52 +112,54 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
     }
 
     PsiType type = var.getType();
-    if (type instanceof PsiClassType &&
-        ((PsiClassType)type).resolve() == null &&
-        seemsMistypedKeyword(((PsiClassType)type).getClassName())) {
+    if (type instanceof PsiClassType classType &&
+        classType.resolve() == null &&
+        seemsMistypedKeyword(classType.getClassName())) {
       return;
     }
 
-    SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, propertyName, null, type, StringUtil.isEmpty(matcher.getPrefix()));
+    SuggestedNameInfo
+      suggestedNameInfo =
+      codeStyleManager.suggestVariableName(variableKind, propertyName, null, type, StringUtil.isEmpty(matcher.getPrefix()));
     suggestedNameInfo = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, var, false);
     String[] suggestedNames = suggestedNameInfo.names;
-    addLookupItems(set, suggestedNameInfo, matcher, project, var, suggestedNames);
+    addLookupItems(set, matcher, project, var, suggestedNames);
     if (!hasStartMatches(set, matcher)) {
       Set<String> setOfNames = Arrays.stream(suggestedNames).collect(Collectors.toSet());
       String objectName = "object";
       if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && matcher.prefixMatches(objectName) &&
-          (!setOfNames.contains(objectName) || !ContainerUtil.exists(set, t -> t.getLookupString().equals(objectName)))) {
-        set.add(withInsertHandler(suggestedNameInfo, LookupElementBuilder.create(objectName)));
+          (!setOfNames.contains(objectName) || !ContainerUtil.exists(set, t -> t.mainLookupString().equals(objectName)))) {
+        set.add(new CommonCompletionItem(objectName));
       }
       String stringName = "string";
       if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) && matcher.prefixMatches(stringName) &&
-          (!setOfNames.contains(stringName) || !ContainerUtil.exists(set, t -> t.getLookupString().equals(stringName)))) {
-        set.add(withInsertHandler(suggestedNameInfo, LookupElementBuilder.create(stringName)));
+          (!setOfNames.contains(stringName) || !ContainerUtil.exists(set, t -> t.mainLookupString().equals(stringName)))) {
+        set.add(new CommonCompletionItem(stringName));
       }
     }
 
     if (!hasStartMatches(set, matcher) && includeOverlapped) {
-      addLookupItems(set, null, matcher, project, var, getOverlappedNameVersions(matcher.getPrefix(), suggestedNames, ""));
+      addLookupItems(set, matcher, project, var, getOverlappedNameVersions(matcher.getPrefix(), suggestedNames, ""));
     }
     PsiElement parent = PsiTreeUtil.getParentOfType(var, PsiCodeBlock.class);
-    if(parent == null) parent = PsiTreeUtil.getParentOfType(var, PsiMethod.class, PsiLambdaExpression.class);
-    addLookupItems(set, suggestedNameInfo, matcher, project, var, getUnresolvedReferences(parent, false, matcher));
-    if (var instanceof PsiParameter && parent instanceof PsiMethod) {
+    if (parent == null) parent = PsiTreeUtil.getParentOfType(var, PsiMethod.class, PsiLambdaExpression.class);
+    addLookupItems(set, matcher, project, var, getUnresolvedReferences(parent, false, matcher));
+    if (var instanceof PsiParameter && parent instanceof PsiMethod method) {
       addSuggestionsInspiredByFieldNames(set, matcher, var, project, codeStyleManager);
-      PsiDocComment docComment = ((PsiMethod)parent).getDocComment();
+      PsiDocComment docComment = method.getDocComment();
       if (docComment != null) {
-        addLookupItems(set, null, matcher, project, var, ArrayUtil.toStringArray(getUnresolvedMethodParamNamesFromJavadoc(docComment)));
+        addLookupItems(set, matcher, project, var, ArrayUtil.toStringArray(getUnresolvedMethodParamNamesFromJavadoc(docComment)));
       }
     }
 
     PsiExpression initializer = var.getInitializer();
     if (initializer != null) {
       SuggestedNameInfo initializerSuggestions = CommonJavaRefactoringUtil.getSuggestedName(type, initializer);
-      addLookupItems(set, initializerSuggestions, matcher, project, var, initializerSuggestions.names);
+      addLookupItems(set, matcher, project, var, initializerSuggestions.names);
     }
   }
 
-  private static @NotNull List<String> getUnresolvedMethodParamNamesFromJavadoc(@NotNull PsiDocComment docComment) {
+  private static List<String> getUnresolvedMethodParamNamesFromJavadoc(PsiDocComment docComment) {
     List<String> result = new ArrayList<>();
     for (PsiDocTag tag : docComment.getTags()) {
       if ("param".equals(tag.getName())) {
@@ -174,28 +176,20 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
     return result;
   }
 
-  private static boolean seemsMistypedKeyword(String className) {
+  private static boolean seemsMistypedKeyword(@Nullable String className) {
     return className != null && !StringUtil.isCapitalized(className);
   }
 
-  private static boolean hasStartMatches(PrefixMatcher matcher, @NotNull Set<String> set) {
-    for (String s : set) {
-      if (matcher.isStartMatch(s)) {
-        return true;
-      }
-    }
-    return false;
-  }
-  private static boolean hasStartMatches(@NotNull Set<? extends LookupElement> set, PrefixMatcher matcher) {
-    for (LookupElement lookupElement : set) {
-      if (matcher.isStartMatch(lookupElement)) {
-        return true;
-      }
-    }
-    return false;
+  private static boolean hasStartMatches(PrefixMatcher matcher, Set<String> set) {
+    return ContainerUtil.exists(set, matcher::isStartMatch);
   }
 
-  private static void addSuggestionsInspiredByFieldNames(Set<LookupElement> set,
+  private static boolean hasStartMatches(Set<? extends ModCompletionItem> set, PrefixMatcher matcher) {
+    return ContainerUtil.exists(set, lookupElement -> matcher.isStartMatch(lookupElement.mainLookupString()) ||
+                                                      hasStartMatches(matcher, lookupElement.additionalLookupStrings()));
+  }
+
+  private static void addSuggestionsInspiredByFieldNames(Set<ModCompletionItem> set,
                                                          PrefixMatcher matcher,
                                                          PsiVariable var,
                                                          Project project,
@@ -209,12 +203,12 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
       String name = field.getName();
       if (field.getType().isAssignableFrom(var.getType())) {
         String prop = codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD);
-        addLookupItems(set, null, matcher, project, var, codeStyleManager.propertyNameToVariableName(prop, VariableKind.PARAMETER));
+        addLookupItems(set, matcher, project, var, codeStyleManager.propertyNameToVariableName(prop, VariableKind.PARAMETER));
       }
     }
   }
 
-  private static String @NotNull [] getOverlappedNameVersions(String prefix, String @NotNull [] suggestedNames, String suffix) {
+  private static String[] getOverlappedNameVersions(String prefix, String[] suggestedNames, String suffix) {
     List<String> newSuggestions = new ArrayList<>();
     int longestOverlap = 0;
 
@@ -252,7 +246,7 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
     return ArrayUtilRt.toStringArray(newSuggestions);
   }
 
-  private static int getOverlap(@NotNull String propertyName, @NotNull String prefix) {
+  private static int getOverlap(String propertyName, String prefix) {
     int overlap = 0;
     int propertyNameLen = propertyName.length();
     int prefixLen = prefix.length();
@@ -264,13 +258,14 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
     return overlap;
   }
 
-  private static String[] getUnresolvedReferences(PsiElement parentOfType, boolean referenceOnMethod, PrefixMatcher matcher) {
+  private static String[] getUnresolvedReferences(@Nullable PsiElement parentOfType, boolean referenceOnMethod, PrefixMatcher matcher) {
     if (parentOfType != null && parentOfType.getTextLength() > MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     Set<String> unresolvedRefs = new LinkedHashSet<>();
 
     if (parentOfType != null) {
       parentOfType.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression reference) {
+        @Override
+        public void visitReferenceExpression(PsiReferenceExpression reference) {
           PsiElement parent = reference.getParent();
           if (parent instanceof PsiReference || referenceOnMethod != parent instanceof PsiMethodCallExpression) return;
 
@@ -284,7 +279,7 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
     return ArrayUtilRt.toStringArray(unresolvedRefs);
   }
 
-  private static void completeComponentName(Set<LookupElement> set, @NotNull PsiRecordComponent var, PrefixMatcher matcher) {
+  private static void completeComponentName(Set<ModCompletionItem> set, PsiRecordComponent var, PrefixMatcher matcher) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
 
     Project project = var.getProject();
@@ -292,10 +287,13 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
 
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, var.getType());
     String[] suggestedNames = suggestedNameInfo.names;
-    addLookupItems(set, suggestedNameInfo, matcher, project, var, suggestedNames);
+    addLookupItems(set, matcher, project, var, suggestedNames);
   }
 
-  private static void completeFieldName(Set<LookupElement> set, @NotNull PsiField var, @NotNull PrefixMatcher matcher, boolean includeOverlapped) {
+  private static void completeFieldName(Set<ModCompletionItem> set,
+                                        PsiField var,
+                                        PrefixMatcher matcher,
+                                        boolean includeOverlapped) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
 
     Project project = var.getProject();
@@ -303,56 +301,58 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
     VariableKind variableKind = JavaCodeStyleManager.getInstance(project).getVariableKind(var);
 
     String prefix = matcher.getPrefix();
-    if (PsiTypes.voidType().equals(var.getType()) || psiField().inClass(psiClass().isInterface().andNot(psiClass().isAnnotationType())).accepts(var)) {
+    if (PsiTypes.voidType().equals(var.getType()) ||
+        psiField().inClass(psiClass().isInterface().andNot(psiClass().isAnnotationType())).accepts(var)) {
       completeVariableNameForRefactoring(project, set, matcher, var.getType(), variableKind, includeOverlapped, true);
       return;
     }
 
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, null, null, var.getType());
     String[] suggestedNames = suggestedNameInfo.names;
-    addLookupItems(set, suggestedNameInfo, matcher, project, var, suggestedNames);
+    addLookupItems(set, matcher, project, var, suggestedNames);
 
     if (!hasStartMatches(set, matcher) && includeOverlapped) {
       // use suggested names as suffixes
       String requiredSuffix = codeStyleManager.getSuffixByVariableKind(variableKind);
-      if(variableKind != VariableKind.STATIC_FINAL_FIELD){
-        for (int i = 0; i < suggestedNames.length; i++)
+      if (variableKind != VariableKind.STATIC_FINAL_FIELD) {
+        for (int i = 0; i < suggestedNames.length; i++) {
           suggestedNames[i] = codeStyleManager.variableNameToPropertyName(suggestedNames[i], variableKind);
+        }
       }
 
 
-      addLookupItems(set, null, matcher, project, var, getOverlappedNameVersions(prefix, suggestedNames, requiredSuffix));
+      addLookupItems(set, matcher, project, var, getOverlappedNameVersions(prefix, suggestedNames, requiredSuffix));
     }
 
-    addLookupItems(set, suggestedNameInfo, matcher, project, var, getUnresolvedReferences(var.getParent(), false, matcher));
+    addLookupItems(set, matcher, project, var, getUnresolvedReferences(var.getParent(), false, matcher));
 
     PsiExpression initializer = var.getInitializer();
     PsiClass containingClass = var.getContainingClass();
     if (initializer != null && containingClass != null) {
       SuggestedNameInfo initializerSuggestions = JavaNameSuggestionUtil.suggestFieldName(
         var.getType(), null, initializer, var.hasModifierProperty(PsiModifier.STATIC), containingClass);
-      addLookupItems(set, initializerSuggestions, matcher, project, var, initializerSuggestions.names);
+      addLookupItems(set, matcher, project, var, initializerSuggestions.names);
     }
   }
 
   static void completeVariableNameForRefactoring(Project project,
-                                                 Set<LookupElement> set,
+                                                 Set<ModCompletionItem> set,
                                                  PrefixMatcher matcher,
                                                  PsiType varType,
                                                  VariableKind varKind, boolean includeOverlapped, boolean methodPrefix) {
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(varKind, null, null, varType);
     String[] strings = completeVariableNameForRefactoring(codeStyleManager, matcher, varType, varKind, suggestedNameInfo,
-                                                                includeOverlapped, methodPrefix);
-    addLookupItems(set, suggestedNameInfo, matcher, project, null, strings);
+                                                          includeOverlapped, methodPrefix);
+    addLookupItems(set, matcher, project, null, strings);
   }
 
-  static String @NotNull [] completeVariableNameForRefactoring(@NotNull JavaCodeStyleManager codeStyleManager,
-                                                               @NotNull PrefixMatcher matcher,
-                                                               @Nullable PsiType varType,
-                                                               @NotNull VariableKind varKind,
-                                                               @NotNull SuggestedNameInfo suggestedNameInfo,
-                                                               boolean includeOverlapped, boolean methodPrefix) {
+  static String[] completeVariableNameForRefactoring(JavaCodeStyleManager codeStyleManager,
+                                                     PrefixMatcher matcher,
+                                                     @Nullable PsiType varType,
+                                                     VariableKind varKind,
+                                                     SuggestedNameInfo suggestedNameInfo,
+                                                     boolean includeOverlapped, boolean methodPrefix) {
     Set<String> result = new LinkedHashSet<>();
     String[] suggestedNames = suggestedNameInfo.names;
     for (String suggestedName : suggestedNames) {
@@ -372,19 +372,17 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
       }
 
       ContainerUtil.addAll(result, getOverlappedNameVersions(prefix, suggestedNames, requiredSuffix));
-
-
     }
     return ArrayUtilRt.toStringArray(result);
   }
 
-  private static void completeMethodName(Set<LookupElement> set, PsiElement element, PrefixMatcher matcher){
+  private static void completeMethodName(Set<ModCompletionItem> set, PsiElement element, PrefixMatcher matcher) {
     if (element instanceof PsiMethod method && method.isConstructor()) {
       PsiClass containingClass = method.getContainingClass();
       if (containingClass != null && !(containingClass instanceof PsiImplicitClass)) {
         String name = containingClass.getName();
         if (StringUtil.isNotEmpty(name)) {
-          addLookupItems(set, null, matcher, element.getProject(), element, name);
+          addLookupItems(set, matcher, element.getProject(), element, name);
         }
       }
       return;
@@ -394,23 +392,26 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
     if (ourClassParent == null) return;
 
     if (ourClassParent.isAnnotationType() && matcher.prefixMatches(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)) {
-      set.add(LookupElementBuilder.create(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
-                .withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method))
-                .withTailText("()")
-                .withInsertHandler(ParenthesesInsertHandler.NO_PARAMETERS));
+      set.add(new CommonCompletionItem(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
+                .withPresentation(new ModCompletionItemPresentation(
+                  MarkupText.plainText(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME).concat("()", MarkupText.Kind.GRAYED))
+                                    .withMainIcon(() -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Method)))
+                .withAdditionalUpdater((completionStart, updater) -> {
+                })); // TODO: parentheses
     }
 
-    if (element instanceof PsiField && ((PsiField)element).hasModifierProperty(PsiModifier.STATIC) &&
-        ourClassParent.equals(PsiUtil.resolveClassInClassTypeOnly(((PsiField)element).getType()))) {
-      set.add(LookupElementBuilder.create("getInstance")
-                                  .withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method))
-                                  .withTailText("()")
-                                  .withInsertHandler(ParenthesesInsertHandler.WITH_PARAMETERS));
-
+    if (element instanceof PsiField field && field.hasModifierProperty(PsiModifier.STATIC) &&
+        ourClassParent.equals(PsiUtil.resolveClassInClassTypeOnly(field.getType()))) {
+      set.add(new CommonCompletionItem("getInstance")
+                .withPresentation(new ModCompletionItemPresentation(
+                  MarkupText.plainText("getInstance").concat("()", MarkupText.Kind.GRAYED))
+                                    .withMainIcon(() -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Method)))
+                .withAdditionalUpdater((completionStart, updater) -> {
+                })); // TODO: parentheses with parameters
     }
-    addLookupItems(set, null, matcher, element.getProject(), element, getUnresolvedReferences(ourClassParent, true, matcher));
+    addLookupItems(set, matcher, element.getProject(), element, getUnresolvedReferences(ourClassParent, true, matcher));
 
-    addLookupItems(set, null, matcher, element.getProject(), element, getPropertiesHandlersNames(
+    addLookupItems(set, matcher, element.getProject(), element, getPropertiesHandlersNames(
       ourClassParent,
       ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC),
       PsiUtil.getTypeByPsiElement(element), element));
@@ -418,7 +419,7 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
 
   private static String[] getPropertiesHandlersNames(PsiClass psiClass,
                                                      boolean staticContext,
-                                                     PsiType varType,
+                                                     @Nullable PsiType varType,
                                                      PsiElement element) {
     List<String> propertyHandlers = new ArrayList<>();
 
@@ -435,9 +436,9 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
 
       if (fieldType.equals(varType)) {
         String getterName = JavaPsiRecordUtil.getComponentForField(field) != null ?
-                                  field.getName() : PropertyUtilBase.suggestGetterName(field);
+                            field.getName() : PropertyUtilBase.suggestGetterName(field);
         if (psiClass.findMethodsByName(getterName, true).length == 0 ||
-             psiClass.findMethodBySignature(GenerateMembersUtil.generateGetterPrototype(field), true) == null) {
+            psiClass.findMethodBySignature(GenerateMembersUtil.generateGetterPrototype(field), true) == null) {
           propertyHandlers.add(getterName);
         }
       }
@@ -445,7 +446,7 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
       if (PsiTypes.voidType().equals(varType)) {
         String setterName = PropertyUtilBase.suggestSetterName(field);
         if (psiClass.findMethodsByName(setterName, true).length == 0 ||
-             psiClass.findMethodBySignature(GenerateMembersUtil.generateSetterPrototype(field), true) == null) {
+            psiClass.findMethodBySignature(GenerateMembersUtil.generateSetterPrototype(field), true) == null) {
           propertyHandlers.add(setterName);
         }
       }
@@ -455,8 +456,7 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
   }
 
   private static void addLookupItems(
-    Set<LookupElement> lookupElements,
-    @Nullable SuggestedNameInfo callback,
+    Set<ModCompletionItem> lookupElements,
     PrefixMatcher matcher, Project project,
     @Nullable PsiElement context,
     String... strings
@@ -469,28 +469,16 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
         continue;
       }
 
-      for (LookupElement lookupElement : lookupElements) {
-        if (lookupElement.getAllLookupStrings().contains(name)) {
+      for (ModCompletionItem lookupElement : lookupElements) {
+        if (lookupElement.mainLookupString().equals(name) || lookupElement.additionalLookupStrings().contains(name)) {
           continue outer;
         }
       }
 
-      LookupElement element = PrioritizedLookupElement.withPriority(LookupElementBuilder.create(name).withAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE), -i);
-      if (callback != null) {
-        element = withInsertHandler(callback, element);
-      }
+      ModCompletionItem element = new CommonCompletionItem(name)
+        .withAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE)
+        .withPriority(-i);
       lookupElements.add(element);
     }
-  }
-
-  private static @NotNull LookupElementDecorator<LookupElement> withInsertHandler(SuggestedNameInfo callback, LookupElement element) {
-    return LookupElementDecorator.withInsertHandler(element, (context, item) -> {
-      TailType tailType = LookupItem.getDefaultTailType(context.getCompletionChar());
-      if (tailType != null) {
-        context.setAddCompletionChar(false);
-        tailType.processTail(context.getEditor(), context.getTailOffset());
-      }
-      callback.nameChosen(item.getLookupString());
-    });
   }
 }
