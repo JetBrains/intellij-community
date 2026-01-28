@@ -40,7 +40,6 @@ class TomlFormatterTest : TomlFormatterTestBase() {
         a = 1,
                 b = 2,
                     c = 3
-        
         }
     """, """
         [workspace]

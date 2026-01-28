@@ -13,6 +13,7 @@ import org.toml.ide.formatter.impl.computeIndent
 import org.toml.ide.formatter.impl.computeSpacing
 import org.toml.ide.formatter.impl.isWhitespaceOrEmpty
 import org.toml.lang.psi.TomlElementTypes.ARRAY
+import org.toml.lang.psi.TomlElementTypes.INLINE_TABLE
 
 class TomlFmtBlock(
     private val node: ASTNode,
@@ -49,6 +50,7 @@ class TomlFmtBlock(
     override fun getChildAttributes(newChildIndex: Int): ChildAttributes {
         val indent = when (node.elementType) {
             ARRAY -> Indent.getNormalIndent()
+            INLINE_TABLE -> Indent.getNormalIndent()
             else -> Indent.getNoneIndent()
         }
         return ChildAttributes(indent, null)
