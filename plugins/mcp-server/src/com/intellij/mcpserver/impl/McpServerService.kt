@@ -9,6 +9,7 @@ import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.mcpserver.stdio.IJ_MCP_ALLOWED_TOOLS
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.mcpserver.util.findMostRelevantProject
+import com.intellij.mcpserver.util.findMostRelevantProjectForRoots
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -105,6 +106,7 @@ class McpServerService(val cs: CoroutineScope) {
   private val callId = AtomicInteger(0)
 
   private val activeAuthorizedSessions = ConcurrentHashMap<String, McpSessionOptions>()
+  internal val sessionRoots = ConcurrentHashMap<String, Set<String>>()
 
   val isRunning: Boolean
     get() = server.value != null
@@ -330,7 +332,25 @@ class McpServerService(val cs: CoroutineScope) {
             mcpServer.addTools(filteredTools.map { it.mcpToolToRegisteredTool(mcpServer, session, projectPath) })
             previousTools = filteredTools
           }
+
         }
+
+        session.onInitialized {
+          val clientCapabilities = session.clientCapabilities
+          if (clientCapabilities?.roots != null) {
+            session.onClose { sessionRoots.remove(session.sessionId) }
+            session.setNotificationHandler<RootsListChangedNotification>(Method.Defined.NotificationsRootsListChanged) {
+              async {
+                sessionRoots[session.sessionId] = session.roots()
+              }
+            }
+            launch {
+              sessionRoots[session.sessionId] = session.roots()
+            }
+          }
+        }
+
+
         return@mcpPatched session
       }
     }.start(wait = false)
@@ -362,9 +382,15 @@ class McpServerService(val cs: CoroutineScope) {
         ?: projectPathFromInitialRequest
       val projectPathFromMcpRequest = (request.arguments?.get(projectPathParameterName) as? JsonPrimitive)?.content
       val project = try {
-        if (!projectPathFromMcpRequest.isNullOrBlank()) {
+        val sessionRoots = sessionRoots[session.sessionId]
+        val projectFromRootList = sessionRoots?.let { findMostRelevantProjectForRoots(sessionRoots) }
+        if (projectFromRootList != null) {
+          logger.trace { "Project from roots list: $sessionRoots" }
+          // prefer project from list of roots
+          projectFromRootList
+        } else if (!projectPathFromMcpRequest.isNullOrBlank()) {
           logger.trace { "Project path specified in MCP request: $projectPathFromMcpRequest" }
-          // prefer a project from mcp argument first
+          // project from mcp argument first (may hallucinate)
           findMostRelevantProject(Path(projectPathFromMcpRequest))
           ?: throw noSuitableProjectError("`$projectPathParameterName`=`$projectPathFromMcpRequest` doesn't correspond to any open project.")
         }
@@ -605,6 +631,9 @@ class McpServerService(val cs: CoroutineScope) {
       return@RegisteredTool callToolResult
     }
   }
+}
+private suspend fun ServerSession.roots(): Set<String> {
+  return listRoots().roots.map { it.uri }.toSet()
 }
 
 private fun McpToolCallResult.toSdkToolCallResult(): CallToolResult {
