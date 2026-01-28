@@ -139,10 +139,17 @@ fun CodeInsightTestFixture.checkLookupItems(
     if (locations.isEmpty() && namedLocations.isEmpty()) {
       completeBasic()
       checkListByFile(
-        renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderDisplayText, renderDisplayEffects,
-                          lookupItemFilter),
-        expectedItemsLocation + (if (hasDir) "/items" else "$fileName.items") + ".txt",
-        containsCheck
+        actualList = renderLookupItems(
+          renderPriority = renderPriority,
+          renderTypeText = renderTypeText,
+          renderTailText = renderTailText,
+          renderProximity = renderProximity,
+          renderDisplayText = renderDisplayText,
+          renderDisplayEffects = renderDisplayEffects,
+          lookupFilter = lookupItemFilter,
+        ),
+        expectedFile = expectedItemsLocation + (if (hasDir) "/items" else "$fileName.items") + ".txt",
+        containsCheck = containsCheck,
       )
       checkLookupDocumentation()
     }
@@ -155,10 +162,17 @@ fun CodeInsightTestFixture.checkLookupItems(
           completeBasic()
           try {
             checkListByFile(
-              renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderDisplayText, renderDisplayEffects,
-                                lookupItemFilter),
-              expectedItemsLocation + (if (hasDir) "/items" else "$fileName.items") + ".$index.txt",
-              containsCheck
+              actualList = renderLookupItems(
+                renderPriority = renderPriority,
+                renderTypeText = renderTypeText,
+                renderTailText = renderTailText,
+                renderProximity = renderProximity,
+                renderDisplayText = renderDisplayText,
+                renderDisplayEffects = renderDisplayEffects,
+                lookupFilter = lookupItemFilter,
+              ),
+              expectedFile = expectedItemsLocation + (if (hasDir) "/items" else "$fileName.items") + ".$index.txt",
+              containsCheck = containsCheck
             )
           }
           catch (e: FileComparisonFailedError) {
@@ -579,7 +593,11 @@ private fun CodeInsightTestFixture.checkEditorNavigation(
   }
 }
 
-fun CodeInsightTestFixture.checkListByFile(actualList: List<String>, @TestDataFile expectedFile: String, containsCheck: Boolean) {
+fun CodeInsightTestFixture.checkListByFile(
+  actualList: List<String>,
+  @TestDataFile expectedFile: String,
+  containsCheck: Boolean,
+) {
   val path = "$testDataPath/$expectedFile"
   val file = File(path)
   if (!file.exists() && file.createNewFile()) {
@@ -686,8 +704,15 @@ fun doCompletionItemsTest(
       fixture.completeBasic()
 
       fixture.checkListByFile(
-        fixture.renderLookupItems(true, true, true, renderDisplayText = renderDisplayText),
-        "gold/${if (goldFileWithExtension) fileName else fileNameNoExt}.${index}.txt", !strict)
+        actualList = fixture.renderLookupItems(
+          renderPriority = true,
+          renderTypeText = true,
+          renderTailText = true,
+          renderDisplayText = renderDisplayText,
+        ),
+        expectedFile = "gold/${if (goldFileWithExtension) fileName else fileNameNoExt}.${index}.txt",
+        containsCheck = !strict,
+      )
 
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     }
