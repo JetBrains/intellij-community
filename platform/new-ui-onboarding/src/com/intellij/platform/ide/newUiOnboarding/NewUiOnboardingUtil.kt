@@ -55,14 +55,22 @@ object NewUiOnboardingUtil {
             && !DistractionFreeModeController.shouldMinimizeCustomHeader()
             && NewUiOnboardingBean.isPresent
 
-  fun shouldProposeOnboarding(): Boolean {
+  enum class OnboardingType {
+    MEET_NEW_UI_TOOL_WINDOW,
+    NEW_UI_ONBOARDING
+  }
+
+  fun shouldProposeOnboarding(type: OnboardingType): Boolean {
     val propertiesComponent = PropertiesComponent.getInstance()
+    val proposeOnboarding = propertiesComponent.getBoolean(ExperimentalUI.NEW_UI_SWITCH)
+                            && ((!propertiesComponent.getBoolean(NEW_UI_ON_FIRST_STARTUP)
+                                 && !propertiesComponent.isValueSet(ONBOARDING_PROPOSED_VERSION))
+                                || ExperimentalUI.forcedSwitchedUi)
+
     return ExperimentalUI.isNewUI()
            && isOnboardingEnabled
-           && propertiesComponent.getBoolean(ExperimentalUI.NEW_UI_SWITCH)
-           && ((!propertiesComponent.getBoolean(NEW_UI_ON_FIRST_STARTUP)
-                && !propertiesComponent.isValueSet(ONBOARDING_PROPOSED_VERSION))
-               || ExperimentalUI.forcedSwitchedUi)
+           && (proposeOnboarding ||
+               (type == OnboardingType.NEW_UI_ONBOARDING && ExperimentalUI.showNewUiOnboarding))
   }
 
   fun getHelpLink(topic: String): String {
