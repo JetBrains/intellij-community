@@ -6,6 +6,7 @@ import com.intellij.facet.FacetManagerFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
@@ -31,7 +32,7 @@ class FacetManagerFactoryImpl(
 
   override fun getFacetManager(module: Module): FacetManager {
     if (module.isDisposed) {
-      throw IllegalStateException("Module is disposed: ${module.name}")
+      throw AlreadyDisposedException("Module is disposed: ${module.name}")
     }
     return facetManagerInstances.computeIfAbsent(module) { FacetManagerBridge(module) }
   }
