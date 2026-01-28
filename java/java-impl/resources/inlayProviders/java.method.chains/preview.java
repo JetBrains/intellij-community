@@ -5,7 +5,7 @@ class Test {
     String id = accountManager
       .getAccounts()/*<# List<Account> #>*/
       .get(0)/*<# Account #>*/
-      .getId()/*<# UUID> #>*/
+      .getId()/*<# UUID #>*/
       .toString();
   }
 
