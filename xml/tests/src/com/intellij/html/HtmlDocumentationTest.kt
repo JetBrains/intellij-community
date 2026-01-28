@@ -13,175 +13,190 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.html;
+package com.intellij.html
 
-import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.polySymbols.testFramework.WebTestUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInsight.documentation.DocumentationManager
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.polySymbols.testFramework.checkDocumentationAtCaret
+import com.intellij.polySymbols.testFramework.checkLookupItems
+import com.intellij.polySymbols.testFramework.checkTextByFile
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-import java.util.Collections;
-
-public class HtmlDocumentationTest extends BasePlatformTestCase {
-  public void testQuickDocumentationHtml5Tag() {
-    doTest("""
-             <!DOCTYPE html>
-             <html>
-             <bo<caret>dy onload="">
-             </body>
-             </html>"""
-    );
+class HtmlDocumentationTest : BasePlatformTestCase() {
+  fun testQuickDocumentationHtml5Tag() {
+    doTest(
+      """
+      <!DOCTYPE html>
+      <html>
+      <bo<caret>dy onload="">
+      </body>
+      </html>
+      """.trimIndent()
+    )
   }
 
-  public void testQuickDocumentationHtml5TagDialog() {
-    doTest("""
-             <!DOCTYPE html>
-             <html>
-             <body onload="">
-             <dia<caret>log></dialog
-             </body>
-             </html>"""
-    );
+  fun testQuickDocumentationHtml5TagDialog() {
+    doTest(
+      """
+      <!DOCTYPE html>
+      <html>
+      <body onload="">
+      <dia<caret>log></dialog
+      </body>
+      </html>
+      """.trimIndent()
+    )
   }
 
-  public void testQuickDocumentationHtml5Attr() {
-    doTest("""
-             <!DOCTYPE html>
-             <html>
-             <body on<caret>load="">
-             </body>
-             </html>"""
-    );
+  fun testQuickDocumentationHtml5Attr() {
+    doTest(
+      """
+      <!DOCTYPE html>
+      <html>
+      <body on<caret>load="">
+      </body>
+      </html>
+      """.trimIndent()
+    )
   }
 
-  public void testQuickDocumentationHtml5Svg() {
-    doTest("""
-             <!DOCTYPE html>
-             <html>
-             <body>
-             <sv<caret>g>
-             </svg>
-             </body>
-             </html>"""
-    );
+  fun testQuickDocumentationHtml5Svg() {
+    doTest(
+      """
+      <!DOCTYPE html>
+      <html>
+      <body>
+      <sv<caret>g>
+      </svg>
+      </body>
+      </html>
+      """.trimIndent()
+    )
   }
 
-  public void testQuickDocumentationHtml5SvgImage() {
-    doTest("""
-             <!DOCTYPE html>
-             <html>
-             <body>
-             <svg>
-             <ima<caret>ge>
-             </image>
-             </svg>
-             </body>
-             </html>"""
-    );
+  fun testQuickDocumentationHtml5SvgImage() {
+    doTest(
+      """
+      <!DOCTYPE html>
+      <html>
+      <body>
+      <svg>
+      <ima<caret>ge>
+      </image>
+      </svg>
+      </body>
+      </html>
+      """.trimIndent()
+    )
   }
 
-  public void testQuickDocumentationHtml5Math() {
-    doTest("""
-             <!DOCTYPE html>
-             <html>
-             <body>
-             <ma<caret>th>
-             </math>
-             </body>
-             </html>"""
-    );
+  fun testQuickDocumentationHtml5Math() {
+    doTest(
+      """
+      <!DOCTYPE html>
+      <html>
+      <body>
+      <ma<caret>th>
+      </math>
+      </body>
+      </html>
+      """.trimIndent()
+    )
   }
 
-  public void testQuickDocumentationHtml5MathMrow() {
-    doTest("""
-             <!DOCTYPE html>
-             <html>
-             <body>
-             <math>
-             <mr<caret>ow>
-             </mrow>
-             </math>
-             </body>
-             </html>"""
-    );
+  fun testQuickDocumentationHtml5MathMrow() {
+    doTest(
+      """
+      <!DOCTYPE html>
+      <html>
+      <body>
+      <math>
+      <mr<caret>ow>
+      </mrow>
+      </math>
+      </body>
+      </html>
+      """.trimIndent()
+    )
   }
 
-  public void testQuickDocumentationHtml4Tag() {
-    doTest("""
-             <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-                "http://www.w3.org/TR/html4/loose.dtd">
-             <html>
-             <bo<caret>dy onload="">
-             </body>
-             </html>"""
-    );
+  fun testQuickDocumentationHtml4Tag() {
+    doTest(
+      """
+      <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+         "http://www.w3.org/TR/html4/loose.dtd">
+      <html>
+      <bo<caret>dy onload="">
+      </body>
+      </html>
+      """.trimIndent()
+    )
   }
 
-  public void testQuickDocumentationHtml4Attr() {
-    doTest("""
-             <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-                "http://www.w3.org/TR/html4/loose.dtd">
-             <html>
-             <body on<caret>load="">
-             </body>
-             </html>"""
-    );
+  fun testQuickDocumentationHtml4Attr() {
+    doTest(
+      """
+      <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+         "http://www.w3.org/TR/html4/loose.dtd">
+      <html>
+      <body on<caret>load="">
+      </body>
+      </html>
+      """.trimIndent()
+    )
   }
 
-  public void testQuickDocumentationHtml5Script() {
-    doTest("<scr<caret>ipt></script>"
-    );
+  fun testQuickDocumentationHtml5Script() {
+    doTest(
+      "<scr<caret>ipt></script>"
+    )
   }
 
 
-  public void testQuickDocumentationHtml5MediaEvents() {
-    doTest("<video on<caret>stalled=''>"
-    );
+  fun testQuickDocumentationHtml5MediaEvents() {
+    doTest(
+      "<video on<caret>stalled=''>"
+    )
   }
 
-  public void testAttributeQuickDocAtTheEndOfFile() {
-    myFixture.configureByText("attributeQuickDocAtTheEndOfFile.html", "<button popovert<caret>");
-    WebTestUtil.checkLookupItems(
-      myFixture, false, false, false, false, false,
-      false, true, false, Collections.emptyList(), Collections.emptyList(),
-      "attributeQuickDocAtTheEndOfFile", "", (item) -> true
-    );
+  fun testAttributeQuickDocAtTheEndOfFile() {
+    myFixture.configureByText("attributeQuickDocAtTheEndOfFile.html", "<button popovert<caret>")
+    myFixture.checkLookupItems(
+      checkDocumentation = true,
+      fileName = "attributeQuickDocAtTheEndOfFile",
+    ) { true }
   }
 
-  public void testInputAttributeQuickDoc() {
-    myFixture.configureByText("attributeQuickDocAtTheEndOfFile.html", "<input type='button' popover<caret>targetaction>");
-    WebTestUtil.checkDocumentationAtCaret(myFixture);
+  fun testInputAttributeQuickDoc() {
+    myFixture.configureByText("attributeQuickDocAtTheEndOfFile.html", "<input type='button' popover<caret>targetaction>")
+    myFixture.checkDocumentationAtCaret()
   }
 
-  public void testLookupDocWordCompletions() {
-    myFixture.configureByText("test.html", "<html lang='en'>la<caret>n");
-    PsiElement originalElement = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
-    DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(originalElement);
-    PsiElement element = documentationProvider.getDocumentationElementForLookupItem(originalElement.getManager(), "lang", originalElement);
-    assertNull(element);
+  fun testLookupDocWordCompletions() {
+    myFixture.configureByText("test.html", "<html lang='en'>la<caret>n")
+    val originalElement = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset())
+    val documentationProvider = DocumentationManager.getProviderFromElement(originalElement)
+    val element = documentationProvider.getDocumentationElementForLookupItem(originalElement!!.getManager(), "lang", originalElement)
+    assertNull(element)
   }
 
-  private void doTest(String text) {
-    myFixture.configureByText("test.html", text);
-    PsiElement originalElement = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
-    PsiElement element = DocumentationManager.getInstance(getProject()).findTargetElement(myFixture.getEditor(), myFixture.getFile());
-    DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(originalElement);
+  private fun doTest(text: String) {
+    myFixture.configureByText("test.html", text)
+    val originalElement = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset())
+    val element = DocumentationManager.getInstance(getProject()).findTargetElement(myFixture.getEditor(), myFixture.getFile())
+    val documentationProvider = DocumentationManager.getProviderFromElement(originalElement)
 
-    String generatedDoc = documentationProvider.generateDoc(element, originalElement);
+    var generatedDoc = documentationProvider.generateDoc(element, originalElement)
     if (generatedDoc == null) {
-      generatedDoc = "<no documentation>";
+      generatedDoc = "<no documentation>"
     }
-    generatedDoc = StringUtil.convertLineSeparators(generatedDoc.strip());
-    generatedDoc += "\n---\n" + documentationProvider.getUrlFor(element, originalElement);
-    WebTestUtil.checkTextByFile(myFixture, generatedDoc, getTestName(false) + ".expected.html");
+    generatedDoc = StringUtil.convertLineSeparators(generatedDoc.trim())
+    generatedDoc += "\n---\n" + documentationProvider.getUrlFor(element, originalElement)
+    myFixture.checkTextByFile(generatedDoc, getTestName(false) + ".expected.html")
   }
 
-  @Override
-  protected @NotNull String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath() + "/xml/tests/testData/documentation/";
+  protected override fun getTestDataPath(): String {
+    return PlatformTestUtil.getCommunityPath() + "/xml/tests/testData/documentation/"
   }
 }
