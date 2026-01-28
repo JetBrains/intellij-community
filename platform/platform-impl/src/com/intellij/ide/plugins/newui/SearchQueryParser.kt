@@ -130,7 +130,7 @@ abstract class SearchQueryParser {
     @JvmField var enabled: Boolean = false
     @JvmField var disabled: Boolean = false
     @JvmField var bundled: Boolean = false
-    @JvmField var downloaded: Boolean = false
+    @JvmField var userInstalled: Boolean = false
     @JvmField var invalid: Boolean = false
     @JvmField var needUpdate: Boolean = false
     @JvmField var attributes: Boolean = false
@@ -169,7 +169,7 @@ abstract class SearchQueryParser {
         }
       }
 
-      attributes = enabled || disabled || bundled || downloaded || invalid || needUpdate
+      attributes = enabled || disabled || bundled || userInstalled || invalid || needUpdate
     }
 
     protected open fun handleAttribute(name: String, value: String) {
@@ -182,8 +182,8 @@ abstract class SearchQueryParser {
       else if ("/bundled" == name) {
         bundled = true
       }
-      else if ("/downloaded" == name) {
-        downloaded = true
+      else if ("/downloaded" == name || "/userInstalled" == name) {
+        userInstalled = true
       }
       else if ("/invalid" == name) {
         invalid = true

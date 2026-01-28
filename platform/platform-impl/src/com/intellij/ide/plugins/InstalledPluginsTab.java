@@ -249,7 +249,7 @@ class InstalledPluginsTab extends PluginsTab {
       protected @NotNull @NonNls List<String> getAttributes() {
         return Arrays
           .asList(
-            "/downloaded",
+            "/userInstalled", // don't suggest /downloaded in popup
             "/outdated",
             "/enabled",
             "/disabled",
@@ -501,7 +501,7 @@ class InstalledPluginsTab extends PluginsTab {
       myIsSelected = switch (myOption) {
         case Enabled -> parser.enabled;
         case Disabled -> parser.disabled;
-        case Downloaded -> parser.downloaded;
+        case UserInstalled -> parser.userInstalled;
         case Bundled -> parser.bundled;
         case Invalid -> parser.invalid;
         case NeedUpdate -> parser.needUpdate;
@@ -553,7 +553,7 @@ class InstalledPluginsTab extends PluginsTab {
   }
 
   private enum InstalledSearchOption {
-    Downloaded(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.Downloaded")),
+    UserInstalled(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.UserInstalled")),
     NeedUpdate(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.NeedUpdate")),
     Enabled(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.Enabled")),
     Disabled(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.Disabled")),
@@ -578,7 +578,8 @@ class InstalledPluginsTab extends PluginsTab {
     @Override
     protected void setEmptyText(@NotNull String query) {
       myPanel.getEmptyText().setText(IdeBundle.message("plugins.configurable.nothing.found"));
-      if (query.contains("/downloaded") || query.contains("/outdated") ||
+      if (query.contains("/downloaded") || query.contains("/userInstalled") ||
+          query.contains("/outdated") ||
           query.contains("/enabled") || query.contains("/disabled") ||
           query.contains("/invalid") || query.contains("/bundled")) {
         return;
@@ -638,7 +639,7 @@ class InstalledPluginsTab extends PluginsTab {
             I.remove();
             continue;
           }
-          if (parser.downloaded && descriptor.isBundled()) {
+          if (parser.userInstalled && descriptor.isBundled()) {
             I.remove();
             continue;
           }
