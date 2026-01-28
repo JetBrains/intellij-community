@@ -22,7 +22,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -90,22 +89,23 @@ public final class IntroduceVariableUtil {
   }
 
   /**
-   * @see IntroduceVariableUtil#getExpressionAndSelectionRange(Project, Document, PsiFile, int)
+   * @see IntroduceVariableUtil#getIntroduceVariableCandidates(Project, Document, PsiFile, int)
    */
-  public static @NotNull Pair<@Nullable TextRange, @NotNull List<PsiExpression>> getExpressionAndSelectionRange(
+  public static @NotNull IntroduceVariableCandidates getIntroduceVariableCandidates(
     final @NotNull Project project,
     final @NotNull Editor editor,
     final @NotNull PsiFile file,
     int offset
   ) {
-    return getExpressionAndSelectionRange(project, editor.getDocument(), file, offset);
+    return getIntroduceVariableCandidates(project, editor.getDocument(), file, offset);
   }
 
   /**
-   * Searches for the expressions that can be extracted into the variable near the given {@code offset}
-   * @return {@link TextRange} that includes preferred expression to extract and list of {@link PsiExpression} - candidates that can be extracted as well
+   * @return the expressions that can be extracted into the variable near the given {@code offset}
+   * and the recommended {@link TextRange} to select the expression from (could be null).
+   * @see IntroduceVariableCandidates
    */
-  public static @NotNull Pair<@Nullable TextRange, @NotNull List<PsiExpression>> getExpressionAndSelectionRange(
+  public static @NotNull IntroduceVariableCandidates getIntroduceVariableCandidates(
     final @NotNull Project project,
     final @NotNull Document document,
     final @NotNull PsiFile file,
@@ -121,7 +121,7 @@ public final class IntroduceVariableUtil {
       final PsiExpression expressionInRange =
         findExpressionInRange(project, file, lineRange.getStartOffset(), lineRange.getEndOffset());
       if (expressionInRange != null && getErrorMessage(expressionInRange) == null) {
-        return Pair.create(lineRange, Collections.singletonList(expressionInRange));
+        return new IntroduceVariableCandidates(lineRange, Collections.singletonList(expressionInRange));
       }
     }
 
@@ -130,13 +130,13 @@ public final class IntroduceVariableUtil {
         CommonJavaRefactoringUtil.getParentStatement(expression, false) != null ||
         PsiTreeUtil.getParentOfType(expression, PsiField.class, true, PsiStatement.class) != null);
     if (expressions.isEmpty()) {
-      return Pair.create(lineRange, Collections.emptyList());
+      return new IntroduceVariableCandidates(lineRange, Collections.emptyList());
     }
     else if (!isChooserNeeded(expressions)) {
-      return Pair.create(expressions.get(0).getTextRange(), expressions);
+      return new IntroduceVariableCandidates(expressions.getFirst().getTextRange(), expressions);
     }
     else {
-      return Pair.create(null, expressions);
+      return new IntroduceVariableCandidates(null, expressions);
     }
   }
 
@@ -144,23 +144,24 @@ public final class IntroduceVariableUtil {
   /**
    * @return single expression that can be extracted into the variable.
    */
-  public static PsiExpression findExpressionInRange(Project project, PsiFile file, int startOffset, int endOffset) {
+  public static PsiExpression findExpressionInRange(@NotNull Project project, @NotNull PsiFile file, int startOffset, int endOffset) {
     PsiExpression tempExpr = CodeInsightFrontbackUtil.findExpressionInRange(file, startOffset, endOffset);
     if (tempExpr == null) {
       PsiElement[] statements = CodeInsightFrontbackUtil.findStatementsInRange(file, startOffset, endOffset);
       if (statements.length == 1) {
-        if (statements[0] instanceof PsiExpressionStatement) {
-          tempExpr = ((PsiExpressionStatement) statements[0]).getExpression();
+        PsiElement statement = statements[0];
+        if (statement instanceof PsiExpressionStatement expressionStatement) {
+          tempExpr = expressionStatement.getExpression();
         }
-        else if (statements[0] instanceof PsiReturnStatement) {
-          tempExpr = ((PsiReturnStatement)statements[0]).getReturnValue();
+        else if (statement instanceof PsiReturnStatement returnStatement) {
+          tempExpr = returnStatement.getReturnValue();
         }
-        else if (statements[0] instanceof PsiSwitchStatement) {
-          PsiExpression expr = JavaPsiFacade.getElementFactory(project).createExpressionFromText(statements[0].getText(), statements[0]);
-          TextRange range = statements[0].getTextRange();
+        else if (statement instanceof PsiSwitchStatement) {
+          PsiExpression expr = JavaPsiFacade.getElementFactory(project).createExpressionFromText(statement.getText(), statement);
+          TextRange range = statement.getTextRange();
           final RangeMarker rangeMarker = file.getViewProvider().getDocument().createRangeMarker(range);
           expr.putUserData(ElementToWorkOn.TEXT_RANGE, rangeMarker);
-          expr.putUserData(ElementToWorkOn.PARENT, statements[0]);
+          expr.putUserData(ElementToWorkOn.PARENT, statement);
           return expr;
         }
       }
@@ -586,4 +587,11 @@ public final class IntroduceVariableUtil {
       return parent.replace(createReplacement(ref.getText(), project, prefix, suffix, parent, textRange, new int[1]));
     }
   }
+
+  /**
+   * Stores information about expressions that can be extracted into the variable near the cursor position.
+   * @param bestRangeToExtractFrom {@link TextRange} that includes the most appropriate expression to be extracted.
+   * @param expressions list of expressions that can be extracted into variable.
+   */
+  public record IntroduceVariableCandidates(@Nullable TextRange bestRangeToExtractFrom, @NotNull List<@NotNull PsiExpression> expressions) {}
 }

@@ -40,6 +40,7 @@ import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser.ReplaceChoice;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase.ErrorOrContainer.Container;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
@@ -63,6 +64,9 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.intellij.refactoring.IntroduceVariableUtil.*;
+import static com.intellij.refactoring.introduceVariable.IntroduceVariableBase.IntroduceVariableResult.Context;
 
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   public static class JavaReplaceChoice implements OccurrencesChooser.BaseReplaceChoice {
@@ -137,14 +141,15 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
-      Pair<TextRange, List<PsiExpression>> rangeAndExpressions = getExpressionsAndSelectionRange(project, editor, file, offset);
-      TextRange suggestedSelection = rangeAndExpressions.getFirst();
+      IntroduceVariableCandidates
+        info = getIntroduceVariableCandidates(project, editor, file, offset);
+      TextRange suggestedSelection = info.bestRangeToExtractFrom();
       if (suggestedSelection != null) {
         selectionModel.setSelection(suggestedSelection.getStartOffset(), suggestedSelection.getEndOffset());
       }
       else {
-        final PsiElement[] statementsInRange = IntroduceVariableUtil.findStatementsAtOffset(editor, file, offset);
-        List<PsiExpression> expressions = rangeAndExpressions.getSecond();
+        final PsiElement[] statementsInRange = findStatementsAtOffset(editor, file, offset);
+        List<PsiExpression> expressions = info.expressions();
         IntroduceTargetChooser.showChooser(editor, expressions,
                                            new Pass<>() {
                                              @Override
@@ -155,7 +160,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                            },
                                            new PsiExpressionTrimRenderer.RenderFunction(),
                                            RefactoringBundle.message("introduce.target.chooser.expressions.title"),
-                                           IntroduceVariableUtil.preferredSelection(statementsInRange, expressions), ScopeHighlighter.NATURAL_RANGER);
+                                           preferredSelection(statementsInRange, expressions), ScopeHighlighter.NATURAL_RANGER);
         return;
       }
     }
@@ -165,18 +170,25 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
+
+  /**
+   * @deprecated use {@link IntroduceVariableUtil#getIntroduceVariableCandidates(Project, Editor, PsiFile, int)} instead.
+   */
+  @Deprecated(forRemoval = true)
   public static @NotNull Pair<@Nullable TextRange, @NotNull List<PsiExpression>> getExpressionsAndSelectionRange(final @NotNull Project project,
-                                                                                              final Editor editor,
+                                                                                              final @NotNull Editor editor,
                                                                                               final @NotNull PsiFile file,
                                                                                               int offset) {
-    return IntroduceVariableUtil.getExpressionAndSelectionRange(project, editor, file, offset);
+    IntroduceVariableCandidates
+      info = getIntroduceVariableCandidates(project, editor, file, offset);
+    return new Pair<>(info.bestRangeToExtractFrom(), info.expressions());
   }
 
   private boolean invoke(final Project project, final Editor editor, PsiFile file, int startOffset, int endOffset) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.REFACTORING_INTRODUCE_VARIABLE);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    return invokeImpl(project, IntroduceVariableUtil.findExpressionInRange(project, file, startOffset, endOffset), editor);
+    return invokeImpl(project, findExpressionInRange(project, file, startOffset, endOffset), editor);
   }
 
   public @NotNull Pair<List<PsiElement>, List<PsiExpression>> getPossibleAnchorsAndOccurrences(final Project project, final PsiExpression expr) {
@@ -203,13 +215,19 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
   private @NotNull OccurrencesInfo buildOccurrencesInfo(Project project, PsiExpression expr) {
     final PsiElement anchorStatement = getAnchor(expr);
-    TempContainerResult result = getTempContainer(anchorStatement);
+    ErrorOrContainer result = getTempContainer(anchorStatement);
 
-    if (result.errorMessage != null) {
-      showErrorMessage(project, null, result.errorMessage);
-    }
+    final PsiElement tempContainer = switch (result) {
+      case Container container -> {
+        yield container.element();
+      }
+      case ErrorOrContainer.Error error -> {
+        showErrorMessage(project, null, error.message());
+        yield null;
+      }
+    };
 
-    final ExpressionOccurrenceManager occurrenceManager = createOccurrenceManager(expr, result.container);
+    final ExpressionOccurrenceManager occurrenceManager = createOccurrenceManager(expr, tempContainer);
     final PsiExpression[] occurrences = occurrenceManager.getOccurrences();
 
     return new OccurrencesInfo(occurrences);
@@ -232,13 +250,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                             @Nullable PsiElement targetContainer,
                             @Nullable JavaReplaceChoice replaceChoice,
                             final Editor editor) {
-    Result result = getIntroduceVariableContext(project, expr, editor);
+    IntroduceVariableResult introduceVariableResult = getIntroduceVariableContext(project, expr, editor);
 
-    switch (result) {
+    switch (introduceVariableResult) {
       case Context context -> {
         return doRefactoring(project, targetContainer, replaceChoice, editor, context);
       }
-      case Error error -> {
+      case IntroduceVariableResult.Error error -> {
         if (error.message != null) {
           showErrorMessage(project, editor, error.message);
         }
@@ -303,18 +321,18 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   /**
    * @return the context necessary for performing "Introduce Variable" refactoring.
    */
-  public static @NotNull Result getIntroduceVariableContext(@NotNull Project project, @Nullable PsiExpression expr, @Nullable Editor editor) {
+  public static @NotNull IntroduceVariableBase.IntroduceVariableResult getIntroduceVariableContext(@NotNull Project project, @Nullable PsiExpression expr, @Nullable Editor editor) {
     if (expr != null) {
-      String message = IntroduceVariableUtil.getErrorMessage(expr);
+      String message = getErrorMessage(expr);
       if (message != null) {
-        return new Error(message);
+        return new IntroduceVariableResult.Error(message);
       }
       PsiExpression topLevelExpression = ExpressionUtils.getTopLevelExpression(expr);
       if (topLevelExpression.getParent() instanceof PsiField f) {
         PsiClass containingClass = f.getContainingClass();
         if (containingClass != null && containingClass.isInterface()) {
           message = JavaRefactoringBundle.message("introduce.variable.message.cannot.extract.variable.in.interface");
-          return new Error(message);
+          return new IntroduceVariableResult.Error(message);
         }
       }
     }
@@ -322,21 +340,21 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     if (expr != null && expr.getParent() instanceof PsiExpressionStatement) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.introduceVariable.incompleteStatement");
     }
-    if (IntroduceVariableUtil.LOG.isDebugEnabled()) {
-      IntroduceVariableUtil.LOG.debug("expression:" + expr);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("expression:" + expr);
     }
 
     if (expr == null || !expr.isPhysical()) {
-      if (ReassignVariableUtil.reassign(editor)) return new Error(null);
+      if (ReassignVariableUtil.reassign(editor)) return new IntroduceVariableResult.Error(null);
       if (expr == null) {
         String message = JavaRefactoringBundle.message("selected.block.should.represent.an.expression");
-        return new Error(message);
+        return new IntroduceVariableResult.Error(message);
       }
     }
 
     String enumInSwitchError = RefactoringUtil.checkEnumConstantInSwitchLabel(expr);
     if (enumInSwitchError != null) {
-      return new Error(enumInSwitchError);
+      return new IntroduceVariableResult.Error(enumInSwitchError);
     }
 
 
@@ -345,12 +363,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       dumbService.computeWithAlternativeResolveEnabled(() -> CommonJavaRefactoringUtil.getTypeByExpressionWithExpectedType(expr));
     if (originalType == null || LambdaUtil.notInferredType(originalType)) {
       String message = JavaRefactoringBundle.message("unknown.expression.type");
-      return new Error(message);
+      return new IntroduceVariableResult.Error(message);
     }
 
     if (PsiTypes.voidType().equals(originalType)) {
       String message = JavaRefactoringBundle.message("selected.expression.has.void.type");
-      return new Error(message);
+      return new IntroduceVariableResult.Error(message);
     }
 
     try {
@@ -360,51 +378,53 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
     catch (IncorrectOperationException ignore) {
       String message = JavaRefactoringBundle.message("unknown.expression.type");
-      return new Error(message);
+      return new IntroduceVariableResult.Error(message);
     }
 
     for (PsiPatternVariable variable : JavaPsiPatternUtil.getExposedPatternVariables(expr)) {
       if (ContainerUtil.exists(VariableAccessUtils.getVariableReferences(variable),
                                ref -> !PsiTreeUtil.isAncestor(expr, ref, true))) {
         String message = JavaRefactoringBundle.message("selected.expression.introduces.pattern.variable", variable.getName());
-        return new Error(message);
+        return new IntroduceVariableResult.Error(message);
       }
     }
 
     final PsiElement anchorStatement = getAnchor(expr);
 
-    TempContainerResult result = getTempContainer(anchorStatement);
-    if (result.errorMessage != null) {
-      return new Error(result.errorMessage, false);
-    }
+    ErrorOrContainer errorOrContainer = getTempContainer(anchorStatement);
 
-    final PsiElement tempContainer = Objects.requireNonNull(result.container);
+    return switch (errorOrContainer) {
+      case Container container -> {
+        final PsiFile file = Objects.requireNonNull(anchorStatement).getContainingFile();
+        LOG.assertTrue(file != null, "expr.getContainingFile() == null");
+        final PsiElement nameSuggestionContext = editor == null ? null : file.findElementAt(editor.getCaretModel().getOffset());
+        final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.getInstance().forContext(expr);
+        final boolean isInplaceAvailableOnDataContext =
+          supportProvider != null &&
+          editor != null &&
+          editor.getSettings().isVariableInplaceRenameEnabled() &&
+          supportProvider.isInplaceIntroduceAvailable(expr, nameSuggestionContext) &&
+          !isInJspHolderMethod(expr);
 
-    final PsiFile file = Objects.requireNonNull(anchorStatement).getContainingFile();
-    IntroduceVariableUtil.LOG.assertTrue(file != null, "expr.getContainingFile() == null");
-    final PsiElement nameSuggestionContext = editor == null ? null : file.findElementAt(editor.getCaretModel().getOffset());
-    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.getInstance().forContext(expr);
-    final boolean isInplaceAvailableOnDataContext =
-      supportProvider != null &&
-      editor != null &&
-      editor.getSettings().isVariableInplaceRenameEnabled() &&
-      supportProvider.isInplaceIntroduceAvailable(expr, nameSuggestionContext) &&
-      !isInJspHolderMethod(expr);
+        if (isInplaceAvailableOnDataContext) {
+          final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+          checkInLoopCondition(expr, conflicts);
+          if (!conflicts.isEmpty()) {
+            yield new IntroduceVariableResult.Error(StringUtil.join(new TreeSet<>(conflicts.values()), "<br>"), false);
+          }
+        }
 
-    if (isInplaceAvailableOnDataContext) {
-      final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-      checkInLoopCondition(expr, conflicts);
-      if (!conflicts.isEmpty()) {
-        return new Error(StringUtil.join(new TreeSet<>(conflicts.values()), "<br>"), false);
+        final ExpressionOccurrenceManager occurrenceManager = createOccurrenceManager(expr, container.element());
+        final PsiExpression[] occurrences = occurrenceManager.getOccurrences();
+
+        OccurrencesInfo occurrencesInfo = new OccurrencesInfo(occurrences);
+
+        yield new Context(expr, originalType, anchorStatement, occurrenceManager, occurrencesInfo, isInplaceAvailableOnDataContext);
       }
-    }
-
-    final ExpressionOccurrenceManager occurrenceManager = createOccurrenceManager(expr, tempContainer);
-    final PsiExpression[] occurrences = occurrenceManager.getOccurrences();
-
-    OccurrencesInfo occurrencesInfo = new OccurrencesInfo(occurrences);
-
-    return new Context(expr, originalType, anchorStatement, occurrenceManager, occurrencesInfo, isInplaceAvailableOnDataContext);
+      case ErrorOrContainer.Error error -> {
+        yield new IntroduceVariableResult.Error(error.message(), false);
+      }
+    };
   }
 
   private static @Nullable PsiType getNormalizedType(PsiExpression expr) {
@@ -458,38 +478,24 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return physicalElement != null ? physicalElement : place;
   }
 
-
-  /**
-   * Contract of the class: when {@code errorMessage} is not null, {@code container} must be null and vice versa.
-   */
-  protected static class TempContainerResult {
-    final @Nullable @NlsContexts.DialogMessage String errorMessage;
-    final @Nullable PsiElement container;
-
-    TempContainerResult(@Nullable @NlsContexts.DialogMessage String errorMessage, @Nullable PsiElement container) {
-      this.errorMessage = errorMessage;
-      this.container = container;
-    }
-  }
-
-  protected static @NotNull TempContainerResult getTempContainer(@Nullable PsiElement anchorStatement) {
+  protected static @NotNull ErrorOrContainer getTempContainer(@Nullable PsiElement anchorStatement) {
     if (anchorStatement == null) {
-      return new TempContainerResult(
-        JavaRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringName()), null
+      return new ErrorOrContainer.Error(
+        JavaRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringName())
       );
     }
 
     String anchorMessage = getAnchorBeforeMessage(anchorStatement);
-    if (anchorMessage != null) return new TempContainerResult(anchorMessage, null);
+    if (anchorMessage != null) return new ErrorOrContainer.Error(anchorMessage);
 
     final PsiElement tempContainer = anchorStatement.getParent();
 
     if (!(tempContainer instanceof PsiCodeBlock) && !CommonJavaRefactoringUtil.isLoopOrIf(tempContainer) && !(tempContainer instanceof PsiLambdaExpression) && (tempContainer.getParent() instanceof PsiLambdaExpression)) {
-      return new TempContainerResult(
-        JavaRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringName()), null
+      return new ErrorOrContainer.Error(
+        JavaRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringName())
       );
     }
-    return new TempContainerResult(null, tempContainer);
+    return new Container(tempContainer);
   }
 
   private static ExpressionOccurrenceManager createOccurrenceManager(PsiExpression expr, @Nullable PsiElement tempContainer) {
@@ -845,7 +851,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           .map(place -> (PsiExpression)getPhysicalElement(place))
           .groupingBy(e -> PsiTreeUtil.findCommonParent(e, physical),
                       () -> new TreeMap<>(treeOrder), Collectors.toList());
-      IntroduceVariableUtil.LOG.assertTrue(!groupByBlock.isEmpty());
+      LOG.assertTrue(!groupByBlock.isEmpty());
       List<PsiExpression> currentOccurrences = new ArrayList<>();
       Map<String, Integer> counts = new HashMap<>();
       groupByBlock.forEach((parent, occurrences) -> {
@@ -972,7 +978,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
             .map(Function.identity())
             .pairMap((prev, next) -> text.substring(prev.getKey(), next.getKey()) + next.getValue())
             .joining();
-          IntroduceVariableUtil.LOG.error("Unable to find anchor for a new variable; selectedOccurrences.length = " + selectedOccurrences.length,
+          LOG.error("Unable to find anchor for a new variable; selectedOccurrences.length = " + selectedOccurrences.length,
                                           new Attachment("source.java", textWithOccurrences));
           return;
         }
@@ -1030,9 +1036,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                                 chosenAnchor instanceof PsiSwitchLabelStatementBase;
         Consumer<? super PsiElement> callback = container -> {
           PsiElement anchor = container instanceof PsiLambdaExpression ? getAnchor(container) : container;
-          TempContainerResult result = getTempContainer(anchor);
-          if (result.errorMessage != null) {
-            showErrorMessage(project, editor, result.errorMessage);
+          ErrorOrContainer errorOrContainer = getTempContainer(anchor);
+          if (errorOrContainer instanceof ErrorOrContainer.Error(String message)) {
+            showErrorMessage(project, editor, message);
             return;
           }
           myInplaceIntroducer = new JavaVariableInplaceIntroducer(project, settings, anchor, editor, expr,
@@ -1052,56 +1058,61 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
-
   /**
    * Represents the result of getting the necessary environment for introducing a variable.
-   * @see IntroduceVariablePass#getIntroduceVariableContext(Project, PsiFile, Editor, TextRange)
+   * @see IntroduceVariablePass#getIntroduceVariableContext(Project, PsiExpression, Editor)
    */
-  public sealed interface Result permits Error, Context {}
+  public sealed interface IntroduceVariableResult permits IntroduceVariableResult.Error, Context {
 
-  /**
-   * Represents a message that will be displayed in UI if there is an error during collecting the context for introduced variable.
-   * @see IntroduceVariablePass#showErrorMessage(Project, Editor, String)
-   */
-  public static final class Error implements Result {
-    public final @NlsContexts.DialogMessage @Nullable String message;
+    /**
+     * Represents a message that will be displayed in UI if there is an error during collecting the context for introduced variable.
+     * @see IntroduceVariablePass#showErrorMessage(Project, Editor, String)
+     */
+    final class Error implements IntroduceVariableResult {
+      public final @NlsContexts.DialogMessage @Nullable String message;
 
-    Error(@NlsContexts.DialogMessage @Nullable String message) {
-      this(message, true);
+      Error(@NlsContexts.DialogMessage @Nullable String message) {
+        this(message, true);
+      }
+
+      Error(@NlsContexts.DialogMessage @Nullable String message, boolean shouldWrap) {
+        if (message == null) {
+          this.message = null;
+        }
+        else if (shouldWrap) {
+          this.message = RefactoringBundle.getCannotRefactorMessage(message);
+        }
+        else {
+          this.message = message;
+        }
+      }
     }
 
-    Error(@NlsContexts.DialogMessage @Nullable String message, boolean shouldWrap) {
-      if (message == null) {
-        this.message = null;
-      }
-      else if (shouldWrap) {
-        this.message = RefactoringBundle.getCannotRefactorMessage(message);
-      }
-      else {
-        this.message = message;
+    /**
+     * Represents all the data necessary to introduce the variable.
+     * @param expression - element that should be extracted into the separate variable.
+     * @param originalType - type of the expression that should be extracted.
+     * @param anchorStatement - statement near which the declared variable will be created.
+     * @param occurrenceManager - stores all occurrences of the expression that should be extracted.
+     * @param occurrencesInfo - stores additional information about occurrences like whether they are valid for extraction.
+     * @param isInplaceAvailableOnDataContext - indicates whether inplace refactoring is available for the current context.
+     */
+    record Context(
+      @NotNull PsiExpression expression,
+      @NotNull PsiType originalType,
+      @NotNull PsiElement anchorStatement,
+      @NotNull ExpressionOccurrenceManager occurrenceManager,
+      @NotNull OccurrencesInfo occurrencesInfo,
+      boolean isInplaceAvailableOnDataContext
+    ) implements IntroduceVariableResult {
+      PsiFile file() {
+        return anchorStatement.getContainingFile();
       }
     }
   }
 
-  /**
-   * Represents all the data necessary to introduce the variable.
-   * @param expression - element that should be extracted into the separate variable.
-   * @param originalType - type of the expression that should be extracted.
-   * @param anchorStatement - statement near which the declared variable will be created.
-   * @param occurrenceManager - stores all occurrences of the expression that should be extracted.
-   * @param occurrencesInfo - stores additional information about occurrences like whether they are valid for extraction.
-   * @param isInplaceAvailableOnDataContext - indicates whether inplace refactoring is available for the current context.
-   */
-  public record Context(
-    @NotNull PsiExpression expression,
-    @NotNull PsiType originalType,
-    @NotNull PsiElement anchorStatement,
-    @NotNull ExpressionOccurrenceManager occurrenceManager,
-    @NotNull OccurrencesInfo occurrencesInfo,
-    boolean isInplaceAvailableOnDataContext
-  ) implements Result {
-    PsiFile file() {
-      return anchorStatement.getContainingFile();
-    }
+  protected sealed interface ErrorOrContainer permits Container, ErrorOrContainer.Error {
+    record Container(@NotNull PsiElement element) implements ErrorOrContainer {}
+    record Error(@NotNull @NlsContexts.DialogMessage String message) implements ErrorOrContainer {}
   }
 }

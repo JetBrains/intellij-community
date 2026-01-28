@@ -53,10 +53,11 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
         }
         PsiElement anchorStatement =
           elements[0] instanceof PsiComment ? elements[0] : CommonJavaRefactoringUtil.getParentStatement(elements[0], false);
-        TempContainerResult result = getTempContainer(anchorStatement);
+        ErrorOrContainer errorOrContainer = getTempContainer(anchorStatement);
 
-        if (result.errorMessage != null) {
-          showErrorMessage(project, editor, result.errorMessage);
+
+        if (errorOrContainer instanceof ErrorOrContainer.Error(@NlsContexts.DialogMessage String message)) {
+          showErrorMessage(project, editor, message);
         }
 
         PsiElement[] elementsInCopy = IntroduceParameterHandler.getElementsInCopy(project, file, elements);
