@@ -148,6 +148,11 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     driver.ui.pasteText(text)
   }
 
+  fun addCodeCellWithRetry(text: String) {
+    addEmptyCodeCell()
+    pasteToCellWithRetry(LastCell, text)
+  }
+
   fun addMarkdownCell(content: String) {
     driver.invokeActionWithRetries("NotebookInsertMarkdownCellAction")
     driver.ui.pasteText(content)
@@ -215,6 +220,15 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
   fun pasteToCell(cellSelector: CellSelector, text: String) {
     clickOnCell(cellSelector)
     driver.ui.pasteText(text)
+  }
+
+  fun pasteToCellWithRetry(cellSelector: CellSelector, text: String) {
+    waitFor(timeout = 15.seconds) {
+      clickOnCell(cellSelector)
+      driver.ui.pasteText(text)
+      val searchText = text.replace("\n", "").replace(" ", "")
+      LastCell(notebookCellEditors).getParent().getParent().getAllTexts().asString().replace(" ", "").contains(searchText)
+    }
   }
 
 
@@ -295,14 +309,20 @@ fun Driver.createNewNotebookWithMouse(name: String = "New Notebook", type: Noteb
 
     val newFileButton = x { byAccessibleName("New File or Directory…") }
 
-    should(message = "new file popup should present and focused", timeout = 30.seconds) {
-      newFileButton.strictClick()
-      hasFocus(popup())
+
+    should("New notebook button should be pressed", timeout = 1.minutes) {
+      should(message = "new file popup should present and focused", timeout = 30.seconds) {
+        newFileButton.strictClick()
+        hasFocus(popup())
+      }
+
+      popup().run {
+        waitOneText("${type.typeName} Notebook").strictClick()
+        hasSubtext("New ${type.typeName} Notebook")
+      }
     }
 
     popup().run {
-      waitOneText("${type.typeName} Notebook").strictClick()
-
       keyboard {
         waitFor("expect $name in the popup") {
           driver.ui.pasteText(name)
