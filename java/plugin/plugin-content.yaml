@@ -44,6 +44,9 @@
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2/kotlin-metadata-jvm-2.jar
   reason: withProjectLibrary
+- name: lib/modules/intellij.debugger.jvm.advanced.java.jar
+  contentModules:
+  - name: intellij.debugger.jvm.advanced.java
 - name: lib/modules/intellij.java.analysis.impl.jar
   contentModules:
   - name: intellij.java.analysis.impl
