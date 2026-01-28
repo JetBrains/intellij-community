@@ -68,7 +68,7 @@ internal fun generateProductInfoJson(
     svgIconPath = if (appInfo.svgRelativePath == null) null else "${relativePathToBin}/${productProperties.baseFileName}.svg",
     productVendor = appInfo.shortCompanyName,
     majorVersionReleaseDate = LocalDate.parse(appInfo.majorReleaseDate, DateTimeFormatter.ofPattern("yyyyMMdd")),
-    minRequiredJavaVersion = JpsJavaExtensionService.getInstance().getProjectExtension(context.project)?.languageLevel?.feature()?.toString(),
+    minRequiredJavaVersion = getProjectLanguageLevel(context),
     launch = launch,
     customProperties = listOfNotNull(generateGitRevisionProperty(context)) + productProperties.generateCustomPropertiesForProductInfo(),
     bundledPlugins = builtinModules?.plugins ?: emptyList(),
@@ -78,6 +78,14 @@ internal fun generateProductInfoJson(
     flavors = jbrFlavors + productFlavors,
   )
   return jsonEncoder.encodeToString<ProductInfoData>(json)
+}
+
+private fun getProjectLanguageLevel(context: BuildContext): String? {
+  val projectLanguageLevel = JpsJavaExtensionService.getInstance().getProjectExtension(context.project)?.languageLevel?.feature()?.toString()
+  if (projectLanguageLevel == null) {
+    context.messages.logErrorAndThrow("Cannot find project language level for '${context.paths.projectHome}'")
+  }
+  return projectLanguageLevel
 }
 
 private fun generateGitRevisionProperty(context: BuildContext): CustomProperty? {
