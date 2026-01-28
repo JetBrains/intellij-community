@@ -17958,4 +17958,38 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/overridingIgnorableWithMustUse/file.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/replaceArrayEqualityOpWithArraysEquals")
+    public static class ReplaceArrayEqualityOpWithArraysEquals extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("arrayAndOtherTypeEQEQ.kt")
+        public void testArrayAndOtherTypeEQEQ() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceArrayEqualityOpWithArraysEquals/arrayAndOtherTypeEQEQ.kt");
+        }
+
+        @TestMetadata("arrayEQEQ.kt")
+        public void testArrayEQEQ() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceArrayEqualityOpWithArraysEquals/arrayEQEQ.kt");
+        }
+
+        @TestMetadata("arrayEXCLEQ.kt")
+        public void testArrayEXCLEQ() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceArrayEqualityOpWithArraysEquals/arrayEXCLEQ.kt");
+        }
+
+        @TestMetadata("primitiveArrayEQEQ.kt")
+        public void testPrimitiveArrayEQEQ() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceArrayEqualityOpWithArraysEquals/primitiveArrayEQEQ.kt");
+        }
+    }
 }

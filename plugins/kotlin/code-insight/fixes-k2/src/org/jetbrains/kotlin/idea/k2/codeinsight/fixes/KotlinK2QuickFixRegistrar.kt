@@ -193,6 +193,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(OverridingIgnorableWithMustUseFixFactories.addIgnorableReturnValueAnnotationFixFactory)
         registerFactory(AddNewLineAfterAnnotationsFixFactory.addNewLineAfterAnnotationsFixFactory)
         registerFactory(ConstFixFactories.addConstModifierFixFactory)
+        registerFactory(ReplaceArrayEqualityOpWithContentEqualsFixFactory.fixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {

@@ -16017,40 +16017,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/replaceArrayEqualityOpWithArraysEquals")
-    public static class ReplaceArrayEqualityOpWithArraysEquals extends AbstractK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("arrayAndOtherTypeEQEQ.kt")
-        public void testArrayAndOtherTypeEQEQ() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/replaceArrayEqualityOpWithArraysEquals/arrayAndOtherTypeEQEQ.kt");
-        }
-
-        @TestMetadata("arrayEQEQ.kt")
-        public void testArrayEQEQ() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/replaceArrayEqualityOpWithArraysEquals/arrayEQEQ.kt");
-        }
-
-        @TestMetadata("arrayEXCLEQ.kt")
-        public void testArrayEXCLEQ() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/replaceArrayEqualityOpWithArraysEquals/arrayEXCLEQ.kt");
-        }
-
-        @TestMetadata("primitiveArrayEQEQ.kt")
-        public void testPrimitiveArrayEQEQ() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/replaceArrayEqualityOpWithArraysEquals/primitiveArrayEQEQ.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness")
     public abstract static class VerboseNullabilityAndEmptiness extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
