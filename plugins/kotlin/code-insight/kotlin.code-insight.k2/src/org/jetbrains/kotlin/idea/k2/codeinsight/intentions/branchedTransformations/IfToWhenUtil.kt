@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformati
 
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.PsiWhiteSpace
@@ -23,17 +24,14 @@ fun convertIfToWhen(element: KtIfExpression, updater: ModPsiUpdater): KtWhenExpr
     val ifExpression = updater.getWritable(element.topmostIfExpression())
     val parent = ifExpression.parent
 
-    val elementCommentSaver = CommentSaver(ifExpression, saveLineBreaks = true)
-    val fullCommentSaver = CommentSaver(PsiChildRange(ifExpression, ifExpression.siblings().last()), saveLineBreaks = true)
+    val commentSaver = CommentSaver(PsiChildRange(ifExpression, findLastIfBlockReturn(ifExpression.siblings())), saveLineBreaks = true)
 
     val loop = ifExpression.getStrictParentOfType<KtLoopExpression>()
     val loopJumpVisitor = LabelLoopJumpVisitor(loop)
 
     val toDelete = ArrayList<PsiElement>()
 
-    val (whenExpression, applyFullCommentSaver) = createWhenExpression(ifExpression, toDelete)
-
-    val commentSaver = if (applyFullCommentSaver) fullCommentSaver else elementCommentSaver
+    val whenExpression = createWhenExpression(ifExpression, toDelete)
 
     val whenExpressionInCodeFragment =
         KtPsiFactory(element.project).createExpressionCodeFragment(whenExpression.text, ifExpression)
@@ -53,9 +51,19 @@ fun convertIfToWhen(element: KtIfExpression, updater: ModPsiUpdater): KtWhenExpr
     commentSaver.restore(result)
 
     if (toDelete.isNotEmpty()) {
+        val first = toDelete.first()
+        val last = toDelete.last()
+        // after the block that is subject of inspection, there might be trailing comments that we need to restore
+        val actualLast = when {
+            first == last -> first
+            last is PsiComment -> {
+                (last.prevSibling as? PsiWhiteSpace)?.prevSibling ?: last.prevSibling
+            }
+            else -> last
+        }
         parent.deleteChildRange(
-            toDelete.first().let { it.prevSibling as? PsiWhiteSpace ?: it },
-            toDelete.last()
+            first.prevSibling as? PsiWhiteSpace ?: first,
+            actualLast
         )
     }
 
@@ -72,11 +80,15 @@ fun convertIfToWhen(element: KtIfExpression, updater: ModPsiUpdater): KtWhenExpr
     return result
 }
 
+private fun findLastIfBlockReturn(sequence: Sequence<PsiElement>): PsiElement =
+    sequence
+        .takeWhile { it is KtIfExpression || it is KtReturnExpression || it is PsiComment || it is PsiWhiteSpace }
+        .last { it is KtIfExpression || it is KtReturnExpression }
+
 private fun createWhenExpression(
     ifExpression: KtIfExpression,
     toDelete: ArrayList<PsiElement>
-): Pair<KtWhenExpression, Boolean> {
-    var applyFullCommentSaver = true
+): KtWhenExpression {
     val whenExpression = KtPsiFactory(ifExpression.project).buildExpression(reformat = false) {
         appendFixedText("when {\n")
 
@@ -105,7 +117,6 @@ private fun createWhenExpression(
                 // Try to build synthetic if / else according to KT-10750
                 val syntheticElseBranch = if (canPassThrough) null else buildNextBranch(baseIfExpressionForSyntheticBranch)
                 if (syntheticElseBranch == null) {
-                    applyFullCommentSaver = false
                     break
                 }
                 toDelete.addAll(baseIfExpressionForSyntheticBranch.siblingsUpTo(syntheticElseBranch))
@@ -121,7 +132,6 @@ private fun createWhenExpression(
                 currentIfExpression = currentElseBranch
             } else {
                 appendElseBlock(currentElseBranch)
-                applyFullCommentSaver = false
                 break
             }
         }
@@ -140,7 +150,7 @@ private fun createWhenExpression(
     }
     whenExpression.entries.forEach { entry -> entry.reformat() }
 
-    return Pair(whenExpression, applyFullCommentSaver)
+    return whenExpression
 }
 
 private fun KtIfExpression.topmostIfExpression(): KtIfExpression {
