@@ -56,8 +56,6 @@ suspend fun refreshPaths(project: Project, sdk: Sdk, reason: Any) {
     RefreshQueue.getInstance().refresh(true, listOfNotNull(getSitePackagesDirectory(sdk), sdk.associatedModuleDir))
   }
 
-  //Restart all inspections because packages are changed
-  DaemonCodeAnalyzer.getInstance(project).restart(reason)
   PythonSdkUpdater.scheduleUpdate(sdk, project, false)
 }
 
