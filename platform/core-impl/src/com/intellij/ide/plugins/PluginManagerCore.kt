@@ -613,7 +613,9 @@ object PluginManagerCore {
                 incompletePlugins[plugin.pluginId] = plugin
               }
             }
-            if (pluginList.source == PluginsSourceContext.Bundled && exclusionReason is PluginVersionIsSuperseded) {
+            if ((pluginList.source == PluginsSourceContext.Bundled ||
+                 pluginList.source == PluginsSourceContext.ClassPathProvided) && // FIXME checking only Bundled should be sufficient here
+                exclusionReason is PluginVersionIsSuperseded) {
               shadowedBundledIds.add(plugin.pluginId)
             }
           }
