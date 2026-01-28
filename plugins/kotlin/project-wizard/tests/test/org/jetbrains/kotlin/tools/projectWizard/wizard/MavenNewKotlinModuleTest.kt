@@ -349,13 +349,13 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
 
     private fun substituteCompilerSourceAndTargetLevels(fileContents: String): String {
         val compilerSourceRegex = Regex("<maven.compiler.source>(\\d\\d)</maven.compiler.source>")
-        val compilerTargetRegex = Regex("<maven.compiler.target>(\\d\\d)</maven.compiler.source>")
+        val compilerTargetRegex = Regex("<maven.compiler.target>(\\d\\d)</maven.compiler.target>")
         var result = fileContents
         if (result.contains(compilerSourceRegex)) {
             result = result.replace(compilerSourceRegex, "<maven.compiler.source>VERSION</maven.compiler.source>")
         }
         if (result.contains(compilerTargetRegex)) {
-            result = result.replace(compilerTargetRegex, "<maven.compiler.target>VERSION</maven.compiler.source>")
+            result = result.replace(compilerTargetRegex, "<maven.compiler.target>VERSION</maven.compiler.target>")
         }
         return result
     }
