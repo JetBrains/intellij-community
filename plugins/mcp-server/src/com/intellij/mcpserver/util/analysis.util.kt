@@ -5,7 +5,9 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
@@ -18,18 +20,16 @@ suspend fun awaitExternalChangesAndIndexing(project: Project) {
   val localFileSystem = LocalFileSystem.getInstance()
   // Get project roots
   val projectDirectory = project.projectDirectory
-  val contentRoots = ProjectRootManager.getInstance(project).contentRoots
-
+  val contentRoots = ProjectRootManager.getInstance(project).contentRoots.toSet()
   val projectDirVirtualFile = localFileSystem.refreshAndFindFileByNioFile(projectDirectory)
+  (LocalFileSystem.getInstance() as LocalFileSystemImpl).markSuspiciousFilesDirty(emptyList<VirtualFile>())
+  val dirtyFiles = (setOf(projectDirVirtualFile) + contentRoots).filter { (it as VirtualFileSystemEntry).isDirty }
 
-  suspendCancellableCoroutine { cont ->
-    val toMarkDirty = contentRoots.toMutableList()
-    if (projectDirVirtualFile != null) {
-      toMarkDirty.add(projectDirVirtualFile)
-    }
-    VfsUtil.markDirty(true, true, *toMarkDirty.toTypedArray())
-    LocalFileSystem.getInstance().refreshFiles(toMarkDirty, true, true) {
-      cont.resume(Unit)
+  if (dirtyFiles.isNotEmpty()) {
+    suspendCancellableCoroutine { cont ->
+      LocalFileSystem.getInstance().refreshFiles(dirtyFiles, true, true) {
+        cont.resume(Unit)
+      }
     }
   }
 
