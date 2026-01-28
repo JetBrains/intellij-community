@@ -1,24 +1,38 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging
 
+import com.intellij.application.subscribe
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.removeUserData
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.QualifiedName
+import com.intellij.util.asDisposable
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.psi.resolve.PackageAvailabilityService
 import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
 import com.jetbrains.python.psi.resolve.fromSdk
+import com.jetbrains.python.psi.resolve.isPackageAvailableKey
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.requirePythonSdk
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Checks if any of the fully-qualified names can be resolved to a real .py file (not .pyi stub)
@@ -55,7 +69,21 @@ fun canResolveFqn(project: Project, sdk: Sdk, fqns: List<String>): Boolean {
  * Implementation of [PackageAvailabilityService] that uses [PythonPackageManager]
  * for fast package lookups with PSI resolution fallback.
  */
-internal class PackageAvailabilityServiceImpl : PackageAvailabilityService {
+internal class PackageAvailabilityServiceImpl(val cs: CoroutineScope) : PackageAvailabilityService {
+
+  init {
+    val messageBus = ApplicationManager.getApplication().messageBus
+    messageBus.connect(cs).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+      override fun projectClosed(project: Project) {
+        ProjectJdkTable.getInstance().allJdks.filter { PythonSdkUtil.isPythonSdk(it, true) }.forEach { sdk ->
+          check(sdk is UserDataHolderBase)
+          sdk.userMap.keys.filter{ it.isPackageAvailableKey() }.forEach {
+            sdk.removeUserData(it)
+          }
+        }
+      }
+    })
+  }
 
   override fun isPackageAvailable(module: Module, spec: PackageAvailabilitySpec): Boolean {
     val sdk = PythonSdkUtil.findPythonSdk(module) ?: return false
@@ -97,6 +125,7 @@ internal class PackageAvailabilityServiceImpl : PackageAvailabilityService {
   }
 
   private fun canResolveFqnCached(project: Project, sdk: Sdk, spec: PackageAvailabilitySpec): Boolean {
+    if (ApplicationManager.getApplication().isUnitTestMode) return canResolveFqn(project, sdk, spec.fqns)
     return CachedValuesManager.getManager(project).getCachedValue(sdk, spec.cacheKey, {
       CachedValueProvider.Result.create(
         canResolveFqn(project, sdk, spec.fqns),

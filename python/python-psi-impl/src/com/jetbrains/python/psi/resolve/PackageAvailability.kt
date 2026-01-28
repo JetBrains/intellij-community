@@ -40,8 +40,15 @@ class PackageAvailabilitySpec(
   val fqns: List<String> = fqns.toList()
 
   @ApiStatus.Internal
-  val cacheKey: Key<CachedValue<Boolean>> = Key.create("isPackageAvailable:$packageName:${fqns.joinToString(",")}")
+  val cacheKey: Key<CachedValue<Boolean>> = Key.create("$PREFIX$packageName:${fqns.joinToString(",")}")
+
+  internal companion object {
+    @ApiStatus.Internal
+    const val PREFIX = "isPackageAvailable:"
+  }
 }
+
+fun Key<*>.isPackageAvailableKey(): Boolean = this.toString().startsWith(PackageAvailabilitySpec.PREFIX)
 
 /**
  * Checks if a package is available in the module's Python environment.
