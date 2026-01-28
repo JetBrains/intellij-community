@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
@@ -163,7 +164,8 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
         VirtualFile vf = jfs.findFileByPath(home + File.separator + productModuleJarPath + JarFileSystem.JAR_SEPARATOR);
         if (vf != null) {
           result.add(vf);
-        } else {
+        }
+        else {
           LOG.error(productModuleJarPath + " not found in " + home);
         }
       }
@@ -286,9 +288,33 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   private static @Nullable JavaSdkVersion getRequiredJdkVersion(Sdk ideaSdk) {
-    if (PsiUtil.isPathToIntelliJIdeaSources(ideaSdk.getHomePath())) return JavaSdkVersion.JDK_1_8;
-    Path apiJar = getPlatformApiJar(ideaSdk.getHomePath());
+    String homePath = ideaSdk.getHomePath();
+    if (PsiUtil.isPathToIntelliJIdeaSources(homePath)) return JavaSdkVersion.JDK_1_8;
+    if (homePath != null) {
+      JavaSdkVersion version = getRequiredVersionFromProductInfo(homePath);
+      if (version != null) {
+        return version;
+      }
+    }
+    Path apiJar = getPlatformApiJar(homePath);
     return apiJar != null ? ClsParsingUtil.getJdkVersionByBytecode(getIdeaClassFileVersion(apiJar)) : null;
+  }
+
+  private static @Nullable JavaSdkVersion getRequiredVersionFromProductInfo(String homePath) {
+    ProductInfo productInfo = ProductInfoKt.loadProductInfo(homePath);
+    if (productInfo == null) return null;
+    String minRequiredJavaVersion = productInfo.getMinRequiredJavaVersion();
+    if (minRequiredJavaVersion == null) return null;
+    try {
+      LanguageLevel languageLevel = LanguageLevel.forFeature(Integer.parseInt(minRequiredJavaVersion));
+      if (languageLevel != null) {
+        return JavaSdkVersion.fromLanguageLevel(languageLevel);
+      }
+    }
+    catch (NumberFormatException e) {
+      LOG.warn("Could not parse minRequiredJavaVersion: " + minRequiredJavaVersion);
+    }
+    return null;
   }
 
   private static int getIdeaClassFileVersion(Path apiJar) {
