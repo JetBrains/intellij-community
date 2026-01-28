@@ -21,6 +21,8 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.platform.buildData.productInfo.ProductInfoData;
+import com.intellij.platform.ide.productInfo.IdeProductInfo;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -301,7 +303,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   private static @Nullable JavaSdkVersion getRequiredVersionFromProductInfo(String homePath) {
-    ProductInfo productInfo = ProductInfoKt.loadProductInfo(homePath);
+    ProductInfoData productInfo = IdeProductInfo.getInstance().loadProductInfo(Path.of(homePath));
     if (productInfo == null) return null;
     String minRequiredJavaVersion = productInfo.getMinRequiredJavaVersion();
     if (minRequiredJavaVersion == null) return null;

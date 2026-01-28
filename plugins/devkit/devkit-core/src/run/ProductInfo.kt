@@ -53,7 +53,6 @@ data class ProductInfo(
   val version: String = "",
   val buildNumber: String = "",
   val productCode: String = "",
-  val minRequiredJavaVersion: String? = null,
   val launch: List<Launch> = mutableListOf(),
   val layout: List<LayoutItem> = mutableListOf(),
 ) {
