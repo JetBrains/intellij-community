@@ -842,17 +842,10 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   )
 
   private fun notifySuccessReportAll(withAutoReportEnabled: Boolean) {
-    val content = if (application.isInternal)
-      gratitudeMessagesInternal.random()
-    else DiagnosticBundle.message("error.report.gratitude")
-    val fullMessage = if (withAutoReportEnabled) {
-      DiagnosticBundle.message("error.report.with.auto.report.enabled", content)
-    }
-    else {
-      content
-    }
+    val gratitude = if (application.isInternal) gratitudeMessagesInternal.random() else DiagnosticBundle.message("error.report.gratitude")
+    val content = if (withAutoReportEnabled) DiagnosticBundle.message("error.report.with.auto.report.enabled", gratitude) else gratitude
     val title = DiagnosticBundle.message("error.reports.submitted")
-    val notification = Notification("Error Report", title, fullMessage, NotificationType.INFORMATION).setImportant(false)
+    val notification = Notification("Error Report", title, content, NotificationType.INFORMATION).setImportant(false)
     notification.notify(myProject)
   }
 
@@ -860,7 +853,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
    *  Returns true if a user enabled an automatic error report on this request
    */
   private fun suggestEnablingAutoReportIfApplicable(): Boolean {
-    if (!ExceptionsAutoReportUtil.shouldOfferEnablingAutoReport()) {
+    if (!ExceptionAutoReportUtil.shouldOfferEnablingAutoReport()) {
       return false
     }
     val dialogResult = MessageDialogBuilder.yesNo(
@@ -871,7 +864,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
       .noText(DiagnosticBundle.message("auto.report.suggestion.dialog.no.option"))
       .ask(rootPane)
 
-    ExceptionsAutoReportUtil.enablingAutoReportOffered(dialogResult)
+    ExceptionAutoReportUtil.enablingAutoReportOffered(dialogResult)
     return dialogResult
   }
 
@@ -914,7 +907,7 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
         continue
       }
 
-      if (onlyEligibleForAutoReport && !ExceptionsAutoReportUtil.isAutoReportableException(cluster.first)) {
+      if (onlyEligibleForAutoReport && !ExceptionAutoReportUtil.isAutoReportableException(cluster.first)) {
         continue
       }
 
@@ -982,17 +975,14 @@ open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
     @JvmStatic
     @ApiStatus.ScheduledForRemoval
     @ApiStatus.Internal
-    @Deprecated("internal implementation detail; a plugin code should use `ErrorReportSubmitter.getPluginDescriptor`",
-                level = DeprecationLevel.ERROR)
+    @Deprecated("internal implementation detail; a plugin code should use `ErrorReportSubmitter.getPluginDescriptor`", level = DeprecationLevel.ERROR)
     fun getPlugin(event: IdeaLoggingEvent): IdeaPluginDescriptor? =
       event.throwable?.let { PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(it)) }
 
     @JvmStatic
     @ApiStatus.ScheduledForRemoval
     @ApiStatus.Internal
-    @Deprecated("use {@link PluginUtil#findPluginId} ",
-                ReplaceWith("PluginUtil.getInstance().findPluginId(t)"),
-                level = DeprecationLevel.ERROR)
+    @Deprecated("use {@link PluginUtil#findPluginId} ", ReplaceWith("PluginUtil.getInstance().findPluginId(t)"), level = DeprecationLevel.ERROR)
     fun findPluginId(t: Throwable): PluginId? =
       PluginUtil.getInstance().findPluginId(t)
 

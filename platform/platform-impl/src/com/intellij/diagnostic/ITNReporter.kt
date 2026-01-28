@@ -77,9 +77,6 @@ open class ITNReporter internal constructor(private val postUrl: String) : Error
    */
   open fun showErrorInRelease(event: IdeaLoggingEvent): Boolean = false
 
-  @ApiStatus.Internal
-  fun hostId(): String = ITNProxy.DEVICE_ID
-
   private fun createReportBean(event: IdeaLoggingEvent, comment: String?): ErrorBean =
     ErrorBean(event, comment, event.plugin?.pluginId?.idString, event.plugin?.name, event.plugin?.version, IdeaLogger.ourLastActionId)
 

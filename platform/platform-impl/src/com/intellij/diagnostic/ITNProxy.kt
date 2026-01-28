@@ -136,7 +136,7 @@ internal object ITNProxy {
     }
     try {
       val reportId = responseText.trim()
-      LOG.info("report ID: ${reportId}, host ID: ${DEVICE_ID}")
+      LOG.info("report ID: ${reportId}")
       return reportId.toLong()
     }
     catch (_: NumberFormatException) {
