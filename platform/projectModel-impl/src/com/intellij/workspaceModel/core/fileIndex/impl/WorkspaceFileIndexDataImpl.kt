@@ -420,19 +420,81 @@ internal class WorkspaceFileIndexDataImpl(
   override fun onEntitiesChanged(event: VersionedStorageChange,
                                  storageKind: EntityStorageKind) = WorkspaceFileIndexDataMetrics.onEntitiesChangedTimeNanosec.addMeasuredTime {
     ThreadingAssertions.assertWriteAccess()
-    val removeRegistrar = RemoveFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
+    val removeRegistrar = RemoveFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix, event.storageBefore)
     val storeRegistrar = StoreFileSetsRegistrarImpl(storageKind, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
     contributorList.filter { it.storageKind == storageKind }.forEach { 
       processChangesByContributor(it, event, storeRegistrar, removeRegistrar)
     }
     resetFileCache()
-    if (storeRegistrar.registeredFileSets.isNotEmpty() || removeRegistrar.removedFileSets.isNotEmpty()) {
-      val changeLog = WorkspaceFileIndexChangedEvent(removedFileSets = removeRegistrar.removedFileSets.values.flatMapTo(HashSet()) { it },
-                                                     registeredFileSets = storeRegistrar.registeredFileSets.values.flatMapTo(HashSet()) { it },
-                                                     storageBefore = event.storageBefore,
-                                                     storageAfter = event.storageAfter,)
+    deduplicateFileSetsAndPublishChangeEvent(storeRegistrar.registeredFileSets,
+                                             removeRegistrar.removedFileSets,
+                                             event.storageBefore,
+                                             event.storageAfter)
+  }
+
+  /**
+   * When an entity is changed or a file referenced from an entity is added/deleted the whole entity is reindexed by WorkspaceFileIndex.
+   * It means that all the file sets from that entity (registered via corresponding [WorkspaceFileIndexContributor]) are removed and then re-added to WFI.
+   * It may happen that a [WorkspaceFileIndexContributor] registers more than one file set (not only the one for added/deleted file)
+   * or that the entity is changed, but it still registers the same file sets.
+   * In that case registeredFileSets and removedFileSets will contain the same file sets, here we want to delete such pairs to avoid
+   * unnecessary scanning events.
+   */
+  private fun deduplicateFileSetsAndPublishChangeEvent(
+    registeredFileSets: MutableMap<VirtualFile, MutableSet<Pair<WorkspaceEntity, WorkspaceFileSet>>>,
+    removedFileSets: MutableMap<VirtualFile, MutableSet<Pair<WorkspaceEntity, WorkspaceFileSet>>>,
+    storageBefore: ImmutableEntityStorage,
+    storageAfter: ImmutableEntityStorage,
+  ) {
+    val registeredFileSetsIterator = registeredFileSets.iterator()
+    while (registeredFileSetsIterator.hasNext()) {
+      val (file, registeredFileSetsForTheFile) = registeredFileSetsIterator.next()
+      val removedFileSetsForTheFile = removedFileSets[file] ?: continue
+      val intersection = registeredFileSetsForTheFile
+        .intersectWithCustomContains(removedFileSetsForTheFile) { collection, (entity1, fileSet1) ->
+          collection.find { (entity2, fileSet2) ->
+            when {
+              fileSet1.kind != fileSet2.kind || entity1.getEntityInterface() != entity2.getEntityInterface() -> false
+              fileSet1 is WorkspaceFileSetWithCustomData<*> && fileSet2 is WorkspaceFileSetWithCustomData<*> -> {
+                fileSet1.data == fileSet2.data && fileSet1.recursive == fileSet2.recursive
+              }
+              fileSet1 !is WorkspaceFileSetWithCustomData<*> && fileSet2 !is WorkspaceFileSetWithCustomData<*> -> {
+                true
+              }
+              else -> false
+            }
+          }
+        }
+      for (duplicateFileSet in intersection) {
+        registeredFileSetsForTheFile.remove(duplicateFileSet.first)
+        removedFileSetsForTheFile.remove(duplicateFileSet.second)
+      }
+      if (registeredFileSetsForTheFile.isEmpty()) {
+        registeredFileSetsIterator.remove()
+      }
+      if (removedFileSetsForTheFile.isEmpty()) {
+        removedFileSets.remove(file)
+      }
+    }
+    if (registeredFileSets.isNotEmpty() || removedFileSets.isNotEmpty()) {
+      val changeLog =
+        WorkspaceFileIndexChangedEvent(removedFileSets = removedFileSets.values.flatMapTo(HashSet()) { it.map { it.second } },
+                                       registeredFileSets = registeredFileSets.values.flatMapTo(HashSet()) { it.map { it.second } },
+                                       storageBefore = storageBefore,
+                                       storageAfter = storageAfter)
       project.messageBus.syncPublisher(WorkspaceFileIndexListener.TOPIC).workspaceFileIndexChanged(changeLog)
     }
+  }
+
+  private fun <T> Iterable<T>.intersectWithCustomContains(other: Collection<T>, find: (Collection<T>, T) -> T?): Set<Pair<T, T>> {
+    val set = mutableSetOf<Pair<T, T>>()
+    for (e in this) {
+      val otherElement = find(other, e)
+      if (otherElement != null) {
+        set.add(Pair(e, otherElement))
+      }
+    }
+    return set
   }
 
   override fun updateDirtyEntities() {
@@ -446,7 +508,7 @@ internal class WorkspaceFileIndexDataImpl(
       }
     }
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
-    val removeRegistrar = RemoveFileSetsRegistrarImpl(EntityStorageKind.MAIN, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
+    val removeRegistrar = RemoveFileSetsRegistrarImpl(EntityStorageKind.MAIN, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix, storage)
     val storeRegistrar = StoreFileSetsRegistrarImpl(EntityStorageKind.MAIN, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
     for (reference in dirtyEntities) {
       val entity = reference.resolve(storage) ?: continue
@@ -463,13 +525,7 @@ internal class WorkspaceFileIndexDataImpl(
     hasDirtyEntities = false
 
     WorkspaceFileIndexDataMetrics.updateDirtyEntitiesTimeNanosec.addElapsedTime(start)
-    if (storeRegistrar.registeredFileSets.isNotEmpty() || removeRegistrar.removedFileSets.isNotEmpty()) {
-      val changeLog = WorkspaceFileIndexChangedEvent(removedFileSets = removeRegistrar.removedFileSets.values.flatMapTo(HashSet()) { it },
-                                                     registeredFileSets = storeRegistrar.registeredFileSets.values.flatMapTo(HashSet()) { it },
-                                                     storageBefore = storage,
-                                                     storageAfter = storage,)
-      project.messageBus.syncPublisher(WorkspaceFileIndexListener.TOPIC).workspaceFileIndexChanged(changeLog)
-    }
+    deduplicateFileSetsAndPublishChangeEvent(storeRegistrar.registeredFileSets, removeRegistrar.removedFileSets, storage, storage)
   }
 
   override fun resetFileCache() {
@@ -607,9 +663,10 @@ private class RemoveFileSetsRegistrarImpl(
   private val nonExistingFilesRegistry: NonExistingWorkspaceRootsRegistry,
   private val fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
   private val fileSetsByPackagePrefix: PackagePrefixStorage,
+  private val storageBefore: ImmutableEntityStorage,
 ) : WorkspaceFileSetRegistrar {
 
-  val removedFileSets = mutableMapOf<VirtualFile, MutableSet<WorkspaceFileSet>>()
+  val removedFileSets = mutableMapOf<VirtualFile, MutableSet<Pair<WorkspaceEntity, WorkspaceFileSet>>>()
 
   override fun registerFileSet(root: VirtualFileUrl, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
     val rootFile = root.virtualFile
@@ -625,10 +682,10 @@ private class RemoveFileSetsRegistrarImpl(
     val removeCondition = { fileSet: StoredFileSet -> fileSet is WorkspaceFileSetImpl && isOriginatedFrom(fileSet, entity) }
 
     val fileSetToRemove = fileSets[root]
-    val removed = mutableSetOf<WorkspaceFileSet>()
+    val removed = mutableSetOf<Pair<WorkspaceEntity, WorkspaceFileSet>>()
     fileSetToRemove?.forEach { fileSet ->
       if (removeCondition(fileSet)) {
-        removed.add(fileSet as WorkspaceFileSetImpl)
+        removed.add(Pair((fileSet as WorkspaceFileSetImpl).entityPointer.resolve(storageBefore)!!, fileSet as WorkspaceFileSetImpl))
       }
     }
     removedFileSets.merge(root, removed, { old, new ->
@@ -715,7 +772,7 @@ private class StoreFileSetsRegistrarImpl(
   private val fileSetsByPackagePrefix: PackagePrefixStorage,
 ) : WorkspaceFileSetRegistrar {
 
-  val registeredFileSets = mutableMapOf<VirtualFile, MutableSet<WorkspaceFileSet>>()
+  val registeredFileSets = mutableMapOf<VirtualFile, MutableSet<Pair<WorkspaceEntity, WorkspaceFileSet>>>()
 
   override fun registerFileSet(
     root: VirtualFileUrl,
@@ -767,7 +824,7 @@ private class StoreFileSetsRegistrarImpl(
       recursive = recursive,
     )
     fileSets.putValue(root, fileSet)
-    registeredFileSets.merge(root, mutableSetOf(fileSet)) { old, new ->
+    registeredFileSets.merge(root, mutableSetOf(Pair(entity, fileSet))) { old, new ->
       old.addAll(new)
       old
     }
