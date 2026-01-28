@@ -12999,6 +12999,20 @@ http_file(
 )
 
 http_file(
+  name = "com_moandjiezana_toml-toml4j-0_7_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/moandjiezana/toml/toml4j/0.7.2/toml4j-0.7.2.jar",
+  sha256 = "f5475e63e7e89e5db62223489aec7a56bd303543772077a17c2cb54c19ca3a20",
+  downloaded_file_path = "toml4j-0.7.2.jar"
+)
+
+http_file(
+  name = "com_moandjiezana_toml-toml4j-0_7_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/moandjiezana/toml/toml4j/0.7.2/toml4j-0.7.2-sources.jar",
+  sha256 = "fc9c72fb6a7abda2a65c037af622471da897f84e0a95643210b1c41328c83c5d",
+  downloaded_file_path = "toml4j-0.7.2-sources.jar"
+)
+
+http_file(
   name = "com_github_marschall-memoryfilesystem-2_8_2_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/marschall/memoryfilesystem/2.8.2/memoryfilesystem-2.8.2.jar",
   sha256 = "8b94840d71ad0caa36b3309425b2d23084bc8788ce84d71f2d805b0fc84d1f5a",

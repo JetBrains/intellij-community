@@ -16369,6 +16369,21 @@ jvm_import(
 )
 
 copy_file(
+  name = "com.moandjiezana.toml/toml4j-0.7.2.jar_copy",
+  src = "@com_moandjiezana_toml-toml4j-0_7_2_http//file",
+  out = "com.moandjiezana.toml/toml4j-0.7.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "mcpserver-toml4j",
+  jar = "@com_moandjiezana_toml-toml4j-0_7_2_http//file",
+  source_jar = "@com_moandjiezana_toml-toml4j-0_7_2-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "com.github.marschall/memoryfilesystem-2.8.2.jar_copy",
   src = "@com_github_marschall-memoryfilesystem-2_8_2_http//file",
   out = "com.github.marschall/memoryfilesystem-2.8.2.jar",

@@ -43,3 +43,8 @@
 - name: lib/mcpserver.jar
   modules:
   - name: intellij.mcpserver
+- name: lib/toml4j.jar
+  library: toml4j
+  module: intellij.mcpserver
+  files:
+  - name: $MAVEN_REPOSITORY$/com/moandjiezana/toml/toml4j/0/toml4j-0.jar
