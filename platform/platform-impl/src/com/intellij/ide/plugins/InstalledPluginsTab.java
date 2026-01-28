@@ -635,11 +635,12 @@ class InstalledPluginsTab extends PluginsTab {
             I.remove();
             continue;
           }
-          if (parser.bundled && !descriptor.isBundled()) {
+          boolean isBundledOrBundledUpdate = descriptor.isBundled() || descriptor.isBundledUpdate();
+          if (parser.bundled && !isBundledOrBundledUpdate) {
             I.remove();
             continue;
           }
-          if (parser.userInstalled && descriptor.isBundled()) {
+          if (parser.userInstalled && isBundledOrBundledUpdate) {
             I.remove();
             continue;
           }
