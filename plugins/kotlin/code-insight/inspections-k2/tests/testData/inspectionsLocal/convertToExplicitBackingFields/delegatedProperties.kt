@@ -1,6 +1,6 @@
 // COMPILER_ARGUMENTS: -Xexplicit-backing-fields
 // PROBLEM: none
-class Example {
-    private val _p: String = "Hello"
-    val p: String by this::_p<caret>
+class Foo {
+    private val _x by lazy { mutableListOf(1, 2, 3) }
+    val x: List<Int> get() = _x<caret>
 }
