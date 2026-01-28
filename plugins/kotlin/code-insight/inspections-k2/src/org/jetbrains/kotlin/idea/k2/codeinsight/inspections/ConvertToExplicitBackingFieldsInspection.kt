@@ -116,6 +116,7 @@ internal class ConvertToExplicitBackingFieldsInspection :
     override fun KaSession.prepareContext(element: KtProperty): Context? {
         val returnedProperty = getReturnedPropertyFromGetter(element.getter) ?: return null
         if (!returnedProperty.isPrivate()) return null
+        if (returnedProperty.isVar) return null
 
         val allProperties = (element.parent as? KtElement)
             ?.childrenOfType<KtProperty>()
