@@ -973,6 +973,10 @@ com.intellij.patterns.ElementPattern
 - a:getCondition():com.intellij.patterns.ElementPatternCondition
 c:com.intellij.patterns.PsiFilePattern
 - withLanguage(java.util.function.Predicate):com.intellij.patterns.PsiFilePattern
+f:com.intellij.patterns.StringPattern
+- afterNonJavaIdentifierPart():com.intellij.patterns.StringPattern
+- endsWithOneOf(java.lang.Iterable):com.intellij.patterns.StringPattern
+- endsWithUppercaseLetter():com.intellij.patterns.StringPattern
 com.intellij.pom.Navigatable
 - sf:EMPTY_NAVIGATABLE_ARRAY:com.intellij.pom.Navigatable[]
 - canNavigate():Z

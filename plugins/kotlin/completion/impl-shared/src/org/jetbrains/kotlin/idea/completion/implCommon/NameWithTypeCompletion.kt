@@ -9,9 +9,8 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
-import com.intellij.util.ProcessingContext
+import com.intellij.patterns.StringPattern
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
@@ -35,10 +34,8 @@ object NameWithTypeCompletion {
      * This pattern is used to check if completion needs to be restarted (which is true when an upper case letter is typed
      * and new completion suggestions may appear)
      */
-    val prefixEndsWithUppercaseLetterPattern =
-        StandardPatterns.string().with(object : PatternCondition<String>("Prefix ends with uppercase letter") {
-            override fun accepts(prefix: String, context: ProcessingContext?) = prefix.isNotEmpty() && prefix.last().isUpperCase()
-        })
+    val prefixEndsWithUppercaseLetterPattern: StringPattern
+        get() = StandardPatterns.string().endsWithUppercaseLetter()
 }
 
 /**

@@ -6,7 +6,6 @@ import com.intellij.codeInsight.completion.serialization.PrefixConditionDescript
 import com.intellij.codeInsight.completion.serialization.PrefixConditionDescriptorConverter
 import com.intellij.patterns.*
 import kotlinx.serialization.Serializable
-import org.jetbrains.annotations.ApiStatus
 
 // ============================================================================
 // AlwaysTrue - matches StandardPatterns.string() with no conditions
@@ -248,4 +247,36 @@ class EqualToConditionConverter : PrefixConditionDescriptorConverter<StringPatte
 @Serializable
 data class EqualToDescriptor(val value: String) : PrefixConditionDescriptor {
   override fun recreatePattern(): ElementPattern<String> = StandardPatterns.string().equalTo(value)
+}
+
+// ============================================================================
+// EndsWithUppercaseLetter - string().endsWithUppercaseLetter()
+// ============================================================================
+
+class EndsWithUppercaseLetterConditionConverter : PrefixConditionDescriptorConverter<StringPattern> {
+  override fun toDescriptor(target: StringPattern): PrefixConditionDescriptor? {
+    target.condition.conditions.singleOrNull() as? StringPattern.EndsWithUppercaseLetterCondition ?: return null
+    return EndsWithUppercaseLetterDescriptor
+  }
+}
+
+@Serializable
+object EndsWithUppercaseLetterDescriptor : PrefixConditionDescriptor {
+  override fun recreatePattern(): ElementPattern<String> = StandardPatterns.string().endsWithUppercaseLetter()
+}
+
+// ============================================================================
+// AfterNonJavaIdentifierPart - string().afterNonJavaIdentifierPart()
+// ============================================================================
+
+class AfterNonJavaIdentifierPartConditionConverter : PrefixConditionDescriptorConverter<StringPattern> {
+  override fun toDescriptor(target: StringPattern): PrefixConditionDescriptor? {
+    target.condition.conditions.singleOrNull() as? StringPattern.AfterNonJavaIdentifierPartCondition ?: return null
+    return AfterNonJavaIdentifierPartDescriptor
+  }
+}
+
+@Serializable
+object AfterNonJavaIdentifierPartDescriptor : PrefixConditionDescriptor {
+  override fun recreatePattern(): ElementPattern<String> = StandardPatterns.string().afterNonJavaIdentifierPart()
 }

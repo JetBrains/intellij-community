@@ -4,6 +4,7 @@ package com.intellij.patterns;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -88,6 +90,22 @@ public final class StringPattern extends ObjectPattern<String, StringPattern> {
     return with(new WithLengthCondition(length));
   }
 
+  /**
+   * Creates a pattern that matches strings ending with an uppercase letter.
+   */
+  public @NotNull StringPattern endsWithUppercaseLetter() {
+    return with(new EndsWithUppercaseLetterCondition());
+  }
+
+  /**
+   * Creates a pattern that matches strings where the second-to-last character is not a Java identifier part.
+   * This is useful for detecting when the user types after a non-identifier character (e.g., space, punctuation).
+   * The string must be at least 2 characters long.
+   */
+  public @NotNull StringPattern afterNonJavaIdentifierPart() {
+    return with(new AfterNonJavaIdentifierPartCondition());
+  }
+
   @Override
   public @NotNull StringPattern oneOf(final @NonNls String @NotNull ... values) {
     return super.oneOf(values);
@@ -100,6 +118,12 @@ public final class StringPattern extends ObjectPattern<String, StringPattern> {
   @Override
   public @NotNull StringPattern oneOf(final @NonNls Collection<String> set) {
     return super.oneOf(set);
+  }
+
+  public @NotNull StringPattern endsWithOneOf(@NotNull Iterable<String> values) {
+    List<StringPattern> patternList = ContainerUtil.map(values, value -> StandardPatterns.string().endsWith(value));
+    StringPattern[] patterns = patternList.toArray(new StringPattern[0]);
+    return and(StandardPatterns.or(patterns));
   }
 
   public static @NotNull CharSequence newBombedCharSequence(@NotNull CharSequence sequence) {
@@ -294,6 +318,37 @@ public final class StringPattern extends ObjectPattern<String, StringPattern> {
     @Override
     public boolean accepts(@NotNull String s, ProcessingContext context) {
       return s.length() == length;
+    }
+  }
+
+  /**
+   * Condition that checks if a string ends with an uppercase letter.
+   */
+  @ApiStatus.Internal
+  public static final class EndsWithUppercaseLetterCondition extends PatternCondition<String> {
+    public EndsWithUppercaseLetterCondition() {
+      super("endsWithUppercaseLetter");
+    }
+
+    @Override
+    public boolean accepts(@NotNull String s, ProcessingContext context) {
+      return !s.isEmpty() && Character.isUpperCase(s.charAt(s.length() - 1));
+    }
+  }
+
+  /**
+   * Condition that checks if the second-to-last character is not a Java identifier part.
+   * The string must be at least 2 characters long.
+   */
+  @ApiStatus.Internal
+  public static final class AfterNonJavaIdentifierPartCondition extends PatternCondition<String> {
+    public AfterNonJavaIdentifierPartCondition() {
+      super("afterNonJavaIdentifierPart");
+    }
+
+    @Override
+    public boolean accepts(@NotNull String s, ProcessingContext context) {
+      return s.length() > 1 && !Character.isJavaIdentifierPart(s.charAt(s.length() - 2));
     }
   }
 }

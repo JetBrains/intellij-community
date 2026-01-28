@@ -229,6 +229,52 @@ class RpcPrefixConditionTest {
   }
 
   @Test
+  fun `test EndsWithUppercaseLetter roundtrip via converter`() {
+    val original = StandardPatterns.string().endsWithUppercaseLetter()
+    val converter = EndsWithUppercaseLetterConditionConverter()
+    val descriptor = converter.toDescriptor(original)
+
+    assertNotNull(descriptor)
+    assertInstanceOf(EndsWithUppercaseLetterDescriptor::class.java, descriptor)
+
+    val rpc = RpcPrefixCondition.Serialized(descriptor!!)
+    val reconstructed = rpc.fromRpc()
+
+    for (input in listOf("", "a", "A", "abc", "abC", "ABC", "ab1", "ab!", "getA", "getAbc")) {
+      assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
+    }
+  }
+
+  @Test
+  fun `test AfterNonJavaIdentifierPart roundtrip via converter`() {
+    val original = StandardPatterns.string().afterNonJavaIdentifierPart()
+    val converter = AfterNonJavaIdentifierPartConditionConverter()
+    val descriptor = converter.toDescriptor(original)
+
+    assertNotNull(descriptor)
+    assertInstanceOf(AfterNonJavaIdentifierPartDescriptor::class.java, descriptor)
+
+    val rpc = RpcPrefixCondition.Serialized(descriptor!!)
+    val reconstructed = rpc.fromRpc()
+
+    // Pattern matches when: length > 1 AND second-to-last char is NOT a Java identifier part
+    for (input in listOf(
+      "",       // too short - false
+      "a",      // too short - false
+      "ab",     // 'a' is identifier part - false
+      "a b",    // ' ' is not identifier part - true
+      " b",     // ' ' is not identifier part - true
+      "a!b",    // '!' is not identifier part - true
+      "a.b",    // '.' is not identifier part - true
+      "abc",    // 'b' is identifier part - false
+      "a1b",    // '1' is identifier part - false
+      "a_b",    // '_' is identifier part - false
+    )) {
+      assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
+    }
+  }
+
+  @Test
   fun `test Or descriptor roundtrip`() {
     // OrPatternConverter uses extension points for inner patterns, so we test the descriptor directly
     val descriptor = OrDescriptor(listOf(
