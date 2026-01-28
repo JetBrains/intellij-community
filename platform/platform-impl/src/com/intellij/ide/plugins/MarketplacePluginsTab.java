@@ -137,7 +137,7 @@ class MarketplacePluginsTab extends PluginsTab {
 
     myMarketplaceRunnable = () -> {
       myMarketplacePanel.clear();
-      myMarketplacePanel.startLoading();
+      myMarketplacePanel.showLoadingIcon();
       doCreateMarketplaceTab(selectionListener, project);
     };
 
@@ -248,7 +248,7 @@ class MarketplacePluginsTab extends PluginsTab {
       }
       finally {
         ApplicationManager.getApplication().invokeLater(() -> {
-          myMarketplacePanel.stopLoading();
+          myMarketplacePanel.hideLoadingIcon();
           try {
             PluginLogo.startBatchMode();
 

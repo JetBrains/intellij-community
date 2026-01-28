@@ -103,7 +103,7 @@ class InstalledPluginsTab extends PluginsTab {
 
     //noinspection ConstantConditions
     ((SearchUpDownPopupController)myInstalledSearchPanel.controller).setEventHandler(eventHandler);
-    myInstalledPanel.startLoading();
+    myInstalledPanel.showLoadingIcon();
 
     PluginsGroup downloaded =
       new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
@@ -217,7 +217,7 @@ class InstalledPluginsTab extends PluginsTab {
         });
       }
       finally {
-        myInstalledPanel.stopLoading();
+        myInstalledPanel.hideLoadingIcon();
       }
       return null;
     });

@@ -192,11 +192,11 @@ public abstract class SearchResultPanel {
     PluginsGroupComponentWithProgress panel = (PluginsGroupComponentWithProgress)myPanel;
     if (start) {
       isLoading = true;
-      panel.startLoading();
+      panel.showLoadingIcon();
     }
     else {
       isLoading = false;
-      panel.stopLoading();
+      panel.hideLoadingIcon();
     }
   }
 
