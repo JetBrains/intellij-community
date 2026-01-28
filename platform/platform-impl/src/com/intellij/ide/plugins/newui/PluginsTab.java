@@ -33,6 +33,9 @@ import java.util.function.Predicate;
 
 @ApiStatus.Internal
 public abstract class PluginsTab {
+  private static final int DEFAULT_PANEL = 0;
+  private static final int SEARCH_PANEL = 1;
+
   private final SingleEdtTaskScheduler searchUpdateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
 
   private PluginDetailsPageComponent detailsPage;
@@ -60,7 +63,7 @@ public abstract class PluginsTab {
   };
 
   private final Consumer<PluginsGroupComponent> mySelectionListener = panel -> {
-    int key = searchPanel.getPanel() == panel ? 1 : 0;
+    int key = searchPanel.getPanel() == panel ? SEARCH_PANEL : DEFAULT_PANEL;
     if (cardPanel.getKey() == key) {
       detailsPage.showPlugins(panel.getSelection());
     }
@@ -80,10 +83,10 @@ public abstract class PluginsTab {
 
       @Override
       protected JComponent create(Integer key) {
-        if (key == 0) {
+        if (key == DEFAULT_PANEL) {
           return createPluginsPanel(mySelectionListener);
         }
-        if (key == 1) {
+        if (key == SEARCH_PANEL) {
           return searchPanel.createVScrollPane();
         }
         return super.create(key);
@@ -108,7 +111,7 @@ public abstract class PluginsTab {
 
     searchPanel = createSearchPanel(mySelectionListener);
 
-    cardPanel.select(0, true);
+    cardPanel.select(DEFAULT_PANEL, true);
 
     return splitter;
   }
@@ -247,7 +250,7 @@ public abstract class PluginsTab {
 
   public void showSearchPanel(@NotNull String query) {
     if (searchPanel.isEmpty()) {
-      cardPanel.select(1, true);
+      cardPanel.select(SEARCH_PANEL, true);
       detailsPage.showPlugin(null);
     }
     searchPanel.setQuery(query);
@@ -257,7 +260,7 @@ public abstract class PluginsTab {
   public void hideSearchPanel() {
     if (!searchPanel.isEmpty()) {
       onSearchReset();
-      cardPanel.select(0, true);
+      cardPanel.select(DEFAULT_PANEL, true);
       searchPanel.setQuery("");
       updateMainSelection(mySelectionListener);
     }
