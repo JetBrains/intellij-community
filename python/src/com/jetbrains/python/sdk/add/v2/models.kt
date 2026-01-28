@@ -27,7 +27,7 @@ import com.jetbrains.python.sdk.add.v2.pipenv.PipenvViewModel
 import com.jetbrains.python.sdk.add.v2.poetry.PoetryViewModel
 import com.jetbrains.python.sdk.add.v2.uv.UvViewModel
 import com.jetbrains.python.sdk.add.v2.venv.VenvViewModel
-import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.target.ui.TargetPanelExtension
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -282,7 +282,7 @@ internal val <P : PathHolder> PythonAddInterpreterModel<P>.existingSdks: List<Sd
 internal suspend fun PythonAddInterpreterModel<*>.getBasePath(module: Module?): Path = withContext(Dispatchers.IO) {
   val pyProjectTomlBased = module?.let { PyProjectToml.findFile(it)?.toNioPathOrNull()?.parent }
 
-  pyProjectTomlBased ?: module?.basePath?.let { Path.of(it) } ?: projectPathFlows.projectPathWithDefault.first()
+  pyProjectTomlBased ?: module?.baseDir?.path?.let { Path.of(it) } ?: projectPathFlows.projectPathWithDefault.first()
 }
 
 private fun <T : MaybeSystemPython> Flow<Iterable<T>>.sysPythonsOnly(): Flow<List<T>> = map { it.sysPythonsOnly() }

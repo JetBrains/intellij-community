@@ -13,7 +13,7 @@ import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.*
 import com.jetbrains.python.sdk.associatedModulePath
-import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.isAssociatedWithModule
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
@@ -30,8 +30,8 @@ import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
 
-internal class UvExistingEnvironmentSelector<P : PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, module: Module?)
-  : CustomExistingEnvironmentSelector<P>("uv", model, module) {
+internal class UvExistingEnvironmentSelector<P : PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, module: Module?) :
+  CustomExistingEnvironmentSelector<P>("uv", model, module) {
   override val interpreterType: InterpreterType = InterpreterType.UV
   override val toolState: ToolValidator<P> = model.uvViewModel.toolValidator
   override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.uvViewModel.uvExecutable
@@ -46,7 +46,7 @@ internal class UvExistingEnvironmentSelector<P : PathHolder>(model: PythonMutabl
     val allSdk = PythonSdkUtil.getAllSdks()
     val existingSdk = allSdk.find { it.homePath == selectedInterpreterPath.path.pathString }
     val associatedModule = extractModule(moduleOrProject)
-    val basePathString = associatedModule?.basePath ?: moduleOrProject.project.basePath
+    val basePathString = associatedModule?.baseDir?.path ?: moduleOrProject.project.basePath
     val projectDir = tryResolvePath(basePathString)
                      ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", basePathString))
 

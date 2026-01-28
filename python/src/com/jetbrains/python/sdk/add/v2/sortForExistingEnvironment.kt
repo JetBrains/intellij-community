@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModuleRootManager
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
@@ -73,7 +74,7 @@ suspend fun <P : PathHolder> sortForExistingEnvironment(
           if (module != null) {
             when (it.homePath) {
               is PathHolder.Eel -> {
-                if (module.rootManager.contentRoots.any { root -> it.homePath.path.startsWith(root.toNioPath()) }) {
+                if (ModuleRootManager.getInstance(module).contentRoots.any { root -> it.homePath.path.startsWith(root.toNioPath()) }) {
                   return@groupBy Group.ASSOC_WITH_PROJ_ROOT
                 }
               }

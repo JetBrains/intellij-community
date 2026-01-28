@@ -24,7 +24,6 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.remote.RemoteSdkException
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.packaging.PyTargetEnvCreationManager
@@ -33,6 +32,7 @@ import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.getInterpreterVersion
 import com.jetbrains.python.target.ui.TargetPanelExtension
@@ -68,7 +68,7 @@ fun createVirtualEnvAndSdkSynchronously(
     baseSdk
   }
 
-  val projectPath = projectBasePath ?: module?.basePath ?: project?.basePath
+  val projectPath = projectBasePath ?: module?.baseDir?.path ?: project?.basePath
   val task = object : Task.WithResult<String, ExecutionException>(project, PySdkBundle.message("python.creating.venv.title"), false) {
     override fun compute(indicator: ProgressIndicator): String {
       indicator.isIndeterminate = true

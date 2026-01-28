@@ -33,7 +33,7 @@ import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.PythonSdkUpdater
-import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
@@ -63,9 +63,10 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
 
   override val toolId: ToolId = CONDA_TOOL_ID
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? = prepareSdkCreator(
-    { checkManageableEnv(module, it) }
-  ) { envExists -> { createAndAddSdk(module, envExists) } }
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+    prepareSdkCreator(
+      { checkManageableEnv(module, it) }
+    ) { envExists -> { createAndAddSdk(module, envExists) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
 
@@ -127,7 +128,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     }.getOr { return it }
 
     val shared = PyCondaSdkCustomizer.instance.sharedEnvironmentsByDefault
-    val basePath = module.basePath
+    val basePath = module.baseDir?.path
 
     withContext(Dispatchers.EDT) {
       this@PyEnvironmentYmlSdkConfiguration.thisLogger()
@@ -165,7 +166,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
         is PyCondaEnvIdentity.NamedEnv -> envIdentity.envName == envName
         is PyCondaEnvIdentity.UnnamedEnv -> if (shouldGuessEnvPrefix) {
           val envPath = Path.of(envIdentity.envPath)
-          val sameModule = module.basePath?.toNioPathOrNull() == envPath.parent
+          val sameModule = module.baseDir?.path?.toNioPathOrNull() == envPath.parent
           !envIdentity.isBase && sameModule && module.findAmongRoots(FileName(Path.of(envIdentity.envPath).name)) != null
         }
         else envIdentity.envPath == envPrefix

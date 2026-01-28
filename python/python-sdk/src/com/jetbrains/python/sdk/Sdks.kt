@@ -200,7 +200,7 @@ object SdksKeeper {
 fun Sdk.setAssociationToModuleAsync(module: Module) {
   requirePythonSdk()
 
-  val path = module.basePath
+  val path = module.baseDir?.path
   assert(path != null) { "Module $module has not paths, and can't be associated" }
 
   val data = getOrCreateAdditionalData()
@@ -222,7 +222,7 @@ fun Sdk.setAssociationToModuleAsync(module: Module) {
 suspend fun Sdk.setAssociationToModule(module: Module) {
   requirePythonSdk()
 
-  val path = module.basePath
+  val path = module.baseDir?.path
   assert(path != null) { "Module $module has not paths, and can't be associated" }
   setAssociationToPath(path)
 }

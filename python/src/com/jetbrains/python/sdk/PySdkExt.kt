@@ -101,7 +101,7 @@ fun filterSystemWideSdks(existingSdks: List<Sdk>): List<Sdk> {
 @Internal
 fun configurePythonSdk(project: Project, module: Module, sdk: Sdk) {
   // in case module contains root of the project we consider it as a project wide interpreter
-  if (project.basePath == module.basePath) {
+  if (project.basePath == module.baseDir?.path) {
     project.pythonSdk = sdk
   }
 
@@ -275,7 +275,7 @@ internal fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsCon
 
 @Internal
 fun Sdk.isAssociatedWithModule(module: Module?): Boolean {
-  val basePath = module?.basePath
+  val basePath = module?.baseDir?.path
   val associatedPath = associatedModulePath
   if (basePath != null && associatedPath == basePath) return true
   if (isAssociatedWithAnotherModule(module)) return false
@@ -284,7 +284,7 @@ fun Sdk.isAssociatedWithModule(module: Module?): Boolean {
 
 @Internal
 fun Sdk.isAssociatedWithAnotherModule(module: Module?): Boolean {
-  val basePath = module?.basePath ?: return false
+  val basePath = module?.baseDir?.path ?: return false
   val associatedPath = associatedModulePath ?: return false
   return basePath != associatedPath
 }
@@ -334,7 +334,7 @@ suspend fun PyDetectedSdk.setupSdk(
   existingSdks: List<Sdk>,
   doAssociate: Boolean,
 ) {
-  val newSdk = setupAssociated(existingSdks, module.basePath, doAssociate).getOr {
+  val newSdk = setupAssociated(existingSdks, module.baseDir?.path, doAssociate).getOr {
     ShowingMessageErrorSync.emit(it.error, module.project)
     return
   }
@@ -623,6 +623,7 @@ val Sdk.sdkSeemsValid: Boolean
 fun setPythonSdk(module: Module, sdk: Sdk) {
   module.pythonSdk = sdk
 }
+
 @Internal
 @Deprecated("Use module.pythonSdk", replaceWith = ReplaceWith("module.pythonSdk"), level = DeprecationLevel.ERROR)
-fun getPythonSdk(module: Module): Sdk?  = module.pythonSdk
+fun getPythonSdk(module: Module): Sdk? = module.pythonSdk

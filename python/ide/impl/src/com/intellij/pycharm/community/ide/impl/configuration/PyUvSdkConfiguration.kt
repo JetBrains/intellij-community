@@ -14,7 +14,7 @@ import com.intellij.python.pyproject.model.api.suggestSdk
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onSuccess
-import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.pyvenvContains
@@ -81,7 +81,7 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
 
   private suspend fun createUv(module: Module, venvsInModule: List<PythonBinary>, envExists: Boolean): PyResult<Sdk> {
     val sdkAssociatedModule = module.getSdkAssociatedModule()
-    val workingDir: Path? = tryResolvePath(sdkAssociatedModule.basePath)
+    val workingDir: Path? = tryResolvePath(sdkAssociatedModule.baseDir?.path)
     if (workingDir == null) {
       throw IllegalStateException("Can't determine working dir for the module")
     }

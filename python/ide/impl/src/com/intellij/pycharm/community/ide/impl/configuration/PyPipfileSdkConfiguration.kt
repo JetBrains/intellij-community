@@ -20,7 +20,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.impl.PySdkBundle
@@ -42,9 +42,10 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override val toolId: ToolId = PIPENV_TOOL_ID
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? = prepareSdkCreator(
-    { checkManageableEnv(module, it) }
-  ) { { createAndAddSdk(module) } }
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+    prepareSdkCreator(
+      { checkManageableEnv(module, it) }
+    ) { { createAndAddSdk(module) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
 
@@ -61,7 +62,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
       canManage && checkExistence -> {
         PropertiesComponent.getInstance().pipenvPath = pipEnvExecutable.pathString
         val envPath = runPipEnv(
-          module.basePath?.toNioPathOrNull(),
+          module.baseDir?.path?.toNioPathOrNull(),
           "--venv",
           transformer = ZeroCodeStdoutParserTransformer { PyResult.success(Path.of(it)) }
         ).successOrNull
@@ -82,9 +83,9 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
   private suspend fun createAndAddSdk(module: Module): PyResult<Sdk> {
     LOGGER.debug("Creating pipenv environment")
     return withBackgroundProgress(module.project, PyBundle.message("python.sdk.using.pipenv.sentence")) {
-      val basePath = module.basePath
+      val basePath = module.baseDir?.path
                      ?: return@withBackgroundProgress PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid",
-                                                                                               module.basePath))
+                                                                                               module.baseDir?.path))
       val pipEnv = setupPipEnv(Path.of(basePath), null, true).getOr {
         PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATION_FAILURE)
         return@withBackgroundProgress it

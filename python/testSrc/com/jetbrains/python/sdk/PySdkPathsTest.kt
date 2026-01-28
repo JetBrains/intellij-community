@@ -285,7 +285,7 @@ class PySdkPathsTest {
     val module = projectModel.createModule(name)
     assertThat(PyUtil.getSourceRoots(module)).isEmpty()
 
-    module.rootManager.modifiableModel.apply {
+   ModuleRootManager.getInstance(module).modifiableModel.apply {
       addContentEntry(moduleRoot)
       runWriteActionAndWait { commit() }
     }

@@ -6,13 +6,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 fun SdkModificator.associateWithModule(module: Module) {
-  val basePath = module.basePath ?: throw IllegalArgumentException("Module $module has no roots and can't be associated")
+  val basePath = module.baseDir?.path ?: throw IllegalArgumentException("Module $module has no roots and can't be associated")
   getOrCreateSdkAdditionalData().associatedModulePath = basePath
 }
 

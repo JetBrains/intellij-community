@@ -69,7 +69,7 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
       is ModuleOrProject.ModuleAndProject -> moduleOrProject.module
       is ModuleOrProject.ProjectOnly -> null
     }
-    val moduleBasePath = module?.basePath?.let { Path.of(it) }
+    val moduleBasePath = module?.baseDir?.path?.let { Path.of(it) }
                          ?: model.projectPathFlows.projectPath.first()
                          ?: error("module base path can't be recognized, both module and project are nulls")
 
@@ -133,9 +133,10 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
     val installedSdk = when (baseInterpreter) {
       is InstallableSelectableInterpreter -> installBaseSdk(baseInterpreter.sdk, model.existingSdks)
         ?.let {
-          val sdkWrapper = runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.progress.title.detect.executable")) {
-            model.fileSystem.wrapSdk(it)
-          }
+          val sdkWrapper =
+            runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.progress.title.detect.executable")) {
+              model.fileSystem.wrapSdk(it)
+            }
           val installed = model.addInstalledInterpreter(sdkWrapper.homePath, baseInterpreter.pythonInfo)
           model.state.baseInterpreter.set(installed)
           installed

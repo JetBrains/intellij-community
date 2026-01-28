@@ -85,7 +85,7 @@ suspend fun createVenvAndSdk(
   }
 
   logger.info("using venv python $venvPython")
-  val sdkBasePath = moduleOrProject.moduleIfExists?.basePath ?: project.basePath
+  val sdkBasePath = moduleOrProject.moduleIfExists?.baseDir?.path ?: project.basePath
   val sdk = getSdk(venvPython, sdkBasePath?.let { Path.of(it) })
   if (moduleOrProject.moduleIfExists == null && project.modules.isEmpty()) {
     writeAction {

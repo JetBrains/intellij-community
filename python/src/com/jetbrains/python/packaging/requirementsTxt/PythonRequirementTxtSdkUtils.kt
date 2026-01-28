@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.findOrCreateFile
@@ -102,7 +103,7 @@ object PythonRequirementTxtSdkUtils {
    */
   @JvmStatic
   fun detectRequirementsTxtInModule(module: Module): VirtualFile? {
-    val requirementsPath = module.rootManager.contentRoots.firstNotNullOfOrNull {
+    val requirementsPath = ModuleRootManager.getInstance(module).contentRoots.firstNotNullOfOrNull {
       it.findChild(PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT)
     }
 

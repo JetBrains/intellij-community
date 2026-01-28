@@ -14,7 +14,7 @@ import java.nio.file.Path
 
 @get:Deprecated("Use root manager directly and obey its contract",
                 replaceWith = ReplaceWith(" ModuleRootManager.getInstance(this)"),
-                level = DeprecationLevel.WARNING)
+                level = DeprecationLevel.ERROR)
 val Module.rootManager: ModuleRootManager
   get() = ModuleRootManager.getInstance(this)
 
@@ -33,7 +33,7 @@ val Module.baseDir: VirtualFile?
   }
 
 
-@get:Deprecated("Representing path as string is discouraged", replaceWith = ReplaceWith("baseBase?.path"), level = DeprecationLevel.WARNING)
+@get:Deprecated("Representing path as string is discouraged", replaceWith = ReplaceWith("baseBase?.path"), level = DeprecationLevel.ERROR)
 val Module.basePath: String?
   get() = baseDir?.path
 

@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -36,7 +37,7 @@ class PythonAddLocalInterpreterPresenter(
    */
   val pathForVEnv: Path
     get() = when (moduleOrProject) {
-              is ModuleOrProject.ModuleAndProject -> moduleOrProject.module.rootManager.contentRoots.firstOrNull()?.toNioPath()
+              is ModuleOrProject.ModuleAndProject -> ModuleRootManager.getInstance(moduleOrProject.module).contentRoots.firstOrNull()?.toNioPath()
                                                      ?: moduleOrProject.project.basePath?.toNioPathOrNull()
               is ModuleOrProject.ProjectOnly -> moduleOrProject.project.basePath?.toNioPathOrNull()
             } ?: envReader.getVEnvRootDir()

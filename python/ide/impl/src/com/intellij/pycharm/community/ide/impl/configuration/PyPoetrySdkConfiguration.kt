@@ -21,7 +21,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.poetry.findPoetryLock
 import com.jetbrains.python.poetry.getPyProjectTomlForPoetry
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
@@ -47,9 +47,10 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
       { checkExistence -> checkManageableEnv(module, checkExistence, true) },
     ) { { createPoetry(module) } }
 
-  override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? = prepareSdkCreator(
-    { checkExistence -> checkManageableEnv(module, checkExistence, false) },
-  ) { { createPoetry(module) } }
+  override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+    prepareSdkCreator(
+      { checkExistence -> checkManageableEnv(module, checkExistence, false) },
+    ) { { createPoetry(module) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension = this
 
@@ -71,7 +72,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
 
     when {
       canManage && checkExistence -> {
-        val basePath = module.basePath?.toNioPathOrNull()
+        val basePath = module.baseDir?.path?.toNioPathOrNull()
         runPoetry(basePath, "check", "--lock").getOr { return@reportRawProgress envNotFound }
         val envPath = runPoetry(basePath, "env", "info", "-p")
           .mapSuccess { it.toNioPathOrNull() }
@@ -87,9 +88,9 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
     withBackgroundProgress(module.project, PyCharmCommunityCustomizationBundle.message("sdk.progress.text.setting.up.poetry.environment")) {
       LOGGER.debug("Creating poetry environment")
 
-      val basePath = module.basePath?.let { Path.of(it) }
+      val basePath = module.baseDir?.path?.let { Path.of(it) }
       if (basePath == null) {
-        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", module.basePath))
+        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", module.baseDir?.path))
       }
       val tomlFile = PyProjectToml.findFile(module)
       val poetry = setupPoetry(basePath, null, true, tomlFile == null).getOr { return@withBackgroundProgress it }
@@ -104,7 +105,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
         PythonSdkUtil.getAllSdks().toTypedArray(),
         file,
         PythonSdkType.getInstance(),
-        PyPoetrySdkAdditionalData(module.basePath?.let { Path.of(it) }),
+        PyPoetrySdkAdditionalData(module.baseDir?.path?.let { Path.of(it) }),
         suggestedSdkName(basePath)
       )
 

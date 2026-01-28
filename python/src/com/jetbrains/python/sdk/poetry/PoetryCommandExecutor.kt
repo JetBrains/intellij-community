@@ -120,7 +120,7 @@ internal suspend fun detectPoetryEnvs(
   existingSdkPaths: Set<String>?,
   projectPath: @SystemIndependent @NonNls String?,
 ): List<PyDetectedSdk> {
-  val path = module?.basePath?.let { Path.of(it) } ?: projectPath?.let { Path.of(it) } ?: return emptyList()
+  val path = module?.baseDir?.path?.let { Path.of(it) } ?: projectPath?.let { Path.of(it) } ?: return emptyList()
   return getPoetryEnvs(path).filter { existingSdkPaths?.contains(getPythonExecutable(it)) != false }
     .map { PyDetectedSdk(getPythonExecutable(it)) }
 }

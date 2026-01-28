@@ -28,9 +28,10 @@ import kotlin.io.path.name
 internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
   override val toolId: ToolId = VENV_TOOL_ID
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? = prepareSdkCreator(
-    { checkManageableEnv(module, venvsInModule) }
-  ) { envExists -> { setupVenv(module, venvsInModule, envExists) } }
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+    prepareSdkCreator(
+      { checkManageableEnv(module, venvsInModule) }
+    ) { envExists -> { setupVenv(module, venvsInModule, envExists) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
 
@@ -65,7 +66,7 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
     val pyDetectedSdk = PyDetectedSdk(pythonBinary.toString())
     val sdk = pyDetectedSdk.setupAssociated(
       PythonSdkUtil.getAllSdks(),
-      module.basePath,
+      module.baseDir?.path,
       true,
       PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance())
     ).getOr { return it }

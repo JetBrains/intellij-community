@@ -13,6 +13,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.*
+import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.moduleIfExists
@@ -43,7 +44,7 @@ internal class PoetryExistingEnvironmentSelector<P : PathHolder>(model: PythonMu
       return Result.success(it)
     }
 
-    val basePathString = moduleOrProject.moduleIfExists?.basePath ?: moduleOrProject.project.basePath
+    val basePathString = moduleOrProject.moduleIfExists?.baseDir?.path ?: moduleOrProject.project.basePath
     val basePath = basePathString?.let { Path.of(it) } ?: error("module base path is not valid: $basePathString")
 
     return createPoetrySdk(basePath, pythonBinaryPath)

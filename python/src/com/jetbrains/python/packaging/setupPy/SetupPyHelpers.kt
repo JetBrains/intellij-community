@@ -4,6 +4,7 @@ package com.jetbrains.python.packaging.setupPy
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -28,7 +29,7 @@ internal object SetupPyHelpers {
 
   @JvmStatic
   fun detectSetupPyInModule(module: Module): PyFile? {
-    val file = module.rootManager.contentRoots.firstNotNullOfOrNull {
+    val file = ModuleRootManager.getInstance(module).contentRoots.firstNotNullOfOrNull {
       it.findChild(SETUP_PY)
     } ?: return null
 
