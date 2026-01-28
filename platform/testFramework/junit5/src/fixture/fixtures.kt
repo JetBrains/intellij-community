@@ -54,7 +54,8 @@ import kotlin.io.path.exists
 fun testNameFixture(lowerCaseFirstLetter: Boolean = true): TestFixture<String> = testFixture {
   val testName = if (lowerCaseFirstLetter) {
     it.testName.replaceFirstChar { chr -> chr.lowercaseChar() }
-  } else {
+  }
+  else {
     it.testName
   }
 
@@ -168,7 +169,9 @@ fun TestFixture<Project>.moduleFixture(
   moduleType?.let { module.setModuleType(it) }
   initialized(module) {
     edtWriteAction {
-      manager.disposeModule(module)
+      if (!module.isDisposed) {
+        manager.disposeModule(module)
+      }
     }
   }
 }
