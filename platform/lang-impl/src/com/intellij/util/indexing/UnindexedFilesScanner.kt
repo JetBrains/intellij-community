@@ -374,6 +374,7 @@ class UnindexedFilesScanner (
   ) {
     try {
       if (!IndexInfrastructure.hasIndices()) {
+        scanningHistory.setWasCancelled("'idea.skip.indices.initialization' flag is set")
         return
       }
       scanUnindexedFiles(indicator, progressReporter, markRef, scanningIterators)
