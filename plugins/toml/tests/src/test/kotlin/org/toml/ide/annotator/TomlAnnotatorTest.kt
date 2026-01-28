@@ -9,8 +9,8 @@ class TomlAnnotatorTest : TomlAnnotatorTestBase(TomlAnnotator::class) {
 
     fun `test inline tables`() = checkByText("""
         a = {something = "", another = ""}
-        a = <error>{something = "",
-            another = ""}</error>
+        a = {something = "",
+            another = ""}
         a = {something = [
                 "foo", "bar"
             ]}

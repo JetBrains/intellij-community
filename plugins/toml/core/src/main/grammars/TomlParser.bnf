@@ -48,6 +48,7 @@ NewLineKeyValue ::= <<atNewLine KeyValue>> {
     elementType = KeyValue
     recoverWhile = EatUntilNextLine_recover
 }
+InlineTableKeyValue ::= Key '=' Value { pin = 1 }
 
 Key ::= KeySegment ('.' KeySegment)*
 KeySegment ::= BareKey | BASIC_STRING | LITERAL_STRING
@@ -94,4 +95,4 @@ ArrayTableHeader ::= '[''[' Key ']'']' {
 }
 
 InlineTable ::= '{' InlineTableElement* '}' { pin = 1 }
-private InlineTableElement ::= KeyValue (','|&'}') { pin = 1 }
+private InlineTableElement ::= InlineTableKeyValue (','|&'}') { pin = 1 }
