@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
@@ -517,24 +518,14 @@ public final class AsyncStacksUtils {
   }
 
   private static void initializeOverheadDetector(DebugProcessImpl process) {
-    AsyncStackTracesOverheadUtilsKt.initializeLastSessionPauseListener(process);
+    AsyncStackTracesOverheadUtilsKt.initializeOverheadListener(process);
 
     String className = "com.intellij.rt.debugger.agent.OverheadDetector";
     String methodName = "overheadDetected";
     var breakpoint = new SyntheticMethodBreakpoint(className, methodName, null, process.getProject()) {
       @Override
       public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) {
-        if (event == null) return false;
-        try {
-          List<Value> args = DebuggerUtilsEx.getArgumentValues(event.thread().frame(0));
-          Value overheadValue = ContainerUtil.getFirstItem(args);
-          if (overheadValue instanceof ObjectReference overhead) {
-            AsyncStackTracesOverheadUtilsKt.showOverheadNotification(process, overhead);
-          }
-        }
-        catch (IncompatibleThreadStateException e) {
-          LOG.error(e);
-        }
+        AsyncStackTracesOverheadUtilsKt.onOverheadDetected(process);
         return false;
       }
     };

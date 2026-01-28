@@ -21,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus
 object DebuggerStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("java.debugger", 15)
+  private val GROUP = EventLogGroup("java.debugger", 16)
 
   // fields
 
@@ -76,14 +76,6 @@ object DebuggerStatistics : CounterUsagesCollector() {
   private val agentOverheadDetected = GROUP.registerEvent("debugger.agent.overhead.detected",
                                                           EventFields.Long("passed_since_session_start_ms"),
                                                           "Detected noticeable overhead of the debugger agent due to async stack traces collection")
-  private val agentOverheadNotificationShown = GROUP.registerEvent("debugger.agent.overhead.notification.shown",
-                                                                   "Debugger agent overhead notification was shown (happens after overhead detected in 3 seconds)")
-  private val agentOverheadNotificationDismissed = GROUP.registerEvent("debugger.agent.overhead.notification.dismissed",
-                                                                       "Debugger agent overhead notification was dismissed")
-  private val agentOverheadNotificationAgentDisabled = GROUP.registerEvent("debugger.agent.overhead.notification.agent.disabled",
-                                                                           "Debugger agent was disabled on overhead detected")
-  private val agentOverheadNotificationThrottlingEnabled = GROUP.registerEvent("debugger.agent.overhead.notification.throttling.enabled",
-                                                                               "Throttling of debugger agent was enabled on overhead detected")
 
   @JvmStatic
   fun logProcessStatistics(debugProcess: DebugProcess) {
@@ -191,22 +183,6 @@ object DebuggerStatistics : CounterUsagesCollector() {
 
   fun logAgentOverheadDetected(project: Project, passedSinceSessionStartMs: Long) {
     agentOverheadDetected.log(project, passedSinceSessionStartMs)
-  }
-
-  fun logAgentOverheadNotificationShown(project: Project) {
-    agentOverheadNotificationShown.log(project)
-  }
-
-  fun logAgentOverheadNotificationDismissed(project: Project) {
-    agentOverheadNotificationDismissed.log(project)
-  }
-
-  fun logAgentOverheadNotificationAgentDisabled(project: Project) {
-    agentOverheadNotificationAgentDisabled.log(project)
-  }
-
-  fun logAgentOverheadNotificationThrottlingEnabled(project: Project) {
-    agentOverheadNotificationThrottlingEnabled.log(project)
   }
 
 

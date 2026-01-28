@@ -169,8 +169,6 @@
 
     <notificationGroup id="HotSwap" displayType="TOOL_WINDOW" toolWindowId="Debug" bundle="messages.JavaDebuggerBundle"
                        key="notification.group.hotswap"/>
-    <notificationGroup id="AsyncStackTraces" displayType="BALLOON" bundle="messages.JavaDebuggerBundle"
-                       key="async.stack.traces.notification.group"/>
 
     <debugger.dfaAssistProvider language="JAVA" implementationClass="com.intellij.debugger.engine.dfaassist.java.JavaDfaAssistProvider"/>
 
