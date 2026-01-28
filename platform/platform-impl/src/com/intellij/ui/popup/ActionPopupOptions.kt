@@ -154,6 +154,8 @@ class ActionPopupOptions private constructor(
       }
 
       return ActionPopupOptionsImpl(
+        showNumbers = options.showNumbers,
+        useAlphaAsNumbers = options.useAlphaAsNumbers,
         showDisabledActions = options.showDisabledActions,
         honorActionMnemonics = enableMnemonics,
         autoSelection = options.autoSelection,
@@ -168,6 +170,8 @@ class ActionPopupOptions private constructor(
       options: ActionPopupOptions,
     ): ActionPopupOptions {
       return ActionPopupOptionsImpl(
+        showNumbers = options.options.showNumbers,
+        useAlphaAsNumbers = options.options.useAlphaAsNumbers,
         showDisabledActions = options.options.showDisabledActions,
         honorActionMnemonics = false,
         autoSelection = false,
