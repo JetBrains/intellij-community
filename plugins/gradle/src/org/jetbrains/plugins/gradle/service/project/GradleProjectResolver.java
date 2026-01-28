@@ -287,8 +287,8 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
       }
     }
 
-    var mainInitScriptPath = GradleInitScriptUtil.createMainInitScript(resolverContext.isBuildSrcProject(), toolingExtensionClasses);
-    executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, mainInitScriptPath.toString());
+    var mainInitScript = GradleInitScriptUtil.createMainInitScript(resolverContext.isBuildSrcProject(), toolingExtensionClasses);
+    executionSettings.addInitScript(resolverContext.getGradleVersion(), mainInitScript);
 
     if (!executionSettings.isDownloadSources()) {
       var ideaPluginConfiguratorInitScriptPath = GradleInitScriptUtil.createIdeaPluginConfiguratorInitScript();

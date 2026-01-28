@@ -8,6 +8,7 @@ import com.google.common.collect.Multimap
 import com.google.gson.GsonBuilder
 import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass
 import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass
+import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -101,17 +102,37 @@ val GRADLE_TOOLING_EXTENSION_PROXY_CLASSES: Set<Class<*>> = GRADLE_TOOLING_EXTEN
 )
 
 @ApiStatus.Internal
-fun createMainInitScript(isBuildSrcProject: Boolean, toolingExtensionClasses: Set<Class<*>>): Path {
-  val initScript = joinInitScripts(
-    loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES + toolingExtensionClasses),
-    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/RegistryProcessor.gradle"),
-    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JetGradlePlugin.gradle"),
-    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/Init.gradle", mapOf(
-      "IS_BUILD_SCR_PROJECT" to isBuildSrcProject.toString()
-    ))
-  )
-  return createInitScript(MAIN_INIT_SCRIPT_NAME, initScript)
-}
+fun createMainInitScript(isBuildSrcProject: Boolean, toolingExtensionClasses: Set<Class<*>>): List<VersionSpecificInitScript> = listOf(
+  LazyVersionSpecificInitScript(
+    filePrefix = MAIN_INIT_SCRIPT_NAME,
+    isApplicable = { GradleVersionSpecificsUtil.isBuildScopeModelBuilderSupported(it) },
+    scriptSupplier = {
+      joinInitScripts(
+        loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES + toolingExtensionClasses),
+        loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/modelFetchAction/GradleDaemonClassLoaderModelInit.gradle"),
+        loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/RegistryProcessor.gradle"),
+        loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JetGradlePlugin.gradle"),
+        loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/Init.gradle", mapOf(
+          "IS_BUILD_SCR_PROJECT" to isBuildSrcProject.toString()
+        ))
+      )
+    }
+  ),
+  LazyVersionSpecificInitScript(
+    filePrefix = MAIN_INIT_SCRIPT_NAME,
+    isApplicable = { !GradleVersionSpecificsUtil.isBuildScopeModelBuilderSupported(it) },
+    scriptSupplier = {
+      joinInitScripts(
+        loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES + toolingExtensionClasses),
+        loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/RegistryProcessor.gradle"),
+        loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JetGradlePlugin.gradle"),
+        loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/Init.gradle", mapOf(
+          "IS_BUILD_SCR_PROJECT" to isBuildSrcProject.toString()
+        ))
+      )
+    }
+  ),
+)
 
 @ApiStatus.Internal
 fun createIdeaPluginConfiguratorInitScript(): Path {

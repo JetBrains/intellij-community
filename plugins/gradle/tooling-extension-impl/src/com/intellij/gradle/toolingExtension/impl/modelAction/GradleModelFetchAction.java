@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.modelAction;
 
+import com.intellij.gradle.toolingExtension.impl.util.GradleClassLoaderUtil;
 import com.intellij.gradle.toolingExtension.impl.model.dslBaseScriptModel.GradleDslBaseScriptModelHolder;
 import com.intellij.gradle.toolingExtension.impl.modelSerialization.ToolingSerializerConverter;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry;
@@ -189,8 +190,11 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     Collection<? extends GradleBuild> nestedGradleBuilds = GradleOpenTelemetry.callWithSpan("GetNestedGradleBuilds", __ ->
       getNestedBuilds(mainGradleBuild, gradleVersion)
     );
+    ClassLoader daemonClassLoader = GradleOpenTelemetry.callWithSpan("GetDaemonClassLoader", __ ->
+      GradleClassLoaderUtil.getDaemonClassLoader(modelController)
+    );
     ToolingSerializerConverter serializer = GradleOpenTelemetry.callWithSpan("GetToolingModelConverter", __ ->
-      new ToolingSerializerConverter(buildController)
+      new ToolingSerializerConverter(daemonClassLoader)
     );
     return GradleOpenTelemetry.callWithSpan("InitModelConsumer", __ ->
       new GradleDaemonModelHolder(converterExecutor, serializer, mainGradleBuild, nestedGradleBuilds, gradleVersion)

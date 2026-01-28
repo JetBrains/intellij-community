@@ -1,0 +1,26 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+//file:noinspection GrPackage
+
+// This init-script is optional, enabled since Gradle 7.3
+
+import com.intellij.gradle.toolingExtension.impl.model.util.daemonClassLoaderModel.GradleDaemonClassLoaderModelBuilder
+import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
+import javax.inject.Inject
+
+beforeSettings { settings ->
+  settings.plugins.apply(GradleDaemonClassLoaderModelPlugin)
+}
+
+class GradleDaemonClassLoaderModelPlugin implements Plugin<Settings> {
+
+  private final ToolingModelBuilderRegistry registry
+
+  @Inject
+  GradleDaemonClassLoaderModelPlugin(ToolingModelBuilderRegistry registry) {
+    this.registry = registry
+  }
+
+  void apply(Settings settings) {
+    registry.register(new GradleDaemonClassLoaderModelBuilder())
+  }
+}

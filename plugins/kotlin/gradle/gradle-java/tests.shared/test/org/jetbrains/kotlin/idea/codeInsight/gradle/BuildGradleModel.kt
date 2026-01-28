@@ -28,7 +28,6 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 import kotlin.reflect.KClass
 import kotlin.test.fail
 
@@ -110,7 +109,7 @@ fun <T : Any> buildGradleModel(
             kotlinToolingExtensionClasses.add(builderClass)
         }
         val initScript = createMainInitScript(false, kotlinToolingExtensionClasses)
-        executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.toString())
+        executionSettings.addInitScript(gradleVersion, initScript)
 
         val buildActionExecutor = gradleConnection.action(buildAction)
         buildActionExecutor.withArguments(executionSettings.arguments)
