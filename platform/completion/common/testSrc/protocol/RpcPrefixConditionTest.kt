@@ -358,6 +358,63 @@ class RpcPrefixConditionTest {
     }
   }
 
+  @Test
+  fun `test And descriptor roundtrip`() {
+    val descriptor = AndDescriptor(AlwaysTrueDescriptor, EndsWithDescriptor("-"))
+    val original = StandardPatterns.string().and(StandardPatterns.string().endsWith("-"))
+
+    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val reconstructed = rpc.fromRpc()
+
+    for (input in listOf("", "a", "a-", "-", "test-", "test")) {
+      assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
+    }
+  }
+
+  @Test
+  fun `test And with afterNonJavaIdentifierPart and Or roundtrip`() {
+    // This is the pattern used by endsWithOneOf()
+    val descriptor = AndDescriptor(
+      AfterNonJavaIdentifierPartDescriptor,
+      OrDescriptor(listOf(EndsWithDescriptor("abc"), EndsWithDescriptor("def")))
+    )
+
+    val original = StandardPatterns.string()
+      .afterNonJavaIdentifierPart()
+      .and(StandardPatterns.or(
+        StandardPatterns.string().endsWith("abc"),
+        StandardPatterns.string().endsWith("def")
+      ))
+
+    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val reconstructed = rpc.fromRpc()
+
+    for (input in listOf("", "a", " abc", ".def", "xabc", "x.abc", " x")) {
+      assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
+    }
+  }
+
+  @Test
+  fun `test endsWithOneOf pattern roundtrip`() {
+    // endsWithOneOf internally uses: .and(StandardPatterns.or(endsWith patterns...))
+    // Build descriptor manually (converter uses extension points which need app context)
+    val descriptor = AndDescriptor(
+      AfterNonJavaIdentifierPartDescriptor,
+      OrDescriptor(listOf(EndsWithDescriptor("key1"), EndsWithDescriptor("key2")))
+    )
+
+    val original = StandardPatterns.string()
+      .afterNonJavaIdentifierPart()
+      .endsWithOneOf(listOf("key1", "key2"))
+
+    val rpc = RpcPrefixCondition.Serialized(descriptor)
+    val reconstructed = rpc.fromRpc()
+
+    for (input in listOf("", "key1", " key1", ".key2", "xkey1", "x.key1")) {
+      assertEquals(original.accepts(input), reconstructed.accepts(input), "Mismatch for '$input'")
+    }
+  }
+
   // ============================================================================
   // Tests for converter rejection of incompatible patterns
   // ============================================================================

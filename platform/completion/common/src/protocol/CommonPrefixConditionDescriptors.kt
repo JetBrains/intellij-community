@@ -280,3 +280,67 @@ class AfterNonJavaIdentifierPartConditionConverter : PrefixConditionDescriptorCo
 object AfterNonJavaIdentifierPartDescriptor : PrefixConditionDescriptor {
   override fun recreatePattern(): ElementPattern<String> = StandardPatterns.string().afterNonJavaIdentifierPart()
 }
+
+// ============================================================================
+// And - pattern.and(otherPattern)
+// ============================================================================
+
+class AndPatternConverter : PrefixConditionDescriptorConverter<StringPattern> {
+  override fun toDescriptor(target: StringPattern): PrefixConditionDescriptor? {
+    val conditions = target.condition.conditions
+    if (conditions.isEmpty()) return null
+
+    // Find the last condition that is a PatternConditionPlus with "and"
+    val lastCondition = conditions.lastOrNull()
+    val andCondition = lastCondition as? PatternConditionPlus<*, *> ?: return null
+    if (andCondition.debugMethodName != "and") return null
+
+    // Get the wrapped pattern from and()
+    @Suppress("UNCHECKED_CAST")
+    val wrappedPattern = andCondition.valuePattern as? ElementPattern<String> ?: return null
+    val wrappedDescriptor = FrontendFriendlyPrefixConditionSerializer.toDescriptor(wrappedPattern)
+      ?: return null
+
+    // Get base pattern conditions (without the and)
+    val baseConditions = conditions.dropLast(1)
+    val baseDescriptor = when {
+      baseConditions.isEmpty() -> AlwaysTrueDescriptor
+      baseConditions.size == 1 -> {
+        // Try to match the single condition to a known descriptor
+        getDescriptorForSingleCondition(baseConditions.single()) ?: return null
+      }
+      else -> return null // TODO Multiple conditions not yet supported
+    }
+
+    return AndDescriptor(baseDescriptor, wrappedDescriptor)
+  }
+
+  // TODO rework, this is a temporary solution until we have a proper way to handle multiple conditions
+  //      it should support arbitrary conditions
+  private fun getDescriptorForSingleCondition(condition: PatternCondition<*>): PrefixConditionDescriptor? {
+    return when (condition) {
+      is StringPattern.LongerThanCondition -> LongerThanDescriptor(condition.minLength)
+      is StringPattern.ShorterThanCondition -> ShorterThanDescriptor(condition.maxLength)
+      is StringPattern.WithLengthCondition -> WithLengthDescriptor(condition.length)
+      is StringPattern.StartsWithCondition -> StartsWithDescriptor(condition.prefix)
+      is StringPattern.EndsWithCondition -> EndsWithDescriptor(condition.suffix)
+      is StringPattern.ContainsCondition -> ContainsDescriptor(condition.substring)
+      is StringPattern.EndsWithUppercaseLetterCondition -> EndsWithUppercaseLetterDescriptor
+      is StringPattern.AfterNonJavaIdentifierPartCondition -> AfterNonJavaIdentifierPartDescriptor
+      else -> null
+    }
+  }
+}
+
+@Serializable
+data class AndDescriptor(
+  val base: PrefixConditionDescriptor,
+  val combined: PrefixConditionDescriptor
+) : PrefixConditionDescriptor {
+  override fun recreatePattern(): ElementPattern<String> {
+    val basePattern = base.recreatePattern()
+    val combinedPattern = combined.recreatePattern()
+    @Suppress("UNCHECKED_CAST")
+    return (basePattern as ObjectPattern<String, *>).and(combinedPattern)
+  }
+}

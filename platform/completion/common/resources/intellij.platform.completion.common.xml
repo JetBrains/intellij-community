@@ -54,6 +54,9 @@
     <completion.frontendFriendlyPrefixCondition target="com.intellij.patterns.StringPattern"
                                                  converter="com.intellij.platform.completion.common.protocol.AfterNonJavaIdentifierPartConditionConverter"
                                                  descriptor="com.intellij.platform.completion.common.protocol.AfterNonJavaIdentifierPartDescriptor"/>
+    <completion.frontendFriendlyPrefixCondition target="com.intellij.patterns.StringPattern"
+                                                 converter="com.intellij.platform.completion.common.protocol.AndPatternConverter"
+                                                 descriptor="com.intellij.platform.completion.common.protocol.AndDescriptor"/>
     <completion.frontendFriendlyPrefixCondition target="com.intellij.patterns.ObjectPattern$Capture"
                                                  converter="com.intellij.platform.completion.common.protocol.OrPatternConverter"
                                                  descriptor="com.intellij.platform.completion.common.protocol.OrDescriptor"/>
