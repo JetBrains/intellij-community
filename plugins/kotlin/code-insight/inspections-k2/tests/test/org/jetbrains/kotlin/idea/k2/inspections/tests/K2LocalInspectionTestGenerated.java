@@ -13485,6 +13485,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/twoGetters.kt");
             }
 
+            @TestMetadata("withBlankLines.kt")
+            public void testWithBlankLines() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/withBlankLines.kt");
+            }
+
             @TestMetadata("withCustomFunctions.kt")
             public void testWithCustomFunctions() throws Exception {
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/withCustomFunctions.kt");

@@ -7,7 +7,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.childrenOfType
+import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
@@ -96,6 +98,10 @@ internal class ConvertToExplicitBackingFieldsInspection :
             val newProperty = psiFactory.createProperty(newPropertyText)
             element.replace(newProperty).reformat(canChangeWhiteSpacesOnly = true)
 
+            backingProperty.parent.deleteChildRange(
+                backingProperty,
+                backingProperty.siblings(withSelf = false).takeWhile { it is PsiWhiteSpace }.lastOrNull() ?: backingProperty
+            )
             backingProperty.delete()
         }
     }
