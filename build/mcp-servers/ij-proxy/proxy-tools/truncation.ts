@@ -2,11 +2,11 @@
 
 import {TRUNCATION_MARKER} from './shared'
 
-export function isTruncatedText(text) {
+export function isTruncatedText(text: string): boolean {
   return findTruncationMarkerSuffix(text) >= 0 || findTruncationMarkerLine(text) >= 0
 }
 
-export function findTruncationMarkerSuffix(text) {
+export function findTruncationMarkerSuffix(text: string): number {
   if (text.endsWith(TRUNCATION_MARKER)) {
     return text.length - TRUNCATION_MARKER.length
   }
@@ -19,7 +19,7 @@ export function findTruncationMarkerSuffix(text) {
   return -1
 }
 
-export function findTruncationMarkerLine(text) {
+export function findTruncationMarkerLine(text: string): number {
   let index = text.indexOf(TRUNCATION_MARKER)
   while (index >= 0) {
     const beforeIndex = index - 1
@@ -34,6 +34,6 @@ export function findTruncationMarkerLine(text) {
   return -1
 }
 
-function isLineBreakChar(code) {
+function isLineBreakChar(code: number): boolean {
   return code === 10 || code === 13
 }

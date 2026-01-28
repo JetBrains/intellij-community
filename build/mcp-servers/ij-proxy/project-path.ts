@@ -1,12 +1,28 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-export function createProjectPathManager({projectPath, defaultProjectPathKey = 'project_path'}) {
-  let projectPathKey = null
+import type {ToolSpecLike} from './proxy-tools/types'
+
+type ProjectPathKey = 'project_path' | 'projectPath'
+
+interface ProjectPathManager {
+  injectProjectPathArgs: (toolName: string | undefined, args: Record<string, unknown>) => void
+  stripProjectPathFromTools: (tools: ToolSpecLike[]) => void
+  updateProjectPathKeys: (tools: ToolSpecLike[]) => void
+}
+
+export function createProjectPathManager({
+  projectPath,
+  defaultProjectPathKey = 'project_path'
+}: {
+  projectPath: string
+  defaultProjectPathKey?: ProjectPathKey
+}): ProjectPathManager {
+  let projectPathKey: ProjectPathKey | null = null
   let hasSeenToolsList = false
   let hasProjectPathTools = false
-  const toolProjectPathKeyByName = new Map()
+  const toolProjectPathKeyByName = new Map<string, ProjectPathKey>()
 
-  function normalizeProjectPathArgs(args, desiredKey) {
+  function normalizeProjectPathArgs(args: Record<string, unknown>, desiredKey: ProjectPathKey | null): void {
     if (!desiredKey) return
 
     const hasSnake = Object.prototype.hasOwnProperty.call(args, 'project_path')
@@ -44,14 +60,14 @@ export function createProjectPathManager({projectPath, defaultProjectPathKey = '
     }
   }
 
-  function shouldInjectProjectPath(toolName) {
+  function shouldInjectProjectPath(toolName: string | undefined): boolean {
     if (!hasSeenToolsList) return true
     if (!hasProjectPathTools) return false
     if (!toolName) return true
     return toolProjectPathKeyByName.has(toolName)
   }
 
-  function chooseProjectPathKey(toolName) {
+  function chooseProjectPathKey(toolName: string | undefined): ProjectPathKey {
     if (toolName) {
       const key = toolProjectPathKeyByName.get(toolName)
       if (key) return key
@@ -59,14 +75,14 @@ export function createProjectPathManager({projectPath, defaultProjectPathKey = '
     return projectPathKey || defaultProjectPathKey
   }
 
-  function injectProjectPathArgs(toolName, args) {
+  function injectProjectPathArgs(toolName: string | undefined, args: Record<string, unknown>): void {
     if (!args || typeof args !== 'object') return
     if (shouldInjectProjectPath(toolName)) {
       normalizeProjectPathArgs(args, chooseProjectPathKey(toolName))
     }
   }
 
-  function updateProjectPathKeys(tools) {
+  function updateProjectPathKeys(tools: ToolSpecLike[]): void {
     if (!Array.isArray(tools)) return
 
     let hasSnake = false
@@ -79,13 +95,17 @@ export function createProjectPathManager({projectPath, defaultProjectPathKey = '
 
       if (Object.prototype.hasOwnProperty.call(props, 'project_path')) {
         hasSnake = true
-        toolProjectPathKeyByName.set(tool.name, 'project_path')
+        if (typeof tool.name === 'string') {
+          toolProjectPathKeyByName.set(tool.name, 'project_path')
+        }
         continue
       }
 
       if (Object.prototype.hasOwnProperty.call(props, 'projectPath')) {
         hasCamel = true
-        toolProjectPathKeyByName.set(tool.name, 'projectPath')
+        if (typeof tool.name === 'string') {
+          toolProjectPathKeyByName.set(tool.name, 'projectPath')
+        }
       }
     }
 
@@ -97,7 +117,7 @@ export function createProjectPathManager({projectPath, defaultProjectPathKey = '
     else projectPathKey = null
   }
 
-  function stripProjectPathFromTools(tools) {
+  function stripProjectPathFromTools(tools: ToolSpecLike[]): void {
     if (!Array.isArray(tools)) return
 
     for (const tool of tools) {

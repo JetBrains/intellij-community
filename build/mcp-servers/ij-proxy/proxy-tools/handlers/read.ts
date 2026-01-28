@@ -14,6 +14,7 @@ import {
   TRUNCATION_MARKER
 } from '../shared'
 import {findTruncationMarkerLine, findTruncationMarkerSuffix} from '../truncation'
+import type {SearchEntry, UpstreamToolCaller} from '../types'
 
 const DEFAULT_READ_LIMIT = 2000
 const MAX_LINE_LENGTH = 500
@@ -26,7 +27,56 @@ const TRUNCATION_ERROR = 'file content truncated while reading'
 const SEARCH_FALLBACK_REGEX = '(?m)^.*$'
 const SEARCH_FALLBACK_MAX_LINES = 200_000
 
-export async function handleReadTool(args, projectPath, callUpstreamTool, {format = 'numbered'} = {}) {
+type ReadFormat = 'numbered' | 'raw'
+
+interface ReadIndentationArgs {
+  anchor_line?: unknown
+  max_levels?: unknown
+  include_siblings?: unknown
+  include_header?: unknown
+  max_lines?: unknown
+}
+
+interface ReadToolArgs {
+  file_path?: unknown
+  offset?: unknown
+  limit?: unknown
+  mode?: unknown
+  indentation?: ReadIndentationArgs | null
+}
+
+interface IndentationOptions {
+  anchorLine?: number | null
+  maxLevels: number
+  includeSiblings: boolean
+  includeHeader: boolean
+  maxLines?: number | null
+}
+
+interface LineRecord {
+  number: number
+  raw: string
+  effectiveIndent: number
+  isHeader: boolean
+}
+
+interface TrimResult {
+  text: string
+  wasTruncated: boolean
+}
+
+interface SearchLinesResult {
+  lineMap: Map<number, string>
+  maxLineNumber: number
+  hasMore: boolean
+}
+
+export async function handleReadTool(
+  args: ReadToolArgs,
+  projectPath: string,
+  callUpstreamTool: UpstreamToolCaller,
+  {format = 'numbered'}: {format?: ReadFormat} = {}
+): Promise<string> {
   const filePath = requireString(args.file_path, 'file_path')
   const offset = toPositiveInt(args.offset, 1, 'offset')
   const limit = toPositiveInt(args.limit, DEFAULT_READ_LIMIT, 'limit')
@@ -34,7 +84,7 @@ export async function handleReadTool(args, projectPath, callUpstreamTool, {forma
   const mode = modeRaw === 'indentation' ? 'indentation' : 'slice'
   const includeLineNumbers = format !== 'raw'
 
-  const indentation = args.indentation ?? {}
+  const indentation = (args.indentation ?? {}) as ReadIndentationArgs
   const anchorLine = indentation.anchor_line === undefined || indentation.anchor_line === null
     ? null
     : toPositiveInt(indentation.anchor_line, undefined, 'anchor_line')
@@ -84,7 +134,7 @@ export async function handleReadTool(args, projectPath, callUpstreamTool, {forma
   }
 }
 
-function formatLine(line) {
+function formatLine(line: string): string {
   if (line.length <= MAX_LINE_LENGTH) return line
   const boundaryIndex = MAX_LINE_LENGTH - 1
   const boundaryChar = line.charCodeAt(boundaryIndex)
@@ -94,14 +144,20 @@ function formatLine(line) {
   return line.slice(0, MAX_LINE_LENGTH)
 }
 
-function formatOutputLine(lineNumber, lineText, includeLineNumbers) {
+function formatOutputLine(lineNumber: number, lineText: string, includeLineNumbers: boolean): string {
   if (!includeLineNumbers) {
     return lineText
   }
   return `L${lineNumber}: ${lineText}`
 }
 
-async function readSliceMode(relativePath, offset, limit, includeLineNumbers, callUpstreamTool) {
+async function readSliceMode(
+  relativePath: string,
+  offset: number,
+  limit: number,
+  includeLineNumbers: boolean,
+  callUpstreamTool: UpstreamToolCaller
+): Promise<string> {
   const requestedLines = offset + limit - 1
   if (requestedLines <= 0) {
     throw new Error('limit must be greater than zero')
@@ -137,7 +193,15 @@ async function readSliceMode(relativePath, offset, limit, includeLineNumbers, ca
   return sliceLines(lines, offset, limit, includeLineNumbers)
 }
 
-async function readSliceModeFromSearch(projectPath, relativePath, absolutePath, offset, limit, includeLineNumbers, callUpstreamTool) {
+async function readSliceModeFromSearch(
+  projectPath: string,
+  relativePath: string,
+  absolutePath: string,
+  offset: number,
+  limit: number,
+  includeLineNumbers: boolean,
+  callUpstreamTool: UpstreamToolCaller
+): Promise<string> {
   const requestedLines = offset + limit - 1
   if (requestedLines <= 0) {
     throw new Error('limit must be greater than zero')
@@ -168,7 +232,7 @@ async function readSliceModeFromSearch(projectPath, relativePath, absolutePath, 
   return output.join('\n')
 }
 
-function measureIndent(line) {
+function measureIndent(line: string): number {
   let indent = 0
   for (const char of line) {
     if (char === ' ') indent += 1
@@ -178,7 +242,7 @@ function measureIndent(line) {
   return indent
 }
 
-function trimEmptyRecords(records) {
+function trimEmptyRecords(records: LineRecord[]): void {
   while (records.length > 0 && records[0].raw.trim() === '') {
     records.shift()
   }
@@ -187,7 +251,7 @@ function trimEmptyRecords(records) {
   }
 }
 
-function iterateLines(text, onLine) {
+function iterateLines(text: string, onLine: (line: string, lineNumber: number) => boolean | void): number {
   let lineStart = 0
   let lineNumber = 1
   const length = text.length
@@ -214,7 +278,14 @@ function iterateLines(text, onLine) {
   return lineNumber - 1
 }
 
-async function readIndentationMode(relativePath, offset, limit, options, includeLineNumbers, callUpstreamTool) {
+async function readIndentationMode(
+  relativePath: string,
+  offset: number,
+  limit: number,
+  options: IndentationOptions,
+  includeLineNumbers: boolean,
+  callUpstreamTool: UpstreamToolCaller
+): Promise<string> {
   const anchorLine = options.anchorLine ?? offset
   if (anchorLine <= 0) {
     throw new Error('anchor_line exceeds file length')
@@ -255,7 +326,16 @@ async function readIndentationMode(relativePath, offset, limit, options, include
   }
 }
 
-async function readIndentationModeFromSearch(projectPath, relativePath, absolutePath, offset, limit, options, includeLineNumbers, callUpstreamTool) {
+async function readIndentationModeFromSearch(
+  projectPath: string,
+  relativePath: string,
+  absolutePath: string,
+  offset: number,
+  limit: number,
+  options: IndentationOptions,
+  includeLineNumbers: boolean,
+  callUpstreamTool: UpstreamToolCaller
+): Promise<string> {
   const anchorLine = options.anchorLine ?? offset
   if (anchorLine <= 0) {
     throw new Error('anchor_line exceeds file length')
@@ -292,7 +372,13 @@ async function readIndentationModeFromSearch(projectPath, relativePath, absolute
 }
 
 
-function readIndentationFromText(text, offset, limit, options, includeLineNumbers) {
+function readIndentationFromText(
+  text: string,
+  offset: number,
+  limit: number,
+  options: IndentationOptions,
+  includeLineNumbers: boolean
+): string {
   const anchorLine = options.anchorLine ?? offset
   if (anchorLine <= 0) {
     throw new Error('anchor_line exceeds file length')
@@ -307,10 +393,10 @@ function readIndentationFromText(text, offset, limit, options, includeLineNumber
 
   const maxBefore = Math.max(0, targetLimit - 1)
   const maxAfter = maxBefore
-  const beforeBuffer = []
+  const beforeBuffer: LineRecord[] = []
   let beforeStart = 0
-  const afterBuffer = []
-  let anchorRecord = null
+  const afterBuffer: LineRecord[] = []
+  let anchorRecord: LineRecord | null = null
   let minIndent = 0
   let previousIndent = 0
   let inBlockComment = false
@@ -434,7 +520,7 @@ function readIndentationFromText(text, offset, limit, options, includeLineNumber
   let iCounterMinIndent = 0
   let jCounterMinIndent = 0
 
-  const out = headerRecords.length > 0 ? [...headerRecords, anchorRecord] : [anchorRecord]
+    const out: LineRecord[] = headerRecords.length > 0 ? [...headerRecords, anchorRecord] : [anchorRecord]
 
   while (out.length < finalLimit) {
     let progressed = 0
@@ -499,7 +585,7 @@ function readIndentationFromText(text, offset, limit, options, includeLineNumber
   }).join('\n')
 }
 
-function sliceLines(lines, offset, limit, includeLineNumbers) {
+function sliceLines(lines: string[], offset: number, limit: number, includeLineNumbers: boolean): string {
   const end = Math.min(offset - 1 + limit, lines.length)
   const output = []
   for (let index = offset - 1; index < end; index += 1) {
@@ -510,7 +596,7 @@ function sliceLines(lines, offset, limit, includeLineNumbers) {
   return output.join('\n')
 }
 
-function trimTruncation(text) {
+function trimTruncation(text: string): TrimResult {
   const markerIndex = findTruncationMarkerLine(text)
   if (markerIndex < 0) {
     const suffixIndex = findTruncationMarkerSuffix(text)
@@ -524,21 +610,27 @@ function trimTruncation(text) {
   return {text: trimmed, wasTruncated: true}
 }
 
-function stripTrailingLineBreak(text) {
+function stripTrailingLineBreak(text: string): string {
   if (text.endsWith('\r\n')) return text.slice(0, -2)
   if (text.endsWith('\n') || text.endsWith('\r')) return text.slice(0, -1)
   return text
 }
 
-function isAnchorLineError(error) {
+function isAnchorLineError(error: unknown): boolean {
   return error instanceof Error && error.message === 'anchor_line exceeds file length'
 }
 
-function isTruncationError(error) {
+function isTruncationError(error: unknown): boolean {
   return error instanceof Error && error.message === TRUNCATION_ERROR
 }
 
-async function readLinesViaSearch(projectPath, relativePath, absolutePath, maxLine, callUpstreamTool) {
+async function readLinesViaSearch(
+  projectPath: string,
+  relativePath: string,
+  absolutePath: string,
+  maxLine: number,
+  callUpstreamTool: UpstreamToolCaller
+): Promise<SearchLinesResult> {
   const cappedMaxLine = Math.min(Math.max(1, maxLine), SEARCH_FALLBACK_MAX_LINES)
   const directory = path.dirname(relativePath)
   const directoryToSearch = directory === '.' ? undefined : directory
@@ -552,11 +644,14 @@ async function readLinesViaSearch(projectPath, relativePath, absolutePath, maxLi
 
   const entries = extractEntries(result)
   const structured = extractStructuredContent(result)
-  const hasMore = structured?.probablyHasMoreMatchingEntries === true || maxLine > cappedMaxLine
-  const lineMap = new Map()
+  const structuredRecord = structured && typeof structured === 'object'
+    ? structured as Record<string, unknown>
+    : null
+  const hasMore = structuredRecord?.probablyHasMoreMatchingEntries === true || maxLine > cappedMaxLine
+  const lineMap = new Map<number, string>()
   let maxLineNumber = 0
 
-  for (const entry of entries) {
+  for (const entry of entries as SearchEntry[]) {
     if (!entry || typeof entry.lineNumber !== 'number') continue
     const entryPath = normalizeEntryPath(projectPath, entry.filePath)
     if (entryPath !== absolutePath) continue
@@ -572,7 +667,7 @@ async function readLinesViaSearch(projectPath, relativePath, absolutePath, maxLi
   return {lineMap, maxLineNumber, hasMore}
 }
 
-function normalizeUsageLine(lineText) {
+function normalizeUsageLine(lineText: unknown): string {
   if (typeof lineText !== 'string') return ''
   if (!lineText.startsWith('||')) return lineText
   const tailIndex = lineText.lastIndexOf('||')

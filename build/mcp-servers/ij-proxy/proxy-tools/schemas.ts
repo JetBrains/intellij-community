@@ -1,6 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-function objectSchema(properties, required) {
+import type {ToolInputSchema} from './types'
+
+type JsonSchemaProperty = Record<string, unknown>
+
+function objectSchema(properties: Record<string, JsonSchemaProperty>, required?: string[]): ToolInputSchema {
   return {
     type: 'object',
     properties,
@@ -9,7 +13,7 @@ function objectSchema(properties, required) {
   }
 }
 
-export function createReadSchema(includeIndentation) {
+export function createReadSchema(includeIndentation: boolean): ToolInputSchema {
   const properties = {
     file_path: {
       type: 'string',
@@ -60,7 +64,7 @@ export function createReadSchema(includeIndentation) {
   return objectSchema(properties, ['file_path'])
 }
 
-export function createWriteSchema() {
+export function createWriteSchema(): ToolInputSchema {
   return objectSchema(
     {
       file_path: {
@@ -76,7 +80,7 @@ export function createWriteSchema() {
   )
 }
 
-export function createEditSchema() {
+export function createEditSchema(): ToolInputSchema {
   return objectSchema(
     {
       file_path: {
@@ -100,7 +104,7 @@ export function createEditSchema() {
   )
 }
 
-export function createGlobSchema() {
+export function createGlobSchema(): ToolInputSchema {
   return objectSchema(
     {
       pattern: {
@@ -116,7 +120,7 @@ export function createGlobSchema() {
   )
 }
 
-export function createGrepSchema() {
+export function createGrepSchema(): ToolInputSchema {
   return objectSchema(
     {
       pattern: {
@@ -172,7 +176,7 @@ export function createGrepSchema() {
   )
 }
 
-export function createGrepSchemaCodex() {
+export function createGrepSchemaCodex(): ToolInputSchema {
   return objectSchema(
     {
       pattern: {
@@ -216,7 +220,7 @@ export function createGrepSchemaCodex() {
   )
 }
 
-export function createListDirSchema() {
+export function createListDirSchema(): ToolInputSchema {
   return objectSchema(
     {
       dir_path: {
@@ -240,7 +244,7 @@ export function createListDirSchema() {
   )
 }
 
-export function createFindSchema() {
+export function createFindSchema(): ToolInputSchema {
   return objectSchema(
     {
       pattern: {
@@ -268,7 +272,7 @@ export function createFindSchema() {
   )
 }
 
-export function createApplyPatchSchema() {
+export function createApplyPatchSchema(): ToolInputSchema {
   return objectSchema(
     {
       input: {
@@ -280,7 +284,7 @@ export function createApplyPatchSchema() {
   )
 }
 
-export function createRenameSchema() {
+export function createRenameSchema(): ToolInputSchema {
   return objectSchema(
     {
       pathInProject: {

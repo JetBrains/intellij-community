@@ -1,4 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+import type {ChildProcessWithoutNullStreams} from 'node:child_process'
 import {spawn} from 'node:child_process'
 import {mkdtempSync, rmSync} from 'node:fs'
 import {createServer} from 'node:http'
@@ -10,6 +11,7 @@ import {Server} from '@modelcontextprotocol/sdk/server/index.js'
 import {StreamableHTTPServerTransport} from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import {CallToolRequestSchema, ListToolsRequestSchema} from '@modelcontextprotocol/sdk/types.js'
 import {BLOCKED_TOOL_NAMES, getReplacedToolNames} from './proxy-tools/registry'
+import type {ToolSpecLike} from './proxy-tools/types'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -18,12 +20,39 @@ export const TOOL_CALL_TIMEOUT_MS = 10_000
 export const SUITE_TIMEOUT_MS = 60_000
 const DEBUG = env['JETBRAINS_MCP_PROXY_TEST_DEBUG'] === 'true'
 
-export function debug(message) {
+interface PendingRequest {
+  resolve: (value: unknown) => void
+  reject: (reason?: unknown) => void
+  timeout: NodeJS.Timeout
+}
+
+interface ToolCall {
+  name: string | undefined
+  args: unknown
+}
+
+interface FakeServerInstance {
+  port: number
+  waitForToolCall: () => Promise<ToolCall>
+  close: () => Promise<void>
+}
+
+type ToolCallHandler = (call: ToolCall) => Promise<unknown> | unknown
+
+interface FakeServerOptions {
+  tools?: ToolSpecLike[]
+  onToolCall?: ToolCallHandler
+  responseMode?: 'json' | 'sse'
+}
+
+type ProxyEnvFactory = (context: {fakeServer: FakeServerInstance}) => Record<string, string>
+
+export function debug(message: string): void {
   if (!DEBUG) return
   stderr.write(`[ij-mcp-proxy.test] ${message}\n`)
 }
 
-export function withTimeout(promise, timeoutMs, label) {
+export function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
   return Promise.race([
     promise,
     new Promise((_, reject) => {
@@ -33,17 +62,13 @@ export function withTimeout(promise, timeoutMs, label) {
 }
 
 export class McpTestClient {
-  /** @type {import('node:child_process').ChildProcessWithoutNullStreams} */
-  server
-  /** @type {Map<number, {resolve: Function, reject: Function, timeout: any}>} */
-  pending = new Map()
+  server: ChildProcessWithoutNullStreams
+  pending: Map<number, PendingRequest> = new Map()
   requestId = 0
   buffer = ''
-  /** @type {Array<any>} */
-  messages = []
+  messages: unknown[] = []
 
-  /** @param {import('node:child_process').ChildProcessWithoutNullStreams} serverProcess */
-  constructor(serverProcess) {
+  constructor(serverProcess: ChildProcessWithoutNullStreams) {
     this.server = serverProcess
 
     this.server.stdout.on('data', (data) => {
@@ -70,7 +95,7 @@ export class McpTestClient {
     })
   }
 
-  async send(method, params = {}) {
+  async send(method: string, params: Record<string, unknown> = {}): Promise<unknown> {
     const id = ++this.requestId
     const request = {jsonrpc: '2.0', id, method, params}
     this.server.stdin.write(JSON.stringify(request) + '\n')
@@ -84,7 +109,7 @@ export class McpTestClient {
     })
   }
 
-  async close() {
+  async close(): Promise<void> {
     this.server.stdin.end()
     this.server.kill()
     await new Promise((resolve) => {
@@ -97,7 +122,11 @@ export class McpTestClient {
   }
 }
 
-export function buildUpstreamTool(name, properties = {}, required) {
+export function buildUpstreamTool(
+  name: string,
+  properties: Record<string, unknown> = {},
+  required?: string[]
+): ToolSpecLike {
   return {
     name,
     description: `Upstream tool ${name}`,
@@ -115,14 +144,16 @@ export const defaultUpstreamTools = [...DEFAULT_UPSTREAM_TOOL_NAMES].map((name) 
   buildUpstreamTool(name, {project_path: {type: 'string'}}, ['project_path'])
 )
 
-export async function startFakeMcpServer({tools = defaultUpstreamTools, onToolCall, responseMode = 'json'} = {}) {
-  const toolCallQueue = []
-  const toolCallWaiters = []
+export async function startFakeMcpServer(
+  {tools = defaultUpstreamTools, onToolCall, responseMode = 'json'}: FakeServerOptions = {}
+): Promise<FakeServerInstance> {
+  const toolCallQueue: ToolCall[] = []
+  const toolCallWaiters: Array<(call: ToolCall) => void> = []
   const sockets = new Set()
   const sessionId = 'test-session'
   const responseModeValue = responseMode === 'sse' ? 'sse' : 'json'
 
-  function enqueueToolCall(call) {
+  function enqueueToolCall(call: ToolCall): void {
     if (toolCallWaiters.length > 0) {
       toolCallWaiters.shift()(call)
       return
@@ -130,13 +161,14 @@ export async function startFakeMcpServer({tools = defaultUpstreamTools, onToolCa
     toolCallQueue.push(call)
   }
 
-  function buildToolResult(response) {
-    if (response?.result) return response.result
-    const result = {
-      content: [{type: 'text', text: response?.text ?? '{}'}]
+  function buildToolResult(response: unknown): unknown {
+    const responseRecord = response && typeof response === 'object' ? response as Record<string, unknown> : null
+    if (responseRecord?.result) return responseRecord.result
+    const result: Record<string, unknown> = {
+      content: [{type: 'text', text: responseRecord?.text ?? '{}'}]
     }
-    if (response?.structuredContent) {
-      result.structuredContent = response.structuredContent
+    if (responseRecord?.structuredContent) {
+      result.structuredContent = responseRecord.structuredContent
     }
     return result
   }
@@ -158,8 +190,7 @@ export async function startFakeMcpServer({tools = defaultUpstreamTools, onToolCa
     enableJsonResponse: responseModeValue === 'json'
   })
   transport.onerror = (error) => {
-    const message = error instanceof Error ? error.message : String(error)
-    debug(`fake server transport error: ${message}`)
+    debug(`fake server transport error: ${error.message}`)
   }
   await mcpServer.connect(transport)
 
@@ -185,9 +216,9 @@ export async function startFakeMcpServer({tools = defaultUpstreamTools, onToolCa
     socket.on('close', () => sockets.delete(socket))
   })
 
-  async function listenOnPort(port) {
-    await new Promise((resolve, reject) => {
-      const onError = (error) => {
+  async function listenOnPort(port: number): Promise<void> {
+    await new Promise<void>((resolve, reject) => {
+      const onError = (error: unknown) => {
         cleanup()
         reject(error)
       }
@@ -205,11 +236,11 @@ export async function startFakeMcpServer({tools = defaultUpstreamTools, onToolCa
     })
   }
 
-  function isAddressInUse(error) {
-    return typeof error === 'object' && error !== null && error.code === 'EADDRINUSE'
+  function isAddressInUse(error: unknown): boolean {
+    return typeof error === 'object' && error !== null && (error as {code?: string}).code === 'EADDRINUSE'
   }
 
-  async function listenWithFallback() {
+  async function listenWithFallback(): Promise<void> {
     try {
       await listenOnPort(0)
       return
@@ -218,7 +249,7 @@ export async function startFakeMcpServer({tools = defaultUpstreamTools, onToolCa
     }
 
     const maxAttempts = 20
-    let lastError = null
+    let lastError: unknown = null
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       const port = 30000 + Math.floor(Math.random() * 20000)
       try {
@@ -240,7 +271,7 @@ export async function startFakeMcpServer({tools = defaultUpstreamTools, onToolCa
 
   return {
     port,
-    waitForToolCall() {
+    waitForToolCall(): Promise<ToolCall> {
       return new Promise((resolve) => {
         if (toolCallQueue.length > 0) {
           resolve(toolCallQueue.shift())
@@ -249,7 +280,7 @@ export async function startFakeMcpServer({tools = defaultUpstreamTools, onToolCa
         toolCallWaiters.push(resolve)
       })
     },
-    async close() {
+    async close(): Promise<void> {
       await mcpServer.close()
       for (const socket of sockets) {
         socket.destroy()
@@ -259,7 +290,7 @@ export async function startFakeMcpServer({tools = defaultUpstreamTools, onToolCa
   }
 }
 
-function startProxy(testDir, port, extraEnv = {}) {
+function startProxy(testDir: string, port: number, extraEnv: Record<string, string> = {}): ChildProcessWithoutNullStreams {
   const proxyEnv = {
     ...env,
     JETBRAINS_MCP_PORT_START: String(port),
@@ -273,10 +304,18 @@ function startProxy(testDir, port, extraEnv = {}) {
   })
 }
 
-export async function withProxy(options, run) {
-  let fakeServer
-  let proxyClient
-  let testDir
+export async function withProxy(
+  options: {
+    proxyEnv?: Record<string, string> | ProxyEnvFactory
+    tools?: ToolSpecLike[]
+    onToolCall?: ToolCallHandler
+    responseMode?: 'json' | 'sse'
+  } = {},
+  run: (context: {fakeServer: FakeServerInstance; proxyClient: McpTestClient; testDir: string}) => Promise<void>
+): Promise<void> {
+  let fakeServer: FakeServerInstance | undefined
+  let proxyClient: McpTestClient | undefined
+  let testDir: string | undefined
 
   const proxyEnvInput = options?.proxyEnv
   const serverOptions = {
@@ -292,7 +331,7 @@ export async function withProxy(options, run) {
     debug(`setup: test dir ${testDir}`)
     const resolvedProxyEnv = typeof proxyEnvInput === 'function'
       ? proxyEnvInput({fakeServer})
-      : proxyEnvInput
+      : (proxyEnvInput ?? {})
     const proxy = startProxy(testDir, fakeServer.port, resolvedProxyEnv)
     proxyClient = new McpTestClient(proxy)
     debug('setup: sending initialize')

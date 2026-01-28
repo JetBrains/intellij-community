@@ -1,5 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
+import type {ChildProcess} from 'node:child_process'
 import {spawn} from 'node:child_process'
 import {mkdir, readFile, rm, writeFile} from 'node:fs/promises'
 import {dirname, join} from 'node:path'
@@ -29,8 +30,8 @@ const bunArgs = [
   '--minify-syntax',
 ]
 
-const proc = spawn(process.execPath, bunArgs, {stdio: 'inherit'})
-const exitCode = await new Promise((resolve, reject) => {
+const proc: ChildProcess = spawn(process.execPath, bunArgs, {stdio: 'inherit'})
+const exitCode = await new Promise<number>((resolve, reject) => {
   proc.on('error', reject)
   proc.on('exit', (code) => resolve(code ?? 1))
 })

@@ -14,8 +14,10 @@ import {clearLogFile, logProgress, logToFile} from '../shared/mcp-rpc.mjs'
 import {createProjectPathManager} from './project-path'
 import {createStreamTransport} from './stream-transport'
 import {BLOCKED_TOOL_NAMES, getReplacedToolNames} from './proxy-tools/registry'
+import type {ToolModeInfo} from './proxy-tools/tooling'
 import {createProxyTooling, resolveToolMode, TOOL_MODES} from './proxy-tools/tooling'
 import {extractTextFromResult} from './proxy-tools/shared'
+import type {ToolArgs, ToolResultLike, ToolSpecLike} from './proxy-tools/types'
 
 // Proxy JetBrains MCP Streamable HTTP to stdio and inject the cwd as project_path.
 const explicitMcpUrl = env.JETBRAINS_MCP_STREAM_URL
@@ -41,7 +43,12 @@ const queueWaitTimeoutMs = parseEnvSeconds(
 const STREAM_RETRY_ATTEMPTS = 3
 const STREAM_RETRY_BASE_DELAY_MS = 200
 
-function parseEnvInt(name, fallback) {
+type ToolOutput = {
+  content: Array<{type: 'text'; text: string}>
+  isError?: boolean
+}
+
+function parseEnvInt(name: string, fallback: number): number {
   const raw = env[name]
   if (!raw) return fallback
   const parsed = Number.parseInt(raw, 10)
@@ -49,7 +56,7 @@ function parseEnvInt(name, fallback) {
   return parsed
 }
 
-function parseEnvNonNegativeInt(name, fallback) {
+function parseEnvNonNegativeInt(name: string, fallback: number): number {
   const raw = env[name]
   if (raw === undefined || raw === null || raw === '') return fallback
   const parsed = Number.parseInt(raw, 10)
@@ -57,12 +64,12 @@ function parseEnvNonNegativeInt(name, fallback) {
   return parsed
 }
 
-function parseEnvSeconds(name, fallbackSeconds) {
+function parseEnvSeconds(name: string, fallbackSeconds: number): number {
   const seconds = parseEnvNonNegativeInt(name, fallbackSeconds)
   return seconds * 1000
 }
 
-function buildStreamUrl(port) {
+function buildStreamUrl(port: number): string {
   // noinspection HttpUrlsUsage
   return `http://${defaultHost}:${port}${defaultPath}`
 }
@@ -71,11 +78,11 @@ const projectPath = path.resolve(cwd())
 const defaultProjectPathKey = 'project_path'
 const projectPathManager = createProjectPathManager({projectPath, defaultProjectPathKey})
 
-const toolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE)
+const toolModeInfo: ToolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE)
 
 const REPLACED_TOOL_NAMES = getReplacedToolNames()
 
-function blockedToolMessage(toolName) {
+function blockedToolMessage(toolName: string): string {
   if (toolName === 'create_new_file') {
     if (toolModeInfo.mode === TOOL_MODES.CC) {
       return `Tool '${toolName}' is not exposed by ij-proxy. Use 'write' instead.`
@@ -91,12 +98,12 @@ const {proxyToolSpecs, proxyToolNames, runProxyToolCall} = createProxyTooling({
   toolMode: toolModeInfo.mode
 })
 
-function note(message) {
+function note(message: string): void {
   logToFile(message)
   logProgress(message)
 }
 
-function warn(message) {
+function warn(message: string): void {
   logToFile(message)
   logProgress(message)
 }
@@ -125,8 +132,7 @@ const streamTransport = createStreamTransport({
 
 const upstreamClient = new Client({name: 'ij-mcp-proxy', version: '1.0.0'})
 upstreamClient.onerror = (error) => {
-  const message = error instanceof Error ? error.message : String(error)
-  warn(`Upstream client error: ${message}`)
+  warn(`Upstream client error: ${error.message}`)
 }
 
 const proxyServer = new Server(
@@ -152,7 +158,9 @@ proxyServer.setRequestHandler(ListToolsRequestSchema, async () => {
 proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
   const toolName = typeof request.params?.name === 'string' ? request.params.name : ''
   const rawArgs = request.params?.arguments
-  const args = rawArgs && typeof rawArgs === 'object' ? {...rawArgs} : {}
+  const args: ToolArgs = rawArgs && typeof rawArgs === 'object'
+    ? {...(rawArgs as ToolArgs)}
+    : {}
 
   if (!toolName) {
     return makeToolError('Tool name is required')
@@ -215,18 +223,17 @@ upstreamClient.fallbackNotificationHandler = async (notification) => {
 
 const stdioTransport = new StdioServerTransport()
 stdioTransport.onerror = (error) => {
-  const message = error instanceof Error ? error.message : String(error)
-  warn(`Stdio transport error: ${message}`)
+  warn(`Stdio transport error: ${error.message}`)
 }
 void proxyServer.connect(stdioTransport).catch((error) => {
   const message = error instanceof Error ? error.message : String(error)
   warn(`Failed to start stdio transport: ${message}`)
 })
 
-let upstreamConnectedPromise = null
-let upstreamTools = null
+let upstreamConnectedPromise: Promise<void> | null = null
+let upstreamTools: ToolSpecLike[] | null = null
 
-async function ensureUpstreamConnected() {
+async function ensureUpstreamConnected(): Promise<void> {
   if (upstreamConnectedPromise) return upstreamConnectedPromise
   upstreamConnectedPromise = upstreamClient.connect(streamTransport).catch((error) => {
     upstreamConnectedPromise = null
@@ -235,7 +242,7 @@ async function ensureUpstreamConnected() {
   return upstreamConnectedPromise
 }
 
-async function refreshUpstreamTools() {
+async function refreshUpstreamTools(): Promise<ToolSpecLike[]> {
   await ensureUpstreamConnected()
   const response = await upstreamClient.listTools()
   const tools = Array.isArray(response?.tools) ? response.tools : []
@@ -245,21 +252,21 @@ async function refreshUpstreamTools() {
   return tools
 }
 
-async function getUpstreamTools() {
+async function getUpstreamTools(): Promise<ToolSpecLike[]> {
   if (!upstreamTools) {
     await refreshUpstreamTools()
   }
   return upstreamTools ?? []
 }
 
-function normalizeToolResult(result) {
+function normalizeToolResult(result: unknown): unknown {
   if (result && typeof result === 'object' && 'toolResult' in result) {
-    return result.toolResult
+    return (result as ToolResultLike).toolResult
   }
   return result
 }
 
-function makeToolOutput(text) {
+function makeToolOutput(text: unknown): ToolOutput {
   return {
     content: [
       {
@@ -270,7 +277,7 @@ function makeToolOutput(text) {
   }
 }
 
-function makeToolError(text) {
+function makeToolError(text: unknown): ToolOutput {
   return {
     content: [
       {
@@ -282,7 +289,7 @@ function makeToolError(text) {
   }
 }
 
-async function callUpstreamToolForClient(toolName, args) {
+async function callUpstreamToolForClient(toolName: string, args: ToolArgs): Promise<unknown> {
   await ensureUpstreamConnected()
   await getUpstreamTools()
   projectPathManager.injectProjectPathArgs(toolName, args)
@@ -291,7 +298,7 @@ async function callUpstreamToolForClient(toolName, args) {
   return normalizeToolResult(result)
 }
 
-async function callUpstreamTool(toolName, args) {
+async function callUpstreamTool(toolName: string, args: ToolArgs): Promise<unknown> {
   await ensureUpstreamConnected()
   await getUpstreamTools()
   const callArgs = {...args}
@@ -307,10 +314,14 @@ async function callUpstreamTool(toolName, args) {
   return result
 }
 
-function mergeToolLists(proxyTools, upstreamTools, blockedNames) {
+function mergeToolLists(
+  proxyTools: ToolSpecLike[] | undefined,
+  upstreamTools: ToolSpecLike[] | undefined,
+  blockedNames: Iterable<string>
+): ToolSpecLike[] {
   const blocked = new Set(blockedNames || [])
-  const result = []
-  const seen = new Set()
+  const result: ToolSpecLike[] = []
+  const seen = new Set<string>()
 
   for (const tool of proxyTools || []) {
     if (!tool || typeof tool.name !== 'string') continue

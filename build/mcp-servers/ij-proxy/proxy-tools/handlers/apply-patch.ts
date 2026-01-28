@@ -5,6 +5,7 @@ import path from 'node:path'
 import {isTrackedPath, runGitCommand, toGitPath} from '../git-utils'
 import {readFileText, resolvePathInProject, splitLines} from '../shared'
 import {isTruncatedText} from '../truncation'
+import type {UpstreamToolCaller} from '../types'
 
 const BEGIN_MARKER = '*** Begin Patch'
 const END_MARKER = '*** End Patch'
@@ -15,7 +16,49 @@ const MOVE_PREFIX = '*** Move to: '
 const END_OF_FILE = '*** End of File'
 const HEREDOC_PREFIXES = new Set(["<<EOF", "<<'EOF'", '<<"EOF"'])
 
-export async function handleApplyPatchTool(args, projectPath, callUpstreamTool) {
+interface ApplyPatchArgsObject {
+  input?: unknown
+  patch?: unknown
+}
+
+type ApplyPatchArgs = string | ApplyPatchArgsObject
+
+interface AddOperation {
+  type: 'add'
+  path: string
+  content: string
+}
+
+interface DeleteOperation {
+  type: 'delete'
+  path: string
+}
+
+interface HunkLine {
+  prefix: ' ' | '+' | '-'
+  text: string
+}
+
+interface Hunk {
+  header: string | null
+  lines: HunkLine[]
+  isEndOfFile: boolean
+}
+
+interface UpdateOperation {
+  type: 'update'
+  path: string
+  moveTo: string | null
+  hunks: Hunk[]
+}
+
+type PatchOperation = AddOperation | DeleteOperation | UpdateOperation
+
+export async function handleApplyPatchTool(
+  args: ApplyPatchArgs,
+  projectPath: string,
+  callUpstreamTool: UpstreamToolCaller
+): Promise<string> {
   const patchText = extractPatchText(args)
   const operations = parsePatch(patchText)
   let touched = 0
@@ -73,31 +116,31 @@ export async function handleApplyPatchTool(args, projectPath, callUpstreamTool) 
   return `Applied patch to ${touched} file${suffix}.`
 }
 
-function extractPatchText(args) {
+function extractPatchText(args: ApplyPatchArgs): string {
   if (typeof args === 'string') return args
   if (args && typeof args.input === 'string') return args.input
   if (args && typeof args['patch'] === 'string') return args['patch']
   throw new Error('input must be a non-empty string')
 }
 
-function isPatchHeaderLine(line) {
+function isPatchHeaderLine(line: string): boolean {
   if (line === '' || [' ', '+', '-'].includes(line[0])) return false
   const trimmed = line.trimStart()
   if (trimmed === END_OF_FILE) return false
   return trimmed.startsWith('*** ')
 }
 
-function isHunkHeaderLine(line) {
+function isHunkHeaderLine(line: string): boolean {
   if (line === '' || [' ', '+', '-'].includes(line[0])) return false
   return line.trimStart().startsWith('@@')
 }
 
-function isDiffLine(line) {
+function isDiffLine(line: string): boolean {
   if (line === '') return true
   return [' ', '+', '-'].includes(line[0])
 }
 
-function unwrapHeredocLines(lines) {
+function unwrapHeredocLines(lines: string[]): string[] {
   if (lines.length < 4) return lines
   const first = lines[0].trim()
   const last = lines[lines.length - 1].trim()
@@ -105,7 +148,7 @@ function unwrapHeredocLines(lines) {
   return lines.slice(1, -1)
 }
 
-function parsePatch(text) {
+function parsePatch(text: string): PatchOperation[] {
   const lines = unwrapHeredocLines(splitLines(text.trim()))
   const startIndex = lines.findIndex((line) => line.trim() === BEGIN_MARKER)
   if (startIndex === -1) {
@@ -117,7 +160,7 @@ function parsePatch(text) {
   }
   const endIndex = startIndex + 1 + endIndexRelative
 
-  const operations = []
+  const operations: PatchOperation[] = []
   let i = startIndex + 1
   while (i < endIndex) {
     const line = lines[i]
@@ -127,7 +170,7 @@ function parsePatch(text) {
       if (!path) throw new Error('Add File requires a path')
       ensureSafePatchPath(path, 'Add File')
       i += 1
-      const contentLines = []
+      const contentLines: string[] = []
       while (i < endIndex && !isPatchHeaderLine(lines[i])) {
         if (!lines[i].startsWith('+')) {
           throw new Error('Add File lines must start with +')
@@ -155,7 +198,7 @@ function parsePatch(text) {
       ensureSafePatchPath(path, 'Update File')
       i += 1
 
-      let moveTo = null
+      let moveTo: string | null = null
       if (i < endIndex && isPatchHeaderLine(lines[i])) {
         const moveLine = lines[i].trimStart()
         if (moveLine.startsWith(MOVE_PREFIX)) {
@@ -174,7 +217,7 @@ function parsePatch(text) {
           i += 1
           continue
         }
-        let header = null
+        let header: string | null = null
         if (isHunkHeaderLine(lines[i])) {
           const trimmed = lines[i].trim()
           const headerText = trimmed.length > 2 ? trimmed.slice(2).trim() : ''
@@ -187,7 +230,7 @@ function parsePatch(text) {
         } else {
           throw new Error('Expected @@ hunk header')
         }
-        const hunkLines = []
+        const hunkLines: HunkLine[] = []
         let isEndOfFile = false
         while (i < endIndex && !isHunkHeaderLine(lines[i]) && !isPatchHeaderLine(lines[i])) {
           const hunkLine = lines[i]
@@ -208,7 +251,7 @@ function parsePatch(text) {
             break
           }
           hunkLines.push({
-            prefix: hunkLine[0],
+            prefix: hunkLine[0] as ' ' | '+' | '-',
             text: hunkLine.slice(1)
           })
           i += 1
@@ -240,7 +283,7 @@ function parsePatch(text) {
   return operations
 }
 
-function ensureSafePatchPath(rawPath, label) {
+function ensureSafePatchPath(rawPath: string, label: string): void {
   if (/[\u0000-\u001F\u007F]/.test(rawPath)) {
     throw new Error(`${label} path contains control characters or escape sequences`)
   }
@@ -249,14 +292,14 @@ function ensureSafePatchPath(rawPath, label) {
   }
 }
 
-async function ensureParentDir(absolutePath) {
+async function ensureParentDir(absolutePath: string): Promise<void> {
   const parentDir = path.dirname(absolutePath)
   await mkdir(parentDir, {recursive: true})
 }
 
 // Use git for tracked delete/move to perform real filesystem operations until MCP exposes file delete/rename tools.
 // https://youtrack.jetbrains.com/issue/IJPL-231258/Add-MCP-tools-for-file-delete-rename-so-applypatch-can-perform-real-filesystem-operations
-async function runGitRm(relativePath, projectPath) {
+async function runGitRm(relativePath: string, projectPath: string): Promise<void> {
   if (!await isTrackedPath(relativePath, projectPath)) {
     await rm(path.resolve(projectPath, relativePath))
     return
@@ -264,7 +307,7 @@ async function runGitRm(relativePath, projectPath) {
   await runGitCommand(['rm', '--', toGitPath(relativePath)], projectPath)
 }
 
-async function runGitMv(fromRelative, toRelative, projectPath) {
+async function runGitMv(fromRelative: string, toRelative: string, projectPath: string): Promise<void> {
   if (!await isTrackedPath(fromRelative, projectPath)) {
     const fromAbsolute = path.resolve(projectPath, fromRelative)
     const toAbsolute = path.resolve(projectPath, toRelative)
@@ -274,7 +317,7 @@ async function runGitMv(fromRelative, toRelative, projectPath) {
   await runGitCommand(['mv', '--', toGitPath(fromRelative), toGitPath(toRelative)], projectPath)
 }
 
-async function moveFile(fromAbsolute, toAbsolute) {
+async function moveFile(fromAbsolute: string, toAbsolute: string): Promise<void> {
   try {
     await rename(fromAbsolute, toAbsolute)
   } catch (error) {
@@ -290,7 +333,7 @@ async function moveFile(fromAbsolute, toAbsolute) {
   }
 }
 
-function applyHunks(originalText, hunks) {
+function applyHunks(originalText: string, hunks: Hunk[]): string {
   let content = splitLines(originalText)
   let searchStart = 0
 
@@ -327,9 +370,9 @@ function applyHunks(originalText, hunks) {
   return content.join('\n')
 }
 
-function buildHunkLines(lines) {
-  const oldLines = []
-  const newLines = []
+function buildHunkLines(lines: HunkLine[]): {oldLines: string[]; newLines: string[]} {
+  const oldLines: string[] = []
+  const newLines: string[] = []
   for (const line of lines) {
     if (line.prefix === ' ') {
       oldLines.push(line.text)
@@ -343,7 +386,7 @@ function buildHunkLines(lines) {
   return {oldLines, newLines}
 }
 
-function normalizeForMatch(text) {
+function normalizeForMatch(text: string): string {
   return text
     .trim()
     .split('')
@@ -388,7 +431,12 @@ function normalizeForMatch(text) {
     .join('')
 }
 
-function findSequence(haystack, needle, startIndex = 0, preferEnd = false) {
+function findSequence(
+  haystack: string[],
+  needle: string[],
+  startIndex = 0,
+  preferEnd = false
+): number {
   if (needle.length === 0) return startIndex
   if (needle.length > haystack.length) return -1
 
@@ -396,14 +444,14 @@ function findSequence(haystack, needle, startIndex = 0, preferEnd = false) {
   const searchStart = preferEnd ? maxStart : Math.max(0, startIndex)
   if (searchStart > maxStart) return -1
 
-  const matchesAt = (index, comparator) => {
+  const matchesAt = (index: number, comparator: (a: string, b: string) => boolean): boolean => {
     for (let j = 0; j < needle.length; j += 1) {
       if (!comparator(haystack[index + j], needle[j])) return false
     }
     return true
   }
 
-  const searchWith = (comparator) => {
+  const searchWith = (comparator: (a: string, b: string) => boolean): number => {
     for (let i = searchStart; i <= maxStart; i += 1) {
       if (matchesAt(i, comparator)) return i
     }

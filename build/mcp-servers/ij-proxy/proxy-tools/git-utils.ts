@@ -2,11 +2,11 @@
 
 import {spawn} from 'node:child_process'
 
-export function toGitPath(relativePath) {
+export function toGitPath(relativePath: string): string {
   return relativePath.replace(/\\/g, '/')
 }
 
-export async function runGitCommand(args, projectPath) {
+export async function runGitCommand(args: string[], projectPath: string): Promise<void> {
   await new Promise((resolve, reject) => {
     const child = spawn('git', args, {cwd: projectPath})
     let stderr = ''
@@ -30,7 +30,7 @@ export async function runGitCommand(args, projectPath) {
   })
 }
 
-export async function isTrackedPath(relativePath, projectPath) {
+export async function isTrackedPath(relativePath: string, projectPath: string): Promise<boolean> {
   const gitPath = toGitPath(relativePath)
   return await new Promise((resolve, reject) => {
     const child = spawn('git', ['ls-files', '--error-unmatch', '--', gitPath], {cwd: projectPath})

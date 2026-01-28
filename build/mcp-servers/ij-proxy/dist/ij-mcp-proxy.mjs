@@ -20564,7 +20564,10 @@ async function clearLogFile() {
 }
 
 // project-path.ts
-function createProjectPathManager({ projectPath, defaultProjectPathKey = "project_path" }) {
+function createProjectPathManager({
+  projectPath,
+  defaultProjectPathKey = "project_path"
+}) {
   let projectPathKey = null, hasSeenToolsList = !1, hasProjectPathTools = !1, toolProjectPathKeyByName = /* @__PURE__ */ new Map;
   function normalizeProjectPathArgs(args, desiredKey) {
     if (!desiredKey)
@@ -20635,11 +20638,14 @@ function createProjectPathManager({ projectPath, defaultProjectPathKey = "projec
       if (!props || typeof props !== "object")
         continue;
       if (Object.prototype.hasOwnProperty.call(props, "project_path")) {
-        hasSnake = !0, toolProjectPathKeyByName.set(tool.name, "project_path");
+        if (hasSnake = !0, typeof tool.name === "string")
+          toolProjectPathKeyByName.set(tool.name, "project_path");
         continue;
       }
-      if (Object.prototype.hasOwnProperty.call(props, "projectPath"))
-        hasCamel = !0, toolProjectPathKeyByName.set(tool.name, "projectPath");
+      if (Object.prototype.hasOwnProperty.call(props, "projectPath")) {
+        if (hasCamel = !0, typeof tool.name === "string")
+          toolProjectPathKeyByName.set(tool.name, "projectPath");
+      }
     }
     if (hasSeenToolsList = !0, hasProjectPathTools = toolProjectPathKeyByName.size > 0, hasSnake)
       projectPathKey = "project_path";
@@ -21944,6 +21950,17 @@ function normalizePortList(preferredPorts, portScanStart, portScanLimit) {
 }
 
 class StreamTransport {
+  _options;
+  _queue;
+  _connectPromise;
+  _transport;
+  _protocolVersion;
+  _closed;
+  _closeNotified;
+  sessionId;
+  onmessage;
+  onerror;
+  onclose;
   constructor(options) {
     this._options = options, this._queue = [], this._connectPromise = null, this._transport = null, this._protocolVersion = null, this._closed = !1, this._closeNotified = !1, this.sessionId = void 0;
   }
@@ -22037,9 +22054,8 @@ class StreamTransport {
         if (this.onmessage)
           this.onmessage(message, extra);
       }, transport.onerror = (error48) => {
-        let err = error48 instanceof Error ? error48 : Error(String(error48));
         if (this.onerror)
-          this.onerror(err);
+          this.onerror(error48);
       }, transport.onclose = () => {
         this._transport = null, this.sessionId = void 0, this._emitClose();
       }, this._protocolVersion && transport.setProtocolVersion)
@@ -22233,9 +22249,10 @@ function extractTextFromResult(result) {
     return null;
   if (typeof result === "string")
     return result;
-  if (typeof result.text === "string")
-    return result.text;
-  let content = result.content;
+  let typedResult = result;
+  if (typeof typedResult.text === "string")
+    return typedResult.text;
+  let content = typedResult.content;
   if (Array.isArray(content)) {
     for (let item of content)
       if (item && typeof item.text === "string")
@@ -22248,8 +22265,9 @@ function extractTextFromResult(result) {
 function extractStructuredContent(result) {
   if (!result)
     return null;
-  if (result.structuredContent !== void 0)
-    return result.structuredContent;
+  let typedResult = result;
+  if (typedResult.structuredContent !== void 0)
+    return typedResult.structuredContent;
   let text = extractTextFromResult(result);
   if (!text)
     return null;
@@ -22265,8 +22283,9 @@ function extractStructuredContent(result) {
 function extractFileList(result) {
   let structured = extractStructuredContent(result);
   if (structured) {
-    if (Array.isArray(structured.files))
-      return structured.files;
+    let structuredRecord = structured;
+    if (Array.isArray(structuredRecord.files))
+      return structuredRecord.files;
     if (Array.isArray(structured))
       return structured;
   }
@@ -22287,10 +22306,11 @@ function extractFileList(result) {
 function extractEntries(result) {
   let structured = extractStructuredContent(result);
   if (structured) {
-    if (Array.isArray(structured.entries))
-      return structured.entries;
-    if (Array.isArray(structured.results))
-      return structured.results;
+    let structuredRecord = structured;
+    if (Array.isArray(structuredRecord.entries))
+      return structuredRecord.entries;
+    if (Array.isArray(structuredRecord.results))
+      return structuredRecord.results;
     if (Array.isArray(structured))
       return structured;
   }
@@ -24957,7 +24977,7 @@ function extractLiteralFromPattern(patternAst) {
     return null;
   let chars = [];
   for (let element of alternative.elements) {
-    if (!element || element.type !== "Character")
+    if (!element || element.type !== "Character" || typeof element.value !== "number")
       return null;
     chars.push(String.fromCodePoint(element.value));
   }
@@ -25422,7 +25442,7 @@ async function readLinesViaSearch(projectPath, relativePath, absolutePath, maxLi
     fileMask: path7.basename(relativePath),
     caseSensitive: !0,
     maxUsageCount: cappedMaxLine
-  }), entries = extractEntries(result), hasMore = extractStructuredContent(result)?.probablyHasMoreMatchingEntries === !0 || maxLine > cappedMaxLine, lineMap = /* @__PURE__ */ new Map, maxLineNumber = 0;
+  }), entries = extractEntries(result), structured = extractStructuredContent(result), hasMore = (structured && typeof structured === "object" ? structured : null)?.probablyHasMoreMatchingEntries === !0 || maxLine > cappedMaxLine, lineMap = /* @__PURE__ */ new Map, maxLineNumber = 0;
   for (let entry of entries) {
     if (!entry || typeof entry.lineNumber !== "number")
       continue;
@@ -25879,7 +25899,11 @@ function resolveToolMode(rawValue) {
     warning: `Unknown JETBRAINS_MCP_TOOL_MODE '${rawValue}', defaulting to codex.`
   };
 }
-function createProxyTooling({ projectPath, callUpstreamTool, toolMode }) {
+function createProxyTooling({
+  projectPath,
+  callUpstreamTool,
+  toolMode
+}) {
   let resolvedMode = toolMode === TOOL_MODES.CC ? TOOL_MODES.CC : TOOL_MODES.CODEX, { proxyToolSpecs, proxyToolNames, handlers } = buildProxyToolingData(resolvedMode, {
     projectPath,
     callUpstreamTool
@@ -25958,8 +25982,7 @@ var streamTransport = createStreamTransport({
   warn
 }), upstreamClient = new Client({ name: "ij-mcp-proxy", version: "1.0.0" });
 upstreamClient.onerror = (error48) => {
-  let message = error48 instanceof Error ? error48.message : String(error48);
-  warn(`Upstream client error: ${message}`);
+  warn(`Upstream client error: ${error48.message}`);
 };
 var proxyServer = new Server({ name: "ij-mcp-proxy", version: "1.0.0" }, {
   capabilities: {
@@ -26023,8 +26046,7 @@ upstreamClient.fallbackNotificationHandler = async (notification) => {
 };
 var stdioTransport = new StdioServerTransport;
 stdioTransport.onerror = (error48) => {
-  let message = error48 instanceof Error ? error48.message : String(error48);
-  warn(`Stdio transport error: ${message}`);
+  warn(`Stdio transport error: ${error48.message}`);
 };
 proxyServer.connect(stdioTransport).catch((error48) => {
   let message = error48 instanceof Error ? error48.message : String(error48);

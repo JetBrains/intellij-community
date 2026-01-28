@@ -2,8 +2,18 @@
 
 import path from 'node:path'
 import {normalizeLineEndings, requireString, resolvePathInProject} from '../shared'
+import type {UpstreamToolCaller} from '../types'
 
-export async function handleWriteTool(args, projectPath, callUpstreamTool) {
+interface WriteToolArgs {
+  file_path?: unknown
+  content?: unknown
+}
+
+export async function handleWriteTool(
+  args: WriteToolArgs,
+  projectPath: string,
+  callUpstreamTool: UpstreamToolCaller
+): Promise<string> {
   const filePath = requireString(args.file_path, 'file_path')
   const content = typeof args.content === 'string' ? args.content : null
   if (content === null) {

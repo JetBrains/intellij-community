@@ -2,8 +2,19 @@
 
 import path from 'node:path'
 import {extractTextFromResult, requireString, resolvePathInProject} from '../shared'
+import type {UpstreamToolCaller} from '../types'
 
-export async function handleRenameTool(args, projectPath, callUpstreamTool) {
+interface RenameToolArgs {
+  pathInProject?: unknown
+  symbolName?: unknown
+  newName?: unknown
+}
+
+export async function handleRenameTool(
+  args: RenameToolArgs | null | undefined,
+  projectPath: string,
+  callUpstreamTool: UpstreamToolCaller
+): Promise<string> {
   const toolArgs = args ?? {}
   const filePath = requireString(toolArgs.pathInProject, 'pathInProject')
   const symbolName = requireString(toolArgs.symbolName, 'symbolName')

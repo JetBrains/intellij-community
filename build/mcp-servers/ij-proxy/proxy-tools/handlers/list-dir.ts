@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import {extractStructuredContent, extractTextFromResult, requireString, resolvePathInProject, splitLines} from '../shared'
+import type {UpstreamToolCaller} from '../types'
 
 const DEFAULT_OFFSET = 1
 const DEFAULT_LIMIT = 25
@@ -9,7 +10,30 @@ const BRANCH_MARKER = '\u251C\u2500\u2500 '
 const LAST_MARKER = '\u2514\u2500\u2500 '
 const MARKER_LENGTH = BRANCH_MARKER.length
 
-export async function handleListDirTool(args, projectPath, callUpstreamTool) {
+interface ListDirArgs {
+  dir_path?: unknown
+  offset?: unknown
+  limit?: unknown
+  depth?: unknown
+}
+
+interface TreeEntry {
+  depth: number
+  name: string
+  isDir: boolean
+}
+
+interface TreeSelection {
+  entries: TreeEntry[]
+  total: number
+  hasMore: boolean
+}
+
+export async function handleListDirTool(
+  args: ListDirArgs,
+  projectPath: string,
+  callUpstreamTool: UpstreamToolCaller
+): Promise<string> {
   const dirPath = requireString(args.dir_path, 'dir_path')
   const offset = args.offset === undefined || args.offset === null
     ? DEFAULT_OFFSET
@@ -60,10 +84,10 @@ export async function handleListDirTool(args, projectPath, callUpstreamTool) {
   return output.join('\n')
 }
 
-function extractTree(result) {
+function extractTree(result: unknown): string {
   const structured = extractStructuredContent(result)
   if (structured) {
-    const treeValue = structured['tree']
+    const treeValue = (structured as Record<string, unknown>)['tree']
     if (typeof treeValue === 'string') return treeValue
   }
   const text = extractTextFromResult(result)
@@ -71,7 +95,7 @@ function extractTree(result) {
   try {
     const parsed = JSON.parse(text)
     if (parsed) {
-      const treeValue = parsed['tree']
+      const treeValue = (parsed as Record<string, unknown>)['tree']
       if (typeof treeValue === 'string') return treeValue
     }
   } catch {
@@ -80,12 +104,12 @@ function extractTree(result) {
   return text
 }
 
-function selectEntriesFromTree(treeText, offset, limit) {
+function selectEntriesFromTree(treeText: string, offset: number, limit: number): TreeSelection {
   if (!treeText) return {entries: [], total: 0, hasMore: false}
   const lines = splitLines(treeText)
   if (lines.length <= 1) return {entries: [], total: 0, hasMore: false}
 
-  const entries = []
+  const entries: TreeEntry[] = []
   let total = 0
   const endIndex = offset + limit - 1
 
@@ -106,7 +130,7 @@ function selectEntriesFromTree(treeText, offset, limit) {
   return {entries, total, hasMore: false}
 }
 
-function parseTreeLine(line) {
+function parseTreeLine(line: string): TreeEntry | null {
   const branchIndex = line.indexOf(BRANCH_MARKER)
   const lastIndex = line.indexOf(LAST_MARKER)
   const index = branchIndex >= 0 ? branchIndex : lastIndex
@@ -122,7 +146,7 @@ function parseTreeLine(line) {
   return {depth, name, isDir}
 }
 
-function formatEntry(entry) {
+function formatEntry(entry: TreeEntry): string {
   const indent = ' '.repeat(entry.depth * 2)
   const suffix = entry.isDir ? '/' : ''
   return `${indent}${entry.name}${suffix}`

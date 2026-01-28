@@ -3,8 +3,20 @@
 import path from 'node:path'
 import {normalizeLineEndings, readFileText, requireString, resolvePathInProject} from '../shared'
 import {isTruncatedText} from '../truncation'
+import type {UpstreamToolCaller} from '../types'
 
-export async function handleEditTool(args, projectPath, callUpstreamTool) {
+interface EditToolArgs {
+  file_path?: unknown
+  old_string?: unknown
+  new_string?: unknown
+  replace_all?: unknown
+}
+
+export async function handleEditTool(
+  args: EditToolArgs,
+  projectPath: string,
+  callUpstreamTool: UpstreamToolCaller
+): Promise<string> {
   const filePath = requireString(args.file_path, 'file_path')
   const oldString = normalizeLineEndings(requireString(args.old_string, 'old_string'))
   const newString = typeof args.new_string === 'string' ? normalizeLineEndings(args.new_string) : null

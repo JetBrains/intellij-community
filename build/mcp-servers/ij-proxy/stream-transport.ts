@@ -4,14 +4,51 @@ import isPortReachable from 'is-port-reachable'
 import pRetry from 'p-retry'
 import {StreamableHTTPClientTransport} from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 
-function resolveTimeout(timeoutMs) {
+type TransportMessage = unknown
+type TransportSendOptions = Record<string, unknown> | undefined
+
+interface PortCandidate {
+  port: number
+  kind: 'preferred' | 'scan'
+}
+
+interface StreamTransportOptions {
+  explicitUrl?: string
+  preferredPorts?: number[]
+  portScanStart: number
+  portScanLimit: number
+  connectTimeoutMs: number
+  scanTimeoutMs: number
+  queueLimit: number
+  queueWaitTimeoutMs: number
+  retryAttempts: number
+  retryBaseDelayMs: number
+  buildUrl: (port: number) => string
+  note?: (message: string) => void
+  warn?: (message: string) => void
+  probeHost?: string
+}
+
+interface QueueEntry {
+  message: TransportMessage
+  options: TransportSendOptions
+  resolve: () => void
+  reject: (error: unknown) => void
+  timeout: NodeJS.Timeout | null
+}
+
+function resolveTimeout(timeoutMs: number | null | undefined): number | undefined {
   if (timeoutMs === undefined || timeoutMs === null) return undefined
   return timeoutMs > 0 ? timeoutMs : undefined
 }
 
-function normalizePortList(preferredPorts, portScanStart, portScanLimit) {
+function normalizePortList(
+  preferredPorts: number[] | undefined,
+  portScanStart: number,
+  portScanLimit: number
+): PortCandidate[] {
   const seen = new Set()
-  const candidates = []
+  const candidates: PortCandidate[] = []
 
   for (const port of preferredPorts || []) {
     if (!Number.isFinite(port) || port <= 0) continue
@@ -33,7 +70,19 @@ function normalizePortList(preferredPorts, portScanStart, portScanLimit) {
 }
 
 class StreamTransport {
-  constructor(options) {
+  _options: StreamTransportOptions
+  _queue: QueueEntry[]
+  _connectPromise: Promise<void> | null
+  _transport: StreamableHTTPClientTransport | null
+  _protocolVersion: string | null
+  _closed: boolean
+  _closeNotified: boolean
+  sessionId: string | undefined
+  onmessage?: (message: TransportMessage, extra?: unknown) => void
+  onerror?: (error: Error) => void
+  onclose?: () => void
+
+  constructor(options: StreamTransportOptions) {
     this._options = options
     this._queue = []
     this._connectPromise = null
@@ -44,11 +93,11 @@ class StreamTransport {
     this.sessionId = undefined
   }
 
-  async start() {
+  async start(): Promise<void> {
     await this._ensureConnected()
   }
 
-  async send(message, options) {
+  async send(message: TransportMessage, options?: TransportSendOptions): Promise<void> {
     if (this._closed) {
       throw new Error('Transport is closed')
     }
@@ -61,7 +110,7 @@ class StreamTransport {
     await this._enqueue(message, options)
   }
 
-  async close() {
+  async close(): Promise<void> {
     if (this._closed) return
     this._closed = true
 
@@ -74,14 +123,14 @@ class StreamTransport {
     this._emitClose()
   }
 
-  setProtocolVersion(version) {
+  setProtocolVersion(version: string): void {
     this._protocolVersion = version
     if (this._transport?.setProtocolVersion) {
       this._transport.setProtocolVersion(version)
     }
   }
 
-  async _sendDirect(message, options) {
+  async _sendDirect(message: TransportMessage, options?: TransportSendOptions): Promise<void> {
     try {
       await this._transport.send(message, options)
       this.sessionId = this._transport.sessionId
@@ -92,14 +141,14 @@ class StreamTransport {
     }
   }
 
-  async _enqueue(message, options) {
+  async _enqueue(message: TransportMessage, options?: TransportSendOptions): Promise<void> {
     const limit = this._options.queueLimit
     if (limit > 0 && this._queue.length >= limit) {
       throw new Error(`MCP proxy queue limit (${limit}) reached before stream connection`)
     }
 
-    await new Promise((resolve, reject) => {
-      const entry = {
+    await new Promise<void>((resolve, reject) => {
+      const entry: QueueEntry = {
         message,
         options,
         resolve,
@@ -122,7 +171,7 @@ class StreamTransport {
     })
   }
 
-  async _ensureConnected() {
+  async _ensureConnected(): Promise<void> {
     if (this._closed) throw new Error('Transport is closed')
     if (this._transport) return
     if (this._connectPromise) return this._connectPromise
@@ -164,8 +213,7 @@ class StreamTransport {
           if (this.onmessage) this.onmessage(message, extra)
         }
         transport.onerror = (error) => {
-          const err = error instanceof Error ? error : new Error(String(error))
-          if (this.onerror) this.onerror(err)
+          if (this.onerror) this.onerror(error)
         }
         transport.onclose = () => {
           this._transport = null
@@ -198,7 +246,7 @@ class StreamTransport {
     return this._connectPromise
   }
 
-  async _flushQueue() {
+  async _flushQueue(): Promise<void> {
     if (!this._transport || this._queue.length === 0) return
     const queued = this._queue.slice()
     this._queue.length = 0
@@ -217,7 +265,7 @@ class StreamTransport {
     }
   }
 
-  _removeQueueEntry(entry) {
+  _removeQueueEntry(entry: QueueEntry): void {
     const index = this._queue.indexOf(entry)
     if (index >= 0) {
       this._queue.splice(index, 1)
@@ -228,7 +276,7 @@ class StreamTransport {
     }
   }
 
-  _rejectQueue(error) {
+  _rejectQueue(error: unknown): void {
     const queued = this._queue.slice()
     this._queue.length = 0
     for (const entry of queued) {
@@ -240,7 +288,7 @@ class StreamTransport {
     }
   }
 
-  _emitClose() {
+  _emitClose(): void {
     if (this._closeNotified) return
     this._closeNotified = true
     if (this.onclose) this.onclose()
@@ -262,7 +310,7 @@ export function createStreamTransport({
   note,
   warn,
   probeHost = '127.0.0.1'
-}) {
+}: StreamTransportOptions): StreamTransport {
   return new StreamTransport({
     explicitUrl,
     preferredPorts,

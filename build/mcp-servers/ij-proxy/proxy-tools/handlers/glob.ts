@@ -2,8 +2,18 @@
 
 import path from 'node:path'
 import {extractFileList, requireString, resolveSearchPath} from '../shared'
+import type {UpstreamToolCaller} from '../types'
 
-export async function handleGlobTool(args, projectPath, callUpstreamTool) {
+interface GlobToolArgs {
+  pattern?: unknown
+  path?: unknown
+}
+
+export async function handleGlobTool(
+  args: GlobToolArgs,
+  projectPath: string,
+  callUpstreamTool: UpstreamToolCaller
+): Promise<string> {
   const pattern = requireString(args.pattern, 'pattern')
   const basePath = args.path
   const {relative} = resolveSearchPath(projectPath, basePath)

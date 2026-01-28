@@ -12,13 +12,58 @@ import {
   resolveSearchPath,
   toPositiveInt
 } from '../shared'
+import type {SearchEntry, UpstreamToolCaller} from '../types'
 
 const CODEX_MAX_LIMIT = 2000
 const FULL_SCAN_USAGE_COUNT = 1_000_000
 const FALLBACK_MAX_ALTERNATIVES = 25
 const REGEXP_PARSER = new RegExpParser({ecmaVersion: 2024})
 
-export async function handleGrepTool(args, projectPath, callUpstreamTool, isCodexStyle) {
+type OutputMode = 'files_with_matches' | 'content' | 'count'
+
+interface GrepToolArgs {
+  pattern?: unknown
+  path?: unknown
+  glob?: unknown
+  include?: unknown
+  type?: unknown
+  output_mode?: unknown
+  '-i'?: unknown
+  '-n'?: unknown
+  head_limit?: unknown
+  limit?: unknown
+}
+
+interface SearchToolArgs {
+  directoryToSearch?: string
+  fileMask?: string
+  caseSensitive: boolean
+  maxUsageCount: number
+  regexPattern?: string
+  searchText?: string
+}
+
+interface PatternAst {
+  alternatives?: AlternativeAst[]
+}
+
+interface AlternativeAst {
+  start: number
+  end: number
+  elements?: ElementAst[]
+}
+
+interface ElementAst {
+  type?: string
+  value?: number
+}
+
+export async function handleGrepTool(
+  args: GrepToolArgs,
+  projectPath: string,
+  callUpstreamTool: UpstreamToolCaller,
+  isCodexStyle: boolean
+): Promise<string> {
   const pattern = requireString(args.pattern, 'pattern')
   const basePath = args.path
   const {relative} = resolveSearchPath(projectPath, basePath)
@@ -47,7 +92,7 @@ export async function handleGrepTool(args, projectPath, callUpstreamTool, isCode
   const outputModeRaw = typeof args.output_mode === 'string'
     ? args.output_mode
     : 'files_with_matches'
-  const outputMode = outputModeRaw.trim().toLowerCase()
+  const outputMode = outputModeRaw.trim().toLowerCase() as OutputMode
   const caseSensitive = !args['-i']
   const includeLineNumbers = Boolean(args['-n'] ?? false)
 
@@ -70,7 +115,7 @@ export async function handleGrepTool(args, projectPath, callUpstreamTool, isCode
 
   const literalSearchText = getLiteralSearchText(pattern)
   const useRegex = literalSearchText === null
-  const toolArgs = {
+  const toolArgs: SearchToolArgs = {
     directoryToSearch,
     fileMask: resolvedMask,
     caseSensitive,
@@ -149,12 +194,22 @@ export async function handleGrepTool(args, projectPath, callUpstreamTool, isCode
 }
 
 // Upstream search_in_files_by_regex may ignore directoryToSearch; filter results locally.
-function filterEntriesByPath(entries, projectPath, relativePath, treatAsFile) {
+function filterEntriesByPath(
+  entries: SearchEntry[],
+  projectPath: string,
+  relativePath: string,
+  treatAsFile: boolean
+): SearchEntry[] {
   const filter = createEntryPathFilter(projectPath, relativePath, treatAsFile)
   return filter ? entries.filter(filter) : entries
 }
 
-function createFallbackEntryFilter(projectPath, relativePath, treatAsFile, pathGlob) {
+function createFallbackEntryFilter(
+  projectPath: string,
+  relativePath: string,
+  treatAsFile: boolean,
+  pathGlob: string | undefined
+): (entry: SearchEntry) => boolean {
   const pathFilter = createEntryPathFilter(projectPath, relativePath, treatAsFile)
   const matcher = pathGlob ? createPathGlobMatcher(pathGlob) : null
 
@@ -162,7 +217,7 @@ function createFallbackEntryFilter(projectPath, relativePath, treatAsFile, pathG
     return () => true
   }
 
-  return (entry) => {
+  return (entry: SearchEntry) => {
     if (pathFilter && !pathFilter(entry)) return false
     if (!matcher) return true
     const entryPath = resolveEntryPath(projectPath, entry)
@@ -173,7 +228,11 @@ function createFallbackEntryFilter(projectPath, relativePath, treatAsFile, pathG
   }
 }
 
-function createEntryPathFilter(projectPath, relativePath, treatAsFile) {
+function createEntryPathFilter(
+  projectPath: string,
+  relativePath: string,
+  treatAsFile: boolean
+): ((entry: SearchEntry) => boolean) | null {
   if (!relativePath) return null
   const targetPath = path.normalize(path.resolve(projectPath, relativePath))
   if (treatAsFile) {
@@ -185,26 +244,26 @@ function createEntryPathFilter(projectPath, relativePath, treatAsFile) {
   }
 }
 
-function resolveEntryPath(projectPath, entry) {
+function resolveEntryPath(projectPath: string, entry: SearchEntry): string | null {
   const filePath = normalizeEntryPath(projectPath, entry.filePath)
   if (typeof filePath !== 'string' || filePath === '') return null
   return path.normalize(filePath)
 }
 
-function isWithinDirectory(filePath, directoryPath) {
+function isWithinDirectory(filePath: string, directoryPath: string): boolean {
   const relative = path.relative(directoryPath, filePath)
   if (relative === '') return true
   return !relative.startsWith('..') && !path.isAbsolute(relative)
 }
 
-function entryKey(entry) {
+function entryKey(entry: SearchEntry): string {
   const filePath = typeof entry?.filePath === 'string' ? entry.filePath : ''
   const lineNumber = typeof entry?.lineNumber === 'number' ? entry.lineNumber : ''
   const lineText = typeof entry?.lineText === 'string' ? entry.lineText : ''
   return `${filePath}:${lineNumber}:${lineText}`
 }
 
-function filterEntriesByPathGlob(entries, projectPath, pathGlob) {
+function filterEntriesByPathGlob(entries: SearchEntry[], projectPath: string, pathGlob: string): SearchEntry[] {
   const matcher = createPathGlobMatcher(pathGlob)
   if (!matcher) return entries
   return entries.filter((entry) => {
@@ -213,20 +272,20 @@ function filterEntriesByPathGlob(entries, projectPath, pathGlob) {
     const relativePath = path.relative(projectPath, entryPath)
     if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) return false
     // Match against normalized project-relative paths (POSIX separators).
-  return matcher(normalizePathForGlob(relativePath))
+    return matcher(normalizePathForGlob(relativePath))
   })
 }
 
 async function searchAlternativesWhenRegexEmpty(
-  pattern,
-  toolArgs,
-  projectPath,
-  relative,
-  treatAsFile,
-  pathGlob,
-  callUpstreamTool,
-  {maxResults, maxAlternatives} = {}
-) {
+  pattern: string,
+  toolArgs: SearchToolArgs,
+  projectPath: string,
+  relative: string,
+  treatAsFile: boolean,
+  pathGlob: string | undefined,
+  callUpstreamTool: UpstreamToolCaller,
+  {maxResults, maxAlternatives}: {maxResults?: number | null; maxAlternatives?: number} = {}
+): Promise<SearchEntry[]> {
   const alternatives = getTopLevelAlternatives(pattern)
   if (!alternatives || alternatives.length < 2) return []
   const maxAltCount = Number.isFinite(maxAlternatives) && maxAlternatives > 0
@@ -236,7 +295,7 @@ async function searchAlternativesWhenRegexEmpty(
   const entryFilter = createFallbackEntryFilter(projectPath, relative, treatAsFile, pathGlob)
   const maxEntries = Number.isFinite(maxResults) && maxResults > 0 ? maxResults : null
   const seen = new Set()
-  const merged = []
+  const merged: SearchEntry[] = []
 
   for (const alternative of cappedAlternatives) {
     const trimmed = alternative.trim()
@@ -261,58 +320,58 @@ async function searchAlternativesWhenRegexEmpty(
   return merged
 }
 
-function getLiteralSearchText(pattern) {
+function getLiteralSearchText(pattern: string): string | null {
   const ast = parsePatternSafe(pattern)
   return ast ? extractLiteralFromPattern(ast) : null
 }
 
-function getTopLevelAlternatives(pattern) {
+function getTopLevelAlternatives(pattern: string): string[] | null {
   const ast = parsePatternSafe(pattern)
   if (!ast || !Array.isArray(ast.alternatives) || ast.alternatives.length < 2) return null
   return ast.alternatives.map((alternative) => pattern.slice(alternative.start, alternative.end))
 }
 
-function parsePatternSafe(pattern) {
+function parsePatternSafe(pattern: string): PatternAst | null {
   const start = 0
   const end = pattern.length
   try {
     return REGEXP_PARSER.parsePattern(pattern, start, end, {
       unicode: true,
       unicodeSets: true
-    })
+    }) as PatternAst
   } catch {
     // fall through
   }
   try {
     return REGEXP_PARSER.parsePattern(pattern, start, end, {
       unicode: true
-    })
+    }) as PatternAst
   } catch {
     // fall through
   }
   try {
-    return REGEXP_PARSER.parsePattern(pattern, start, end, true, true)
+    return REGEXP_PARSER.parsePattern(pattern, start, end, true, true) as PatternAst
   } catch {
     // fall through
   }
   try {
-    return REGEXP_PARSER.parsePattern(pattern, start, end, true)
+    return REGEXP_PARSER.parsePattern(pattern, start, end, true) as PatternAst
   } catch {
     // fall through
   }
   try {
-    return REGEXP_PARSER.parsePattern(pattern, start, end, 'u')
+    return REGEXP_PARSER.parsePattern(pattern, start, end, 'u') as PatternAst
   } catch {
     // fall through
   }
   try {
-    return REGEXP_PARSER.parsePattern(pattern, start, end)
+    return REGEXP_PARSER.parsePattern(pattern, start, end) as PatternAst
   } catch {
     return null
   }
 }
 
-function extractLiteralFromPattern(patternAst) {
+function extractLiteralFromPattern(patternAst: PatternAst): string | null {
   if (!patternAst || !Array.isArray(patternAst.alternatives) || patternAst.alternatives.length !== 1) {
     return null
   }
@@ -321,21 +380,21 @@ function extractLiteralFromPattern(patternAst) {
 
   const chars = []
   for (const element of alternative.elements) {
-    if (!element || element.type !== 'Character') return null
+    if (!element || element.type !== 'Character' || typeof element.value !== 'number') return null
     chars.push(String.fromCodePoint(element.value))
   }
   return chars.join('')
 }
 
-function endsWithSeparator(input) {
+function endsWithSeparator(input: string): boolean {
   return input.endsWith(path.sep) || input.endsWith('/') || input.endsWith('\\')
 }
 
-function isPathAwareGlob(pattern) {
+function isPathAwareGlob(pattern: string): boolean {
   return pattern.includes('/') || pattern.includes('\\')
 }
 
-function normalizeGlobPattern(pattern) {
+function normalizeGlobPattern(pattern: string): string {
   let normalized = pattern.replace(/\\/g, '/')
   if (normalized.startsWith('./')) {
     normalized = normalized.slice(2)
@@ -346,11 +405,11 @@ function normalizeGlobPattern(pattern) {
   return normalized
 }
 
-function normalizePathForGlob(candidate) {
+function normalizePathForGlob(candidate: string): string {
   return candidate.replace(/\\/g, '/')
 }
 
-function deriveFileMaskFromPathGlob(pattern) {
+function deriveFileMaskFromPathGlob(pattern: string): string | undefined {
   if (pattern.includes(';')) return undefined
   const normalized = normalizeGlobPattern(pattern)
   const tail = normalized.split('/').pop()
@@ -360,16 +419,16 @@ function deriveFileMaskFromPathGlob(pattern) {
   return tail
 }
 
-function createPathGlobMatcher(pattern) {
+function createPathGlobMatcher(pattern: string): ((candidate: string) => boolean) | null {
   const normalized = normalizeGlobPattern(pattern)
   const patterns = normalized.split(';').map((entry) => entry.trim()).filter(Boolean)
   if (patterns.length === 0) return null
   const nocase = path.sep === '\\'
   const matchers = patterns.map((entry) => picomatch(entry, {dot: true, nocase}))
-  return (candidate) => matchers.some((matcher) => matcher(candidate))
+  return (candidate: string) => matchers.some((matcher) => matcher(candidate))
 }
 
-async function isExistingFilePath(relativePath, callUpstreamTool) {
+async function isExistingFilePath(relativePath: string, callUpstreamTool: UpstreamToolCaller): Promise<boolean> {
   try {
     const result = await callUpstreamTool('find_files_by_glob', {
       globPattern: relativePath,

@@ -21,18 +21,37 @@ import {
   createRenameSchema,
   createWriteSchema
 } from './schemas'
+import type {ToolArgs, ToolInputSchema, ToolSpecLike, UpstreamToolCaller} from './types'
 
 export const TOOL_MODES = {
   CODEX: 'codex',
   CC: 'cc'
 } as const
 
+type ToolMode = typeof TOOL_MODES[keyof typeof TOOL_MODES]
+
+interface ToolContext {
+  projectPath: string
+  callUpstreamTool: UpstreamToolCaller
+}
+
+type ToolHandler = (args: ToolArgs) => Promise<unknown>
+
+interface ToolVariant {
+  mode: ToolMode
+  name: string
+  description: string
+  schemaFactory: () => ToolInputSchema
+  handlerFactory: (context: ToolContext) => ToolHandler
+  upstreamNames?: string[]
+}
+
 export const BLOCKED_TOOL_NAMES = new Set(['create_new_file', 'execute_terminal_command'])
 
 const EXTRA_REPLACED_TOOL_NAMES = ['search_in_files_by_text', 'execute_terminal_command']
 const RENAME_TOOL_DESCRIPTION = 'Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use edit/apply_patch for renames.'
 
-function buildToolSpec(name: string, description: string, inputSchema: { type: string; properties: any; required: any; additionalProperties: boolean }) {
+function buildToolSpec(name: string, description: string, inputSchema: ToolInputSchema): ToolSpecLike {
   return {
     name,
     description,
@@ -40,7 +59,7 @@ function buildToolSpec(name: string, description: string, inputSchema: { type: s
   }
 }
 
-const TOOL_VARIANTS = [
+const TOOL_VARIANTS: ToolVariant[] = [
   {
     mode: TOOL_MODES.CODEX,
     name: 'read_file',
@@ -151,17 +170,21 @@ const TOOL_VARIANTS = [
   }
 ]
 
-function getProxyToolVariants(mode) {
+function getProxyToolVariants(mode: ToolMode): ToolVariant[] {
   return TOOL_VARIANTS.filter((tool) => tool.mode === mode)
 }
 
-export function buildProxyToolSpecs(mode) {
+export function buildProxyToolSpecs(mode: ToolMode): ToolSpecLike[] {
   return getProxyToolVariants(mode).map((tool) =>
     buildToolSpec(tool.name, tool.description, tool.schemaFactory())
   )
 }
 
-export function buildProxyToolingData(mode, context) {
+export function buildProxyToolingData(mode: ToolMode, context: ToolContext): {
+  proxyToolSpecs: ToolSpecLike[]
+  proxyToolNames: Set<string>
+  handlers: Map<string, ToolHandler>
+} {
   const variants = getProxyToolVariants(mode)
   const handlers = new Map()
   for (const tool of variants) {
@@ -176,7 +199,7 @@ export function buildProxyToolingData(mode, context) {
   }
 }
 
-export function getProxyToolNames(mode: string) {
+export function getProxyToolNames(mode: ToolMode): Set<string> {
   return new Set(getProxyToolVariants(mode).map((tool) => tool.name))
 }
 
