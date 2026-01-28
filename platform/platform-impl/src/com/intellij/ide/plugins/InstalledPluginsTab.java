@@ -66,24 +66,6 @@ class InstalledPluginsTab extends PluginsTab {
     }
   }
 
-  @Override
-  protected void createSearchTextField(int flyDelay) {
-    super.createSearchTextField(flyDelay);
-
-    JBTextField textField = searchTextField.getTextEditor();
-    ExtendableTextComponent.Extension searchFieldExtension = ExtendableTextComponent.Extension.create(
-      AllIcons.General.Filter, AllIcons.General.Filter,
-      IdeBundle.message("plugins.configurable.search.options"),
-      true,
-      () -> showRightBottomPopup(textField, IdeBundle.message("plugins.configurable.show"), myInstalledSearchGroup)
-    );
-    textField.putClientProperty("search.extension", searchFieldExtension);
-    textField.putClientProperty("JTextField.variant", null);
-    textField.putClientProperty("JTextField.variant", "search");
-
-    searchTextField.setHistoryPropertyName("InstalledPluginsSearchHistory");
-  }
-
   public @Nullable PluginsGroupComponentWithProgress getInstalledPanel() {
     return myInstalledPanel;
   }
@@ -244,24 +226,21 @@ class InstalledPluginsTab extends PluginsTab {
   }
 
   @Override
-  protected void updateMainSelection(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
-    selectionListener.accept(myInstalledPanel);
-  }
+  protected void createSearchTextField(int flyDelay) {
+    super.createSearchTextField(flyDelay);
 
-  @Override
-  public void hideSearchPanel() {
-    super.hideSearchPanel();
-    if (myInstalledSearchSetState) {
-      for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
-        ((InstalledSearchOptionAction)action).setState(null);
-      }
-    }
-    myPluginModelFacade.getModel().setInvalidFixCallback(null);
-  }
+    JBTextField textField = searchTextField.getTextEditor();
+    ExtendableTextComponent.Extension searchFieldExtension = ExtendableTextComponent.Extension.create(
+      AllIcons.General.Filter, AllIcons.General.Filter,
+      IdeBundle.message("plugins.configurable.search.options"),
+      true,
+      () -> showRightBottomPopup(textField, IdeBundle.message("plugins.configurable.show"), myInstalledSearchGroup)
+    );
+    textField.putClientProperty("search.extension", searchFieldExtension);
+    textField.putClientProperty("JTextField.variant", null);
+    textField.putClientProperty("JTextField.variant", "search");
 
-  @Override
-  protected void onSearchReset() {
-    PluginManagerUsageCollector.INSTANCE.searchReset();
+    searchTextField.setHistoryPropertyName("InstalledPluginsSearchHistory");
   }
 
   @Override
@@ -455,6 +434,27 @@ class InstalledPluginsTab extends PluginsTab {
     };
 
     return myInstalledSearchPanel;
+  }
+
+  @Override
+  protected void updateMainSelection(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
+    selectionListener.accept(myInstalledPanel);
+  }
+
+  @Override
+  public void hideSearchPanel() {
+    super.hideSearchPanel();
+    if (myInstalledSearchSetState) {
+      for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
+        ((InstalledSearchOptionAction)action).setState(null);
+      }
+    }
+    myPluginModelFacade.getModel().setInvalidFixCallback(null);
+  }
+
+  @Override
+  protected void onSearchReset() {
+    PluginManagerUsageCollector.INSTANCE.searchReset();
   }
 
   private void handleSearchOptionSelection(InstalledSearchOptionAction updateAction) {
