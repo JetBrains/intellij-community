@@ -371,7 +371,7 @@ fun CodeInsightTestFixture.polySymbolAtCaret(): PolySymbol? =
 
 
 fun CodeInsightTestFixture.polySymbolSourceAtCaret(): PsiElement? =
-  when (val symbol = polySymbolAtCaret()){
+  when (val symbol = polySymbolAtCaret()) {
     is PsiSourcedPolySymbol -> symbol.source
     is PolySymbolDeclaredInPsi -> symbol.sourceElement
     else -> null
@@ -552,7 +552,12 @@ fun CodeInsightTestFixture.checkJumpToSource(fromSignature: String?, sourceSigna
   checkEditorNavigation("EditSource", fromSignature, sourceSignature, expectedFileName)
 }
 
-private fun CodeInsightTestFixture.checkEditorNavigation(action: String, fromSignature: String?, targetSignature: String, expectedFileName: String?) {
+private fun CodeInsightTestFixture.checkEditorNavigation(
+  action: String,
+  fromSignature: String?,
+  targetSignature: String,
+  expectedFileName: String?,
+) {
   val actualSignature = fromSignature ?: editor.currentPositionSignature
   performEditorAction(action)
   val targetEditor = FileEditorManager.getInstance(project).selectedTextEditor?.topLevelEditor
