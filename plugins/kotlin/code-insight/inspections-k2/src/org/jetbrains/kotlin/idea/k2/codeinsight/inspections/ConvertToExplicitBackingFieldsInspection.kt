@@ -93,14 +93,14 @@ internal class ConvertToExplicitBackingFieldsInspection :
                 append(propertyNameText)
                 append(": ")
                 append(propertyType)
-
-                val initializer = context.backingProperty.initializer
-                if (initializer != null) {
-                    append("\nfield = ")
-                    append(initializer.text)
-                } else if (backingPropertyType != null && backingPropertyType != propertyType) {
-                    append("\nfield: ")
+                append("\nfield")
+                backingPropertyType?.let {
+                    append(": ")
                     append(backingPropertyType)
+                }
+                context.backingProperty.initializer?.let {
+                    append(" = ")
+                    append(it.text)
                 }
             }
 
