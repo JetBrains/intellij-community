@@ -33,17 +33,15 @@ import static com.intellij.ide.plugins.PluginManagerConfigurablePanel.*;
 
 @ApiStatus.Internal
 class InstalledPluginsTab extends PluginsTab {
-  private final DefaultActionGroup myInstalledSearchGroup;
-  private boolean myInstalledSearchSetState = true;
-
   private final @NotNull PluginModelFacade myPluginModelFacade;
   private final @NotNull PluginUpdatesService myPluginUpdatesService;
   private final @NotNull CoroutineScope myCoroutineScope;
-
   private final @Nullable Consumer<String> mySearchInMarketplaceTabHandler;
 
   private @Nullable PluginsGroupComponentWithProgress myInstalledPanel = null;
   private @Nullable SearchResultPanel myInstalledSearchPanel = null;
+  private final DefaultActionGroup myInstalledSearchGroup;
+  private boolean myInstalledSearchSetState = true;
 
   private final PluginsGroup myBundledUpdateGroup =
     new PluginsGroup(IdeBundle.message("plugins.configurable.bundled.updates"), PluginsGroupType.BUNDLED_UPDATE);
@@ -56,12 +54,12 @@ class InstalledPluginsTab extends PluginsTab {
   InstalledPluginsTab(@NotNull PluginModelFacade facade,
                       @NotNull PluginUpdatesService service,
                       @NotNull CoroutineScope scope,
-                      @Nullable Consumer<String> handler) {
+                      @Nullable Consumer<String> searchInMarketplaceHandler) {
     super();
     myPluginModelFacade = facade;
     myPluginUpdatesService = service;
     myCoroutineScope = scope;
-    mySearchInMarketplaceTabHandler = handler;
+    mySearchInMarketplaceTabHandler = searchInMarketplaceHandler;
     myInstalledSearchGroup = new DefaultActionGroup();
     for (InstalledSearchOption option : InstalledSearchOption.values()) {
       myInstalledSearchGroup.add(new InstalledSearchOptionAction(option));
