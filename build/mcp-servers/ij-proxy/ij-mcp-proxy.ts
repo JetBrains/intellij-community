@@ -74,7 +74,10 @@ function buildStreamUrl(port: number): string {
   return `http://${defaultHost}:${port}${defaultPath}`
 }
 
-const projectPath = path.resolve(cwd())
+const explicitProjectPath = env.JETBRAINS_MCP_PROJECT_PATH
+const projectPath = explicitProjectPath && explicitProjectPath.length > 0
+  ? path.resolve(explicitProjectPath)
+  : path.resolve(cwd())
 const defaultProjectPathKey = 'project_path'
 const projectPathManager = createProjectPathManager({projectPath, defaultProjectPathKey})
 

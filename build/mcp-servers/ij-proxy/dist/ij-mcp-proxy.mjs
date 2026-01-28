@@ -25943,7 +25943,7 @@ function parseEnvSeconds(name, fallbackSeconds) {
 function buildStreamUrl(port) {
   return `http://${defaultHost}:${port}${defaultPath}`;
 }
-var projectPath = path10.resolve(cwd()), defaultProjectPathKey = "project_path", projectPathManager = createProjectPathManager({ projectPath, defaultProjectPathKey }), toolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE), REPLACED_TOOL_NAMES = getReplacedToolNames();
+var explicitProjectPath = env.JETBRAINS_MCP_PROJECT_PATH, projectPath = explicitProjectPath && explicitProjectPath.length > 0 ? path10.resolve(explicitProjectPath) : path10.resolve(cwd()), defaultProjectPathKey = "project_path", projectPathManager = createProjectPathManager({ projectPath, defaultProjectPathKey }), toolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE), REPLACED_TOOL_NAMES = getReplacedToolNames();
 function blockedToolMessage(toolName) {
   if (toolName === "create_new_file") {
     if (toolModeInfo.mode === TOOL_MODES.CC)

@@ -7,7 +7,7 @@ It forwards JSON-RPC messages between stdin/stdout and the upstream streamable H
 
 - Use JetBrains MCP streamable HTTP servers as stdio MCP servers.
 - Hide `project_path`/`projectPath` from tool schemas shown to clients.
-- Inject the current working directory (`process.cwd()`) as the project path for `tools/call` requests.
+- Inject the current working directory (`process.cwd()`) as the project path for `tools/call` requests (override with `JETBRAINS_MCP_PROJECT_PATH`).
 
 ## Usage
 
@@ -46,6 +46,7 @@ Environment variables (optional):
 - `JETBRAINS_MCP_QUEUE_LIMIT`: max number of queued client messages before the stream endpoint is ready. Default: `100`. Use `0` for unlimited.
 - `JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S`: timeout for upstream tool calls after they are sent (seconds). Default: `60`. Use `0` to disable.
 - `JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S`: timeout for upstream tool calls waiting to be sent while the stream is unavailable (seconds). Defaults to the tool-call timeout when set; use `0` to disable.
+- `JETBRAINS_MCP_PROJECT_PATH`: override the injected project path (defaults to `process.cwd()`, relative paths resolve from the current working directory).
 - `MCP_LOG`: path to a log file for proxy progress (cleared on startup).
 - `JETBRAINS_MCP_TOOL_MODE`: tool API shape to expose. `codex` (default) uses `read_file`, `grep`, `find`, `list_dir`, `apply_patch`. `cc` uses `read`, `edit`, `write`, `glob`, `grep`.
 
@@ -131,6 +132,6 @@ bun test community/build/mcp-servers/ij-proxy/integration-tests/*.test.ts commun
 
 ## Notes
 
-- Run from the desired project root so `process.cwd()` matches the project path.
+- Run from the desired project root so `process.cwd()` matches the project path, or set `JETBRAINS_MCP_PROJECT_PATH` to override it.
 - Direct `create_new_file` calls are blocked; use `apply_patch` (codex) or `write` (cc).
 - Requires Bun 1.0+ (Node 18+ if you run the built proxy with node).
