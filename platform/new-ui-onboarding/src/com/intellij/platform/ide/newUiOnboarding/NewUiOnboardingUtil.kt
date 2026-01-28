@@ -4,6 +4,7 @@ package com.intellij.platform.ide.newUiOnboarding
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.DistractionFreeModeController
+import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -11,12 +12,16 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.UiComponentsSearchUtil
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.wm.WindowManager
@@ -27,7 +32,9 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.WebAnimationUtils
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.AbstractPopup
+import com.intellij.ui.popup.PopupFactoryImpl.ActionItem
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.util.SlowOperations
 import com.intellij.util.ui.JBUI
@@ -38,12 +45,17 @@ import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
+import java.awt.Rectangle
+import javax.swing.Icon
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 object NewUiOnboardingUtil {
   const val ONBOARDING_PROPOSED_VERSION = "experimental.ui.onboarding.proposed.version"
   const val NEW_UI_ON_FIRST_STARTUP = "experimental.ui.on.first.startup"
+
+  internal const val MEET_ISLANDS_TOUR_COVER_IMAGE_PATH: String = "newUiOnboarding/meetIslandsTourCover.png"
+  internal const val SHOW_TOOL_WINDOW_NAMES_IMAGE_PATH: String = "newUiOnboarding/showToolWindowNamesTour.png"
 
   private const val LOTTIE_SCRIPT_PATH = "newUiOnboarding/lottie.js"
   private const val LIGHT_SUFFIX = ""
@@ -58,6 +70,10 @@ object NewUiOnboardingUtil {
   enum class OnboardingType {
     MEET_NEW_UI_TOOL_WINDOW,
     NEW_UI_ONBOARDING
+  }
+
+  internal fun getImage(path: String): Icon {
+    return IconLoader.getIcon(path, NewUiOnboardingUtil::class.java.classLoader)
   }
 
   fun shouldProposeOnboarding(type: OnboardingType): Boolean {
@@ -141,10 +157,14 @@ object NewUiOnboardingUtil {
     return popup
   }
 
-  suspend fun createPopupFromActionButton(button: ActionButton, doCreatePopup: suspend (AnActionEvent) -> JBPopup?): JBPopup? {
+  suspend fun createPopupFromActionButton(
+    button: ActionButton,
+    place: String = ActionPlaces.NEW_UI_ONBOARDING,
+    doCreatePopup: suspend (AnActionEvent) -> JBPopup?,
+  ): JBPopup? {
     val action = button.action
     val context = DataManager.getInstance().getDataContext(button)
-    val event = AnActionEvent.createFromInputEvent(null, ActionPlaces.NEW_UI_ONBOARDING, button.presentation, context)
+    val event = AnActionEvent.createFromInputEvent(null, place, button.presentation, context)
     performActionUpdate(action, event)
 
     var popup: JBPopup?
@@ -194,6 +214,38 @@ object NewUiOnboardingUtil {
     val background = JBUI.CurrentTheme.GotItTooltip.animationBackground(false)
     val htmlPage = WebAnimationUtils.createLottieAnimationPage(lottieJson, lottieScript, background)
     return htmlPage to size
+  }
+
+  suspend fun createSettingsEntryPointPopup(project: Project, disposable: CheckedDisposable): JBPopup? {
+    val settingsButton = UiComponentsSearchUtil.findUiComponent(project) { button: ActionButton ->
+      button.action is SettingsEntryPointAction
+    } ?: return null
+
+    val action = settingsButton.action as SettingsEntryPointAction
+
+    val result = showNonClosablePopup(
+      disposable,
+      createPopup = {
+        createPopupFromActionButton(settingsButton, place = ActionPlaces.getPopupPlace(ActionPlaces.MAIN_TOOLBAR)) { event ->
+          action.createPopup(event)
+        }
+      },
+      showPopup = { popup -> popup.showUnderneathOf(settingsButton) }
+    ) ?: return null
+
+    yield()  // Wait for the popup to be shown
+
+    return result
+  }
+
+  suspend fun findActionItemBounds(list: JBList<*>, actionId: String): Rectangle? {
+    val actionManager = serviceAsync<ActionManager>()
+    val pluginsActionIndex = (0 until list.model.size).find { index ->
+      val element = list.model.getElementAt(index) as? ActionItem ?: return@find false
+      actionManager.getId(element.action) == actionId
+    } ?: return null
+
+    return list.getCellBounds(pluginsActionIndex, pluginsActionIndex)
   }
 
   private fun getAnimationPathVariants(path: String): List<String> {
