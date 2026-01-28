@@ -108,9 +108,10 @@ fun CodeInsightTestFixture.checkLookupItems(
   namedLocations: List<Pair<String, String>> = emptyList(),
   fileName: String = InjectedLanguageManager.getInstance(project).getTopLevelFile(file).virtualFile.nameWithoutExtension,
   expectedDataLocation: String = "",
+  expectedItemsLocation: String = expectedDataLocation,
   lookupItemFilter: (item: LookupElementInfo) -> Boolean = { true },
 ) {
-  val hasDir = expectedDataLocation.isNotEmpty()
+  val hasDir = expectedItemsLocation.isNotEmpty()
 
   fun checkLookupDocumentation(fileSuffix: String = "") {
     if (!checkDocumentation) return
@@ -140,7 +141,7 @@ fun CodeInsightTestFixture.checkLookupItems(
       checkListByFile(
         renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderDisplayText, renderDisplayEffects,
                           lookupItemFilter),
-        expectedDataLocation + (if (hasDir) "/items" else "$fileName.items") + ".txt",
+        expectedItemsLocation + (if (hasDir) "/items" else "$fileName.items") + ".txt",
         containsCheck
       )
       checkLookupDocumentation()
@@ -156,7 +157,7 @@ fun CodeInsightTestFixture.checkLookupItems(
             checkListByFile(
               renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderDisplayText, renderDisplayEffects,
                                 lookupItemFilter),
-              expectedDataLocation + (if (hasDir) "/items" else "$fileName.items") + ".$index.txt",
+              expectedItemsLocation + (if (hasDir) "/items" else "$fileName.items") + ".$index.txt",
               containsCheck
             )
           }
