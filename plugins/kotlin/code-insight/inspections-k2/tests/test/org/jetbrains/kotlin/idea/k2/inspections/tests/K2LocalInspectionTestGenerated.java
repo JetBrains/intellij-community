@@ -13430,6 +13430,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/delegatedProperties.kt");
             }
 
+            @TestMetadata("finalProperty.kt")
+            public void testFinalProperty() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/finalProperty.kt");
+            }
+
             @TestMetadata("genericsWithIn.kt")
             public void testGenericsWithIn() throws Exception {
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/genericsWithIn.kt");
@@ -13443,6 +13448,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("nonPrivateBackingField.kt")
             public void testNonPrivateBackingField() throws Exception {
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/nonPrivateBackingField.kt");
+            }
+
+            @TestMetadata("openProperty.kt")
+            public void testOpenProperty() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/openProperty.kt");
             }
 
             @TestMetadata("propertyIsVar.kt")
