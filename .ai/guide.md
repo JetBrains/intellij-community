@@ -73,7 +73,12 @@ Direct JetBrains MCP connection. Use when ijproxy unavailable.
 - List dir: `list_directory_tree`
 
 ### Client fallback (no MCP)
+<!-- IF_EDITION:ULTIMATE -->
+- Use `./community/tools/fd.cmd` instead of Glob and `./community/tools/rg.cmd` instead of Grep. These are the only allowed shell file ops on repo paths.
+<!-- /IF_EDITION:ULTIMATE -->
+<!-- IF_EDITION:COMMUNITY -->
 - Use `./tools/fd.cmd` instead of Glob and `./tools/rg.cmd` instead of Grep. These are the only allowed shell file ops on repo paths.
+<!-- /IF_EDITION:COMMUNITY -->
 
 ### IDE-backed semantic tools
 Available via ijproxy or JetBrains MCP. Use these for semantic operations; avoid manual search/replace when a refactor exists.
@@ -94,7 +99,12 @@ Available via ijproxy or JetBrains MCP. Use these for semantic operations; avoid
 <!-- IF_TOOL:CLAUDE -->
 - For repo edits, use the ijproxy edit/write tools listed above. Generic edit/write fallbacks are forbidden unless ijproxy is unavailable.
 <!-- /IF_TOOL:CLAUDE -->
+<!-- IF_EDITION:ULTIMATE -->
+- Never shell for file ops (`cat`, `sed`, `find`, `grep`) on repo paths, except the client fallback (`./community/tools/fd.cmd`, `./community/tools/rg.cmd`) when no MCP is available.
+<!-- /IF_EDITION:ULTIMATE -->
+<!-- IF_EDITION:COMMUNITY -->
 - Never shell for file ops (`cat`, `sed`, `find`, `grep`) on repo paths, except the client fallback (`./tools/fd.cmd`, `./tools/rg.cmd`) when no MCP is available.
+<!-- /IF_EDITION:COMMUNITY -->
 - Shell OK for: git, build/test.
 - Outside repo: native shell permitted.
 

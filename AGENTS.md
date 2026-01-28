@@ -83,6 +83,7 @@ Direct JetBrains MCP connection. Use when ijproxy unavailable.
 - List dir: `list_directory_tree`
 
 ### Client fallback (no MCP)
+
 - Use `./tools/fd.cmd` instead of Glob and `./tools/rg.cmd` instead of Grep. These are the only allowed shell file ops on repo paths.
 
 ### IDE-backed semantic tools
@@ -102,5 +103,6 @@ Available via ijproxy or JetBrains MCP. Use these for semantic operations; avoid
 - For repo edits, use `mcp__ijproxy__apply_patch`. Generic `apply_patch` is forbidden unless ijproxy is unavailable.
 
 - Never shell for file ops (`cat`, `sed`, `find`, `grep`) on repo paths, except the client fallback (`./tools/fd.cmd`, `./tools/rg.cmd`) when no MCP is available.
+
 - Shell OK for: git, build/test.
 - Outside repo: native shell permitted.
