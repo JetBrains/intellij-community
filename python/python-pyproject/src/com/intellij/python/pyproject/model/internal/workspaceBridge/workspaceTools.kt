@@ -2,6 +2,7 @@ package com.intellij.python.pyproject.model.internal.workspaceBridge
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
@@ -280,16 +281,17 @@ private data class PyProjectTomlBasedEntryImpl(
  * @see com.intellij.openapi.project.impl.getOrInitializeModule
  */
 private fun removeFakeModuleAndConflictingEntities(storage: MutableEntityStorage, newModules: Sequence<ModuleEntity>) {
-  val contentsToRemove = newModules.flatMap { content -> content.contentRoots.map { it.url } }.toSet()
-  val namesToRemove = newModules.map { it.name }.toSet()
+  val vfsManager = VirtualFileManager.getInstance()
+  val contentsToRemove = newModules.flatMap { content -> content.contentRoots.map { vfsManager.findFileByUrl(it.url.url)!! } }.toSet()
+  val namesToRemove = newModules.map { it.name.lowercase() }.toSet()
   val modulesToRemove = storage.entities(ModuleEntity::class.java)
     .filter { moduleEntity ->
       moduleEntity.type == PYTHON_MODULE_ID // Python module
       && (
         // Intersects with new module content root
-        moduleEntity.contentRoots.map { it.url }.any { it in contentsToRemove } ||
+        moduleEntity.contentRoots.map { vfsManager.findFileByUrl(it.url.url) }.any { it in contentsToRemove } ||
         // Intersects by name
-        moduleEntity.name in namesToRemove ||
+        moduleEntity.name.lowercase() in namesToRemove ||
         // Auto-generated, temporary module
         moduleEntity.entitySource is NonPersistentEntitySource
          )
