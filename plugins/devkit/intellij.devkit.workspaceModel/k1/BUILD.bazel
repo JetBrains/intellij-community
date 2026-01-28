@@ -9,6 +9,7 @@ create_kotlinc_options(
     "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
     "com.jetbrains.kotlin.ocSwift.KotlinFE10Usage",
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+    "org.jetbrains.kotlin.K1Deprecation",
   ]
 )
 
