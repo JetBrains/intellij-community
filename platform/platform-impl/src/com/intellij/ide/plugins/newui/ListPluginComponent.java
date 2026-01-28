@@ -421,10 +421,9 @@ public final class ListPluginComponent extends JPanel {
       myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
     }
     else {
-      String version = myPlugin.isBundled() ? IdeBundle.message("plugin.status.bundled") : myPlugin.getVersion();
-
+      String version = myPlugin.getVersion();
       if (!StringUtil.isEmptyOrSpaces(version)) {
-        myVersion = createRatingLabel(myMetricsPanel, version, null);
+        myVersion = createRatingLabel(myMetricsPanel, version, myPlugin.isBundledUpdate() ? AllIcons.Plugins.Updated : null);
       }
     }
 
