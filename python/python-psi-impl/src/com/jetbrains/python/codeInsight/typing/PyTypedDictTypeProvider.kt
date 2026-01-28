@@ -317,7 +317,7 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
     }
 
     private fun calculateTypeDictType(resolved: PsiElement, context: TypeEvalContext): PyTypedDictType? {
-      if (resolved is PyClass && isTypingTypedDictInheritor(resolved, context)) {
+      if (resolved is PyClass) {
         return getTypedDictTypeForTypingTDInheritorAsCallee(resolved, context, true)
       }
       return null
