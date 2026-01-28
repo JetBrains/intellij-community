@@ -69,26 +69,17 @@ sealed interface EnvCheckerResult {
 }
 
 @ApiStatus.Internal
-// TODO: Make internal after we drop WSL sdk configurator
 suspend fun prepareSdkCreator(
-  envChecker: suspend (CheckExistence) -> EnvCheckerResult,
+  envChecker: suspend () -> EnvCheckerResult,
   sdkCreator: (EnvExists) -> SdkCreator,
 ): CreateSdkInfo? {
-  var res = envChecker(true)
-  return when (res) {
+  return when (val res = envChecker()) {
     is EnvCheckerResult.EnvFound -> CreateSdkInfo.ExistingEnv(
       res.pythonInfo,
       res.intentionName,
       sdkCreator(true)
     )
-    is EnvCheckerResult.EnvNotFound -> {
-      res = envChecker(false)
-      when (res) {
-        is EnvCheckerResult.EnvNotFound -> CreateSdkInfo.WillCreateEnv(res.intentionName, sdkCreator(false))
-        is EnvCheckerResult.EnvFound -> throw AssertionError("Env shouldn't exist if we didn't check for it")
-        is EnvCheckerResult.CannotConfigure -> null
-      }
-    }
+    is EnvCheckerResult.EnvNotFound -> CreateSdkInfo.WillCreateEnv(res.intentionName, sdkCreator(false))
     is EnvCheckerResult.CannotConfigure -> null
   }
 }

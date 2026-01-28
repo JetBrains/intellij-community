@@ -33,12 +33,12 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(
-      { checkExistence -> checkManageableEnv(module, venvsInModule, checkExistence) }
+      { checkManageableEnv(module, venvsInModule) }
     ) { envExists -> { createUv(module, venvsInModule, envExists) } }
 
   override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(
-      { checkExistence -> checkManageableEnv(module, venvsInModule, checkExistence) }
+      { checkManageableEnv(module, venvsInModule) }
     ) { envExists -> { createUv(module, venvsInModule, envExists) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension = this
@@ -55,14 +55,10 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
   private suspend fun checkManageableEnv(
     module: Module,
     venvsInModule: List<PythonBinary>,
-    checkExistence: CheckExistence,
   ): EnvCheckerResult {
     getUvExecutable() ?: return EnvCheckerResult.CannotConfigure
-
     val intentionName = PyBundle.message("sdk.set.up.uv.environment", module.name)
-
-    val envFound = if (checkExistence) getUvEnv(venvsInModule)?.findEnvOrNull(intentionName) else null
-
+    val envFound = getUvEnv(venvsInModule)?.findEnvOrNull(intentionName)
     return envFound ?: EnvCheckerResult.EnvNotFound(intentionName)
   }
 

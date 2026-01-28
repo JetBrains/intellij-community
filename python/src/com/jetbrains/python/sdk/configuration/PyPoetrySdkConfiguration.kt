@@ -41,18 +41,18 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(
-      { checkExistence -> checkManageableEnv(module, checkExistence, true) },
+      { checkManageableEnv(module, true) },
     ) { { createPoetry(module) } }
 
   override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(
-      { checkExistence -> checkManageableEnv(module, checkExistence, false) },
+      { checkManageableEnv(module, false) },
     ) { { createPoetry(module) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension = this
 
   private suspend fun checkManageableEnv(
-    module: Module, checkExistence: CheckExistence, checkToml: CheckToml,
+    module: Module, checkToml: CheckToml,
   ): EnvCheckerResult = reportRawProgress {
     it.text(PyBundle.message("python.sdk.validating.environment"))
 
@@ -67,18 +67,15 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
     val intentionName = PyBundle.message("sdk.set.up.poetry.environment")
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
-    when {
-      canManage && checkExistence -> {
-        val basePath = module.baseDir?.path?.toNioPathOrNull()
-        runPoetry(basePath, "check", "--lock").getOr { return@reportRawProgress envNotFound }
-        val envPath = runPoetry(basePath, "env", "info", "-p")
-          .mapSuccess { it.toNioPathOrNull() }
-          .getOr { return@reportRawProgress envNotFound }
-        envPath?.resolvePythonBinary()?.findEnvOrNull(intentionName) ?: return@reportRawProgress envNotFound
-      }
-      canManage -> envNotFound
-      else -> EnvCheckerResult.CannotConfigure
+    if (canManage) {
+      val basePath = module.baseDir?.path?.toNioPathOrNull()
+      runPoetry(basePath, "check", "--lock").getOr { return@reportRawProgress envNotFound }
+      val envPath = runPoetry(basePath, "env", "info", "-p")
+        .mapSuccess { it.toNioPathOrNull() }
+        .getOr { return@reportRawProgress envNotFound }
+      envPath?.resolvePythonBinary()?.findEnvOrNull(intentionName) ?: envNotFound
     }
+    else EnvCheckerResult.CannotConfigure
   }
 
   private suspend fun createPoetry(module: Module): PyResult<Sdk> =

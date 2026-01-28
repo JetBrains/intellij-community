@@ -41,13 +41,13 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(
-      { checkManageableEnv(module, it) }
+      { checkManageableEnv(module) }
     ) { { createAndAddSdk(module) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
 
   private suspend fun checkManageableEnv(
-    module: Module, checkExistence: CheckExistence,
+    module: Module,
   ): EnvCheckerResult = withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
     val pipfile = findAmongRoots(module, PipEnvFileHelper.PIP_FILE)?.name ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
     val pipEnvExecutable = getPipEnvExecutable() ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
@@ -55,26 +55,23 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
     val intentionName = PyBundle.message("sdk.create.pipenv.suggestion", pipfile)
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
-    when {
-      canManage && checkExistence -> {
-        PropertiesComponent.getInstance().pipenvPath = pipEnvExecutable.pathString
-        val envPath = runPipEnv(
-          module.baseDir?.path?.toNioPathOrNull(),
-          "--venv",
-          transformer = ZeroCodeStdoutParserTransformer { PyResult.success(Path.of(it)) }
-        ).successOrNull
-        val path = envPath?.resolvePythonBinary()
-        val envExists = path?.let {
-          LocalFileSystem.getInstance().refreshAndFindFileByPath(it.pathString) != null
-        } ?: false
-        if (envExists) {
-          path.findEnvOrNull(intentionName) ?: envNotFound
-        }
-        else envNotFound
+    if (canManage) {
+      PropertiesComponent.getInstance().pipenvPath = pipEnvExecutable.pathString
+      val envPath = runPipEnv(
+        module.baseDir?.path?.toNioPathOrNull(),
+        "--venv",
+        transformer = ZeroCodeStdoutParserTransformer { PyResult.success(Path.of(it)) }
+      ).successOrNull
+      val path = envPath?.resolvePythonBinary()
+      val envExists = path?.let {
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(it.pathString) != null
+      } ?: false
+      if (envExists) {
+        path.findEnvOrNull(intentionName) ?: envNotFound
       }
-      canManage -> envNotFound
-      else -> EnvCheckerResult.CannotConfigure
+      else envNotFound
     }
+    else EnvCheckerResult.CannotConfigure
   }
 
   private suspend fun createAndAddSdk(module: Module): PyResult<Sdk> {

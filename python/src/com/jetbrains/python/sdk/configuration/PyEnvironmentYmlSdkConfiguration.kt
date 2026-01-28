@@ -59,14 +59,13 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
 
   override val toolId: ToolId = CONDA_TOOL_ID
 
-  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
-    prepareSdkCreator(
-      { checkManageableEnv(module, it) }
-    ) { envExists -> { createAndAddSdk(module, envExists) } }
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? = prepareSdkCreator(
+    { checkManageableEnv(module) }
+  ) { envExists -> { createAndAddSdk(module, envExists) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
 
-  private suspend fun checkManageableEnv(module: Module, checkExistence: CheckExistence): EnvCheckerResult =
+  private suspend fun checkManageableEnv(module: Module): EnvCheckerResult =
     withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
       val condaPath = withContext(Dispatchers.IO) {
         suggestCondaPath()?.let { LocalFileSystem.getInstance().findFileByPath(it) }
@@ -75,16 +74,15 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
       val intentionName = PyBundle.message("sdk.create.condaenv.suggestion")
       val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
-      when {
-        canManage && checkExistence -> {
-          getCondaEnvIdentity(module, condaPath.path)?.let { env ->
-            val binaryToExec = BinOnEel(Path.of(condaPath.path))
-            CondaExecutor.getPythonInfo(binaryToExec, env).findEnvOrNull(intentionName)
-          } ?: envNotFound
+      if (canManage) {
+        val envExistenceResult = getCondaEnvIdentity(module, condaPath.path)?.let { env ->
+          val binaryToExec = BinOnEel(Path.of(condaPath.path))
+          CondaExecutor.getPythonInfo(binaryToExec, env).findEnvOrNull(intentionName)
         }
-        canManage -> if (getEnvironmentYml(module) != null) envNotFound else EnvCheckerResult.CannotConfigure
-        else -> EnvCheckerResult.CannotConfigure
+
+        envExistenceResult ?: if (getEnvironmentYml(module) != null) envNotFound else EnvCheckerResult.CannotConfigure
       }
+      else EnvCheckerResult.CannotConfigure
     }
 
   private suspend fun getEnvironmentYml(module: Module) = listOf(
