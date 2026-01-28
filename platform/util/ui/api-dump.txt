@@ -1025,6 +1025,7 @@ f:com.intellij.icons.AllIcons$Plugins
 - sf:PluginLogo:javax.swing.Icon
 - sf:PluginLogoDisabled:javax.swing.Icon
 - sf:Rating:javax.swing.Icon
+- sf:Refresh:javax.swing.Icon
 - sf:Updated:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Process

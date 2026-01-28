@@ -3405,6 +3405,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Plugins
 - sf:PluginLogo:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:PluginLogoDisabled:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Rating:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Refresh:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Updated:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Process

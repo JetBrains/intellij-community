@@ -3045,6 +3045,9 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey Rating = new IntelliJIconKey("plugins/rating.svg", "plugins/rating.svg", AllIconsKeys.class);
     /** 12x12 */ 
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Refresh = new IntelliJIconKey("plugins/refresh.svg", "plugins/refresh.svg", AllIconsKeys.class);
+    /** 12x12 */ 
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Updated = new IntelliJIconKey("plugins/updated.svg", "plugins/updated.svg", AllIconsKeys.class);
   }
 

@@ -1096,7 +1096,8 @@ public class AllIcons {
     /** 40x40 */ public static final @NotNull Icon PluginLogo = load("expui/nodes/pluginLogo.svg", "plugins/pluginLogo.svg", 899855946, 0);
     /** 40x40 */ public static final @NotNull Icon PluginLogoDisabled = load("expui/nodes/pluginLogoDisabled.svg", "plugins/pluginLogoDisabled.svg", 1569910218, 0);
     /** 12x12 */ public static final @NotNull Icon Rating = load("plugins/rating.svg", 1714785539, 2);
-    /** 12x12 */ public static final @NotNull Icon Updated = load("plugins/updated.svg", 1725310914, 2);
+    /** 12x12 */ public static final @NotNull Icon Refresh = load("plugins/refresh.svg", -649384412, 2);
+    /** 12x12 */ public static final @NotNull Icon Updated = load("plugins/updated.svg", -191512259, 2);
   }
 
   public static final class Process {
