@@ -1,9 +1,22 @@
 package com.intellij.devkit.compose.demo
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -18,22 +31,41 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.IconLoader
+import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.InlineBanner
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.COLUMNS_SHORT
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.jewel.bridge.JewelComposePanel
 import org.jetbrains.jewel.bridge.retrieveEditorColorScheme
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.ui.component.*
+import org.jetbrains.jewel.ui.component.DefaultButton
+import org.jetbrains.jewel.ui.component.DefaultInformationBanner
+import org.jetbrains.jewel.ui.component.EditableListComboBox
+import org.jetbrains.jewel.ui.component.ExternalLink
+import org.jetbrains.jewel.ui.component.Icon
+import org.jetbrains.jewel.ui.component.InformationDefaultBanner
+import org.jetbrains.jewel.ui.component.InlineInformationBanner
+import org.jetbrains.jewel.ui.component.ListComboBox
+import org.jetbrains.jewel.ui.component.OutlinedButton
+import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.TextArea
+import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.textAreaStyle
 import org.jetbrains.jewel.ui.typography
+import java.awt.Dimension
 import javax.swing.BoxLayout
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JLabel
@@ -50,6 +82,10 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
       iconsRow()
       separator()
       linksRow()
+      separator()
+      inlineBannersRow()
+      separator()
+      bannersRow()
       separator()
       textFieldsRow()
       separator()
@@ -93,6 +129,72 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
         .applyToComponent { autoHideOnDisable = false }
 
       compose { ExternalLink(text = "Disabled link", uri = "", enabled = false) }
+    }
+      .layout(RowLayout.PARENT_GRID)
+  }
+
+  private fun Panel.inlineBannersRow() {
+    row(DevkitComposeBundle.message("jewel.inline.banners.label")) {
+      val inlineBanner = InlineBanner(
+        messageText = DevkitComposeBundle.message("jewel.swing.inline.banners"),
+        status = EditorNotificationPanel.Status.Info,
+      )
+      //inlineBanner.showCloseButton(false)
+      inlineBanner.addAction("Action A") {}
+      inlineBanner.addAction("Action B") {}
+
+      cell(
+        component = inlineBanner
+      )
+        .align(AlignY.CENTER)
+        .applyToComponent { maximumSize = Dimension(400, Int.MAX_VALUE) }
+
+      compose {
+        Box(modifier = Modifier.width(250.dp)) {
+          InlineInformationBanner(
+            text = DevkitComposeBundle.message("jewel.compose.inline.banners"),
+            iconActions = {
+              iconAction(
+                AllIconsKeys.General.Close,
+                "Close",
+                onClick = {},
+              )
+            },
+            linkActions = {
+              action("Action A", onClick = {})
+              action("Action B", onClick = {})
+            }
+          )
+        }
+      }
+    }
+      .layout(RowLayout.PARENT_GRID)
+  }
+
+  private fun Panel.bannersRow() {
+    row(DevkitComposeBundle.message("jewel.banners.label")) {
+      val defaultBanner = EditorNotificationPanel(EditorNotificationPanel.Status.Info).text(DevkitComposeBundle.message("jewel.swing.banners"))
+      defaultBanner.setCloseAction {  }
+      cell(
+        component = defaultBanner
+      )
+        .align(AlignY.CENTER)
+        .applyToComponent { maximumSize = Dimension(400, Int.MAX_VALUE) }
+
+      compose {
+        Box(modifier = Modifier.width(250.dp)) {
+          DefaultInformationBanner(
+            text = DevkitComposeBundle.message("jewel.compose.banners"),
+            iconActions = {
+              iconAction(
+                AllIconsKeys.General.Close,
+                "Close",
+                onClick = {},
+              )
+            },
+          )
+        }
+      }
     }
       .layout(RowLayout.PARENT_GRID)
   }
@@ -188,7 +290,8 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
     }
 
     row(DevkitComposeBundle.message("jewel.swing.titles.swing")) {
-      text(DevkitComposeBundle.message("jewel.swing.label.this.will.wrap.over.couple.rows"), maxLineLength = 30).component.font = JBFont.h1()
+      text(DevkitComposeBundle.message("jewel.swing.label.this.will.wrap.over.couple.rows"), maxLineLength = 30).component.font =
+        JBFont.h1()
     }
     row(DevkitComposeBundle.message("jewel.swing.titles.compose")) {
       compose {
