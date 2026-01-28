@@ -627,11 +627,6 @@
     <depends>com.intellij.modules.vcs</depends>
     <depends optional="true">-com-intellij-java-</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.spring.osgi/META-INF/plugin.xml">
-    <id>-com-intellij-spring-osgi-</id>
-    <name>Spring OSGi</name>
-    <depends>-com-intellij-spring-</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.spring.data/META-INF/plugin.xml">
     <id>-com-intellij-spring-data-</id>
     <name>Spring Data</name>
