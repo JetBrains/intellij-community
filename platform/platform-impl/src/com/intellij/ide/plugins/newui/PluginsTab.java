@@ -124,20 +124,18 @@ public abstract class PluginsTab {
         int id = event.getID();
 
         if (keyCode == KeyEvent.VK_ENTER || event.getKeyChar() == '\n') {
-          if (id == KeyEvent.KEY_PRESSED &&
-              (searchPanel.controller == null || !searchPanel.controller.handleEnter(event))) {
+          if (id == KeyEvent.KEY_PRESSED && !searchPanel.controller.handleEnter(event)) {
             String text = getText();
             if (!text.isEmpty()) {
-              if (searchPanel.controller != null) {
-                searchPanel.controller.hidePopup();
-              }
+              searchPanel.controller.hidePopup();
               showSearchPanel(text);
             }
           }
           return true;
         }
-        if ((keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_UP) && id == KeyEvent.KEY_PRESSED &&
-            searchPanel.controller != null && searchPanel.controller.handleUpDown(event)) {
+        if ((keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_UP) &&
+            id == KeyEvent.KEY_PRESSED &&
+            searchPanel.controller.handleUpDown(event)) {
           return true;
         }
         return super.preprocessEventForTextField(event);
@@ -162,7 +160,7 @@ public abstract class PluginsTab {
 
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            if (searchPanel.controller != null && searchPanel.controller.isPopupShow()) {
+            if (searchPanel.controller.isPopupShow()) {
               searchPanel.controller.hidePopup();
             }
             else {
@@ -180,7 +178,7 @@ public abstract class PluginsTab {
 
       @Override
       protected void showCompletionPopup() {
-        if (searchPanel.controller != null && !searchPanel.controller.isPopupShow()) {
+        if (!searchPanel.controller.isPopupShow()) {
           showSearchPopup();
         }
       }
@@ -198,9 +196,6 @@ public abstract class PluginsTab {
         String text = searchTextField.getText();
         if (StringUtil.isEmptyOrSpaces(text)) {
           hideSearchPanel();
-        }
-        else if (searchPanel.controller == null) {
-          showSearchPanel(text);
         }
         else {
           searchPanel.controller.handleShowPopup();
@@ -264,21 +259,17 @@ public abstract class PluginsTab {
       searchPanel.setQuery("");
       updateMainSelection(mySelectionListener);
     }
-    if (searchPanel.controller != null) {
-      searchPanel.controller.hidePopup();
-    }
+    searchPanel.controller.hidePopup();
   }
 
   protected abstract void onSearchReset();
 
   private void showSearchPopup() {
-    if (searchPanel.controller != null) {
-      if (StringUtil.isEmptyOrSpaces(searchTextField.getText())) {
-        searchPanel.controller.showAttributesPopup(null, 0);
-      }
-      else {
-        searchPanel.controller.handleShowPopup();
-      }
+    if (StringUtil.isEmptyOrSpaces(searchTextField.getText())) {
+      searchPanel.controller.showAttributesPopup(null, 0);
+    }
+    else {
+      searchPanel.controller.handleShowPopup();
     }
   }
 
