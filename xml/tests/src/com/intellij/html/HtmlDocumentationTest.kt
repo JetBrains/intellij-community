@@ -26,6 +26,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 class HtmlDocumentationTest : BasePlatformTestCase() {
   fun testQuickDocumentationHtml5Tag() {
     doTest(
+      // language=html
       """
       <!DOCTYPE html>
       <html>
@@ -38,6 +39,7 @@ class HtmlDocumentationTest : BasePlatformTestCase() {
 
   fun testQuickDocumentationHtml5TagDialog() {
     doTest(
+      // language=html
       """
       <!DOCTYPE html>
       <html>
@@ -51,6 +53,7 @@ class HtmlDocumentationTest : BasePlatformTestCase() {
 
   fun testQuickDocumentationHtml5Attr() {
     doTest(
+      // language=html
       """
       <!DOCTYPE html>
       <html>
@@ -63,6 +66,7 @@ class HtmlDocumentationTest : BasePlatformTestCase() {
 
   fun testQuickDocumentationHtml5Svg() {
     doTest(
+      // language=html
       """
       <!DOCTYPE html>
       <html>
@@ -77,6 +81,7 @@ class HtmlDocumentationTest : BasePlatformTestCase() {
 
   fun testQuickDocumentationHtml5SvgImage() {
     doTest(
+      // language=html
       """
       <!DOCTYPE html>
       <html>
@@ -93,6 +98,7 @@ class HtmlDocumentationTest : BasePlatformTestCase() {
 
   fun testQuickDocumentationHtml5Math() {
     doTest(
+      // language=html
       """
       <!DOCTYPE html>
       <html>
@@ -107,6 +113,7 @@ class HtmlDocumentationTest : BasePlatformTestCase() {
 
   fun testQuickDocumentationHtml5MathMrow() {
     doTest(
+      // language=html
       """
       <!DOCTYPE html>
       <html>
@@ -123,6 +130,7 @@ class HtmlDocumentationTest : BasePlatformTestCase() {
 
   fun testQuickDocumentationHtml4Tag() {
     doTest(
+      // language=html
       """
       <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
          "http://www.w3.org/TR/html4/loose.dtd">
@@ -136,6 +144,7 @@ class HtmlDocumentationTest : BasePlatformTestCase() {
 
   fun testQuickDocumentationHtml4Attr() {
     doTest(
+      // language=html
       """
       <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
          "http://www.w3.org/TR/html4/loose.dtd">
@@ -149,6 +158,7 @@ class HtmlDocumentationTest : BasePlatformTestCase() {
 
   fun testQuickDocumentationHtml5Script() {
     doTest(
+      // language=html
       "<scr<caret>ipt></script>"
     )
   }
@@ -156,6 +166,7 @@ class HtmlDocumentationTest : BasePlatformTestCase() {
 
   fun testQuickDocumentationHtml5MediaEvents() {
     doTest(
+      // language=html
       "<video on<caret>stalled=''>"
     )
   }
