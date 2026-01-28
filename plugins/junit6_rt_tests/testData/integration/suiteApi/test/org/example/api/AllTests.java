@@ -5,6 +5,6 @@ import org.example.impl.*;
 import org.junit.platform.suite.api.*;
 
 @Suite
-@SelectClasses({FirstTest.class, SecondTest.class})
+@SelectClasses({FirstTest.class, SecondTest.class, SimpleTest.class})
 public class AllTests {
 }

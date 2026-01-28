@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit6;
 
 import com.intellij.execution.ExecutionException;
@@ -47,11 +47,11 @@ public class JUnit6SuiteApiIntegrationTest extends AbstractTestFrameworkCompilin
 
     List<ServiceMessage> messages = processOutput.messages;
 
-    Map<String, TestStarted> tests = getStartedTests(messages);
+    Map<String, TestStarted> tests = getTests(messages, TestStarted.class);
     assertEquals(Set.of("java:test://org.example.impl.MyTest/test"),
                  tests.values().stream().map(t -> t.getAttributes().get("locationHint")).collect(Collectors.toSet()));
-    assertEquals(Set.of(), getTestIds(messages, TestFailed.class));
-    assertEquals(tests.keySet(), getTestIds(messages, TestFinished.class));
+    assertEquals(Set.of(), getTests(messages, TestFailed.class).keySet());
+    assertEquals(tests.keySet(), getTests(messages, TestFinished.class).keySet());
   }
 
   public void testRunPackage() throws Exception {
@@ -61,8 +61,9 @@ public class JUnit6SuiteApiIntegrationTest extends AbstractTestFrameworkCompilin
 
     List<ServiceMessage> messages = processOutput.messages;
 
-    Map<String, TestStarted> tests = getStartedTests(messages);
-    assertEquals(Set.of("java:test://org.example.impl.MyTest/test",
+    Map<String, TestStarted> tests = getTests(messages, TestStarted.class);
+    assertEquals(Set.of("java:test://org.example.api.SimpleTest/test",
+                        "java:test://org.example.impl.MyTest/test",
                         "java:test://org.example.impl.FirstTest/test1",
                         "java:test://org.example.impl.FirstTest/test2",
                         "java:test://org.example.impl.SecondTest/test1",
@@ -70,8 +71,21 @@ public class JUnit6SuiteApiIntegrationTest extends AbstractTestFrameworkCompilin
                  tests.values().stream().map(t -> t.getAttributes().get("locationHint")).collect(Collectors.toSet()));
     assertEquals(getTestIds(tests, Set.of("java:test://org.example.impl.FirstTest/test1",
                                           "java:test://org.example.impl.SecondTest/test2")),
-                 getTestIds(messages, TestFailed.class));
-    assertEquals(tests.keySet(), getTestIds(messages, TestFinished.class));
+                 getTests(messages, TestFailed.class).keySet());
+
+    {
+      // the test was executed 2 times
+      Set<String> ids = getTests(messages, TestStarted.class).entrySet().stream()
+        .filter(e -> e.getValue().getAttributes().get("locationHint").equals("java:test://org.example.api.SimpleTest/test"))
+        .map(e -> e.getKey()).collect(Collectors.toSet());
+      assertEquals(Set.of(
+        // direct run
+        "[engine:junit-jupiter]/[class:org.example.api.SimpleTest]/[method:test()]",
+        // suite run
+        "[engine:junit-platform-suite]/[suite:org.example.api.AllTests]/[engine:junit-jupiter]/[class:org.example.api.SimpleTest]/[method:test()]"), ids);
+    }
+
+    assertEquals(tests.keySet(), getTests(messages, TestFinished.class).keySet());
   }
 
   private @NotNull RunConfiguration createRunClassConfiguration(final String className) {
@@ -92,20 +106,16 @@ public class JUnit6SuiteApiIntegrationTest extends AbstractTestFrameworkCompilin
     return configuration;
   }
 
-  private static Map<String, TestStarted> getStartedTests(List<ServiceMessage> messages) {
-    return messages.stream().filter(TestStarted.class::isInstance).map(TestStarted.class::cast)
-      .collect(Collectors.toMap(t -> t.getAttributes().get("id"), t -> t, (existing, replacement) -> existing));
+  private static <T extends BaseTestMessage> Map<String, T> getTests(List<ServiceMessage> messages, Class<T> clazz) {
+    return messages.stream().filter(clazz::isInstance).map(clazz::cast)
+      .collect(Collectors.toMap(t -> t.getAttributes().get("id"), t -> t));
   }
 
-  private static <T extends BaseTestMessage> Set<String> getTestIds(Map<String, TestStarted> tests, Set<String> locationHints) {
+  private static <T extends BaseTestMessage> Set<String> getTestIds(Map<String, T> tests, Set<String> locationHints) {
     return tests.entrySet().stream()
       .filter(e -> locationHints.contains(e.getValue().getAttributes().get("locationHint")))
       .map(t -> t.getKey())
       .collect(Collectors.toSet());
-  }
-
-  private static <T extends BaseTestMessage> Set<String> getTestIds(List<ServiceMessage> messages, Class<T> clazz) {
-    return messages.stream().filter(clazz::isInstance).map(clazz::cast).map(o -> o.getAttributes().get("id")).collect(Collectors.toSet());
   }
 
   public void testRerunFailedFromSuite() throws Exception {
@@ -114,8 +124,8 @@ public class JUnit6SuiteApiIntegrationTest extends AbstractTestFrameworkCompilin
     assertEmpty(initialOutput.err);
 
     List<ServiceMessage> initialMessages = initialOutput.messages;
-    Map<String, TestStarted> started = getStartedTests(initialMessages);
-    Set<String> failedIds = getTestIds(initialMessages, TestFailed.class);
+    Map<String, TestStarted> started = getTests(initialMessages, TestStarted.class);
+    Set<String> failedIds = getTests(initialMessages, TestFailed.class).keySet();
 
     Set<String> failedHints = failedIds.stream()
       .map(id -> started.get(id))
@@ -131,11 +141,11 @@ public class JUnit6SuiteApiIntegrationTest extends AbstractTestFrameworkCompilin
     assertEmpty(rerunOutput.out);
     assertEmpty(rerunOutput.err);
 
-    Map<String, TestStarted> rerunStarted = getStartedTests(rerunOutput.messages);
+    Map<String, TestStarted> rerunStarted = getTests(rerunOutput.messages, TestStarted.class);
     Set<String> rerunHints = rerunStarted.values().stream().map(t -> t.getAttributes().get("locationHint")).collect(Collectors.toSet());
 
     assertEquals(failedHints, rerunHints);
-    assertEquals(rerunStarted.keySet(), getTestIds(rerunOutput.messages, TestFinished.class));
+    assertEquals(rerunStarted.keySet(), getTests(rerunOutput.messages, TestFinished.class).keySet());
   }
 
   public void testInitSuiteFailed() throws ExecutionException {
