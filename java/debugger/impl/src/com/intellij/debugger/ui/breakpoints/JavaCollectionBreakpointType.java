@@ -34,9 +34,14 @@ public final class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBa
     super("java-collection", JavaDebuggerBundle.message("collection.watchpoints.tab.title"));
   }
 
+  @ApiStatus.Internal
+  public static boolean isEnabled() {
+    return Registry.is("debugger.collection.watchpoints.enabled");
+  }
+
   @Override
   public boolean isAddBreakpointButtonVisible() {
-    return Registry.is("debugger.collection.watchpoints.enabled");
+    return isEnabled();
   }
 
   @Override
@@ -122,7 +127,7 @@ public final class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBa
 
   @Override
   public boolean canPutAt(@NotNull VirtualFile file, int line, @NotNull Project project) {
-    if (!Registry.is("debugger.collection.watchpoints.enabled")) {
+    if (!isEnabled()) {
       return false;
     }
     return canPutAtElement(file, line, project, (element, document) -> {

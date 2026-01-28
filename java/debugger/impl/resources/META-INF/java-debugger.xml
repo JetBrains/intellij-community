@@ -250,7 +250,7 @@
                  description="Use memory agent to estimate retained sizes in the Instances Window"/>
     <registryKey key="debugger.async.stack.trace.for.all.threads" defaultValue="true"
                  description="Get async stack trace for any thread using the same evaluationContext. By default debugger-agent only returns async stack trace for the current suspended thread."/>
-    <registryKey key="debugger.async.stack.trace.overhead.percent" defaultValue="20.0"
+    <registryKey key="debugger.async.stack.trace.overhead.percent" defaultValue="50.0"
                  description="The allowed overhead of the async stacktraces collection in percents. When exceeded, a user will be suggested to disable or throttle."/>
     <registryKey key="debugger.stepping.current.thread.check.timeout.ms" defaultValue="100"
                  description="In the 'Resume only the current thread mode': Check timeout (in ms) for the stepping thread is running."/>

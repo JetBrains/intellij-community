@@ -12,6 +12,7 @@ import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.testFramework.TestDebuggerAgentArtifactsProvider;
+import com.intellij.debugger.ui.breakpoints.JavaCollectionBreakpointType;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
@@ -32,7 +33,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
@@ -367,10 +367,6 @@ public final class AsyncStacksUtils {
     if (Registry.is("debugger.async.stack.trace.for.all.threads")) {
       parametersList.addProperty("debugger.async.stack.trace.for.all.threads", "true");
     }
-    RegistryValue percentRegistry = Registry.get("debugger.async.stack.trace.overhead.percent");
-    if (percentRegistry.isChangedFromDefault()) {
-      parametersList.addProperty("debugger.agent.overhead.percent", percentRegistry.asString());
-    }
 
     for (var modifier : DebuggerAgentParametersModifier.getAgentModifiers()) {
       modifier.modifyParameters(parametersList, project);
@@ -499,6 +495,11 @@ public final class AsyncStacksUtils {
     }
     if (isSuspendHelperEnabled()) {
       properties.setProperty("suspendHelper", "true");
+    }
+    double overhead = Registry.doubleValue("debugger.async.stack.trace.overhead.percent");
+    properties.setProperty("overheadPercent", Double.toString(overhead));
+    if (JavaCollectionBreakpointType.isEnabled()) {
+      properties.setProperty("collectionBreakpoints", "true");
     }
     if (!properties.isEmpty()) {
       try {
