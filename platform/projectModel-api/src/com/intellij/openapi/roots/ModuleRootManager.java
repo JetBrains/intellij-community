@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,13 +15,15 @@ import org.jetbrains.annotations.NotNull;
 public abstract class ModuleRootManager implements ModuleRootModel, ProjectModelElement {
   /**
    * Returns the module root manager instance for the specified module.
-   * It throws {{@link com.intellij.util.IncorrectOperationException}} if module is disposed.
-   * It is recommended to wrap a call with a read action and check if module isn't disposed before calling this method
+   * It is recommended to wrap a call with a read action and check if module isn't disposed before calling this method.
+   * If module is disposed and read action is used, {@link com.intellij.serviceContainer.AlreadyDisposedException} will be thrown.
+   * Without read action, this method is a subject to a race condition, so any other exception could be thrown.
    *
    * @param module the module for which the root manager is requested.
    * @return the root manager instance.
-   * @throws com.intellij.util.IncorrectOperationException if module is disposed
+   * @throws com.intellij.serviceContainer.AlreadyDisposedException if module is disposed
    */
+  @RequiresReadLock(generateAssertion = false)
   @NotNull
   public static ModuleRootManager getInstance(@NotNull Module module) {
     ProjectRootManager projectRootManager = ProjectRootManager.getInstance(module.getProject());
