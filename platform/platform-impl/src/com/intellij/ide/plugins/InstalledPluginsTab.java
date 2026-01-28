@@ -255,6 +255,7 @@ class InstalledPluginsTab extends PluginsTab {
             "/disabled",
             "/invalid",
             "/bundled",
+            "/updatedBundled",
             SearchWords.VENDOR.getValue(),
             SearchWords.TAG.getValue()
           );
@@ -503,6 +504,7 @@ class InstalledPluginsTab extends PluginsTab {
         case Disabled -> parser.disabled;
         case UserInstalled -> parser.userInstalled;
         case Bundled -> parser.bundled;
+        case UpdatedBundled -> parser.updatedBundled;
         case Invalid -> parser.invalid;
         case NeedUpdate -> parser.needUpdate;
       };
@@ -558,7 +560,8 @@ class InstalledPluginsTab extends PluginsTab {
     Enabled(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.Enabled")),
     Disabled(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.Disabled")),
     Invalid(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.Invalid")),
-    Bundled(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.Bundled"));
+    Bundled(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.Bundled")),
+    UpdatedBundled(IdeBundle.messagePointer("plugins.configurable.InstalledSearchOption.UpdatedBundled"));
 
     private final Supplier<@Nls String> myPresentableNameSupplier;
 
@@ -581,7 +584,8 @@ class InstalledPluginsTab extends PluginsTab {
       if (query.contains("/downloaded") || query.contains("/userInstalled") ||
           query.contains("/outdated") ||
           query.contains("/enabled") || query.contains("/disabled") ||
-          query.contains("/invalid") || query.contains("/bundled")) {
+          query.contains("/invalid") ||
+          query.contains("/bundled") || query.contains("/updatedBundled")) {
         return;
       }
       if (mySearchInMarketplaceTabHandler != null) {
@@ -637,6 +641,10 @@ class InstalledPluginsTab extends PluginsTab {
           }
           boolean isBundledOrBundledUpdate = descriptor.isBundled() || descriptor.isBundledUpdate();
           if (parser.bundled && !isBundledOrBundledUpdate) {
+            I.remove();
+            continue;
+          }
+          if (parser.updatedBundled && !descriptor.isBundledUpdate()) {
             I.remove();
             continue;
           }

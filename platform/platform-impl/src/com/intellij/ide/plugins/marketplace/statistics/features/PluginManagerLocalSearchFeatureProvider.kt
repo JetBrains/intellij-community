@@ -28,6 +28,7 @@ internal object PluginManagerLocalSearchFeatureProvider {
     IS_ENABLED_DATA_KEY.with(query.enabled),
     IS_DISABLED_DATA_KEY.with(query.disabled),
     IS_BUNDLED_DATA_KEY.with(query.bundled),
+    // TODO support UPDATED_BUNDLED
     IS_DOWNLOADED_DATA_KEY.with(query.userInstalled), // TODO maybe it's worth to rename the key
     IS_INVALID_DATA_KEY.with(query.invalid),
     IS_UPDATE_NEEDED_DATA_KEY.with(query.needUpdate),
