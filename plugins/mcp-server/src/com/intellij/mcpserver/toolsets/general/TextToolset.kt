@@ -260,7 +260,7 @@ class TextToolset : McpToolset {
     val entries = usages.mapNotNull { usage ->
       val file = usage.virtualFile ?: return@mapNotNull null
       val document = readAction { FileDocumentManager.getInstance().getDocument(file) } ?: return@mapNotNull null
-      val textRange = usage.navigationRange ?: return@mapNotNull null
+      val textRange = readAction { usage.navigationRange } ?: return@mapNotNull null
       val startLineNumber = document.getLineNumber(textRange.startOffset)
       val startLineStartOffset = document.getLineStartOffset(startLineNumber)
       val endLineNumber = document.getLineNumber(textRange.endOffset)
