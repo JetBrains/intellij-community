@@ -41,6 +41,10 @@ internal suspend fun importConfigIfNeeded(
     scope.launch {
       logDeferred.await().info("Will skip the config import to directory \"$configDir\" (exists = $configDirExists). Current entries: ${entries}.")
     }
+    if (ClassicUiToIslandsMigration.isEnabledFeature) {
+      // Possible minor update
+      ClassicUiToIslandsMigration.enableNewUiWithIslands(logDeferred)
+    }
     return null
   }
 
@@ -66,7 +70,13 @@ internal suspend fun importConfigIfNeeded(
   importConfig(args, targetDirectoryToImportConfig, log, appStarterDeferred.await(), euaDocumentDeferred)
 
   val isNewUser = InitialConfigImportState.isNewUser()
-  enableNewUi(logDeferred, isNewUser)
+
+  if (ClassicUiToIslandsMigration.isEnabledFeature) {
+    ClassicUiToIslandsMigration.enableNewUiWithIslands(logDeferred)
+  } else {
+    enableNewUi(logDeferred, isNewUser)
+  }
+
   if (isNewUser && InitialConfigImportState.isStartupWizardEnabled()) {
     log.info("Will enter initial app wizard flow.")
     val result = CompletableDeferred<Boolean>()
