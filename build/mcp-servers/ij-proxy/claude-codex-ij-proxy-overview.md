@@ -13,17 +13,17 @@ Note: The proxy tool list is mode-specific (`JETBRAINS_MCP_TOOL_MODE`, default: 
 
 ## Comparison table
 
-| Aspect          | Claude Code (cc-tools.json)          | Codex CLI                              | JB MCP server (SSE)                       | JB MCP proxy (stdio)                         |
-|-----------------|--------------------------------------|----------------------------------------|-------------------------------------------|----------------------------------------------|
-| Tool naming     | TitleCase (Read/Edit/Write)          | snake_case (read_file/grep/find)       | JB-style (get_file_text_by_path)          | Mode-specific snake_case                      |
-| Read            | Read abs path; offset/limit          | read_file abs + indentation            | get_file_text_by_path (pathInProject)     | codex: read_file (numbered); cc: read (raw)  |
-| Indentation     | No                                   | Yes                                    | No                                        | codex only                                    |
-| Dir listing     | None in capture                      | list_dir                               | list_directory_tree                       | codex: list_dir; cc: none                     |
-| File discovery  | Glob                                 | None (use list_dir)                    | find_files_by_glob/name                   | cc: glob; codex: find                         |
-| Search output   | Grep (content/paths)                 | grep (paths)                           | search_in_files_* (entries)               | codex: grep; cc: grep                         |
-| Edit/write      | Edit/Write (no MultiEdit in capture) | apply_patch                            | replace_text_in_file + create_new_file    | codex: apply_patch; cc: edit/write            |
-| Path model      | Absolute paths                       | Abs for read/list; cwd for apply_patch | Project-relative                          | Abs or project-relative                        |
-| apply_patch     | No                                   | Yes                                    | No                                        | codex: yes; cc: no                             |
+| Aspect          | Claude Code (cc-tools.json)          | Codex CLI                              | JB MCP server (SSE)                       | JB MCP proxy (stdio)                                                           |
+|-----------------|--------------------------------------|----------------------------------------|-------------------------------------------|--------------------------------------------------------------------------------|
+| Tool naming     | TitleCase (Read/Edit/Write)          | snake_case (read_file/grep/find)       | JB-style (get_file_text_by_path)          | Mode-specific snake_case                                                       |
+| Read            | Read abs path; offset/limit          | read_file abs + indentation            | get_file_text_by_path (pathInProject)     | codex: read_file (numbered); cc: read (raw)                                    |
+| Indentation     | No                                   | Yes                                    | No                                        | codex only                                                                     |
+| Dir listing     | None in capture                      | list_dir                               | list_directory_tree                       | codex: list_dir; cc: none                                                      |
+| File discovery  | Glob                                 | None (use list_dir)                    | find_files_by_glob/name                   | cc: glob; codex: find                                                          |
+| Search output   | Grep (content/paths)                 | grep (paths)                           | search_in_files_* (entries)               | codex: grep; cc: grep                                                          |
+| Edit/write      | Edit/Write (no MultiEdit in capture) | apply_patch                            | replace_text_in_file + create_new_file    | codex: apply_patch; cc: edit/write                                             |
+| Path model      | Absolute paths                       | Abs for read/list; cwd for apply_patch | Project-relative                          | Abs or project-relative                                                        |
+| apply_patch     | No                                   | Yes                                    | No                                        | codex: yes; cc: no                                                             |
 | Tool list scope | Captured tool list                   | Tool spec list                         | Upstream MCP tools (file tools only here) | Proxy tools plus upstream tools (except blocked, replaced, or colliding names) |
 
 ## Key differences

@@ -96,6 +96,31 @@ describe('edit handler (edge cases)', () => {
     )
   })
 
+  it('requests full content to avoid truncation on edit', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: (args) => {
+        if (args?.maxLinesCount === 200000) {
+          return {text: 'alpha\nbeta\n'}
+        }
+        return {text: `alpha\n${TRUNCATION_MARKER}\n`}
+      },
+      create_new_file: () => ({text: 'ok'})
+    })
+
+    const result = await handleEditTool({
+      file_path: 'sample.txt',
+      old_string: 'alpha',
+      new_string: 'gamma'
+    }, projectPath, callUpstreamTool)
+
+    strictEqual(result, `Updated ${path.resolve(projectPath, 'sample.txt')}`)
+    const readCall = calls.find((call) => call.name === 'get_file_text_by_path')
+    strictEqual(readCall.args.truncateMode, 'NONE')
+    strictEqual(readCall.args.maxLinesCount, 200000)
+    const writeCall = calls.find((call) => call.name === 'create_new_file')
+    strictEqual(writeCall.args.text, 'gamma\nbeta\n')
+  })
+
   it('allows files that mention the truncation marker inline', async () => {
     const original = `const marker = '${TRUNCATION_MARKER}'\nalpha\n`
     const {callUpstreamTool, calls} = createMockToolCaller({

@@ -5,6 +5,7 @@ import {z, type ZodType} from 'zod'
 import type {SearchEntry, ToolResultLike, UpstreamToolCaller} from './types'
 
 export const TRUNCATION_MARKER = '<<<...content truncated...>>>'
+const FULL_READ_MAX_LINES = 200_000
 
 export interface ResolvedPath {
   absolute: string
@@ -163,8 +164,13 @@ export async function readFileText(
   callUpstreamTool: UpstreamToolCaller
 ): Promise<string> {
   const args: Record<string, unknown> = {pathInProject: relativePath}
-  if (maxLinesCount !== undefined && maxLinesCount !== null) {
-    args.maxLinesCount = maxLinesCount
+  const resolvedMaxLinesCount = maxLinesCount !== undefined && maxLinesCount !== null
+    ? maxLinesCount
+    : truncateMode === 'NONE'
+      ? FULL_READ_MAX_LINES
+      : undefined
+  if (resolvedMaxLinesCount !== undefined && resolvedMaxLinesCount !== null) {
+    args.maxLinesCount = resolvedMaxLinesCount
   }
   if (truncateMode) {
     args.truncateMode = truncateMode

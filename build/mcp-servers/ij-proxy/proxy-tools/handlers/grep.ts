@@ -12,6 +12,7 @@ import {
   resolveSearchPath,
   toPositiveInt
 } from '../shared'
+import {shouldApplyWorkaround, WorkaroundKey} from '../../workarounds'
 import type {SearchEntry, UpstreamToolCaller} from '../types'
 
 const CODEX_MAX_LIMIT = 2000
@@ -128,7 +129,12 @@ export async function handleGrepTool(
     toolArgs
   )
   const entries = extractEntries(result)
-  const filteredEntries = filterEntriesByPath(entries, projectPath, relative, treatAsFile)
+  const shouldFilterByPath = !useRegex
+    || !directoryToSearch
+    || shouldApplyWorkaround(WorkaroundKey.SearchInFilesByRegexDirectoryScopeIgnored)
+  const filteredEntries = shouldFilterByPath
+    ? filterEntriesByPath(entries, projectPath, relative, treatAsFile)
+    : entries
   // Apply path glob filtering after search_in_files_* since upstream ignores path globs.
   let finalEntries = pathGlob
     ? filterEntriesByPathGlob(filteredEntries, projectPath, pathGlob)

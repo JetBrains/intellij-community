@@ -22144,6 +22144,109 @@ function createStreamTransport({
   });
 }
 
+// workarounds.ts
+var FULL_VERSION_RE = /\b\d{4}\.\d+(?:\.\d+){0,2}\b/, BUILD_VERSION_RE = /\b\d{3}\.\d+(?:\.\d+)?\b/, SNAPSHOT_BUILD_RE = /\b(\d{3})\.SNAPSHOT\b/i, ANY_VERSION_RE = /\d+(?:\.\d+)+/;
+var WORKAROUND_FIXED_IN = {
+  ["search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */]: "261.SNAPSHOT"
+}, currentIdeVersion = null;
+function setIdeVersion(rawVersion) {
+  if (!rawVersion) {
+    currentIdeVersion = null;
+    return;
+  }
+  currentIdeVersion = parseIdeVersion(rawVersion);
+}
+function shouldApplyWorkaround(key) {
+  if (isWorkaroundDisabled(key))
+    return logDebug(`Workaround ${key} not used (disabled by env)`), !1;
+  let fixedInRaw = (WORKAROUND_FIXED_IN[key] ?? "").trim();
+  if (!fixedInRaw)
+    return !0;
+  let ideVersion = currentIdeVersion;
+  if (!ideVersion)
+    return !0;
+  let fixedSpec = parseVersionSpec(fixedInRaw);
+  if (!fixedSpec)
+    return !0;
+  let currentParts = fixedSpec.kind === "build" ? ideVersion.build ?? deriveBuildFromFull(ideVersion.full) : ideVersion.full;
+  if (!currentParts)
+    return !0;
+  if (compareVersionParts(currentParts, fixedSpec.parts) >= 0)
+    return logDebug(`Workaround ${key} not used; fixed in ${fixedInRaw}, ide ${ideVersion.raw}`), !1;
+  return !0;
+}
+function isWorkaroundDisabled(key) {
+  let disabledAll = process.env.JETBRAINS_MCP_PROXY_DISABLE_WORKAROUNDS;
+  if (disabledAll && disabledAll !== "false" && disabledAll !== "0")
+    return !0;
+  let disabledKeys = process.env.JETBRAINS_MCP_PROXY_DISABLE_WORKAROUND_KEYS;
+  if (!disabledKeys)
+    return !1;
+  return disabledKeys.split(",").map((entry) => entry.trim()).filter((entry) => entry.length > 0).includes(key);
+}
+function logDebug(message) {
+  let enabled = process.env.JETBRAINS_MCP_PROXY_WORKAROUND_DEBUG;
+  if (!enabled || enabled === "0" || enabled === "false")
+    return;
+  process.stderr.write(`[ij-mcp-proxy] ${message}
+`);
+}
+function parseIdeVersion(raw) {
+  let full = extractVersionParts(raw, FULL_VERSION_RE), build = extractVersionParts(raw, BUILD_VERSION_RE);
+  return {
+    raw,
+    full: full ?? void 0,
+    build: build ?? void 0
+  };
+}
+function parseVersionSpec(version2) {
+  let snapshotMatch = version2.match(SNAPSHOT_BUILD_RE);
+  if (snapshotMatch) {
+    let train = Number.parseInt(snapshotMatch[1], 10);
+    if (!Number.isNaN(train))
+      return { parts: [train], kind: "build" };
+  }
+  let match = version2.match(ANY_VERSION_RE);
+  if (!match)
+    return null;
+  let parts = parseVersionParts(match[0]);
+  if (!parts)
+    return null;
+  let kind = parts[0] >= 1000 ? "full" : "build";
+  return { parts, kind };
+}
+function extractVersionParts(raw, regex) {
+  let match = raw.match(regex);
+  if (!match)
+    return null;
+  return parseVersionParts(match[0]);
+}
+function parseVersionParts(value) {
+  let parts = value.split(".").map((part) => Number.parseInt(part, 10));
+  if (parts.some((part) => Number.isNaN(part)))
+    return null;
+  return parts;
+}
+function deriveBuildFromFull(full) {
+  if (!full || full.length < 2)
+    return null;
+  let year = full[0], minor = full[1];
+  if (!Number.isFinite(year) || !Number.isFinite(minor))
+    return null;
+  if (year < 2000 || year > 2100)
+    return null;
+  return [(year - 2000) * 10 + minor];
+}
+function compareVersionParts(left, right) {
+  let maxLength = Math.max(left.length, right.length);
+  for (let i = 0;i < maxLength; i += 1) {
+    let leftValue = left[i] ?? 0, rightValue = right[i] ?? 0;
+    if (leftValue !== rightValue)
+      return leftValue - rightValue;
+  }
+  return 0;
+}
+
 // proxy-tools/handlers/apply-patch.ts
 import { copyFile, mkdir, rename, rm } from "fs/promises";
 import path2 from "path";
@@ -22195,7 +22298,7 @@ async function isTrackedPath(relativePath, projectPath) {
 
 // proxy-tools/shared.ts
 import path from "path";
-var TRUNCATION_MARKER = "<<<...content truncated...>>>", nonEmptyStringSchema = exports_external.string().refine((value) => value.trim() !== "", {
+var TRUNCATION_MARKER = "<<<...content truncated...>>>", FULL_READ_MAX_LINES = 200000, nonEmptyStringSchema = exports_external.string().refine((value) => value.trim() !== "", {
   message: "must be a non-empty string"
 }), positiveIntSchema = exports_external.coerce.number().int().refine((value) => Number.isFinite(value) && value > 0, {
   message: "must be a positive integer"
@@ -22336,9 +22439,9 @@ function normalizeLineEndings(text) {
 `);
 }
 async function readFileText(relativePath, { maxLinesCount, truncateMode } = {}, callUpstreamTool) {
-  let args = { pathInProject: relativePath };
-  if (maxLinesCount !== void 0 && maxLinesCount !== null)
-    args.maxLinesCount = maxLinesCount;
+  let args = { pathInProject: relativePath }, resolvedMaxLinesCount = maxLinesCount !== void 0 && maxLinesCount !== null ? maxLinesCount : truncateMode === "NONE" ? FULL_READ_MAX_LINES : void 0;
+  if (resolvedMaxLinesCount !== void 0 && resolvedMaxLinesCount !== null)
+    args.maxLinesCount = resolvedMaxLinesCount;
   if (truncateMode)
     args.truncateMode = truncateMode;
   let result = await callUpstreamTool("get_file_text_by_path", args), text = extractTextFromResult(result);
@@ -24806,7 +24909,7 @@ async function handleGrepTool(args, projectPath, callUpstreamTool, isCodexStyle)
     caseSensitive,
     maxUsageCount: FULL_SCAN_USAGE_COUNT,
     ...useRegex ? { regexPattern: pattern } : { searchText: literalSearchText }
-  }, result = await callUpstreamTool(useRegex ? "search_in_files_by_regex" : "search_in_files_by_text", toolArgs), entries = extractEntries(result), filteredEntries = filterEntriesByPath(entries, projectPath, relative, treatAsFile), finalEntries = pathGlob ? filterEntriesByPathGlob(filteredEntries, projectPath, pathGlob) : filteredEntries;
+  }, result = await callUpstreamTool(useRegex ? "search_in_files_by_regex" : "search_in_files_by_text", toolArgs), entries = extractEntries(result), filteredEntries = !useRegex || !directoryToSearch || shouldApplyWorkaround("search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */) ? filterEntriesByPath(entries, projectPath, relative, treatAsFile) : entries, finalEntries = pathGlob ? filterEntriesByPathGlob(filteredEntries, projectPath, pathGlob) : filteredEntries;
   if (finalEntries.length === 0 && useRegex) {
     let fallbackEntries = await searchAlternativesWhenRegexEmpty(pattern, { directoryToSearch, fileMask: resolvedMask, caseSensitive, maxUsageCount: FULL_SCAN_USAGE_COUNT }, projectPath, relative, treatAsFile, pathGlob, callUpstreamTool, {
       maxResults: outputMode === "count" ? null : limit
@@ -26058,7 +26161,13 @@ async function ensureUpstreamConnected() {
     return upstreamConnectedPromise;
   return upstreamConnectedPromise = upstreamClient.connect(streamTransport).catch((error48) => {
     throw upstreamConnectedPromise = null, error48;
+  }), upstreamConnectedPromise = upstreamConnectedPromise.then(() => {
+    updateIdeVersionFromUpstream();
   }), upstreamConnectedPromise;
+}
+function updateIdeVersionFromUpstream() {
+  let version2 = upstreamClient.getServerVersion()?.version;
+  setIdeVersion(typeof version2 === "string" ? version2 : null);
 }
 async function refreshUpstreamTools() {
   await ensureUpstreamConnected();

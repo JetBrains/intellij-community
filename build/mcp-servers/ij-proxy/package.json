@@ -8,7 +8,8 @@
   "scripts": {
     "build": "bun build.ts",
     "start": "bun dist/ij-mcp-proxy.mjs",
-    "test": "bun test community/build/mcp-servers/ij-proxy/integration-tests/*.test.ts community/build/mcp-servers/ij-proxy/proxy-tools/handlers/*.test.ts"
+    "test": "bun test community/build/mcp-servers/ij-proxy/integration-tests/*.test.ts community/build/mcp-servers/ij-proxy/proxy-tools/handlers/*.test.ts",
+    "test:jb-mcp": "JETBRAINS_MCP_PROXY_WORKAROUND_DEBUG=1 JETBRAINS_MCP_STREAM_URL=http://127.0.0.1:64344/stream JETBRAINS_MCP_PROXY_DISABLE_WORKAROUND_KEYS=search_in_files_by_regex_directory_scope_ignored bun test ./integration-tests/jb-mcp-search-scope.test.ts"
   },
   "dependencies": {
     "@eslint-community/regexpp": "^4.12.2",

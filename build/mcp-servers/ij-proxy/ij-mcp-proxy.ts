@@ -13,6 +13,7 @@ import {
 import {clearLogFile, logProgress, logToFile} from '../shared/mcp-rpc.mjs'
 import {createProjectPathManager} from './project-path'
 import {createStreamTransport} from './stream-transport'
+import {setIdeVersion} from './workarounds'
 import {BLOCKED_TOOL_NAMES, getReplacedToolNames} from './proxy-tools/registry'
 import type {ToolModeInfo} from './proxy-tools/tooling'
 import {createProxyTooling, resolveToolMode, TOOL_MODES} from './proxy-tools/tooling'
@@ -242,7 +243,16 @@ async function ensureUpstreamConnected(): Promise<void> {
     upstreamConnectedPromise = null
     throw error
   })
+  upstreamConnectedPromise = upstreamConnectedPromise.then(() => {
+    updateIdeVersionFromUpstream()
+  })
   return upstreamConnectedPromise
+}
+
+function updateIdeVersionFromUpstream(): void {
+  const serverInfo = upstreamClient.getServerVersion()
+  const version = serverInfo?.version
+  setIdeVersion(typeof version === 'string' ? version : null)
 }
 
 async function refreshUpstreamTools(): Promise<ToolSpecLike[]> {

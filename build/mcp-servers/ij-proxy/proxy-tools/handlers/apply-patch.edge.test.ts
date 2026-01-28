@@ -244,6 +244,35 @@ describe('apply_patch handler (edge cases)', () => {
     )
   })
 
+  it('requests full content to avoid truncation on update', async () => {
+    const {callUpstreamTool, calls} = createMockToolCaller({
+      get_file_text_by_path: (args) => {
+        if (args?.maxLinesCount === 200000) {
+          return {text: 'alpha\nbeta\n'}
+        }
+        return {text: `alpha\n${TRUNCATION_MARKER}\n`}
+      },
+      create_new_file: () => ({text: 'ok'})
+    })
+    const patch = buildPatch([
+      '*** Begin Patch',
+      '*** Update File: sample.txt',
+      '@@',
+      '-alpha',
+      '+gamma',
+      '*** End Patch'
+    ])
+
+    const result = await handleApplyPatchTool({patch}, projectPath, callUpstreamTool)
+
+    strictEqual(result, 'Applied patch to 1 file.')
+    const readCall = calls.find((call) => call.name === 'get_file_text_by_path')
+    strictEqual(readCall.args.truncateMode, 'NONE')
+    strictEqual(readCall.args.maxLinesCount, 200000)
+    const writeCall = calls.find((call) => call.name === 'create_new_file')
+    strictEqual(writeCall.args.text, 'gamma\nbeta\n')
+  })
+
   it('allows files that mention the truncation marker inline', async () => {
     const original = `const marker = '${TRUNCATION_MARKER}'\nalpha\n`
     const {callUpstreamTool, calls} = createMockToolCaller({
