@@ -10,10 +10,8 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.completion.impl.RealPrefixMatchingWeigher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.base.fe10.analysis.classId
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -276,9 +274,7 @@ abstract class CompletionSession(
 
     private fun _complete(): Boolean {
         // we restart completion when prefix becomes "get" or "set" to ensure that properties get lower priority comparing to get/set functions (see KT-12299)
-        val prefixPattern = StandardPatterns.string().with(object : PatternCondition<String>("get or set prefix") {
-            override fun accepts(prefix: String, context: ProcessingContext?) = prefix == "get" || prefix == "set"
-        })
+        val prefixPattern = StandardPatterns.string().oneOf("get", "set")
         collector.restartCompletionOnPrefixChange(prefixPattern)
 
         val statisticsContext = calcContextForStatisticsInfo()
