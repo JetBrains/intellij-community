@@ -31,7 +31,7 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
     ): ImmutableEntityStorage {
         val project = context.project
 
-        val models = getKotlinDslScripts(context).toList()
+        val models = getKotlinDslScripts(context)
 
         if (models.isEmpty()) return storage
 

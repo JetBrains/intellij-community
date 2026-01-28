@@ -11,35 +11,26 @@ import org.gradle.tooling.model.kotlin.dsl.EditorReportSeverity
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.kotlin.gradle.scripting.shared.getGradleScriptInputsStamp
 import org.jetbrains.kotlin.gradle.scripting.shared.kotlinDslScriptsModelImportSupported
-import org.jetbrains.kotlin.idea.gradleTooling.BrokenKotlinDslScriptsModel
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.io.File
 
-fun getKotlinDslScripts(context: ProjectResolverContext): Sequence<KotlinDslScriptModel> = sequence {
-    if (!kotlinDslScriptsModelImportSupported(context.projectGradleVersion)) return@sequence
-
-    context.allBuilds.asSequence()
-        .flatMap { it.projects }
-        .filter { it.projectIdentifier.projectPath == ":" }
-        .forEach {
-            val dslScriptsModel = context.getProjectModel(it, KotlinDslScriptsModel::class.java)
-            val scriptClasspathModel = context.getProjectModel(it, GradleBuildScriptClasspathModel::class.java)
-
-            if (dslScriptsModel == null || dslScriptsModel is BrokenKotlinDslScriptsModel) {
-                LOG.error("Couldn't get KotlinDslScriptsModel. error=${dslScriptsModel?.message}\n${dslScriptsModel?.stackTrace}")
-            } else {
-                yieldAll(getDslScriptModels(context.project, dslScriptsModel, scriptClasspathModel))
-            }
+fun getKotlinDslScripts(context: ProjectResolverContext): List<KotlinDslScriptModel> = buildList {
+    if (kotlinDslScriptsModelImportSupported(context.projectGradleVersion)) {
+        for (buildModel in context.allBuilds) {
+            val scriptsModel = context.getBuildModel(buildModel, KotlinDslScriptsModel::class.java) ?: continue
+            val classpathModel = context.getProjectModel(buildModel.rootProject, GradleBuildScriptClasspathModel::class.java)
+            addAll(getDslScriptModels(context.project, scriptsModel, classpathModel))
         }
+    }
 }
 
 private fun getDslScriptModels(
     project: Project,
-    dslScriptsModel: KotlinDslScriptsModel,
+    scriptsModel: KotlinDslScriptsModel,
     classpathModel: GradleBuildScriptClasspathModel?
 ): List<KotlinDslScriptModel> {
-    return dslScriptsModel.scriptModels.mapNotNull { (file, model) ->
+    return scriptsModel.scriptModels.mapNotNull { (file, model) ->
         val messages = mutableListOf<KotlinDslScriptModel.Message>()
 
         model.exceptions.forEach {
