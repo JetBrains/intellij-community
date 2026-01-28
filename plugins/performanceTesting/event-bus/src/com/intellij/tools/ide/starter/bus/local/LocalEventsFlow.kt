@@ -45,6 +45,7 @@ class LocalEventsFlow : EventsFlow {
     subscriber: Any,
     executeOnce: Boolean,
     timeout: Duration,
+    sequential: Boolean,
     callback: suspend (event: EventType) -> Unit,
   ): Boolean {
     subscribersLock.writeLock().withLock {
@@ -52,8 +53,11 @@ class LocalEventsFlow : EventsFlow {
       val eventClassName = eventClass.simpleName
       val subscriberObject = getSubscriberObject(subscriber)
       // To avoid double subscriptions
-      if (subscribers[eventClassName]?.any { it.subscriberName == subscriberObject } == true) return false
-      val newSubscriber = Subscriber(subscriberObject, timeout, executeOnce = executeOnce, callback)
+      if (subscribers[eventClassName]?.any { it.subscriberName == subscriberObject } == true) {
+        LOG.info("Subscriber $subscriberObject is already subscribed for $eventClassName")
+        return false
+      }
+      val newSubscriber = Subscriber(subscriberObject, timeout, executeOnce = executeOnce, sequential = sequential, callback)
       LOG.debug("New subscriber $newSubscriber for $eventClassName")
       subscribers.computeIfAbsent(eventClassName) { CopyOnWriteArrayList() }.add(newSubscriber)
       return true
@@ -64,15 +68,17 @@ class LocalEventsFlow : EventsFlow {
     eventClass: Class<EventType>,
     subscriber: Any,
     timeout: Duration,
+    sequential: Boolean,
     callback: suspend (event: EventType) -> Unit,
-  ): Boolean = subscribe(eventClass, subscriber, true, timeout, callback)
+  ): Boolean = subscribe(eventClass, subscriber, executeOnce = true, timeout, sequential = sequential, callback)
 
   override fun <EventType : Event> subscribe(
     eventClass: Class<EventType>,
     subscriber: Any,
     timeout: Duration,
+    sequential: Boolean,
     callback: suspend (event: EventType) -> Unit,
-  ): Boolean = subscribe(eventClass, subscriber, false, timeout, callback)
+  ): Boolean = subscribe(eventClass, subscriber, executeOnce = false, timeout, sequential = sequential, callback)
 
   override fun <T : Event> postAndWaitProcessing(event: T) {
     val eventClassName = event.javaClass.simpleName
@@ -89,6 +95,22 @@ class LocalEventsFlow : EventsFlow {
       return
     }
 
+    val (blockingSubscribers, nonblockingSubscribers) = subscribersForEvent.partition { it.sequential }
+    val exceptions = processSequentially(blockingSubscribers, eventClassName, event) +
+                     processInParallel(nonblockingSubscribers, eventClassName, event)
+
+    LOG.debug("All exceptions: $exceptions")
+    if (exceptions.isNotEmpty()) {
+      val exceptionsString = exceptions.joinToString(separator = "\n") { e -> "${exceptions.indexOf(e) + 1}) ${e.message}" }
+      throw IllegalArgumentException("Exceptions occurred while processing subscribers. $exceptionsString")
+    }
+  }
+
+  private fun <T : Event> processInParallel(
+    subscribersForEvent: List<Subscriber<out Event>>,
+    eventClassName: String,
+    event: T,
+  ): CopyOnWriteArrayList<Throwable> {
     val exceptions = CopyOnWriteArrayList<Throwable>()
     val tasks = (subscribersForEvent as List<Subscriber<T>>).map { subscriber ->
       // In case the job is interrupted (e.g. due to timeout), the coroutine may enter Cancelling state
@@ -133,12 +155,42 @@ class LocalEventsFlow : EventsFlow {
         }
       }
     }
+    return exceptions
+  }
 
-    LOG.debug("All exceptions: $exceptions")
-    if (exceptions.isNotEmpty()) {
-      val exceptionsString = exceptions.joinToString(separator = "\n") { e -> "${exceptions.indexOf(e) + 1}) ${e.message}" }
-      throw IllegalArgumentException("Exceptions occurred while processing subscribers. $exceptionsString")
+  private fun <T : Event> processSequentially(
+    subscribersForEvent: List<Subscriber<out Event>>,
+    eventClassName: String,
+    event: T,
+  ): CopyOnWriteArrayList<Throwable> {
+    val exceptions = CopyOnWriteArrayList<Throwable>()
+    // Execute strictly one-by-one in the current thread (wrapped with runBlocking for suspend compatibility)
+    runBlocking(CoroutineName("Processing consequently $eventClassName for ${subscribersForEvent.size} subscribers")) {
+      @Suppress("UNCHECKED_CAST")
+      val typed = subscribersForEvent as List<Subscriber<T>>
+      for (subscriber in typed) {
+        LOG.debug("Start execution $eventClassName for $subscriber")
+        try {
+          withTimeout(subscriber.timeout) {
+            // If the code inside blocks a thread, make it interruptible for cooperative cancellation
+            runInterruptible {
+              // We need a blocking bridge to call suspend callback from interruptible block
+              runBlocking(CoroutineName("Processing $eventClassName for $subscriber")) {
+                subscriber.callback(event)
+              }
+            }
+          }
+        }
+        catch (e: Throwable) {
+          LOG.info("Exception occurred while processing $eventClassName for $subscriber: $e")
+          exceptions.add(e)
+        }
+        finally {
+          LOG.debug("Finished execution $eventClassName for $subscriber")
+        }
+      }
     }
+    return exceptions
   }
 
   override fun unsubscribeAll() {

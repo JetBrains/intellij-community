@@ -43,20 +43,24 @@ object EventsBus {
    * Subscriber might be invoked multiple times on different events since unsubscription happens only after end of test container.
    * See com.intellij.ide.starter.config.StarterConfigurationStorage.afterEachMessageBusCleanup()
    * If you need to unsubscribe earlier call [unsubscribe]
+   *
+   * @param sequential Subscriptions with sequential=true will be processed in a sequential blocking way before all the callbacks without this flag
+   *
    */
   inline fun <reified EventType : Event> subscribe(
     subscriber: Any,
     timeout: Duration = 2.minutes,
     ignoreExceptions: Boolean = true,
+    sequential: Boolean = false,
     noinline callback: suspend (event: EventType) -> Unit
   ): EventsBus {
     executeWithExceptionHandling(ignoreExceptions) {
       if (SharedEvent::class.java.isAssignableFrom(EventType::class.java)) {
-        SHARED_EVENTS_FLOW.subscribe(eventClass = EventType::class.java, subscriber = subscriber, timeout, callback)
+        SHARED_EVENTS_FLOW.subscribe(eventClass = EventType::class.java, subscriber = subscriber, timeout, sequential, callback)
         SHARED_EVENTS_FLOW.startServerPolling()
       }
       else
-        EVENTS_FLOW.subscribe(eventClass = EventType::class.java, subscriber = subscriber, timeout, callback)
+        EVENTS_FLOW.subscribe(eventClass = EventType::class.java, subscriber = subscriber, timeout, sequential, callback)
     }
     return this
   }
@@ -64,20 +68,23 @@ object EventsBus {
   /**
    * Can have only one subscription by pair subscriber + event
    * Subscriber will be invoked once for a single event.
+   *
+   * @param sequential Subscriptions with sequential=true will be processed in a sequential blocking way before all the callbacks without this flag
    */
   inline fun <reified EventType : Event> subscribeOnce(
     subscriber: Any,
     timeout: Duration = 2.minutes,
     ignoreExceptions: Boolean = true,
+    sequential: Boolean = false,
     noinline callback: suspend (event: EventType) -> Unit
   ): EventsBus {
     executeWithExceptionHandling(ignoreExceptions) {
       if (SharedEvent::class.java.isAssignableFrom(EventType::class.java)) {
-        SHARED_EVENTS_FLOW.subscribeOnce(eventClass = EventType::class.java, subscriber = subscriber, timeout, callback)
+        SHARED_EVENTS_FLOW.subscribeOnce(eventClass = EventType::class.java, subscriber = subscriber, timeout, sequential, callback)
         SHARED_EVENTS_FLOW.startServerPolling()
       }
       else
-        EVENTS_FLOW.subscribeOnce(eventClass = EventType::class.java, subscriber = subscriber, timeout, callback)
+        EVENTS_FLOW.subscribeOnce(eventClass = EventType::class.java, subscriber = subscriber, timeout, sequential, callback)
     }
     return this
   }

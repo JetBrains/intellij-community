@@ -36,9 +36,10 @@ class SharedEventsFlow(
     eventClass: Class<EventType>,
     subscriber: Any,
     timeout: Duration,
+    sequential: Boolean,
     callback: suspend (event: EventType) -> Unit,
   ): Boolean {
-    return localEventsFlow.subscribe(eventClass, subscriber, timeout, callback).also {
+    return localEventsFlow.subscribe(eventClass, subscriber, timeout, sequential, callback).also {
       if (it) client.newSubscriber(eventClass, timeout, getSubscriberObject(subscriber).toString())
     }
   }
@@ -47,9 +48,10 @@ class SharedEventsFlow(
     eventClass: Class<EventType>,
     subscriber: Any,
     timeout: Duration,
+    sequential: Boolean,
     callback: suspend (event: EventType) -> Unit,
   ): Boolean {
-    return localEventsFlow.subscribeOnce(eventClass, subscriber, timeout, callback).also {
+    return localEventsFlow.subscribeOnce(eventClass, subscriber, timeout, sequential, callback).also {
       if (it) client.newSubscriber(eventClass, timeout, getSubscriberObject(subscriber).toString())
     }
   }
