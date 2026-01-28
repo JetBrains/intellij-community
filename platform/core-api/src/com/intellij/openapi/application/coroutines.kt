@@ -18,6 +18,9 @@ import kotlin.coroutines.CoroutineContext
 /**
  * Suspends until it's possible to obtain the read lock and then
  * runs the [action] holding the lock **without** preventing write actions.
+ *
+ * The [action] is dispatched to [Dispatchers.Default], because a read action is expected to be a CPU-bound task.
+ *
  * See [constrainedReadAction] for semantic details.
  *
  * @see readActionUndispatched
