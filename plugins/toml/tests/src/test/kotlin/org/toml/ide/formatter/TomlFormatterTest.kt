@@ -33,4 +33,21 @@ class TomlFormatterTest : TomlFormatterTestBase() {
             "c.rs"
         ]
     """)
+
+    fun `test indent tables`() = doTest("""
+        [workspace]
+        members = {
+        a = 1,
+                b = 2,
+                    c = 3
+        
+        }
+    """, """
+        [workspace]
+        members = {
+            a = 1,
+            b = 2,
+            c = 3
+        }
+    """)
 }
