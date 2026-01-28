@@ -48,7 +48,7 @@ import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getResolvedVersionByModuleData
 import org.jetbrains.kotlin.idea.gradleJava.migrateNonJvmSourceFolders
-import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
+import org.jetbrains.kotlin.library.KlibConstants.KLIB_FILE_EXTENSION
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.impl.isCommon
