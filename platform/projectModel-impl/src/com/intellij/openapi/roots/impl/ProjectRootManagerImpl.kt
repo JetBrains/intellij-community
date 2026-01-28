@@ -417,12 +417,13 @@ open class ProjectRootManagerImpl(
   }
 
   override fun getModuleRootManager(module: Module): ModuleRootManager {
-    if (module.isDisposed) {
-      throw AlreadyDisposedException("module ${module.name} is already disposed. Please read ${ProjectRootManager::getModuleRootManager} doc and follow the contract")
-    }
     // If module gets disposed here, we have an exception, hence race.
     // As for now, too many usages without read lock.
     // As soon as all code migrates to RA, we make it mandatory
+    val existed = moduleRootManagerInstances.containsKey(module)
+    if (!existed && module.isDisposed) {
+      throw AlreadyDisposedException("module ${module.name} is already disposed. Please read ${ProjectRootManager::getModuleRootManager} doc and follow the contract")
+    }
     return moduleRootManagerInstances.computeIfAbsent(module) { ModuleRootComponentBridge(module) }
   }
 
