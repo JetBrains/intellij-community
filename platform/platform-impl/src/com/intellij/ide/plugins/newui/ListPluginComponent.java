@@ -585,7 +585,7 @@ public final class ListPluginComponent extends JPanel {
     }
     else {
       if (myVersion != null) {
-        myVersion.setText(NewUiUtil.getUpdateVersionText(plugin.getVersion(), myUpdateDescriptor.getVersion()));
+        myVersion.setText(plugin.getVersion());
       }
       if (plugin.getProductCode() == null && myUpdateDescriptor.getProductCode() != null &&
           !plugin.isBundled() && !LicensePanel.isEA2Product(myUpdateDescriptor.getProductCode()) &&
