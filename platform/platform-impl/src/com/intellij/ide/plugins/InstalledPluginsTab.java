@@ -290,148 +290,7 @@ class InstalledPluginsTab extends PluginsTab {
     panel.setSelectionListener(selectionListener);
     registerCopyProvider(panel);
 
-    myInstalledSearchPanel = new SearchResultPanel(installedController, panel, false, 0, 0) {
-      @Override
-      protected void setEmptyText(@NotNull String query) {
-        myPanel.getEmptyText().setText(IdeBundle.message("plugins.configurable.nothing.found"));
-        if (query.contains("/downloaded") || query.contains("/outdated") ||
-            query.contains("/enabled") || query.contains("/disabled") ||
-            query.contains("/invalid") || query.contains("/bundled")) {
-          return;
-        }
-        if (mySearchInMarketplaceTabHandler != null) {
-          myPanel.getEmptyText().appendSecondaryText(IdeBundle.message("plugins.configurable.search.in.marketplace"),
-                                                     SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-                                                     e -> mySearchInMarketplaceTabHandler.accept(query));
-        }
-      }
-
-      @Override
-      protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result, AtomicBoolean runQuery) {
-        int searchIndex = PluginManagerUsageCollector.updateAndGetSearchIndex();
-        myPluginModelFacade.getModel().setInvalidFixCallback(null);
-
-        SearchQueryParser.Installed parser = new SearchQueryParser.Installed(query);
-
-        if (myInstalledSearchSetState) {
-          for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
-            ((InstalledSearchOptionAction)action).setState(parser);
-          }
-        }
-
-        List<PluginUiModel> descriptors = myPluginModelFacade.getModel().getInstalledDescriptors();
-
-        if (!parser.vendors.isEmpty()) {
-          for (Iterator<PluginUiModel> I = descriptors.iterator(); I.hasNext(); ) {
-            if (!MyPluginModel.isVendor(I.next(), parser.vendors)) {
-              I.remove();
-            }
-          }
-        }
-        if (!parser.tags.isEmpty()) {
-          String sessionId = myPluginModelFacade.getModel().getSessionId();
-
-          for (Iterator<PluginUiModel> I = descriptors.iterator(); I.hasNext(); ) {
-            if (!ContainerUtil.intersects(PluginUiModelKt.calculateTags(I.next(), sessionId), parser.tags)) {
-              I.remove();
-            }
-          }
-        }
-        for (Iterator<PluginUiModel> I = descriptors.iterator(); I.hasNext(); ) {
-          PluginUiModel descriptor = I.next();
-          if (parser.attributes) {
-            if (parser.enabled &&
-                (!myPluginModelFacade.isEnabled(descriptor) || !myPluginModelFacade.getErrors(descriptor).isEmpty())) {
-              I.remove();
-              continue;
-            }
-            if (parser.disabled &&
-                (myPluginModelFacade.isEnabled(descriptor) || !myPluginModelFacade.getErrors(descriptor).isEmpty())) {
-              I.remove();
-              continue;
-            }
-            if (parser.bundled && !descriptor.isBundled()) {
-              I.remove();
-              continue;
-            }
-            if (parser.downloaded && descriptor.isBundled()) {
-              I.remove();
-              continue;
-            }
-            if (parser.invalid && myPluginModelFacade.getErrors(descriptor).isEmpty()) {
-              I.remove();
-              continue;
-            }
-            if (parser.needUpdate && !UiPluginManager.getInstance().isNeedUpdate(descriptor.getPluginId())) {
-              I.remove();
-              continue;
-            }
-          }
-          if (parser.searchQuery != null && !containsQuery(descriptor, parser.searchQuery)) {
-            I.remove();
-          }
-        }
-
-        result.addModels(descriptors);
-        Map<PluginId, CheckErrorsResult> errors = UiPluginManager.getInstance()
-          .loadErrors(myPluginModelFacade.getModel().mySessionId.toString(),
-                      ContainerUtil.map(descriptors, PluginUiModel::getPluginId));
-        result.getPreloadedModel().setErrors(MyPluginModel.getErrors(errors));
-        result.getPreloadedModel().setPluginInstallationStates(UiPluginManager.getInstance().getInstallationStatesSync());
-        PluginManagerUsageCollector.performInstalledTabSearch(
-          ProjectUtil.getActiveProject(), parser, result.getModels(), searchIndex, null);
-
-        if (!result.getModels().isEmpty()) {
-          if (parser.invalid) {
-            myPluginModelFacade.getModel().setInvalidFixCallback(() -> {
-              PluginsGroup group = myInstalledSearchPanel.getGroup();
-              if (group.ui == null) {
-                myPluginModelFacade.getModel().setInvalidFixCallback(null);
-                return;
-              }
-
-              PluginsGroupComponent resultPanel = myInstalledSearchPanel.getPanel();
-
-              for (PluginUiModel descriptor : new ArrayList<>(group.getModels())) {
-                if (myPluginModelFacade.getErrors(descriptor).isEmpty()) {
-                  resultPanel.removeFromGroup(group, descriptor);
-                }
-              }
-
-              group.titleWithCount();
-              myInstalledSearchPanel.fullRepaint();
-
-              if (group.getModels().isEmpty()) {
-                myPluginModelFacade.getModel().setInvalidFixCallback(null);
-                myInstalledSearchPanel.removeGroup();
-              }
-            });
-          }
-          else if (parser.needUpdate) {
-            result.rightAction = new PluginManagerConfigurablePanel.LinkLabelButton<>(IdeBundle.message("plugin.manager.update.all"), null, (__, ___) -> {
-              result.rightAction.setEnabled(false);
-
-              for (ListPluginComponent plugin : result.ui.plugins) {
-                plugin.updatePlugin();
-              }
-            });
-          }
-          PluginModelAsyncOperationsExecutor.INSTANCE.loadUpdates(myCoroutineScope, updates -> {
-            if (!ContainerUtil.isEmpty(updates)) {
-              myPostFillGroupCallback = () -> {
-                //noinspection unchecked
-                applyUpdates(myPanel, (Collection<PluginUiModel>)updates);
-                selectionListener.accept(myInstalledPanel);
-                selectionListener.accept(myInstalledSearchPanel.getPanel());
-              };
-            }
-            return null;
-          });
-        }
-        updatePanel(runQuery);
-      }
-    };
-
+    myInstalledSearchPanel = new InstalledTabSearchResultPanel(installedController, panel, selectionListener);
     return myInstalledSearchPanel;
   }
 
@@ -704,5 +563,156 @@ class InstalledPluginsTab extends PluginsTab {
     private final Supplier<@Nls String> myPresentableNameSupplier;
 
     InstalledSearchOption(Supplier<@Nls String> name) { myPresentableNameSupplier = name; }
+  }
+
+  private class InstalledTabSearchResultPanel extends SearchResultPanel {
+    private final @NotNull Consumer<? super PluginsGroupComponent> mySelectionListener;
+
+    InstalledTabSearchResultPanel(SearchUpDownPopupController installedController,
+                                  PluginsGroupComponent panel,
+                                  @NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
+      super(installedController, panel, false, 0, 0);
+      mySelectionListener = selectionListener;
+    }
+
+    @Override
+    protected void setEmptyText(@NotNull String query) {
+      myPanel.getEmptyText().setText(IdeBundle.message("plugins.configurable.nothing.found"));
+      if (query.contains("/downloaded") || query.contains("/outdated") ||
+          query.contains("/enabled") || query.contains("/disabled") ||
+          query.contains("/invalid") || query.contains("/bundled")) {
+        return;
+      }
+      if (mySearchInMarketplaceTabHandler != null) {
+        myPanel.getEmptyText().appendSecondaryText(IdeBundle.message("plugins.configurable.search.in.marketplace"),
+                                                   SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+                                                   e -> mySearchInMarketplaceTabHandler.accept(query));
+      }
+    }
+
+    @Override
+    protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result, AtomicBoolean runQuery) {
+      int searchIndex = PluginManagerUsageCollector.updateAndGetSearchIndex();
+      myPluginModelFacade.getModel().setInvalidFixCallback(null);
+
+      SearchQueryParser.Installed parser = new SearchQueryParser.Installed(query);
+
+      if (myInstalledSearchSetState) {
+        for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
+          ((InstalledSearchOptionAction)action).setState(parser);
+        }
+      }
+
+      List<PluginUiModel> descriptors = myPluginModelFacade.getModel().getInstalledDescriptors();
+
+      if (!parser.vendors.isEmpty()) {
+        for (Iterator<PluginUiModel> I = descriptors.iterator(); I.hasNext(); ) {
+          if (!MyPluginModel.isVendor(I.next(), parser.vendors)) {
+            I.remove();
+          }
+        }
+      }
+      if (!parser.tags.isEmpty()) {
+        String sessionId = myPluginModelFacade.getModel().getSessionId();
+
+        for (Iterator<PluginUiModel> I = descriptors.iterator(); I.hasNext(); ) {
+          if (!ContainerUtil.intersects(PluginUiModelKt.calculateTags(I.next(), sessionId), parser.tags)) {
+            I.remove();
+          }
+        }
+      }
+      for (Iterator<PluginUiModel> I = descriptors.iterator(); I.hasNext(); ) {
+        PluginUiModel descriptor = I.next();
+        if (parser.attributes) {
+          if (parser.enabled &&
+              (!myPluginModelFacade.isEnabled(descriptor) || !myPluginModelFacade.getErrors(descriptor).isEmpty())) {
+            I.remove();
+            continue;
+          }
+          if (parser.disabled &&
+              (myPluginModelFacade.isEnabled(descriptor) || !myPluginModelFacade.getErrors(descriptor).isEmpty())) {
+            I.remove();
+            continue;
+          }
+          if (parser.bundled && !descriptor.isBundled()) {
+            I.remove();
+            continue;
+          }
+          if (parser.downloaded && descriptor.isBundled()) {
+            I.remove();
+            continue;
+          }
+          if (parser.invalid && myPluginModelFacade.getErrors(descriptor).isEmpty()) {
+            I.remove();
+            continue;
+          }
+          if (parser.needUpdate && !UiPluginManager.getInstance().isNeedUpdate(descriptor.getPluginId())) {
+            I.remove();
+            continue;
+          }
+        }
+        if (parser.searchQuery != null && !containsQuery(descriptor, parser.searchQuery)) {
+          I.remove();
+        }
+      }
+
+      result.addModels(descriptors);
+      Map<PluginId, CheckErrorsResult> errors = UiPluginManager.getInstance()
+        .loadErrors(myPluginModelFacade.getModel().mySessionId.toString(),
+                    ContainerUtil.map(descriptors, PluginUiModel::getPluginId));
+      result.getPreloadedModel().setErrors(MyPluginModel.getErrors(errors));
+      result.getPreloadedModel().setPluginInstallationStates(UiPluginManager.getInstance().getInstallationStatesSync());
+      PluginManagerUsageCollector.performInstalledTabSearch(
+        ProjectUtil.getActiveProject(), parser, result.getModels(), searchIndex, null);
+
+      if (!result.getModels().isEmpty()) {
+        if (parser.invalid) {
+          myPluginModelFacade.getModel().setInvalidFixCallback(() -> {
+            PluginsGroup group = myInstalledSearchPanel.getGroup();
+            if (group.ui == null) {
+              myPluginModelFacade.getModel().setInvalidFixCallback(null);
+              return;
+            }
+
+            PluginsGroupComponent resultPanel = myInstalledSearchPanel.getPanel();
+
+            for (PluginUiModel descriptor : new ArrayList<>(group.getModels())) {
+              if (myPluginModelFacade.getErrors(descriptor).isEmpty()) {
+                resultPanel.removeFromGroup(group, descriptor);
+              }
+            }
+
+            group.titleWithCount();
+            myInstalledSearchPanel.fullRepaint();
+
+            if (group.getModels().isEmpty()) {
+              myPluginModelFacade.getModel().setInvalidFixCallback(null);
+              myInstalledSearchPanel.removeGroup();
+            }
+          });
+        }
+        else if (parser.needUpdate) {
+          result.rightAction = new LinkLabelButton<>(IdeBundle.message("plugin.manager.update.all"), null, (__, ___) -> {
+            result.rightAction.setEnabled(false);
+
+            for (ListPluginComponent plugin : result.ui.plugins) {
+              plugin.updatePlugin();
+            }
+          });
+        }
+        PluginModelAsyncOperationsExecutor.INSTANCE.loadUpdates(myCoroutineScope, updates -> {
+          if (!ContainerUtil.isEmpty(updates)) {
+            myPostFillGroupCallback = () -> {
+              //noinspection unchecked
+              applyUpdates(myPanel, (Collection<PluginUiModel>)updates);
+              mySelectionListener.accept(myInstalledPanel);
+              mySelectionListener.accept(myInstalledSearchPanel.getPanel());
+            };
+          }
+          return null;
+        });
+      }
+      updatePanel(runQuery);
+    }
   }
 }
