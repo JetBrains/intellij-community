@@ -2,7 +2,6 @@
 package com.intellij.gradle.toolingExtension.impl.modelAction;
 
 import com.intellij.gradle.toolingExtension.impl.model.dslBaseScriptModel.GradleDslBaseScriptModelHolder;
-import com.intellij.gradle.toolingExtension.impl.model.utilTurnOffDefaultTasksModel.TurnOffDefaultTasks;
 import com.intellij.gradle.toolingExtension.impl.modelSerialization.ToolingSerializerConverter;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry;
 import com.intellij.gradle.toolingExtension.impl.util.GradleExecutorServiceUtil;
@@ -141,15 +140,6 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     GradleOpenTelemetry.runWithSpan("ExecuteAction", __ ->
       executeAction(buildController, converterExecutor, models)
     );
-
-    if (myProjectLoadedAction) {
-      GradleModelControllerImpl modelController = GradleOpenTelemetry.callWithSpan("CreateGradleModelController", __ ->
-        new GradleModelControllerImpl(buildController, getGradleVersion())
-      );
-      GradleOpenTelemetry.runWithSpan("TurnOffDefaultTasks", __ ->
-        modelController.fetchModel(TurnOffDefaultTasks.class)
-      );
-    }
 
     return models.pollPendingState();
   }

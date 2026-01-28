@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.modelAction
 
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.NonExtendable
 import java.io.Serializable
 
 /**
@@ -13,7 +15,8 @@ import java.io.Serializable
  *
  * [BASE_SCRIPT_MODEL_PHASE] is an internal action-owned phase emitted directly by the Gradle model fetch action.
  */
-@ApiStatus.Experimental
+@Experimental
+@NonExtendable
 sealed interface GradleModelFetchPhase : Comparable<GradleModelFetchPhase>, Serializable {
 
   /**
@@ -35,6 +38,7 @@ sealed interface GradleModelFetchPhase : Comparable<GradleModelFetchPhase>, Seri
    * @see org.gradle.tooling.IntermediateResultHandler
    * @see org.gradle.tooling.BuildActionExecuter.setStreamedValueListener
    */
+  @NonExtendable
   sealed interface ProjectLoaded : GradleModelFetchPhase {
 
     val order: Int
@@ -54,6 +58,7 @@ sealed interface GradleModelFetchPhase : Comparable<GradleModelFetchPhase>, Seri
    * @see org.gradle.tooling.IntermediateResultHandler
    * @see org.gradle.tooling.BuildActionExecuter.setStreamedValueListener
    */
+  @NonExtendable
   sealed interface BuildFinished : GradleModelFetchPhase {
 
     val order: Int
@@ -79,8 +84,13 @@ sealed interface GradleModelFetchPhase : Comparable<GradleModelFetchPhase>, Seri
      * In this phase, Gradle model providers fetch Gradle tooling models after gradle projects are loaded and before "sync" tasks are run.
      * This can be used to set up "sync" tasks for the import
      */
+    @Internal
     @JvmField
     val PROJECT_LOADED_PHASE: GradleModelFetchPhase = ProjectLoaded(0, "PROJECT_LOADED_PHASE")
+
+    @Internal
+    @JvmField
+    val TURN_OFF_DEFAULT_TASKS_PHASE: GradleModelFetchPhase = ProjectLoaded(1, "TURN_OFF_DEFAULT_TASKS_PHASE")
 
     /**
      * In this phase, Gradle model providers fetch a Gradle project identification models.

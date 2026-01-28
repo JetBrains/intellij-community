@@ -1,6 +1,6 @@
 # Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 com.intellij.gradle.toolingExtension.impl.model.utilDummyModel.DummyModelBuilder
-com.intellij.gradle.toolingExtension.impl.model.utilTurnOffDefaultTasksModel.TurnOffDefaultTasksModelBuilder
+com.intellij.gradle.toolingExtension.impl.model.util.turnOffDefaultTasksModel.GradleTurnOffDefaultTasksModelBuilder
 com.intellij.gradle.toolingExtension.impl.model.projectModel.GradleExternalProjectModelBuilder
 com.intellij.gradle.toolingExtension.impl.model.warmUp.GradleTaskWarmUpService
 com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskModelBuilder
