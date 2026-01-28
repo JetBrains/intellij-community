@@ -188,9 +188,8 @@ class InstalledPluginsTab extends PluginsTab {
           .entrySet()
           .stream()
           .map(entry -> new ComparablePluginsGroup(entry.getKey(), entry.getValue(), model.getVisiblePluginsRequiresUltimate()))
-          .sorted((o1, o2) -> defaultCategory.equals(o1.title) ? 1 :
-                              defaultCategory.equals(o2.title) ? -1 :
-                              o1.compareTo(o2))
+          .sorted((o1, o2) ->
+                    defaultCategory.equals(o1.title) ? 1 : defaultCategory.equals(o2.title) ? -1 : o1.compareTo(o2))
           .forEachOrdered(group -> {
             group.getPreloadedModel().setErrors(model.getErrors());
             group.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
