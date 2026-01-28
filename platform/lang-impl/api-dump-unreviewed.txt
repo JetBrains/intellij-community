@@ -1497,27 +1497,21 @@ c:com.intellij.codeInsight.codeVision.CodeVisionHost
 - sf:settingsLensProviderId:java.lang.String
 - <init>(com.intellij.openapi.project.Project):V
 - f:calculateCodeVisionSync(com.intellij.openapi.editor.Editor,com.intellij.openapi.Disposable):V
-- collectAllProviders():java.util.List
 - f:collectPlaceholders(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,kotlin.coroutines.Continuation):java.lang.Object
-- getAnchorForEntry(com.intellij.codeInsight.codeVision.CodeVisionEntry):com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 - f:getCodeVisionLifetime():com.jetbrains.rd.util.lifetime.Lifetime
 - f:getInvalidateProviderSignal():com.jetbrains.rd.util.reactive.Signal
 - f:getLifeSettingModel():com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsLiveModel
-- f:getNumber(java.lang.String):I
 - f:getPriorityForEntry(com.intellij.codeInsight.codeVision.CodeVisionEntry):I
 - f:getProject():com.intellij.openapi.project.Project
-- getProviderById(java.lang.String):com.intellij.codeInsight.codeVision.CodeVisionProvider
 - f:getProviders():java.util.List
 - handleLensClick(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.codeVision.CodeVisionEntry):V
 - handleLensExtraAction(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.codeVision.CodeVisionEntry,java.lang.String):V
-- initialize():V
 - f:invalidateProvider(com.intellij.codeInsight.codeVision.CodeVisionHost$LensInvalidateSignal):V
 - sf:isCodeLensTest():Z
 - f:nullIfDefault(com.intellij.codeInsight.codeVision.CodeVisionAnchorKind):com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 - p:openCodeVisionSettings(com.intellij.codeInsight.codeVision.CodeVisionProvider):V
 - bs:openCodeVisionSettings$default(com.intellij.codeInsight.codeVision.CodeVisionHost,com.intellij.codeInsight.codeVision.CodeVisionProvider,I,java.lang.Object):V
 - pf:rearrangeProviders():V
-- f:setProviders(java.util.List):V
 - p:subscribeForDocumentChanges(com.intellij.openapi.editor.Editor,com.jetbrains.rd.util.lifetime.Lifetime,kotlin.jvm.functions.Function0):V
 f:com.intellij.codeInsight.codeVision.CodeVisionHost$Companion
 - f:isCodeLensTest():Z
@@ -1549,9 +1543,7 @@ com.intellij.codeInsight.codeVision.CodeVisionModel$Listener
 - a:onLensesAddedOrUpdated(java.lang.Iterable):V
 - a:onLensesRemoved(java.lang.Iterable):V
 f:com.intellij.codeInsight.codeVision.CodeVisionProviderFactory$Companion
-- sf:EP_NAME:java.lang.String
 - f:createAllProviders(com.intellij.openapi.project.Project):java.util.List
-- f:getExtensionPoint():com.intellij.openapi.extensions.ExtensionPointName
 a:com.intellij.codeInsight.codeVision.CodeVisionState
 - sf:Companion:com.intellij.codeInsight.codeVision.CodeVisionState$Companion
 - f:getResult():java.util.List

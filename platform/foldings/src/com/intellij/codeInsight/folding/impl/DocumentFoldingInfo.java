@@ -9,10 +9,7 @@ import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.project.Project;
@@ -47,7 +44,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
   private final @NotNull Project myProject;
   private final VirtualFile myFile;
 
-  private final @NotNull List<Info> myInfos = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final @NotNull List<SignatureInfo> myInfos = ContainerUtil.createLockFreeCopyOnWriteList();
   private final @NotNull List<RangeMarker> myRangeMarkers = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final String DEFAULT_PLACEHOLDER = "...";
   private static final @NonNls String ELEMENT_TAG = "element";
@@ -62,12 +59,12 @@ final class DocumentFoldingInfo implements CodeFoldingState {
     myFile = FileDocumentManager.getInstance().getFile(document);
   }
 
-  @RequiresEdt
   void loadFromEditor(@NotNull Editor editor) {
-    ThreadingAssertions.assertEventDispatchThread();
+    EditorThreading.Companion.assertInteractionAllowed();
     LOG.assertTrue(!editor.isDisposed());
     clear();
 
+    int caretOffset = editor.getCaretModel().getOffset();
     FoldRegion[] foldRegions = editor.getFoldingModel().getAllFoldRegions();
     for (FoldRegion region : foldRegions) {
       if (!region.isValid() || region.shouldNeverExpand() || CodeFoldingManagerImpl.isTransient(region)) {
@@ -78,22 +75,22 @@ final class DocumentFoldingInfo implements CodeFoldingState {
       if (Strings.areSameInstance(signature, UpdateFoldRegionsOperation.NO_SIGNATURE)) {
         continue;
       }
-      Boolean storedCollapseByDefault = CodeFoldingManagerImpl.getCollapsedByDef(region);
+      Boolean storedCollapseByDefault = CodeFoldingManagerImpl.getCollapsedByDefault(region);
       boolean collapseByDefault = storedCollapseByDefault != null && storedCollapseByDefault &&
-                                  !FoldingUtil.caretInsideRange(editor, region.getTextRange());
+                                  !UpdateFoldRegionsOperation.caretInsideRange(caretOffset, region.getTextRange());
       if (collapseByDefault == expanded || isManuallyCreated(region, signature)) {
         if (signature == null) {
-          addRangeMarker(editor.getDocument(), region.getStartOffset(), region.getEndOffset(), expanded, region.getPlaceholderText());
+          addRangeMarker(editor.getDocument(), region.getTextRange(), expanded, region.getPlaceholderText());
         }
         else {
-          myInfos.add(new Info(signature, expanded));
+          myInfos.add(new SignatureInfo(signature, expanded));
         }
       }
     }
   }
 
-  private void addRangeMarker(@NotNull Document document, int startOffset, int endOffset, boolean expanded, @NotNull String placeholderText) {
-    RangeMarker marker = document.createRangeMarker(startOffset, endOffset);
+  private void addRangeMarker(@NotNull Document document, @NotNull TextRange range, boolean expanded, @NotNull String placeholderText) {
+    RangeMarker marker = document.createRangeMarker(range);
     myRangeMarkers.add(marker);
     marker.putUserData(FOLDING_INFO_KEY, new FoldingInfo(placeholderText, expanded));
   }
@@ -102,6 +99,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
     return signature == null && !CodeFoldingManagerImpl.isAutoCreated(region);
   }
 
+  @RequiresEdt
   @Override
   public void setToEditor(@NotNull Editor editor) {
     ThreadingAssertions.assertEventDispatchThread();
@@ -119,7 +117,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
     }
 
     Map<PsiElement, FoldingDescriptor> ranges = null;
-    for (Info info : myInfos) {
+    for (SignatureInfo info : myInfos) {
       PsiElement element = FoldingPolicy.restoreBySignature(psiFile, info.signature);
       if (element == null || !element.isValid()) {
         continue;
@@ -158,7 +156,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
       expandRegionBlessForNewLife(editor, region, state);
     }
   }
-  
+
   private static void expandRegionBlessForNewLife(@NotNull Editor editor, @NotNull FoldRegion region, boolean expanded) {
     if (!CodeFoldingManagerImpl.isFoldingsInitializedInEditor(editor)) {
       int offset = editor.getCaretModel().getOffset();
@@ -202,7 +200,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
       return;
     }
 
-    for (Info info : myInfos) {
+    for (SignatureInfo info : myInfos) {
       Element e = new Element(ELEMENT_TAG);
       e.setAttribute(SIGNATURE_ATT, info.signature);
       if (info.expanded) {
@@ -260,7 +258,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
 
         boolean expanded = Boolean.parseBoolean(e.getAttributeValue(EXPANDED_ATT));
         if (ELEMENT_TAG.equals(e.getName())) {
-          myInfos.add(new Info(signature, expanded));
+          myInfos.add(new SignatureInfo(signature, expanded));
         }
         else if (MARKER_TAG.equals(e.getName())) {
           if (date == null) {
@@ -290,7 +288,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
               continue;
             }
 
-            addRangeMarker(document, start, end, expanded, placeHolderText);
+            addRangeMarker(document, TextRange.create(start, end), expanded, placeHolderText);
           }
           catch (NoSuchElementException exc) {
             LOG.error(exc);
@@ -330,8 +328,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
     if (!Objects.equals(myFile, info.myFile)) {
       return false;
     }
-    if (!myProject.equals(info.myProject)
-        || !myInfos.equals(info.myInfos)) {
+    if (!myProject.equals(info.myProject) || !myInfos.equals(info.myInfos)) {
       return false;
     }
 
@@ -357,7 +354,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
     return true;
   }
 
-  private record Info(@NotNull String signature, boolean expanded) {
+  private record SignatureInfo(@NotNull String signature, boolean expanded) {
   }
 
   private record FoldingInfo(@NotNull String placeHolder, boolean expanded) {

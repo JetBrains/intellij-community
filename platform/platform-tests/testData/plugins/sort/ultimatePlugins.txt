@@ -50,7 +50,6 @@
 + -Git4Idea-
 + -com-jetbrains-performancePlugin-
 + -org-jetbrains-plugins-github-
-+ -com-intellij-guice-
 + -com-intellij-dsm-
 + -com-intellij-aop-
 + -ZKM-

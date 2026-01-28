@@ -200,7 +200,7 @@ public class BaseCompletionService extends CompletionService {
   }
 
   @Override
-  public @NotNull CompletionSorter defaultSorter(@NotNull CompletionParameters parameters, @NotNull PrefixMatcher matcher) {
+  public @NotNull CompletionSorter defaultSorter(@NotNull BaseCompletionParameters parameters, @NotNull PrefixMatcher matcher) {
 
     CompletionLocation location = new CompletionLocation(parameters);
     CompletionSorterImpl sorter = emptySorter();

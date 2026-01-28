@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.pasta.common
 
 import andel.editor.AnchorId
@@ -13,11 +13,10 @@ import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.EntityType
 import com.jetbrains.rhizomedb.entities
 import fleet.util.singleOrNullOrThrow
-import org.jetbrains.annotations.ApiStatus.Experimental
+
 
 private object LocalAnchorStorage: DocumentComponentKey<AnchorStorageComponent>
 
-@Experimental
 internal data class LocalAnchorStorageEntity(override val eid: EID) : DocumentComponentEntity<AnchorStorageComponent> {
   val anchorStorage: AnchorStorage by AnchorStorageAttr
 
@@ -54,7 +53,6 @@ internal data class LocalAnchorStorageEntity(override val eid: EID) : DocumentCo
   }
 }
 
-@Experimental
 internal fun ChangeScope.ensureLocalAnchorStorageCreated(document: DocumentEntity): LocalAnchorStorageEntity {
   return entities(DocumentComponentEntity.DocumentAttr, document)
     .filterIsInstance<LocalAnchorStorageEntity>()

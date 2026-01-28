@@ -1,0 +1,34 @@
+{
+  "nodes": [
+    {
+      "address": {
+        "project_root_file_path": "Inheritance.java",
+        "text_range": [
+          15,
+          43
+        ]
+      },
+      "project_name": "dumpGraph",
+      "id": "0",
+      "qualified_name": "Base#baseMethod"
+    },
+    {
+      "address": {
+        "project_root_file_path": "Inheritance.java",
+        "text_range": [
+          78,
+          128
+        ]
+      },
+      "project_name": "dumpGraph",
+      "id": "1",
+      "qualified_name": "Derived#caller"
+    }
+  ],
+  "edges": [
+    {
+      "caller_id": "1",
+      "callee_id": "0"
+    }
+  ]
+}

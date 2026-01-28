@@ -6,7 +6,10 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.engine.managerThread.DebuggerCommand
 import com.intellij.debugger.engine.managerThread.DebuggerManagerThread
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand
-import com.intellij.debugger.impl.*
+import com.intellij.debugger.impl.DebuggerContextImpl
+import com.intellij.debugger.impl.DebuggerUtilsAsync
+import com.intellij.debugger.impl.InvokeAndWaitThread
+import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.debugger.statistics.StatisticsStorage
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -374,12 +377,18 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
       val debuggerIndicator = currentThread().currentRequest.progressIndicator
       return currentIndicator !== debuggerIndicator
     }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun getCurrentThread(): DebuggerManagerThreadImpl {
+      assertIsManagerThread()
+      return currentThread() as DebuggerManagerThreadImpl
+    }
   }
 }
 
 private fun findCurrentContext(): Triple<DebuggerManagerThreadImpl, PrioritizedTask.Priority, SuspendContextImpl?> {
-  DebuggerManagerThreadImpl.assertIsManagerThread()
-  val managerThread = InvokeThread.currentThread() as DebuggerManagerThreadImpl
+  val managerThread = DebuggerManagerThreadImpl.getCurrentThread()
   val command = DebuggerManagerThreadImpl.getCurrentCommand()
   val priority = command?.priority ?: PrioritizedTask.Priority.LOW
   val suspendContext = (command as? SuspendContextCommandImpl)?.suspendContext

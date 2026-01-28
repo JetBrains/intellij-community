@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 final class InjectedCodeFoldingPass extends TextEditorHighlightingPass {
   private static final Key<Boolean> THE_FIRST_TIME_KEY = Key.create("FirstInjectedFoldingPass");
-  private Runnable myRunnable;
+  private volatile Runnable myRunnable;
   private final Editor myEditor;
   private final PsiFile myFile;
 
@@ -26,19 +26,13 @@ final class InjectedCodeFoldingPass extends TextEditorHighlightingPass {
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
     boolean firstTime = CodeFoldingPass.isFirstTime(myFile, myEditor, THE_FIRST_TIME_KEY);
-    Runnable runnable = FoldingUpdate.updateInjectedFoldRegions(myEditor, myFile, firstTime);
-    synchronized (this) {
-      myRunnable = runnable;
-    }
+    myRunnable = FoldingUpdate.updateInjectedFoldRegions(myEditor, myFile, firstTime);
   }
 
   @Override
   public void doApplyInformationToEditor() {
-    Runnable runnable;
-    synchronized (this) {
-      runnable = myRunnable;
-    }
-    if (runnable != null){
+    Runnable runnable = myRunnable;
+    if (runnable != null) {
       try {
         runnable.run();
       }

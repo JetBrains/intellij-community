@@ -28,7 +28,7 @@ object PyCompletionFeatures {
   }
 
   fun getElementPsiLocationFeatures(element: LookupElement, location: CompletionLocation): Map<String, MLFeatureValue> {
-    val caretPsiPosition = location.completionParameters.position
+    val caretPsiPosition = location.baseCompletionParameters.position
     val elementPsiPosition = element.psiElement ?: return emptyMap()
 
     val caretFile = caretPsiPosition.containingFile?.originalFile ?: return emptyMap()

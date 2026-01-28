@@ -8,6 +8,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
@@ -49,7 +50,8 @@ fun WorkspaceFileIndexEx.contentNonIndexableRoots(): Set<VirtualFile> {
 
 internal fun iterateNonIndexableFilesImpl(project: Project, inputFilter: VirtualFileFilter?, processor: ContentIterator): Boolean {
   val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
-  val roots: Set<VirtualFile> = ReadAction.nonBlocking<Set<VirtualFile>> { workspaceFileIndex.contentNonIndexableRoots() }.executeSynchronously()
+  val roots: Set<VirtualFile> =
+    ReadAction.nonBlocking<Set<VirtualFile>> { workspaceFileIndex.contentNonIndexableRoots() }.executeSynchronously()
   return workspaceFileIndex.iterateNonIndexableFilesImpl(roots, inputFilter ?: VirtualFileFilter.ALL, processor)
 }
 
@@ -75,7 +77,11 @@ private fun WorkspaceFileIndexEx.isExcludedOrInvalid(file: VirtualFile, alreadyI
   }
 
 @RequiresBackgroundThread
-private fun WorkspaceFileIndexEx.iterateNonIndexableFilesImpl(roots: Set<VirtualFile>, filter: VirtualFileFilter, processor: ContentIterator): Boolean {
+private fun WorkspaceFileIndexEx.iterateNonIndexableFilesImpl(
+  roots: Set<VirtualFile>,
+  filter: VirtualFileFilter,
+  processor: ContentIterator,
+): Boolean {
   for (root in roots) {
     val res = VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Any?>() {
       override fun visitFileEx(file: VirtualFile): Result {
@@ -154,5 +160,9 @@ private class NonIndexableFilesDequeImpl(
   }
 }
 
-private inline fun <T> runReadActionIfNeeded(alreadyInReadAction: Boolean, crossinline action: () -> T): T =
-  if (alreadyInReadAction) action() else runReadAction { action() }
+private inline fun <T> runReadActionIfNeeded(alreadyInReadAction: Boolean, crossinline action: () -> T): T = when {
+  alreadyInReadAction -> action()
+  Registry.`is`("intellij.platform.iterate.non.indexable.files.use.cancellable.read.actions") ->
+    ReadAction.nonBlocking<T> { action() }.executeSynchronously()
+  else -> runReadAction { action() }
+}

@@ -2741,6 +2741,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         semaphore.up();
         removeDebugProcessListener(this);
       }
+
+      @Override
+      public void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
+        removeDebugProcessListener(this);
+      }
     }, disposable);
 
     getManagerThread().schedule(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {

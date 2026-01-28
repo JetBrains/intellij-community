@@ -2,7 +2,9 @@
 package com.intellij.openapi.editor;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -12,15 +14,16 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class FoldingGroup {
   private static final AtomicLong ourCounter = new AtomicLong();
 
-  private final @NonNls String myDebugName;
+  private final @NonNls @NotNull String myDebugName;
   private final long myId;
 
-  private FoldingGroup(@NonNls String debugName) {
+  private FoldingGroup(@NonNls @NotNull String debugName) {
     myDebugName = debugName;
     myId = ourCounter.incrementAndGet();
   }
 
-  public static FoldingGroup newGroup(@NonNls String debugName) {
+  @Contract("_ -> new")
+  public static @NotNull FoldingGroup newGroup(@NonNls @NotNull String debugName) {
     return new FoldingGroup(debugName);
   }
 

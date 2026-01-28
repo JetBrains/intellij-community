@@ -1,0 +1,38 @@
+{
+  "nodes": [
+    {
+      "address": {
+        "project_root_file_path": "Sample.kt",
+        "text_range": [
+          0,
+          21
+        ]
+      },
+      "project_name": "kotlinGraph",
+      "id": "0",
+      "qualified_name": "SampleKt.foo"
+    },
+    {
+      "address": {
+        "project_root_file_path": "Sample.kt",
+        "text_range": [
+          23,
+          44
+        ]
+      },
+      "project_name": "kotlinGraph",
+      "id": "1",
+      "qualified_name": "SampleKt.bar"
+    }
+  ],
+  "edges": [
+    {
+      "caller_id": "0",
+      "callee_id": "1"
+    },
+    {
+      "caller_id": "1",
+      "callee_id": "0"
+    }
+  ]
+}

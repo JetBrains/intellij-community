@@ -7,7 +7,6 @@ import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
-import com.intellij.util.asDisposable
 import com.intellij.xdebugger.XDebugSessionListener
 import kotlinx.coroutines.launch
 
@@ -48,7 +47,7 @@ private class ExecutionPointManagerChangeListener(val project: Project) : XDebug
         updateExecutionPosition(session)
       }
 
-    }, session.coroutineScope.asDisposable())
+    })
   }
 
   override fun activeSessionChanged(previousSession: XDebugSessionProxy?, currentSession: XDebugSessionProxy?) {

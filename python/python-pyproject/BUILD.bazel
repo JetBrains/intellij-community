@@ -56,6 +56,7 @@ jvm_library(
   associates = [":pyproject"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//libraries/assertj-core",
     "//python/openapi:community",
     "//python/openapi:community_test_lib",
     "//python/python-psi-impl:psi-impl",

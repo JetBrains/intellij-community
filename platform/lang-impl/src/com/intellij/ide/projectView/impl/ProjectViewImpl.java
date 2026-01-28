@@ -1577,15 +1577,15 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private boolean isAutoscrollFromSourceEnabled(String paneId) {
     if (project.isDisposed()) {
-      selectInProjectViewLog().debug("Select in Project View not available: the project is disposed");
+      selectInProjectViewLog().debug("Always Select Opened File not available: the project is disposed");
       return false;
     }
     if (!myAutoscrollFromSource.isSelected()) {
-      selectInProjectViewLog().debug("Select in Project View not available: Always Select Opened File is enabled");
+      selectInProjectViewLog().debug("Always Select Opened File not available: it's turned off");
       return false;
     }
     if (!myAutoscrollFromSource.isEnabled(paneId)) {
-      selectInProjectViewLog().debug("Select in Project View not available: not enabled for " + paneId);
+      selectInProjectViewLog().debug("Always Select Opened File not available: not enabled for " + paneId);
       return false;
     }
     return true;

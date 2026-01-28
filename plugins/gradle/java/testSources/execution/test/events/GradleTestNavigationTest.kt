@@ -202,6 +202,11 @@ class GradleTestNavigationTest : GradleTestExecutionTestCase() {
     }
   }
 
+  /*
+   The new expected layout have been changed since Gradle 9.3
+   A new test for Gradle 9.3.0+ build view was introduced
+   https://docs.gradle.org/9.3.0/release-notes.html#parameterized-test-changes
+   */
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test display name and navigation with Java and Junit Platform with Gradle 9_0 and newer`(gradleVersion: GradleVersion) {
@@ -306,6 +311,7 @@ class GradleTestNavigationTest : GradleTestExecutionTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test display name and navigation with Java and Junit 4`(gradleVersion: GradleVersion) {
+    assumeThatGradleIsOlderThan(gradleVersion, "9.3")
     testJunit4Project(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", JAVA_JUNIT4_TEST)
       writeText("src/test/java/org/example/ParametrizedTestCase.java", JAVA_PARAMETRIZED_JUNIT4_TEST)
@@ -331,6 +337,51 @@ class GradleTestNavigationTest : GradleTestExecutionTestCase() {
           }
           assertNode("parametrized_test[2]") {
             assertPsiLocation("ParametrizedTestCase", "parametrized_test", "[2]")
+          }
+        }
+      }
+    }
+  }
+
+  /*
+    Starting from Gradle 9.3.0 a new layout was introduced.
+    https://docs.gradle.org/9.3.0/release-notes.html#parameterized-test-changes
+  */
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test display name and navigation with Java and Junit 4 for gradle 9_3 and newer`(gradleVersion: GradleVersion) {
+    assumeThatGradleIsAtLeast(gradleVersion, "9.3")
+    testJunit4Project(gradleVersion) {
+      writeText("src/test/java/org/example/TestCase.java", JAVA_JUNIT4_TEST)
+      writeText("src/test/java/org/example/ParametrizedTestCase.java", JAVA_PARAMETRIZED_JUNIT4_TEST)
+
+      executeTasks(":test", isRunAsTest = true)
+      assertTestViewTree {
+        assertNode("TestCase") {
+          assertPsiLocation("TestCase")
+          assertNode("test") {
+            assertPsiLocation("TestCase", "test")
+          }
+          assertNode("successful_test") {
+            assertPsiLocation("TestCase", "successful_test")
+          }
+        }
+        assertNode("ParametrizedTestCase") {
+          assertPsiLocation("ParametrizedTestCase")
+          assertNode("[0]") {
+            assertNode("parametrized_test[0]") {
+              assertPsiLocation("ParametrizedTestCase", "parametrized_test", "[0]")
+            }
+          }
+          assertNode("[1]") {
+            assertNode("parametrized_test[1]") {
+              assertPsiLocation("ParametrizedTestCase", "parametrized_test", "[1]")
+            }
+          }
+          assertNode("[2]") {
+            assertNode("parametrized_test[2]") {
+              assertPsiLocation("ParametrizedTestCase", "parametrized_test", "[2]")
+            }
           }
         }
       }

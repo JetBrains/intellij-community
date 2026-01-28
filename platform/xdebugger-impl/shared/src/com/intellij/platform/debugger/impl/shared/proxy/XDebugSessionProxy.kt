@@ -100,6 +100,7 @@ interface XDebugSessionProxy {
    */
   fun computeRunningExecutionStacks(container: XSuspendContext.XExecutionStackContainer)
   fun createTabLayouter(): XDebugTabLayouter
+  fun addSessionListener(listener: XDebugSessionListener)
   fun addSessionListener(listener: XDebugSessionListener, disposable: Disposable)
   fun rebuildViews()
   fun registerAdditionalActions(leftToolbar: DefaultActionGroup, topLeftToolbar: DefaultActionGroup, settings: DefaultActionGroup)

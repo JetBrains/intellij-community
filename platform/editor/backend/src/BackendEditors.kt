@@ -1,15 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.editor.backend
 
-import com.intellij.openapi.application.isRhizomeAdEnabled
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.ad.isRhizomeAdRebornEnabled
 import com.intellij.openapi.util.Key
 import kotlinx.coroutines.CoroutineScope
 
 internal class BackendEditors(private val cs: CoroutineScope) {
 
   init {
-    check(isRhizomeAdEnabled)
+    check(isRhizomeAdRebornEnabled)
   }
 
   fun editorCreated(editor: Editor) {

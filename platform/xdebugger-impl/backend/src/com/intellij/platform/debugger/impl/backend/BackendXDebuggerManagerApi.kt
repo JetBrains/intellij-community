@@ -2,7 +2,9 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.execution.RunContentDescriptorIdImpl
+import com.intellij.ide.rpc.AnActionId
 import com.intellij.ide.rpc.rpcId
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -76,6 +78,9 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       it.breakpointId
     }.toRpc()
     val cs = currentSession.coroutineScope
+
+    val (leftToolbarActions, topToolbarActions, settingsActions) = registerAdditionalActions(debugProcess, cs)
+
     return XDebugSessionDto(
       currentSession.id,
       currentSession.getMockRunContentDescriptorIfInitialized()?.id as RunContentDescriptorIdImpl?,
@@ -94,8 +99,26 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       currentSession.restartActions.map { it.rpcId(cs) },
       currentSession.extraActions.map { it.rpcId(cs) },
       currentSession.extraStopActions.map { it.rpcId(cs) },
+      leftToolbarActions,
+      topToolbarActions,
+      settingsActions,
     )
   }
+
+  private fun registerAdditionalActions(
+    debugProcess: XDebugProcess,
+    cs: CoroutineScope,
+  ): Triple<List<AnActionId>, List<AnActionId>, List<AnActionId>> {
+    val left = DefaultActionGroup()
+    val topLeft = DefaultActionGroup()
+    val settings = DefaultActionGroup()
+    debugProcess.registerAdditionalActions(left, topLeft, settings)
+    return Triple(left.toRpc(cs), topLeft.toRpc(cs), settings.toRpc(cs))
+  }
+
+  private fun DefaultActionGroup.toRpc(cs: CoroutineScope): List<AnActionId> =
+    childActionsOrStubs.mapNotNull { it?.rpcId(cs) }
+
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun createSessionManagerEvents(projectId: ProjectId, initialSessionIds: Set<XDebugSessionId>): Flow<XDebuggerManagerSessionEvent> {

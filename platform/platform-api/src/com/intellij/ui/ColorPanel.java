@@ -57,7 +57,7 @@ public class ColorPanel extends JComponent {
           setSelectedColor(color);
           if (!myListeners.isEmpty() && (myEvent == null)) {
             try {
-              myEvent = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "colorPanelChanged");
+              myEvent = new ActionEvent(ColorPanel.this, ActionEvent.ACTION_PERFORMED, "colorPanelChanged");
               for (ActionListener listener : myListeners) {
                 listener.actionPerformed(myEvent);
               }
@@ -97,6 +97,16 @@ public class ColorPanel extends JComponent {
     myListeners.remove(actionlistener);
   }
 
+  /**
+   * Adds a listener that reacts to color selection changes.
+   * <p>
+   *   The given listener will be invoked when the popup for selecting a new color closes.
+   *   The event source will be {@code this} instance,
+   *   the event ID will be {@link ActionEvent#ACTION_PERFORMED}
+   *   and the command will be {@code "colorPanelChanged"}.
+   * </p>
+   * @param actionlistener the listener to register
+   */
   public void addActionListener(ActionListener actionlistener) {
     myListeners.add(actionlistener);
   }

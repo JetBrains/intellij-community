@@ -9,8 +9,6 @@ import com.intellij.database.settings.DataGridSettings
 import com.intellij.database.util.DataGridUIUtil
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.application.UI
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopup
@@ -20,8 +18,6 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.awt.Component
 import java.util.*
 import javax.swing.JComponent
@@ -79,14 +75,8 @@ class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, D
     }
     else {
       e.presentation.setVisible(true)
-      val updateEdtJob = grid.coroutineScope.launch(Dispatchers.UI) {
+      e.updateSession.compute(this, "updatePresentationUI", ActionUpdateThread.EDT) {
         updatePresentation(state, e.presentation, GridUtil.getSettings(grid))
-      }
-
-      // We wait for it because we need an updated presentation when the function returns,
-      // it's the contract of AnAction.update() method
-      runBlockingMaybeCancellable {
-        updateEdtJob.join()
       }
     }
   }

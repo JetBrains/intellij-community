@@ -68,7 +68,7 @@ public class EditorFoldingInfo {
     myFoldRegionToSmartPointerMap.put(region, pointer);
   }
 
-  public void removeRegion(@NotNull FoldRegion region){
+  public void removeRegion(@NotNull FoldRegion region) {
     myFoldRegionToSmartPointerMap.remove(region);
   }
 

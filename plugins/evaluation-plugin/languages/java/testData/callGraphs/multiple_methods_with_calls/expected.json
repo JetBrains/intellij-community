@@ -1,0 +1,34 @@
+{
+  "nodes": [
+    {
+      "address": {
+        "project_root_file_path": "TestClass.java",
+        "text_range": [
+          29,
+          87
+        ]
+      },
+      "project_name": "dumpGraph",
+      "id": "0",
+      "qualified_name": "TestClass#callerMethod"
+    },
+    {
+      "address": {
+        "project_root_file_path": "TestClass.java",
+        "text_range": [
+          97,
+          131
+        ]
+      },
+      "project_name": "dumpGraph",
+      "id": "1",
+      "qualified_name": "TestClass#calleeMethod"
+    }
+  ],
+  "edges": [
+    {
+      "caller_id": "0",
+      "callee_id": "1"
+    }
+  ]
+}

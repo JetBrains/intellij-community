@@ -4,7 +4,7 @@ export function buildError(message) {
   return {kind: 'error', next: 'await_user', message}
 }
 
-export function buildEmpty(message = 'No ready tasks found.', next = 'provide_request') {
+export function buildEmpty(message = 'No in-progress tasks found.', next = 'await_user') {
   return {kind: 'empty', next, message}
 }
 
@@ -14,11 +14,9 @@ export function buildIssue(issue, {next = 'continue', memory} = {}) {
   return response
 }
 
-export function buildSummary(issues, {next = 'await_user', suggested_parent} = {}) {
+export function buildSummary(issues, {next = 'await_user'} = {}) {
   const normalizedIssues = Array.isArray(issues) ? issues : (issues ? [issues] : [])
-  const response = {kind: 'summary', next, issues: normalizedIssues}
-  if (suggested_parent) response.suggested_parent = suggested_parent
-  return response
+  return {kind: 'summary', next, issues: normalizedIssues}
 }
 
 export function buildProgress({memory, status, next = 'await_user'}) {
@@ -27,8 +25,12 @@ export function buildProgress({memory, status, next = 'await_user'}) {
   return response
 }
 
-export function buildCreated(payload, next = 'await_user') {
+export function buildCreated(payload, next = 'continue') {
   return {kind: 'created', next, ...payload}
+}
+
+export function buildUpdated(payload, next = 'continue') {
+  return {kind: 'updated', next, ...payload}
 }
 
 export function buildClosed(payload, nextOverride) {
@@ -36,25 +38,3 @@ export function buildClosed(payload, nextOverride) {
   return {kind: 'closed', next, ...payload}
 }
 
-export function buildNeedUser({question, header, choices, next}) {
-  return {
-    kind: 'need_user',
-    next,
-    question,
-    header,
-    choices,
-    multiSelect: false
-  }
-}
-
-export function buildTaskChoice(issue) {
-  return {label: issue.title, description: issue.id, action: 'select_task', id: issue.id}
-}
-
-export function buildCreateSubTaskChoice(parentEpic) {
-  return {label: 'Create sub-task', description: `Under ${parentEpic}`, action: 'create_sub_task', parent: parentEpic}
-}
-
-export function buildStartNewTaskChoice() {
-  return {label: 'Start new task', description: 'Create a new epic', action: 'start_new_task'}
-}

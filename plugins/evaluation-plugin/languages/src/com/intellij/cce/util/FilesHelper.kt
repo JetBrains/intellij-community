@@ -27,6 +27,8 @@ object FilesHelper {
     for (file in evaluationRoots) {
       VfsUtilCore.iterateChildrenRecursively(file, { f -> !ignoreFileNames.contains(f.name) }, object : ContentIterator {
         override fun processFile(fileOrDir: VirtualFile): Boolean {
+          println(fileOrDir.path)
+          println(fileOrDir.name)
           val extension = fileOrDir.extension
           if (fileOrDir.isDirectory || extension == null) return true
 

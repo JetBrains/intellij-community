@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -Xlambdas=class -Xconsistent-data-class-copy-visibility -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
+          <option name="additionalArguments" value="-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -Xlambdas=class -Xconsistent-data-class-copy-visibility -Xcontext-parameters -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>

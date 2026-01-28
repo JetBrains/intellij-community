@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.EditorThreading
@@ -13,24 +13,14 @@ import org.jetbrains.annotations.ApiStatus
 class EditorThreadingImpl : EditorThreading {
 
   override fun doAssertInteractionAllowed() {
-    if (Registry.`is`("editor.allow.raw.access.on.edt")) {
-      if (!EDT.isCurrentThreadEdt() && !application.isReadAccessAllowed) {
-        throw IllegalStateException("Access to Editor models (caret, selection, etc.) is allowed either from EDT, or under read action. Current thread: ${Thread.currentThread()}")
-      }
-    }
-    else {
-      ThreadingAssertions.assertReadAccess()
+    if (!EDT.isCurrentThreadEdt() && !application.isReadAccessAllowed) {
+      throw IllegalStateException("Access to Editor models (caret, selection, etc.) is allowed either from EDT, or under read action. Current thread: ${Thread.currentThread()}")
     }
   }
 
   override fun <T, E : Throwable> doCompute(action: ThrowableComputable<T, E>): T {
-    return if (Registry.`is`("editor.allow.raw.access.on.edt")) {
-      if (EDT.isCurrentThreadEdt()) {
-        action.compute()
-      }
-      else {
-        application.runReadAction(action)
-      }
+    return if (EDT.isCurrentThreadEdt()) {
+      action.compute()
     }
     else {
       application.runReadAction(action)
@@ -38,13 +28,8 @@ class EditorThreadingImpl : EditorThreading {
   }
 
   override fun doRun(action: Runnable) {
-    return if (Registry.`is`("editor.allow.raw.access.on.edt")) {
-      if (EDT.isCurrentThreadEdt()) {
-        action.run()
-      }
-      else {
-        application.runReadAction(action)
-      }
+    return if (EDT.isCurrentThreadEdt()) {
+      action.run()
     }
     else {
       application.runReadAction(action)

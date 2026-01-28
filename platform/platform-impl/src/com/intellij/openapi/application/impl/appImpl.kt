@@ -17,6 +17,7 @@ import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.UIUtil
 import io.opentelemetry.api.metrics.BatchCallback
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CompletableJob
@@ -144,6 +145,22 @@ object TestOnlyThreading {
       return getGlobalThreadingSupport().releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action::run)
     } else {
       return action.run()
+    }
+  }
+
+  /**
+   * This method allows executing all scheduled AWT events that could depend on model changes.
+   *
+   * In the IntelliJ Platform Test Framework, there are many tests that run on the EDT, and these tests often need to wait until their asynchronous computations terminate.
+   * Historically, the tests were using synchronous dispatch of AWT events in these scenarios.
+   * In particular, it allowed to wait for scheduled write actions.
+   * With the introduction of Background Write Action, this strategy does not work -- a test cannot wait for a write action if it is not scheduled to the EDT.
+   * Such tests need to use this function, as it allows background write actions to proceed.
+   */
+  @JvmStatic
+  fun dispatchAwtEventsWithoutWriteIntentLock() {
+    releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+      UIUtil.dispatchAllInvocationEvents()
     }
   }
 }

@@ -72,7 +72,7 @@ private val DEVKIT_HOT_RELOAD_EXECUTOR_ID_KEY = Key.create<Boolean>(DEVKIT_HOT_R
 
 internal class DevkitHotReloadExecutor : Executor() {
   override fun getId(): @NonNls String = DEVKIT_HOT_RELOAD_EXECUTOR_ID
-  override fun getContextActionId(): @NonNls String = id
+  override fun getContextActionId(): @NonNls String = "DebugComposeHotReload"
   override fun getToolWindowId(): String = ToolWindowId.DEBUG
 
   override fun getToolWindowIcon(): Icon = AllIcons.Toolwindows.ToolWindowDebugger
@@ -213,7 +213,7 @@ internal class DevkitHotReloadCommandLinePatcher : RunConfigurationExtension() {
     configuration: T & Any,
     params: JavaParameters,
     runnerSettings: RunnerSettings?,
-    executor: Executor
+    executor: Executor,
   ) {
     if (executor.id != DEVKIT_HOT_RELOAD_EXECUTOR_ID) return
     if (!isIntelliJPlatformProject(configuration.project)) return

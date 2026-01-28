@@ -98,12 +98,14 @@ f:com.intellij.codeInsight.codeVision.CodeVisionBundle$Companion
 - f:message(java.lang.String,java.lang.Object[]):java.lang.String
 - f:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 c:com.intellij.codeInsight.codeVision.CodeVisionHost
-- f:finishInitialisation():V
+- f:getAnchorForEntry(com.intellij.codeInsight.codeVision.CodeVisionEntry):com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
+- f:getProviderById(java.lang.String):com.intellij.codeInsight.codeVision.CodeVisionProvider
+- p:initialize():V
 - f:isInitialised():Z
 com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
 - sf:Companion:com.intellij.codeInsight.codeVision.CodeVisionProviderFactory$Companion
-- sf:EP_NAME:java.lang.String
 - a:createProviders(com.intellij.openapi.project.Project):kotlin.sequences.Sequence
+f:com.intellij.codeInsight.codeVision.CodeVisionProviderFactory$Companion
 com.intellij.codeInsight.codeVision.GenericPlaceholderCollector
 - a:collectPlaceholders(com.intellij.openapi.editor.Editor):java.util.List
 com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider

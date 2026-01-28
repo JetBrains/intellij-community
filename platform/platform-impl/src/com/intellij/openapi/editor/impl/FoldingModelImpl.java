@@ -280,7 +280,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   @Override
   public boolean hasDocumentRegionChangedFor(@NotNull FoldRegion region) {
     EditorThreading.assertInteractionAllowed();
-    return region instanceof FoldRegionImpl && ((FoldRegionImpl)region).hasDocumentRegionChanged();
+    return region instanceof FoldRegionImpl impl && impl.hasDocumentRegionChanged();
   }
 
   @Override
@@ -414,8 +414,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
     runBatchFoldingOperation(() ->
       myRegionTree.processAll(region -> {
-        if (region instanceof CustomFoldRegion) {
-          ((CustomFoldRegion)region).update();
+        if (region instanceof CustomFoldRegion custom) {
+          custom.update();
         }
         return true;
       }));
@@ -478,8 +478,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       return null;
     }
     FoldRegion region = location.getCollapsedRegion();
-    return !ignoreCustomRegionWidth && region instanceof CustomFoldRegion &&
-           p.x >= myEditor.getContentComponent().getInsets().left + ((CustomFoldRegion)region).getWidthInPixels() ? null : region;
+    return !ignoreCustomRegionWidth && region instanceof CustomFoldRegion custom &&
+           p.x >= myEditor.getContentComponent().getInsets().left + custom.getWidthInPixels() ? null : region;
   }
 
   @RequiresEdt
@@ -787,8 +787,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     if (myIsComplexDocumentChange) {
       // validate all custom fold regions
       myRegionTree.processAll(r -> {
-        if (r instanceof CustomFoldRegionImpl customFoldRegion) {
-          addAffectedCustomRegions(customFoldRegion);
+        if (r instanceof CustomFoldRegionImpl custom) {
+          addAffectedCustomRegions(custom);
         }
         return true;
       });

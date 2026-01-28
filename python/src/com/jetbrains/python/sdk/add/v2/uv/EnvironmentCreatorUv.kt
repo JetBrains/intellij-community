@@ -20,7 +20,6 @@ import com.intellij.util.ui.AsyncProcessIcon
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrNull
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
 import com.jetbrains.python.sdk.add.v2.*
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
@@ -146,7 +145,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
 
           val pythonVersions = withContext(Dispatchers.IO) {
             val versionRequest = if (pyProjectTomlPath.exists()) {
-              PyProjectToml.parse(pyProjectTomlPath.readText()).getOrNull()?.project?.requiresPython
+              PyProjectToml.parse(pyProjectTomlPath.readText()).project?.requiresPython
             }
             else {
               null

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.markup
 
 import andel.intervals.Interval
@@ -13,13 +13,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Color
 import java.lang.ref.WeakReference
 import kotlin.math.min
 
 
-@Experimental
 @Serializable
 internal data class AdRangeHighlighter(
   private val interval: AdIntervalData,
@@ -32,7 +30,7 @@ internal data class AdRangeHighlighter(
       return AdRangeHighlighter(AdIntervalData.fromInterval(interval), interval.data, document)
     }
 
-    fun fromHighlighter(id: Long, highlighter: RangeHighlighterEx): AdRangeHighlighter? /*TODO null??*/ {
+    fun fromHighlighter(id: Long, highlighter: RangeHighlighterEx): AdRangeHighlighter /*TODO null??*/ {
       return AdRangeHighlighter(
         interval = AdIntervalData.fromRangeMarker(id, highlighter),
         data = AdRangeHighlighterData(
@@ -86,7 +84,7 @@ internal data class AdRangeHighlighter(
   override fun getForcedTextAttributes(): TextAttributes? = data.origin()?.forcedTextAttributes
   override fun getForcedErrorStripeMarkColor(): Color? = data.origin()?.forcedErrorStripeMarkColor
   override fun getEditorFilter(): MarkupEditorFilter = data.origin()?.editorFilter ?: MarkupEditorFilter.EMPTY
-  override fun <T : Any?> getUserData(key: Key<T?>): T? = data.origin()?.getUserData(key)
+  override fun <T> getUserData(key: Key<T?>): T? = data.origin()?.getUserData(key)
 
   // region Not yet implemented
 
@@ -166,7 +164,7 @@ internal data class AdRangeHighlighter(
     TODO("Not yet implemented")
   }
 
-  override fun <T : Any?> putUserData(key: Key<T?>, value: T?) {
+  override fun <T> putUserData(key: Key<T?>, value: T?) {
     TODO("Not yet implemented")
   }
 

@@ -512,6 +512,25 @@ internal class PowerShellCompletionTest(private val shellPath: Path) : BasePlatf
   }
 
   @Test
+  fun `check files are suggested when there is no command and file path with spaces is inserted correctly`() {
+    doTest { fixture ->
+      val tempDir = createTempDir().also {
+        it.createDirectory("dir with spaces")
+        it.createDirectory("director")
+        it.createFile("direction.txt")
+      }
+
+      fixture.type("$tempDir/di")
+      fixture.callCompletionPopup()
+      assertThat(fixture.getLookupElements().map { it.lookupString })
+        .hasSameElementsAs(listOf("dir with spaces$separator", "director$separator", "direction.txt"))
+
+      fixture.insertCompletionItem("dir with spaces$separator")
+      fixture.assertCommandTextState("& '$tempDir${separator}dir with spaces${separator}<cursor>'")
+    }
+  }
+
+  @Test
   fun `check files are suggested after unknown command and inserted correctly`() {
     doTest { fixture ->
       val tempDir = createTempDir().also {

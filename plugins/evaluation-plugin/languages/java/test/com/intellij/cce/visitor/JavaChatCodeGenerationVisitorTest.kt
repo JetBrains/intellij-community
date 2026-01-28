@@ -1,9 +1,6 @@
 package com.intellij.cce.visitor
 
-import com.intellij.cce.evaluable.EXTERNAL_API_CALLS_PROPERTY
-import com.intellij.cce.evaluable.INTERNAL_API_CALLS_PROPERTY
-import com.intellij.cce.evaluable.INTERNAL_RELEVANT_FILES_PROPERTY
-import com.intellij.cce.evaluable.METHOD_NAME_PROPERTY
+import com.intellij.cce.evaluable.*
 import com.intellij.cce.java.visitor.JavaChatCodeGenerationVisitor
 import com.intellij.cce.util.extractAdditionalProperties
 import com.intellij.openapi.application.readAction
@@ -29,12 +26,14 @@ class JavaChatCodeGenerationVisitorTest : LightJavaCodeInsightFixtureTestCase() 
         INTERNAL_API_CALLS_PROPERTY to "",
         INTERNAL_RELEVANT_FILES_PROPERTY to "",
         EXTERNAL_API_CALLS_PROPERTY to "capitalize",
+        METHOD_QUALIFIED_NAME_PROPERTY to "ExternalApiExample#processString",
       ),
       mapOf(
         METHOD_NAME_PROPERTY to "isStringEmpty",
         INTERNAL_API_CALLS_PROPERTY to "",
         INTERNAL_RELEVANT_FILES_PROPERTY to "",
         EXTERNAL_API_CALLS_PROPERTY to "isEmpty",
+        METHOD_QUALIFIED_NAME_PROPERTY to "ExternalApiExample#isStringEmpty",
       )
     )
     val actualAdditionalProperties = visitor.getFile().extractAdditionalProperties()
@@ -55,30 +54,35 @@ class JavaChatCodeGenerationVisitorTest : LightJavaCodeInsightFixtureTestCase() 
         INTERNAL_API_CALLS_PROPERTY to "",
         INTERNAL_RELEVANT_FILES_PROPERTY to "",
         EXTERNAL_API_CALLS_PROPERTY to "",
+        METHOD_QUALIFIED_NAME_PROPERTY to "SuperClass#foo",
       ),
       mapOf(
         METHOD_NAME_PROPERTY to "MyClass",
         INTERNAL_API_CALLS_PROPERTY to "",
         INTERNAL_RELEVANT_FILES_PROPERTY to "",
         EXTERNAL_API_CALLS_PROPERTY to "",
+        METHOD_QUALIFIED_NAME_PROPERTY to "MyClass#MyClass",
       ),
       mapOf(
         METHOD_NAME_PROPERTY to "myMethod",
         INTERNAL_API_CALLS_PROPERTY to "",
         INTERNAL_RELEVANT_FILES_PROPERTY to "",
         EXTERNAL_API_CALLS_PROPERTY to "",
+        METHOD_QUALIFIED_NAME_PROPERTY to "MyClass#myMethod",
       ),
       mapOf(
         METHOD_NAME_PROPERTY to "SuperClass",
         INTERNAL_API_CALLS_PROPERTY to "",
         INTERNAL_RELEVANT_FILES_PROPERTY to "",
         EXTERNAL_API_CALLS_PROPERTY to "",
+        METHOD_QUALIFIED_NAME_PROPERTY to "SuperClass#SuperClass",
       ),
       mapOf(
         METHOD_NAME_PROPERTY to "myMethod",
         INTERNAL_API_CALLS_PROPERTY to "SuperClass#foo",
         INTERNAL_RELEVANT_FILES_PROPERTY to psiFile.projectRelativePath(),
         EXTERNAL_API_CALLS_PROPERTY to "",
+        METHOD_QUALIFIED_NAME_PROPERTY to "SuperClass#myMethod",
       )
     )
     val actualAdditionalProperties = visitor.getFile().extractAdditionalProperties()

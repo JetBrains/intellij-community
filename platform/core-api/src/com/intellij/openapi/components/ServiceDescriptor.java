@@ -72,13 +72,24 @@ public final class ServiceDescriptor {
   public final String headlessImplementation;
 
   /**
-   * Allows overriding existing registered implementation for given {@link #serviceInterface}.
+   * Declares that this service overrides an existing implementation of the same
+   * {@link #serviceInterface}.
+   * <p>
+   * The overridden service must be marked as {@link #open}.
+   * <p>
+   * This attribute may be used together with {@link #open}, but such usage is
+   * discouraged as it may lead to non-deterministic behavior.
    */
   @Attribute
   public final boolean overrides;
 
   /**
-   * Allows this service to be overridden.
+   * Declares that this service is eligible to be overridden by another service.
+   * <p>
+   * Only services marked as open may be overridden.
+   * <p>
+   * This attribute may be used together with {@link #overrides}, but such usage
+   * is discouraged as it may lead to non-deterministic behavior.
    */
   @Attribute
   public final boolean open;

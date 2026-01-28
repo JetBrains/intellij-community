@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Consumer
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.measureTime
@@ -487,6 +488,8 @@ private inline fun <T> Channel<T>.receiveAll(consumer: (T) -> Unit) {
 
 private class LoadRefsPolicy(override val previouslyLoadedRefs: VcsRefsContainer) : RefsLoadingPolicy.LoadAllRefs
 
-private fun VcsLogProvider.Requirements.toRefsLoadingPolicy(): RefsLoadingPolicy =
+@ApiStatus.Internal
+@VisibleForTesting
+fun VcsLogProvider.Requirements.toRefsLoadingPolicy(): RefsLoadingPolicy =
   if (this !is VcsLogProviderRequirementsEx || !isRefreshRefs) RefsLoadingPolicy.FromLoadedCommits
   else LoadRefsPolicy(previousRefs)

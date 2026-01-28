@@ -82,24 +82,28 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
       }
     }
     if (data.packageDirectory != null) {
-      val newSourceRootPath = withContext(Dispatchers.IO) {
-        Path(data.newModuleDirectoryPath).resolve(SRC_DIRECTORY_NAME).createDirectories()
+      val newPackagePath = withContext(Dispatchers.IO) {
+        var srcRoot = Path(data.newModuleDirectoryPath).resolve(SRC_DIRECTORY_NAME)
+        if (data.packageName != null && !data.usePackagePrefix) {
+          srcRoot = srcRoot.resolve(data.packageName.replace('.', '/'))
+        }
+        srcRoot.createDirectories()
       }
-      val newSourceRootDirectory = writeAction {
-        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newSourceRootPath)
+      val newPackageDirectory = writeAction {
+        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newPackagePath)
       }
       withContext(Dispatchers.EDT) {
         val createdModule = ModuleManager.getInstance(project).findModuleByName(data.newModuleName)
-        if (createdModule != null && newSourceRootDirectory != null) {
+        if (createdModule != null && newPackageDirectory != null) {
           val creator = object : TargetModuleCreator {
             override fun createExtractedModule(originalModule: Module, directory: VirtualFile): TargetModuleCreator.ExtractedModuleData {
-              return TargetModuleCreator.ExtractedModuleData(module = createdModule, directoryToMoveClassesTo = newSourceRootDirectory)
+              return TargetModuleCreator.ExtractedModuleData(module = createdModule, directoryToMoveClassesTo = newPackageDirectory)
             }
           }
           project.service<ExtractModuleService>().analyzeDependenciesAndCreateModuleInBackground(data.packageDirectory, data.originalModule, creator)
         }
         else {
-          LOG.error("Cannot move classes to module '${data.newModuleName}': createdModule = $createdModule, newSourceRootDirectory = $newSourceRootDirectory")
+          LOG.error("Cannot move classes to module '${data.newModuleName}': createdModule = $createdModule, newPackageDirectory = $newPackageDirectory")
         }
       }
     }
@@ -159,11 +163,12 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
                 rootTypeId = JAVA_SOURCE_ROOT_ENTITY_TYPE_ID,
                 entitySource = entitySource,
               ) {
+                val packagePrefix = if (data.usePackagePrefix) data.packageName else ""
                 javaSourceRoots = listOf(
                   JavaSourceRootPropertiesEntity(
                     entitySource = entitySource,
                     generated = false,
-                    packagePrefix = data.packageName,
+                    packagePrefix = packagePrefix,
                   )
                 )
               }
@@ -174,6 +179,9 @@ internal class ExtractToJpsModuleService(private val project: Project, private v
       })
     }
   }
+
+  private val ExtractToContentModuleData.usePackagePrefix: Boolean
+    get() = packageName != null && packageName.startsWith("com.${newModuleName}")
 
   private fun computeOriginalData(problemDescriptor: ProblemDescriptor): ExtractToContentModuleData? {
     val xmlElement = problemDescriptor.psiElement as? XmlTag ?: return null

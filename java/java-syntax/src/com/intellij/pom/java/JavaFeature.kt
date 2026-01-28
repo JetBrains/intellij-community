@@ -293,8 +293,9 @@ enum class JavaFeature {
   /**
    * JEP 502,
    * JEP 526
+   * @see STABLE_VALUES
    */
-  LAZY_CONSTANTS(LanguageLevel.JDK_25_PREVIEW, "feature.lazy.constants"),
+  LAZY_CONSTANTS(LanguageLevel.JDK_26_PREVIEW, "feature.lazy.constants"),
 
   /**
    * JEP 530

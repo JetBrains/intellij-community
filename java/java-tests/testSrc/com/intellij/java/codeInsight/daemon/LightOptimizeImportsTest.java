@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -67,11 +67,12 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
     @Language("JAVA") String text = """
       package main;
       
-      import aaa.AAA;
-      import aaa.CCC;
-      import aaa.BBB;
-      import java.util.ArrayList;
-      import static aaa.BBB.x;
+      import aaa.AAA; // 1
+      import aaa.CCC; // 2
+      import aaa.BBB; // 3
+      /*X*/
+      import java.util.ArrayList; // 4
+      import static aaa.BBB.x; // 5
       
       public class Main {
           void usage() {
@@ -98,13 +99,15 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
     @Language("JAVA") String result = """
       package main;
       
-      import java.util.ArrayList;
+      import java.util.ArrayList; // 4
       
-      import aaa.AAA;
-      import aaa.BBB;
-      import static aaa.BBB.x;
-      import aaa.CCC;
-            
+      import aaa.AAA; // 1
+      import aaa.BBB; // 3
+      import static aaa.BBB.x; // 5
+      import aaa.CCC; // 2
+      
+      /*X*/
+      
       public class Main {
           void usage() {
               new ArrayList<>();

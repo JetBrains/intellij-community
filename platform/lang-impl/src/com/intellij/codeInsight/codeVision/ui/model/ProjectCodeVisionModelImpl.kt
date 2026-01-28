@@ -61,7 +61,7 @@ open class ProjectCodeVisionModel(val project: Project) {
   }
 
   fun getLensIndex(lens: CodeVisionEntry): Int {
-    return getCodeVisionHost().getNumber(lens.providerId) + 1
+    return getCodeVisionHost().getPriorityForEntry(lens)
   }
 
   private fun showMore(anchorInlay: Inlay<*>) {

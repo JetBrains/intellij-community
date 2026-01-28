@@ -39,8 +39,7 @@ public interface FoldingModelEx extends FoldingModel {
    */
   @Nullable
   @RequiresEdt
-  FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, @Nullable FoldingGroup group,
-                              boolean neverExpands);
+  FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, @Nullable FoldingGroup group, boolean neverExpands);
 
   void addListener(@NotNull FoldingListener listener, @NotNull Disposable parentDisposable);
 
@@ -49,7 +48,7 @@ public interface FoldingModelEx extends FoldingModel {
   void rebuild();
 
   @NotNull
-  List<FoldRegion> getGroupedRegions(FoldingGroup group);
+  List<FoldRegion> getGroupedRegions(@NotNull FoldingGroup group);
 
   void clearDocumentRangesModificationStatus();
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
+import com.intellij.openapi.editor.impl.ad.isRhizomeAdRebornEnabled
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl
 import com.intellij.openapi.editor.impl.view.EditorPainter
 import com.intellij.openapi.editor.impl.zombie.Necropolis
@@ -324,7 +325,7 @@ private fun collectAllEditors(): Sequence<Editor> {
 }
 
 private fun hackyPutEditorIdToDocument(document: Document) {
-  if (isRhizomeAdEnabled) {
+  if (isRhizomeAdRebornEnabled) {
     if (document.getUserData(KERNEL_EDITOR_ID_KEY) == null) {
       document.putUserData(KERNEL_EDITOR_ID_KEY, EditorId.create())
     }
@@ -332,7 +333,7 @@ private fun hackyPutEditorIdToDocument(document: Document) {
 }
 
 private fun putEditorId(document: Document, editor: EditorImpl) {
-  if (isRhizomeAdEnabled) {
+  if (isRhizomeAdRebornEnabled) {
     editor.putUserData(KERNEL_EDITOR_ID_KEY, document.removeUserData(KERNEL_EDITOR_ID_KEY))
   }
   else {

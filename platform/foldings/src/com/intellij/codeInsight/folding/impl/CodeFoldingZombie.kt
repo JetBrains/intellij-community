@@ -66,7 +66,7 @@ internal class CodeFoldingZombie(
         region.isExpanded = isExpanded
       }
       region.putUserData(ZOMBIE_REGION_KEY, true)
-      CodeFoldingManagerImpl.setCollapsedByDef(region, isCollapsedByDefault)
+      CodeFoldingManagerImpl.setCollapsedByDefault(region, isCollapsedByDefault)
       if (isFrontendCreated) {
         CodeFoldingManagerImpl.markAsFrontendCreated(region)
       }

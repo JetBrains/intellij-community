@@ -14,7 +14,7 @@ public final class DefaultCompletionStatistician extends CompletionStatistician{
 
   @Override
   public @NotNull Function<@NotNull LookupElement, @Nullable StatisticsInfo> forLocation(@NotNull CompletionLocation location) {
-    String context = "completion#" + location.getCompletionParameters().getOriginalFile().getLanguage();
+    String context = "completion#" + location.getBaseCompletionParameters().getOriginalFile().getLanguage();
     return element -> new StatisticsInfo(context, element.getLookupString());
   }
 

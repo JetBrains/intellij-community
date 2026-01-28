@@ -145,6 +145,7 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - getPlaceholderCollector(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.codeVision.CodeVisionPlaceholderCollector
 - a:getRelativeOrderings():java.util.List
 - handleClick(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.codeVision.CodeVisionEntry):V
+- handleExtraAction(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.codeVision.CodeVisionEntry,java.lang.String):V
 - handleExtraAction(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange,java.lang.String):V
 - isAvailableFor(com.intellij.openapi.project.Project):Z
 - a:precomputeOnUiThread(com.intellij.openapi.editor.Editor):java.lang.Object

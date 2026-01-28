@@ -381,6 +381,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       KeyEvent.KEY_TYPED == e.id && isPressedWasProcessed -> true
       //see IDEADEV-8615
       KeyEvent.KEY_RELEASED == e.id && KeyEvent.VK_ALT == e.keyCode && isPressedWasProcessed -> true
+      KeyEvent.KEY_PRESSED == e.id -> true
       else -> {
         state = KeyState.STATE_INIT
         isPressedWasProcessed = false

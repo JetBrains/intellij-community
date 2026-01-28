@@ -309,10 +309,10 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
                            package staticImportCanBeUsed;
                            import java.util.Locale;
                            public interface Example {
-                           	default String localize() {
-                           		return localize(Locale.getDefault());
-                           	}
-                            String localize(Locale locale);
+                             default String localize() {
+                               return localize(Locale.getDefault());
+                           	 }
+                             String localize(Locale locale);
                            }""");
 
       myFixture.addClass("""

@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObjectToSupertypeOrSelf
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.psi.extensions.ImplementationDetailClassNameCheckerProvider
@@ -174,7 +175,7 @@ object K2CreateFunctionFromUsageUtil {
         val parameterNameAsString = getArgumentName()?.asName?.asString()
         val argumentExpression = getArgumentExpression()
         val parameterNames = parameterNameAsString?.let { sequenceOf(it) } ?: argumentExpression?.let { NAME_SUGGESTER.suggestExpressionNames(it) }
-        var expectedArgumentType = argumentExpression?.expressionType
+        var expectedArgumentType = argumentExpression?.expressionType?.approximateAnonymousObjectToSupertypeOrSelf()
         if (expectedArgumentType != null && receiverType is KaClassType) {
             expectedArgumentType = guessAccessibleTypeByArguments(receiverType, expectedArgumentType)
         }

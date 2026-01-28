@@ -8,14 +8,13 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
-import org.jetbrains.kotlin.analysis.api.components.approximateToDenotableSupertypeOrSelf
 import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObjectToSupertypeOrSelf
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
@@ -135,13 +134,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
 @OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, anotherType: KaClassType? = null) {
-    val classType = when (val symbol = type.symbol) {
-        is KaClassSymbol if symbol.classKind == KaClassKind.ANONYMOUS_OBJECT ->
-            type.approximateToDenotableSupertypeOrSelf(allowLocalDenotableTypes = false) as? KaClassType ?: type
-
-        else -> type
-
-    }
+    val classType = type.approximateAnonymousObjectToSupertypeOrSelf() as KaClassType
     val truncatedName = truncatedName(classType)
     if (truncatedName.isNotEmpty()) {
         if (classType.classId.isLocal) {

@@ -3,10 +3,7 @@ package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Action;
-import org.gradle.tooling.BuildAction;
-import org.gradle.tooling.BuildController;
-import org.gradle.tooling.UnknownModelException;
-import org.gradle.tooling.UnsupportedVersionException;
+import org.gradle.tooling.*;
 import org.gradle.tooling.model.Model;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.util.GradleVersion;
@@ -152,5 +149,35 @@ public class DefaultBuildController implements BuildController {
   @Override
   public boolean getCanQueryProjectModelInParallel(Class<?> aClass) {
     return isParallelModelFetchSupported() && myDelegate.getCanQueryProjectModelInParallel(aClass);
+  }
+
+  @Override
+  public <M> FetchModelResult<M> fetch(Class<M> aClass) {
+    return myDelegate.fetch(myMyMainGradleBuildRootProject, aClass);
+  }
+
+  @Override
+  public <M> FetchModelResult<M> fetch(Model model, Class<M> aClass) {
+    if (isMainBuild(model)) {
+      return fetch(aClass);
+    }
+    else {
+      return myDelegate.fetch(model, aClass);
+    }
+  }
+
+  @Override
+  public <M, P> FetchModelResult<M> fetch(Class<M> aClass, Class<P> aClass1, Action<? super P> action) {
+    return myDelegate.fetch(myMyMainGradleBuildRootProject, aClass, aClass1, action);
+  }
+
+  @Override
+  public <M, P> FetchModelResult<M> fetch(Model model, Class<M> aClass, Class<P> aClass1, Action<? super P> action) {
+    if (isMainBuild(model)) {
+      return fetch(aClass, aClass1, action);
+    }
+    else {
+      return myDelegate.fetch(model, aClass, aClass1, action);
+    }
   }
 }

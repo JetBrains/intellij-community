@@ -37,7 +37,11 @@ public abstract class CompletionSorter {
     return CompletionService.getCompletionService().emptySorter();
   }
 
-  public static @NotNull CompletionSorter defaultSorter(@NotNull CompletionParameters parameters, @NotNull PrefixMatcher matcher) {
+  public static @NotNull CompletionSorter defaultSorter(@NotNull BaseCompletionParameters parameters, @NotNull PrefixMatcher matcher) {
     return CompletionService.getCompletionService().defaultSorter(parameters, matcher);
+  }
+
+  public static @NotNull CompletionSorter defaultSorter(@NotNull CompletionParameters parameters, @NotNull PrefixMatcher matcher) {
+    return defaultSorter((BaseCompletionParameters)parameters, matcher);
   }
 }

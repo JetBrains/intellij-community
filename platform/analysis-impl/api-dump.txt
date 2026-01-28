@@ -83,6 +83,8 @@ f:com.intellij.codeInsight.CodeInsightSettings
 com.intellij.codeInsight.TargetElementEvaluatorEx
 - com.intellij.codeInsight.TargetElementEvaluator
 - a:isIdentifierPart(com.intellij.psi.PsiFile,java.lang.CharSequence,I):Z
+c:com.intellij.codeInsight.completion.BaseCompletionService
+- defaultSorter(com.intellij.codeInsight.completion.BaseCompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionSorter
 com.intellij.codeInsight.completion.CompletionLookupArranger
 - sf:PREFIX_CHANGES:com.intellij.openapi.util.Key
 - sf:WEIGHING_CONTEXT:com.intellij.openapi.util.Key

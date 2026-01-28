@@ -46,7 +46,7 @@ public final class PythonCompletionWeigher extends CompletionWeigher {
 
   @Override
   public Comparable weigh(final @NotNull LookupElement element, final @NotNull CompletionLocation location) {
-    if (!PsiUtilCore.findLanguageFromElement(location.getCompletionParameters().getPosition()).isKindOf(PythonLanguage.getInstance())) {
+    if (!PsiUtilCore.findLanguageFromElement(location.getBaseCompletionParameters().getPosition()).isKindOf(PythonLanguage.getInstance())) {
       return PyCompletionUtilsKt.FALLBACK_WEIGHT;
     }
 
@@ -58,12 +58,12 @@ public final class PythonCompletionWeigher extends CompletionWeigher {
     }
 
     PsiElement psiElement = element.getPsiElement();
-    PsiFile file = location.getCompletionParameters().getOriginalFile();
+    PsiFile file = location.getBaseCompletionParameters().getOriginalFile();
     if (psiElement != null) {
       if (psiElement.getContainingFile() == file) return PRIORITY_WEIGHT;
 
-      PsiElement dummyParent = location.getCompletionParameters().getPosition().getParent();
-      boolean isQualified = dummyParent instanceof PyReferenceExpression && ((PyReferenceExpression)dummyParent).isQualified();
+      PsiElement dummyParent = location.getBaseCompletionParameters().getPosition().getParent();
+      boolean isQualified = dummyParent instanceof PyReferenceExpression ref && ref.isQualified();
       int completionWeight = PyCompletionUtilsKt.computeCompletionWeight(psiElement, name, null, file, isQualified);
       LOG.debug("Combined weight for completion item ", name, ": ", completionWeight);
       return completionWeight;

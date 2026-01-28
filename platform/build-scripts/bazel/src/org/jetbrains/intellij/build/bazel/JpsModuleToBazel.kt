@@ -154,6 +154,8 @@ internal class JpsModuleToBazel {
           assertAllModuleOutputsExist = assertAllModuleOutputsExist,
           bazelOutputBase = if (bazelWorkspaceRoot == ultimateRoot) bazelOutputBase else null,
         )
+
+        saveDevServerRunConfigurations(ultimateRoot = ultimateRoot, targetFilePath = ultimateRoot.resolve("build").resolve("dev_server_run_configurations.bzl"))
       }
       else {
         check(bazelWorkspaceRoot == null || bazelWorkspaceRoot == communityRoot) { "Bazel workspace root ($bazelWorkspaceRoot) must be community root ($communityRoot)" }

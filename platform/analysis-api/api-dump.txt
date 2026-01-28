@@ -19,6 +19,9 @@ com.intellij.codeInsight.completion.BatchConsumer
 f:com.intellij.codeInsight.completion.CompletionConfidenceEP
 - com.intellij.lang.LanguageExtensionPoint
 - <init>():V
+f:com.intellij.codeInsight.completion.CompletionLocation
+- <init>(com.intellij.codeInsight.completion.BaseCompletionParameters):V
+- getBaseCompletionParameters():com.intellij.codeInsight.completion.BaseCompletionParameters
 f:com.intellij.codeInsight.completion.CompletionParameters
 - com.intellij.codeInsight.completion.BaseCompletionParameters
 - getCompletionType():com.intellij.codeInsight.completion.CompletionType
@@ -41,6 +44,10 @@ f:com.intellij.codeInsight.completion.CompletionParameters
 com.intellij.codeInsight.completion.CompletionProcess
 - a:isAutopopupCompletion():Z
 a:com.intellij.codeInsight.completion.CompletionService
+- a:defaultSorter(com.intellij.codeInsight.completion.BaseCompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionSorter
+- defaultSorter(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionSorter
+Fa:com.intellij.codeInsight.completion.CompletionSorter
+- s:defaultSorter(com.intellij.codeInsight.completion.BaseCompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionSorter
 a:com.intellij.codeInsight.completion.CompletionWeigher
 - com.intellij.psi.Weigher
 com.intellij.codeInsight.completion.InsertHandler
@@ -672,20 +679,9 @@ com.intellij.modcommand.ModCommandService
 - a:wrapToLocalQuickFixAndIntentionActionOnPsiElement(com.intellij.modcommand.ModCommandAction,com.intellij.psi.PsiElement):com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 - a:wrapToQuickFix(com.intellij.modcommand.ModCommandAction):com.intellij.codeInspection.LocalQuickFix
 - a:wrapToQuickFix(com.intellij.modcommand.ModCommandAction,Z):com.intellij.codeInspection.LocalQuickFix
-f:com.intellij.modcommand.ModLaunchEditorAction
-- java.lang.Record
-- com.intellij.modcommand.ModCommand
-- sf:ACTION_CODE_COMPLETION:java.lang.String
-- sf:ACTION_PARAMETER_INFO:java.lang.String
-- <init>(java.lang.String,Z):V
-- actionId():java.lang.String
-- f:equals(java.lang.Object):Z
-- f:hashCode():I
-- optional():Z
 com.intellij.modcommand.ModPsiUpdater
 - com.intellij.openapi.editor.ModNavigator
 - a:cancel(java.lang.String):V
-- a:editorAction(java.lang.String,Z):V
 - a:getCaretOffset():I
 - a:getDocument():com.intellij.openapi.editor.Document
 - a:getOriginalFile(com.intellij.psi.PsiFile):com.intellij.psi.PsiFile

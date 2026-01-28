@@ -46,7 +46,7 @@ public final class GrKindWeigher extends CompletionWeigher {
 
   @Override
   public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
-    final PsiElement position = location.getCompletionParameters().getPosition();
+    final PsiElement position = location.getBaseCompletionParameters().getPosition();
     if (!(position.getContainingFile() instanceof GroovyFileBase)) return null;
 
     Object o = element.getObject();

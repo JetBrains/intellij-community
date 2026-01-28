@@ -110,12 +110,13 @@ private suspend fun readFile(file: Path): PyProjectToml? {
     logger.warn("Can't read $file", e)
     return null
   }
-  return when (val r = withContext(Dispatchers.Default) { PyProjectToml.parse(content) }) {
-    is Result.Failure -> {
-      logger.warn("Errors on $file: ${r.error.joinToString(", ")}")
-      null
+  return withContext(Dispatchers.Default) {
+    val toml = PyProjectToml.parse(content)
+    val errors = toml.issues.joinToString(", ")
+    if (errors.isNotBlank()) {
+      logger.warn("Errors on $file: $errors")
     }
-    is Result.Success -> r.result
+    toml
   }
 }
 

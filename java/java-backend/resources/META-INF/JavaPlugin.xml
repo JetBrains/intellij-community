@@ -1083,7 +1083,7 @@
     <codeInsight.declarativeInlayProvider language="JAVA"
                                           implementationClass="com.intellij.codeInsight.hints.JavaMethodChainsDeclarativeInlayProvider"
                                           isEnabledByDefault="true"
-                                          group="METHOD_CHAINS_GROUP"
+                                          group="TYPES_GROUP"
                                           providerId="java.method.chains"
                                           bundle="messages.JavaBundle"
                                           nameKey="java.method.chains.inlay.provider.name"

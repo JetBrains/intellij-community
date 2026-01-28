@@ -27,7 +27,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Pair;
@@ -82,7 +81,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.getTypeRenderer;
 import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.loadTypeRendererChildren;
 import static com.jetbrains.python.statistics.PythonDebuggerIdsHolder.CONNECTION_FAILED;
-
 
 public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener, PyDebugProcessWithConsole {
   private static final Logger LOG = Logger.getInstance(PyDebugProcess.class);
@@ -392,8 +390,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     getSession().rebuildViews();
     registerBreakpoints();
     setUserTypeRenderersSettings();
-    setShowReturnValues(PyDebuggerSettings.getInstance().isWatchReturnValues());
     setUnitTestDebuggingMode();
+    myDebugger.setShowReturnValues(PyDebuggerSettings.getInstance().isWatchReturnValues());
   }
 
   @Override
@@ -537,56 +535,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
                                         @NotNull DefaultActionGroup topToolbar,
                                         @NotNull DefaultActionGroup settings) {
     super.registerAdditionalActions(leftToolbar, topToolbar, settings);
-    settings.add(new WatchReturnValuesAction(this));
+    settings.add(new WatchReturnValuesAction(this, myDebugger::setShowReturnValues));
     settings.add(new PyVariableViewSettings.SimplifiedView(this));
     settings.add(new PyVariableViewSettings.VariablesPolicyGroup());
     settings.add(new PyVariableViewSettings.QuotingPolicyGroup());
-  }
-
-  private static final class WatchReturnValuesAction extends ToggleAction {
-    private volatile boolean myWatchesReturnValues;
-    private final PyDebugProcess myProcess;
-    private final @NlsActions.ActionText String myText;
-
-    WatchReturnValuesAction(@NotNull PyDebugProcess debugProcess) {
-      super("", PyBundle.message("debugger.watch.return.values.description"), null);
-      myWatchesReturnValues = PyDebuggerSettings.getInstance().isWatchReturnValues();
-      myProcess = debugProcess;
-      myText = PyBundle.message("debugger.watch.show.return.values");
-    }
-
-    @Override
-    public void update(final @NotNull AnActionEvent e) {
-      super.update(e);
-      final Presentation presentation = e.getPresentation();
-      presentation.setEnabled(true);
-      presentation.setText(myText);
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return myWatchesReturnValues;
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean watch) {
-      myWatchesReturnValues = watch;
-      PyDebuggerSettings.getInstance().setWatchReturnValues(watch);
-      final Project project = e.getProject();
-      if (project != null) {
-        myProcess.setShowReturnValues(myWatchesReturnValues);
-        myProcess.getSession().rebuildViews();
-      }
-    }
-  }
-
-  public void setShowReturnValues(boolean showReturnValues) {
-    myDebugger.setShowReturnValues(showReturnValues);
   }
 
   public void setUnitTestDebuggingMode() {

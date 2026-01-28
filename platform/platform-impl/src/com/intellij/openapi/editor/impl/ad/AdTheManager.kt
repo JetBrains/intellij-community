@@ -1,9 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.isRhizomeAdEnabled
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
@@ -27,10 +26,8 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import fleet.kernel.transactor
 import fleet.util.UID
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus.Experimental
 
 
-@Experimental
 @Service(Level.APP)
 class AdTheManager(private val appCoroutineScope: CoroutineScope) {
 
@@ -103,6 +100,6 @@ class AdTheManager(private val appCoroutineScope: CoroutineScope) {
   }
 
   private fun isEnabled(): Boolean {
-    return isRhizomeAdEnabled
+    return isRhizomeAdRebornEnabled
   }
 }

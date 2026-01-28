@@ -176,7 +176,7 @@ class RecentProjectIconHelper {
 
 private fun createDeferredIcon(key: DeferredIconKey): Icon {
   return IconDeferrer.getInstance().deferAsync(
-    EmptyIcon.create(key.iconSize),
+    key.getCachedIcon() ?: EmptyIcon.create(key.iconSize),
     key,
   ) {
     withContext(Dispatchers.IO) {
@@ -188,6 +188,7 @@ private fun createDeferredIcon(key: DeferredIconKey): Icon {
 private sealed class DeferredIconKey {
   abstract val iconSize: Int
   abstract fun loadIcon(): Icon
+  abstract fun getCachedIcon(): Icon?
 }
 
 private data class LocalProjectIconKey(
@@ -200,6 +201,8 @@ private data class LocalProjectIconKey(
   override fun loadIcon(): Icon =
     getCustomIcon(path, isProjectValid, iconSize)
     ?: getGeneratedProjectIcon(path, isProjectValid, name, iconSize)
+
+  override fun getCachedIcon(): Icon? = projectIconCache.get(Pair(path, iconSize))?.icon
 }
 
 private data class NonLocalProjectIconKey(
@@ -210,6 +213,8 @@ private data class NonLocalProjectIconKey(
   val name: String,
 ) : DeferredIconKey() {
   override fun loadIcon(): Icon = getGeneratedNonLocalProjectIcon(id = id, isProjectValid, name, iconSize)
+
+  override fun getCachedIcon(): Icon? = nonLocalProjectIconCache.get(Pair(id, iconSize))?.icon
 }
 
 private fun getCustomIconFileInfo(file: Path): Pair<Path, BasicFileAttributes>? {

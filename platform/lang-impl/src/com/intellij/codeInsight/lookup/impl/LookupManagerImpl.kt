@@ -4,6 +4,7 @@ package com.intellij.codeInsight.lookup.impl
 import com.intellij.codeInsight.hint.EditorHintListener
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.lookup.*
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.sessions
@@ -95,7 +96,8 @@ open class LookupManagerImpl(private val myProject: Project) : LookupManager() {
                             items: Array<LookupElement>,
                             prefix: String,
                             arranger: LookupArranger): LookupImpl {
-    return ClientLookupManager.getCurrentInstance(myProject).createLookup(editor, items, prefix, arranger)
+    val manager = ClientLookupManager.getCurrentInstance(myProject) ?: error("Can't create lookup for ${ClientId.current}")
+    return manager.createLookup(editor, items, prefix, arranger)
   }
 
   fun fireActiveLookupChanged(oldLookup: LookupImpl?, newLookup: LookupImpl?) {
@@ -108,11 +110,11 @@ open class LookupManagerImpl(private val myProject: Project) : LookupManager() {
   }
 
   override fun hideActiveLookup() {
-    ClientLookupManager.getCurrentInstance(myProject).hideActiveLookup()
+    ClientLookupManager.getCurrentInstance(myProject)?.hideActiveLookup()
   }
 
   override fun getActiveLookup(): LookupEx? {
-    return ClientLookupManager.getCurrentInstance(myProject).getActiveLookup()
+    return ClientLookupManager.getCurrentInstance(myProject)?.getActiveLookup()
   }
 
   override fun addPropertyChangeListener(listener: PropertyChangeListener) {
@@ -131,7 +133,7 @@ open class LookupManagerImpl(private val myProject: Project) : LookupManager() {
 
   @TestOnly
   fun forceSelection(completion: Char, index: Int) {
-    val activeLookup = ClientLookupManager.getCurrentInstance(myProject).getActiveLookup()
+    val activeLookup = ClientLookupManager.getCurrentInstance(myProject)!!.getActiveLookup()
                        ?: throw RuntimeException("There are no items in this lookup")
     val lookupItem = activeLookup.items[index]
     activeLookup.currentItem = lookupItem
@@ -140,7 +142,7 @@ open class LookupManagerImpl(private val myProject: Project) : LookupManager() {
 
   @TestOnly
   fun forceSelection(completion: Char, item: LookupElement?) {
-    val activeLookup = ClientLookupManager.getCurrentInstance(myProject).getActiveLookup()
+    val activeLookup = ClientLookupManager.getCurrentInstance(myProject)!!.getActiveLookup()
                        ?: throw RuntimeException("There are no items in this lookup")
     activeLookup.currentItem = item
     (activeLookup as LookupImpl).finishLookup(completion)
@@ -148,7 +150,7 @@ open class LookupManagerImpl(private val myProject: Project) : LookupManager() {
 
   @TestOnly
   fun clearLookup() {
-    ClientLookupManager.getCurrentInstance(myProject).clear()
+    ClientLookupManager.getCurrentInstance(myProject)!!.clear()
   }
 
   companion object {

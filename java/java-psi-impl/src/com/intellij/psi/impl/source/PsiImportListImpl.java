@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -125,7 +125,13 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
 
   @Override
   public boolean isReplaceEquivalent(PsiImportList otherList) {
-    return getText().equals(otherList.getText());
+    PsiImportStatementBase[] importStatements1 = getAllImportStatements();
+    PsiImportStatementBase[] importStatements2 = otherList.getAllImportStatements();
+    if (importStatements1.length != importStatements2.length) return false;
+    for (int i = 0; i < importStatements1.length; i++) {
+      if (!importStatements1[i].isReplaceEquivalent(importStatements2[i])) return false;
+    }
+    return true;
   }
 
   private void initializeMaps() {

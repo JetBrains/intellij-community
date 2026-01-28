@@ -9,6 +9,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.tools.build.bazel.jvmIncBuilder" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.dependencyGraph" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="JUnit5Launcher" level="project" />

@@ -1,11 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.document
 
-import andel.text.Text
-import andel.text.TextView
-import andel.text.charSequence
-import andel.text.line
-import andel.text.lineEndOffset
+import andel.text.*
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.LineIterator
@@ -14,11 +10,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.NonNls
 
 
-@Experimental
 internal class AdTextDocument(val textLambda: () -> Text) : DocumentEx {
 
   constructor(text: Text) : this({ text })
@@ -147,11 +141,11 @@ internal class AdTextDocument(val textLambda: () -> Text) : DocumentEx {
     throw UnsupportedOperationException()
   }
 
-  override fun <T : Any?> getUserData(key: Key<T?>): T? {
+  override fun <T> getUserData(key: Key<T?>): T? {
     throw UnsupportedOperationException()
   }
 
-  override fun <T : Any?> putUserData(key: Key<T?>, value: T?) {
+  override fun <T> putUserData(key: Key<T?>, value: T?) {
     throw UnsupportedOperationException()
   }
 

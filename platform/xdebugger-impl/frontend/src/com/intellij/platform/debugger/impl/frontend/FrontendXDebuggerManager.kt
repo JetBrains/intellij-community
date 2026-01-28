@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.execution.ui.RunContentDescriptor
@@ -155,8 +155,8 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
     return sessions.firstOrNull { it.sessionTab?.runContentDescriptor === descriptor }?.id
   }
 
-  private suspend fun createDebuggerSession(sessionDto: XDebugSessionDto): XDebugSessionProxy {
-    val newSession = FrontendXDebuggerSession.create(project, cs, this, sessionDto)
+  private fun createDebuggerSession(sessionDto: XDebugSessionDto): XDebugSessionProxy {
+    val newSession = FrontendXDebuggerSession(project, cs, this, sessionDto)
     val old = sessionsFlow.getAndUpdate {
       it + newSession
     }

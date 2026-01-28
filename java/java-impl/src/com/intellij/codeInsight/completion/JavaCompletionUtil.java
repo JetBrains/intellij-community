@@ -77,11 +77,11 @@ public final class JavaCompletionUtil {
     "expectedTypes",
     location -> {
       if (PsiJavaPatterns.psiElement().beforeLeaf(PsiJavaPatterns.psiElement().withText("."))
-        .accepts(location.getCompletionParameters().getPosition())) {
+        .accepts(location.getBaseCompletionParameters().getPosition())) {
         return ExpectedTypeInfo.EMPTY_ARRAY;
       }
 
-      return JavaSmartCompletionContributor.getExpectedTypes(location.getCompletionParameters());
+      return JavaSmartCompletionContributor.getExpectedTypes(location.getBaseCompletionParameters());
     });
 
   public static final Key<Boolean> SUPER_METHOD_PARAMETERS = Key.create("SUPER_METHOD_PARAMETERS");

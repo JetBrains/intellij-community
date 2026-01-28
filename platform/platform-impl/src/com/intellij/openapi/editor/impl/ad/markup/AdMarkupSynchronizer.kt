@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad.markup
 
 import com.intellij.openapi.Disposable
@@ -22,7 +22,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus.Experimental
 import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
@@ -30,7 +29,6 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
 
 
-@Experimental
 @Service(Level.APP)
 internal class AdMarkupSynchronizerService(private val coroutineScope: CoroutineScope): Disposable.Default {
 
@@ -43,14 +41,13 @@ internal class AdMarkupSynchronizerService(private val coroutineScope: Coroutine
     val disposable = cs.asDisposable()
     val delay = if (markupModel is EditorMarkupModel) 5L else 100L
     val sync = AdMarkupSynchronizer(markupEntity, WeakReference(markupModel), delay, cs)
+    @Suppress("DEPRECATION")
     markupModel.document.addDocumentListener(sync)
     markupModel.addMarkupModelListener(disposable, sync)
     return cs
   }
 }
 
-
-@Experimental
 private class AdMarkupSynchronizer(
   private val markupEntity: AdMarkupEntity,
   private val markupModel: WeakReference<MarkupModelEx>,
@@ -165,9 +162,7 @@ private class AdMarkupSynchronizer(
       val ts = highlighter.getUserData(HIGHLIGHTER_TIMESTAMP)
       if (ts != null && (invalidateOldMarkup || ts > lastSeenNoveltyId)) {
         val adHighlighter = AdRangeHighlighter.fromHighlighter(ts, highlighter)
-        if (adHighlighter != null) {
-          toAdd.add(adHighlighter)
-        }
+        toAdd.add(adHighlighter)
       }
       true
     }

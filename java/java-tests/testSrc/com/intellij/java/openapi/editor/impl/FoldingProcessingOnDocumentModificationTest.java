@@ -22,6 +22,7 @@ import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
@@ -34,6 +35,8 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -217,9 +220,17 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
   private void runFoldingPass() {
     runFoldingPass(false);
   }
-  
+
   private void runFoldingPass(boolean firstTime) {
-    Runnable runnable = CodeFoldingManager.getInstance(getProject()).updateFoldRegionsAsync(getEditor(), firstTime);
+    ThreadingAssertions.assertEventDispatchThread();
+    Runnable runnable;
+    try {
+      runnable = ReadAction.nonBlocking(()-> ReadAction.compute(()->CodeFoldingManager.getInstance(getProject()).updateFoldRegionsAsync(getEditor(), firstTime))).submit(
+        AppExecutorUtil.getAppExecutorService()).get();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
     assertNotNull(runnable);
     runnable.run();
   }

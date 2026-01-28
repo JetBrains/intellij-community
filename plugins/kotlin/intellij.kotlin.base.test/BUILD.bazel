@@ -4,7 +4,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jvm_library(
   name = "base-test",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True)
+  srcs = glob([], allow_empty = True),
+  runtime_deps = ["//libraries/kotlin/reflect"]
 )
 
 jvm_library(
@@ -14,6 +15,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -92,6 +94,11 @@ jvm_library(
     "//java/java-impl-inspections:impl-inspections",
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/migration",
+    "//plugins/kotlin/compiler-reference-index",
+    "//plugins/kotlin/base/compiler-configuration",
+    "//java/compiler/impl",
+    "//jps/jps-builders:build",
+    "//java/java-indexing-api:indexing",
   ],
   runtime_deps = [":base-test"]
 )

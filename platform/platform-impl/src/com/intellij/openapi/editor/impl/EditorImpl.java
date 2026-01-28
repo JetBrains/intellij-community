@@ -1117,7 +1117,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     mySelectionModel.reinitSettings();
     caretRepaintService.setBlinking(mySettings.isBlinkCaret());
     caretRepaintService.setBlinkPeriod(mySettings.getCaretBlinkPeriod());
-    caretRepaintService.restartImmediately();
+    caretRepaintService.restart();
 
     myView.reinitSettings();
     if (myAdView != null) myAdView.reinitSettings();
@@ -1678,7 +1678,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void setCaretActive() {
     synchronized (caretRepaintService) {
       caretRepaintService.setEditor(this);
-      caretRepaintService.restartImmediately();
+      caretRepaintService.restart();
     }
   }
 
@@ -3187,6 +3187,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     else {
       myCaretCursor.myIsShown = true;
+      myCaretCursor.myBlinkOpacity = 1.0f;
       myCaretCursor.repaint();
     }
   }
@@ -3202,22 +3203,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   double caretAnimationElapsed;
 
   private final @NotNull EditorCaretMoveService caretMoveService = EditorCaretMoveService.getInstance();
-
-  @ApiStatus.Internal
-  void pauseBlinking() {
-    synchronized (caretRepaintService) {
-      caretRepaintService.setEditor(this);
-      caretRepaintService.pause();
-    }
-  }
-
-  @ApiStatus.Internal
-  void resumeBlinking(long after) {
-    synchronized (caretRepaintService) {
-      caretRepaintService.setEditor(this);
-      caretRepaintService.restart(after);
-    }
-  }
 
   private void setCursorPosition() {
     synchronized (caretMoveService) {
@@ -3367,7 +3352,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         caretRepaintService.setBlinking(blink);
         caretRepaintService.setBlinkPeriod(blinkPeriod);
         myIsShown = true;
-        caretRepaintService.restartImmediately();
+        myBlinkOpacity = 1.0f;
+        caretRepaintService.restart();
       }
     }
 
@@ -3380,6 +3366,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     void setActive(boolean isActive) {
       synchronized (caretRepaintService) {
         myIsShown = isActive;
+      }
+    }
+
+    void setFullOpacity() {
+      synchronized (caretRepaintService) {
+        myIsShown = true;
+        myBlinkOpacity = 1.0f;
       }
     }
 
@@ -3404,6 +3397,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     long getStartTime() {
       synchronized (caretRepaintService) {
         return myStartTime;
+      }
+    }
+
+    void setStartTime(long startTime) {
+      synchronized (caretRepaintService) {
+        myStartTime = startTime;
       }
     }
 

@@ -64,7 +64,7 @@ internal class InstanceRegistrarImpl(
         }
         if (!existingInstanceHolder.overridable) {
           val exception =
-            InstanceNotOverridableException("$keyClassName -> existing: ${existingInstanceHolder.instanceClassName()}, new: ${initializer?.instanceClassName ?: "<removed>"}")
+            InstanceNotOverridableException(keyClassName, existingInstanceHolder.instanceClassName(), initializer?.instanceClassName)
           logIncorrectOverride(exception)
         }
         if (initializer == null) RegistrationAction.Remove else RegistrationAction.Override(initializer)
@@ -73,7 +73,7 @@ internal class InstanceRegistrarImpl(
         check(keyClassName !in existingKeys) // sanity check
         if (!existingAction.initializer.overridable) {
           val exception =
-            InstanceNotOverridableException("$keyClassName -> existing: ${existingAction.initializer.instanceClassName}, new: ${initializer?.instanceClassName ?: "<removed>"}")
+            InstanceNotOverridableException(keyClassName, existingAction.initializer.instanceClassName, initializer?.instanceClassName)
           logIncorrectOverride(exception)
         }
         LOG.trace {
@@ -92,7 +92,7 @@ internal class InstanceRegistrarImpl(
         check(keyClassName in existingKeys) // sanity check
         if (!existingAction.initializer.overridable) {
           val exception =
-            InstanceNotOverridableException("$keyClassName -> existing: ${existingAction.initializer.instanceClassName}, new: ${initializer?.instanceClassName ?: "<removed>"}")
+            InstanceNotOverridableException(keyClassName, existingAction.initializer.instanceClassName, initializer?.instanceClassName)
           logIncorrectOverride(exception)
         }
         LOG.trace {

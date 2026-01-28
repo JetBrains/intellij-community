@@ -191,7 +191,11 @@ public abstract class CompletionService {
     }
   }
 
-  public abstract @NotNull CompletionSorter defaultSorter(@NotNull CompletionParameters parameters, @NotNull PrefixMatcher matcher);
+  public abstract @NotNull CompletionSorter defaultSorter(@NotNull BaseCompletionParameters parameters, @NotNull PrefixMatcher matcher);
+  
+  public @NotNull CompletionSorter defaultSorter(@NotNull CompletionParameters parameters, @NotNull PrefixMatcher matcher) {
+    return defaultSorter((BaseCompletionParameters) parameters, matcher);
+  }
 
   public abstract @NotNull CompletionSorter emptySorter();
 

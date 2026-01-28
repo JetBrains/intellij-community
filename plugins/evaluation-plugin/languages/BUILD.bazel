@@ -18,6 +18,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/statistics",
     "//platform/statistics/uploader",
+    "@lib//:gson",
   ]
 )
 ### auto-generated section `build intellij.evaluationPlugin.languages` end

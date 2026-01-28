@@ -17,11 +17,17 @@ import org.gradle.internal.serialize.StatefulSerializer
 import org.slf4j.LoggerFactory
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.nio.ByteBuffer
 import java.nio.channels.ClosedChannelException
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
+import java.nio.charset.StandardCharsets
+import kotlin.time.Duration.Companion.seconds
 
 class TargetIncomingConnector : IncomingConnector {
+
+  private val DEFAULT_READ_TIMEOUT_SECONDS = 5L
+  private val GRADLE_MAGIC: ByteArray = "Gradle Magic".toByteArray(StandardCharsets.UTF_8)
   private val addressFactory: InetAddressFactory = InetAddressFactory()
 
   private val executorFactory = DefaultExecutorFactory()
@@ -74,9 +80,11 @@ class TargetIncomingConnector : IncomingConnector {
     }
   }
 
-  private inner class Receiver(private val serverSocket: ServerSocketChannel,
-                               private val action: Action<ConnectCompletion>,
-                               private val allowRemote: Boolean) : Runnable {
+  private inner class Receiver(
+    private val serverSocket: ServerSocketChannel,
+    private val action: Action<ConnectCompletion>,
+    private val allowRemote: Boolean,
+  ) : Runnable {
     override fun run() {
       try {
         while (true) {
@@ -95,6 +103,7 @@ class TargetIncomingConnector : IncomingConnector {
             logger.debug("Accepted connection from {} to {}.", socket.socket().remoteSocketAddress, socket.socket().localSocketAddress)
             try {
               socket.configureBlocking(false)
+              socket.offsetHeader()
               action.execute(SocketConnectCompletion(socket))
             }
             catch (t: Throwable) {
@@ -111,6 +120,24 @@ class TargetIncomingConnector : IncomingConnector {
       }
       finally {
         CompositeStoppable.stoppable(serverSocket).stop()
+      }
+    }
+
+    private fun SocketChannel.offsetHeader() {
+      val buffer = ByteBuffer.allocate(GRADLE_MAGIC.size)
+      val deadline = System.nanoTime() + DEFAULT_READ_TIMEOUT_SECONDS.seconds.inWholeNanoseconds
+      while (buffer.hasRemaining() && System.nanoTime() < deadline) {
+        val read = read(buffer)
+        if (read == -1)
+          break
+        else if (read == 0)
+          Thread.sleep(100)
+      }
+      if (!GRADLE_MAGIC.contentEquals(buffer.array())) {
+        throw IllegalStateException(
+          "Gradle message prefix does not match with the expected value. " +
+          "Expected: ${String(GRADLE_MAGIC)} but got: ${String(buffer.array())}"
+        )
       }
     }
   }

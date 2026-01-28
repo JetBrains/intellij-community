@@ -6,17 +6,15 @@ import {buildIssueView} from './task-issue-view.mjs'
 import {
   buildClosed,
   buildCreated,
-  buildCreateSubTaskChoice,
   buildEmpty,
   buildError,
   buildIssue,
-  buildNeedUser,
   buildProgress,
-  buildStartNewTaskChoice,
   buildSummary,
-  buildTaskChoice
+  buildUpdated
 } from './task-responses.mjs'
-import {buildInProgressSummaries, computeSuggestedParent, createEpic, getReadyChildren} from './task-helpers.mjs'
+import {buildInProgressSummaries, createEpic, getReadyChildren} from './task-helpers.mjs'
+
 
 /**
  * @typedef {{
@@ -64,6 +62,47 @@ function readMetaFields(source) {
     design: getNonEmptyString(source.design),
     acceptance: getNonEmptyString(source.acceptance)
   }
+}
+
+function normalizeDependsOnInput(dependsOn) {
+  if (dependsOn === undefined || dependsOn === null) return {list: []}
+  if (typeof dependsOn === 'string') {
+    const trimmed = dependsOn.trim()
+    return trimmed ? {list: [trimmed]} : {error: 'depends_on must be a non-empty string'}
+  }
+  if (Array.isArray(dependsOn)) {
+    const list = []
+    for (const entry of dependsOn) {
+      if (typeof entry !== 'string') return {error: 'depends_on entries must be strings'}
+      const trimmed = entry.trim()
+      if (!trimmed) return {error: 'depends_on entries must be non-empty'}
+      list.push(trimmed)
+    }
+    return {list}
+  }
+  return {error: 'depends_on must be a string or array of strings'}
+}
+
+function normalizeDecomposeDependsOn(dependsOn, subIndex) {
+  if (!Array.isArray(dependsOn)) return {list: []}
+  const list = []
+  for (const entry of dependsOn) {
+    if (Number.isInteger(entry)) {
+      if (entry < 0 || entry >= subIndex) {
+        return {error: `Invalid depends_on[${entry}] in sub_issue[${subIndex}]: must reference 0 to ${subIndex - 1}`}
+      }
+      list.push({type: 'index', value: entry})
+      continue
+    }
+    if (typeof entry === 'string') {
+      const trimmed = entry.trim()
+      if (!trimmed) return {error: `Invalid depends_on entry in sub_issue[${subIndex}]: empty id`}
+      list.push({type: 'id', value: trimmed})
+      continue
+    }
+    return {error: `Invalid depends_on entry in sub_issue[${subIndex}]: must be integer index or issue id`}
+  }
+  return {list}
 }
 
 function summarizeChildren(children) {
@@ -122,33 +161,6 @@ async function loadIssue(id, {resume, next, memory_limit, view, meta_max_chars} 
   return buildIssue(viewIssue, {next: next ?? (resume ? 'continue' : 'await_user'), memory})
 }
 
-function buildReadyAskUser(ready) {
-  return buildNeedUser({
-    question: 'Which task would you like to work on?',
-    header: 'Task',
-    choices: ready.map(buildTaskChoice),
-    next: 'select_task'
-  })
-}
-
-function buildSelectionAskUser(inProgress, questionText, next) {
-  const parentIds = [...new Set(inProgress.map(i => i.parent).filter(Boolean))]
-  const epicIds = inProgress.filter(i => i.issue_type === 'epic').map(i => i.id)
-  const parentEpic = parentIds.length === 1 ? parentIds[0]
-    : (parentIds.length === 0 && epicIds.length === 1 ? epicIds[0] : null)
-  const choices = [
-    ...inProgress.map(buildTaskChoice),
-    ...(parentEpic ? [buildCreateSubTaskChoice(parentEpic)] : []),
-    buildStartNewTaskChoice()
-  ]
-  return buildNeedUser({
-    question: questionText,
-    header: 'Task',
-    choices,
-    next
-  })
-}
-
 async function createEpicFromUserRequest(userRequest, {memory_limit, view, meta_max_chars, ...metaArgs} = {}) {
   const title = userRequest.trim()
   if (!title) {
@@ -190,18 +202,12 @@ async function handleTaskStatus(args) {
   }
 
   const inProgress = /** @type {Issue[]} */ (await bdJson(['list', '--status', 'in_progress']))
-  const ready = await bdJson(['ready', '--limit', '5'])
-
   if (inProgress.length === 0) {
-    if (ready.length > 0) {
-      return buildReadyAskUser(ready)
-    }
-    return buildEmpty()
+    return buildEmpty('No in-progress tasks found.', 'await_user')
   }
 
   const summaries = await buildInProgressSummaries(inProgress)
-  const suggestedParent = computeSuggestedParent(inProgress)
-  return buildSummary(summaries, {next: 'await_user', suggested_parent: suggestedParent})
+  return buildSummary(summaries, {next: 'await_user'})
 }
 
 async function handleTaskStart(args) {
@@ -215,31 +221,15 @@ async function handleTaskStart(args) {
     })
   }
 
-  const inProgress = /** @type {Issue[]} */ (await bdJson(['list', '--status', 'in_progress']))
-  const ready = await bdJson(['ready', '--limit', '5'])
-
-  const hasUserRequest = typeof args.user_request === 'string' && args.user_request.trim().length > 0
-  if (hasUserRequest) {
-    const created = await createEpicFromUserRequest(args.user_request, args)
+  const userRequest = getNonEmptyString(args.user_request)
+  if (userRequest) {
+    const created = await createEpicFromUserRequest(userRequest, args)
     if (created) {
       return created
     }
   }
 
-  if (inProgress.length === 0) {
-    if (ready.length > 0) {
-      return buildReadyAskUser(ready)
-    }
-    return buildEmpty()
-  }
-
-  if (inProgress.length === 1 && !hasUserRequest) {
-    const summaries = await buildInProgressSummaries(inProgress)
-    const suggestedParent = computeSuggestedParent(inProgress)
-    return buildSummary(summaries, {next: 'await_user', suggested_parent: suggestedParent})
-  }
-
-  return buildSelectionAskUser(inProgress, 'Which task to work on?', 'select_task')
+  return buildError('task_start requires id or user_request')
 }
 
 export const toolHandlers = {
@@ -303,19 +293,6 @@ export const toolHandlers = {
   },
 
   task_decompose: async (args) => {
-    // Validate depends_on indices
-    for (let i = 0; i < args.sub_issues.length; i++) {
-      const sub = args.sub_issues[i]
-      if (sub.depends_on) {
-        for (const depIdx of sub.depends_on) {
-          if (depIdx < 0 || depIdx >= i) {
-            return buildError(`Invalid depends_on[${depIdx}] in sub_issue[${i}]: must reference 0 to ${i - 1}`)
-          }
-        }
-      }
-    }
-
-
     const normalizedSubs = []
     for (let i = 0; i < args.sub_issues.length; i++) {
       const sub = args.sub_issues[i]
@@ -327,7 +304,11 @@ export const toolHandlers = {
       if (missing.length > 0) {
         return buildError(`sub_issues[${i}] missing required fields: ${missing.join(', ')}`)
       }
-      normalizedSubs.push({...sub, ...meta})
+      const depResult = normalizeDecomposeDependsOn(sub.depends_on, i)
+      if (depResult.error) {
+        return buildError(depResult.error)
+      }
+      normalizedSubs.push({...sub, ...meta, normalized_depends_on: depResult.list})
     }
 
     const ids = []
@@ -340,10 +321,17 @@ export const toolHandlers = {
     // Add dependencies
     for (let i = 0; i < normalizedSubs.length; i++) {
       const sub = normalizedSubs[i]
-      if (sub.depends_on) {
-        for (const depIdx of sub.depends_on) {
-          await bd(['dep', 'add', ids[i], ids[depIdx]])
-        }
+      const deps = Array.isArray(sub.normalized_depends_on) ? sub.normalized_depends_on : []
+      if (deps.length === 0) continue
+      const seen = new Set()
+      for (const dep of deps) {
+        const depId = dep.type === 'index' ? ids[dep.value] : dep.value
+        if (!depId || depId === ids[i] || seen.has(depId)) continue
+        seen.add(depId)
+        const depArgs = ['dep', 'add', ids[i], depId]
+        const depType = getNonEmptyString(sub.dep_type)
+        if (depType) depArgs.push('--type', depType)
+        await bd(depArgs)
       }
     }
 
@@ -388,13 +376,53 @@ export const toolHandlers = {
     if (args.parent) createArgs.push('--parent', args.parent)
     if (args.priority) createArgs.push('--priority', args.priority)
 
+    const depResult = normalizeDependsOnInput(args.depends_on)
+    if (depResult.error) {
+      return buildError(depResult.error)
+    }
+
     const id = await bd(createArgs)
-    if (args.depends_on) {
-      const depArgs = ['dep', 'add', id, args.depends_on]
-      if (args.dep_type) depArgs.push('--type', args.dep_type)
-      await bd(depArgs)
+    if (depResult.list.length > 0) {
+      for (const depId of depResult.list) {
+        const depArgs = ['dep', 'add', id, depId]
+        if (args.dep_type) depArgs.push('--type', args.dep_type)
+        await bd(depArgs)
+      }
     }
     return buildCreated({id})
+  },
+
+  task_link: async (args) => {
+    const issue = /** @type {Issue | null} */ (await bdShowOne(args.id))
+    if (!issue) {
+      return buildError(`Issue ${args.id} not found`)
+    }
+
+    const depResult = normalizeDependsOnInput(args.depends_on)
+    if (depResult.error) {
+      return buildError(depResult.error)
+    }
+    if (depResult.list.length === 0) {
+      return buildError('depends_on required')
+    }
+
+    const added = []
+    const seen = new Set()
+    for (const depId of depResult.list) {
+      if (depId === args.id) {
+        return buildError('depends_on cannot include the issue id itself')
+      }
+      if (seen.has(depId)) continue
+      seen.add(depId)
+      const depArgs = ['dep', 'add', args.id, depId]
+      if (args.dep_type) depArgs.push('--type', args.dep_type)
+      await bd(depArgs)
+      added.push(depId)
+    }
+
+    const payload = {id: args.id, added_depends_on: added}
+    if (args.dep_type) payload.dep_type = args.dep_type
+    return buildUpdated(payload)
   },
 
   task_done: async (args) => {
@@ -433,11 +461,26 @@ export const toolHandlers = {
           const readyList = await bdJson(['ready', '--parent', parentId])
           nextReady = readyList[0] || null
 
-          const epicIssue = await bdShowOne(parentId)
-          if (epicIssue) {
-            const children = epicIssue.children || []
+          const parentIssue = await bdShowOne(parentId)
+          if (parentIssue) {
+            let children
+            try {
+              children = await bdJson(['list', '--parent', parentId, '--all'])
+            } catch (error) {
+              children = Array.isArray(parentIssue.children) ? parentIssue.children : []
+            }
+            if (!Array.isArray(children)) {
+              children = []
+            }
             const completed = children.filter(c => c.status === 'closed').length
-            epicStatus = {completed, remaining: children.length - completed}
+            const remaining = children.length - completed
+            epicStatus = {completed, remaining}
+
+            const isEpic = parentIssue.issue_type === 'epic' || parentIssue.type === 'epic'
+            const isPinned = parentIssue.status === 'pinned' || parentIssue.status === 'hooked'
+            if (isEpic && children.length > 0 && remaining === 0 && parentIssue.status !== 'closed' && !isPinned) {
+              await bd(['close', parentId, '--reason', 'Auto-closed: all child issues closed'])
+            }
           }
         }
       } catch (e) {

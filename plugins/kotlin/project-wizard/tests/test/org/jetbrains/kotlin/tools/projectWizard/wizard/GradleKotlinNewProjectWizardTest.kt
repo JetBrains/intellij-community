@@ -244,7 +244,7 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     @ParameterizedTest
     @CsvCrossProductSource("KOTLIN,GROOVY", "true,false")
     fun testNewModuleWithVersionCatalog(gradleDsl: GradleDsl, addBuildSrcVersionCatalogDependency: Boolean): Unit = runBlocking {
-        val kotlinJvmPluginVersion = "2.2.20"
+        val kotlinJvmPluginVersion = "2.2.21"
         val versionTomlContent = """
             |[versions]
             |kotlin = "$kotlinJvmPluginVersion"

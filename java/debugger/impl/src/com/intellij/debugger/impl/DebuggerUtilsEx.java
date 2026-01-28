@@ -18,6 +18,7 @@ import com.intellij.debugger.jdi.GeneratedReferenceType;
 import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.ui.CollectionHistoryView;
+import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettingsUtils;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -71,10 +72,7 @@ import com.sun.jdi.event.EventSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -819,6 +817,39 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       }
     }
     return null;
+  }
+
+  @ApiStatus.Internal
+  public static void setStaticBooleanField(@NotNull DebugProcessImpl process,
+                                           @NotNull String className,
+                                           @NotNull String fieldName,
+                                           boolean value) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    final RequestManagerImpl requestsManager = process.getRequestsManager();
+    ClassPrepareRequestor requestor = new ClassPrepareRequestor() {
+      @Override
+      public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
+        try {
+          requestsManager.deleteRequest(this);
+          Field field = findField(referenceType, fieldName);
+          BooleanValue mirror = referenceType.virtualMachine().mirrorOf(value);
+          ((ClassType)referenceType).setValue(field, mirror);
+        }
+        catch (Exception e) {
+          LOG.warn("Error while setting field '" + fieldName + "' in class '" + className + "'", e);
+        }
+      }
+    };
+    requestsManager.callbackOnPrepareClasses(requestor, className);
+    try {
+      ClassType classType = (ClassType)process.findClass(null, className, null);
+      if (classType != null) {
+        requestor.processClassPrepare(process, classType);
+      }
+    }
+    catch (Exception e) {
+      LOG.warn("Error while setting field '" + fieldName + "' in class '" + className + "'", e);
+    }
   }
 
   private static class JavaXSourcePosition implements XSourcePosition, ExecutionPointHighlighter.HighlighterProvider {
