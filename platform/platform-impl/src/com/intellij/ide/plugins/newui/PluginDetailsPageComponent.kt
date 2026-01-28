@@ -971,9 +971,6 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     val descriptorForActions = descriptorForActions!!
     var version = descriptorForActions.version
-    if (descriptorForActions.isBundled && !descriptorForActions.allowBundledUpdate) {
-      version = IdeBundle.message("plugin.version.bundled") + (if (Strings.isEmptyOrSpaces(version)) "" else " $version")
-    }
     if (updateDescriptor != null) {
       version = NewUiUtil.getUpdateVersionText(descriptorForActions.version, updateDescriptor!!.version)
     }
