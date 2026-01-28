@@ -9,13 +9,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.getPresentablePath
+import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
@@ -39,12 +35,15 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Dimension
 import java.nio.file.Paths
+import java.util.*
+import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 import javax.swing.JList
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
+import kotlin.math.min
 
 internal class GitWorkingTreeDialog(
   private val data: GitWorkingTreePreDialogData,
@@ -101,10 +100,8 @@ internal class GitWorkingTreeDialog(
   override fun createCenterPanel(): JComponent {
     return panel {
       row(GitBundle.message("working.tree.dialog.label.existing.branch")) {
-        val localBranchesWithTrees: List<BranchWithWorkingTree?> = computeBranchesWithWorkingTrees()
-        val comboBox = comboBox(localBranchesWithTrees, BranchWithTreeCellRenderer(data.project, data.repository))
-        comboBox.bindItem(existingBranchWithWorkingTree).align(Align.FILL).validationOnApply { validateExistingBranchOnApply() }
-        comboBox.component.isSwingPopup = false
+        createBranchComboBox()
+          .bindItem(existingBranchWithWorkingTree).align(Align.FILL).validationOnApply { validateExistingBranchOnApply() }
       }
 
       row {
@@ -129,6 +126,23 @@ internal class GitWorkingTreeDialog(
         supportFieldCommentsAndPathValidation()
       }
     }
+  }
+
+  private fun Row.createBranchComboBox(): Cell<ComboBox<BranchWithWorkingTree?>> {
+    val localBranchesWithTrees: List<BranchWithWorkingTree?> = computeBranchesWithWorkingTrees()
+    val model = DefaultComboBoxModel(Vector(localBranchesWithTrees))
+    val component = object : ComboBox<BranchWithWorkingTree?>(model) {
+      override fun getPreferredSize(): Dimension? {
+        val dimension = super.getPreferredSize()
+        dimension.width = min(dimension.width, JBUI.scale(300))
+        return dimension
+      }
+    }
+    component.isSwingPopup = false
+    component.isUsePreferredSizeAsMinimum = false
+    component.renderer = BranchWithTreeCellRenderer(data.project, data.repository)
+
+    return cell(component)
   }
 
   private fun ValidationInfoBuilder.validateExistingBranchOnApply(): ValidationInfo? {
@@ -268,39 +282,10 @@ internal class GitWorkingTreeDialog(
                                                 favoriteToggleOnClick = false,
                                                 selected = selected)
 
-      val renderingData = TextToRender(branch.name, value.workingTree?.path?.name, isInPopup = index >= 0)
-      append(renderingData.branchNameToRender)
-      renderingData.workingTreeNameToRender?.apply {
+      append(branch.name)
+      value.workingTree?.path?.name?.apply {
         append("   ")
-        append(renderingData.workingTreeNameToRender, SimpleTextAttributes.GRAYED_ATTRIBUTES)
-      }
-    }
-
-    private class TextToRender(branchName: String, workingTreeName: String?, isInPopup: Boolean) {
-      val branchNameToRender: String
-      val workingTreeNameToRender: String?
-
-      init {
-        fun fitIntoLimit(text: String, limit: Int): String {
-          return StringUtil.shortenTextWithEllipsis(text, limit, (limit - "...".length) / 2)
-        }
-
-        val limit = if (isInPopup) 100 else 50
-
-        val minimalBranchText = StringUtil.shortenTextWithEllipsis(branchName, 6, 0)
-        if (workingTreeName != null && workingTreeName.length > limit - minimalBranchText.length) {
-          branchNameToRender = minimalBranchText
-          workingTreeNameToRender = fitIntoLimit(workingTreeName, limit - branchNameToRender.length)
-
-        }
-        else if (workingTreeName != null) {
-          workingTreeNameToRender = workingTreeName
-          branchNameToRender = fitIntoLimit(branchName, limit - workingTreeNameToRender.length)
-        }
-        else {
-          workingTreeNameToRender = null
-          branchNameToRender = fitIntoLimit(branchName, limit)
-        }
+        append(this, SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
     }
   }
