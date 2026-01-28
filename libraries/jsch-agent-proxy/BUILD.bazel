@@ -9,10 +9,27 @@ resourcegroup(
 
 jvm_library(
   name = "jsch-agent-proxy",
+  module_name = "intellij.libraries.jsch.agent.proxy",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":jsch-agent-proxy_resources"],
   exports = ["@lib//:libraries-jsch-agent-proxy-jsch-agent-proxy"],
   runtime_deps = ["@lib//:libraries-jsch-agent-proxy-jsch-agent-proxy"]
 )
+
+jvm_library(
+  name = "jsch-agent-proxy_test_lib",
+  module_name = "intellij.libraries.jsch.agent.proxy",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-jsch-agent-proxy-jsch-agent-proxy"],
+  runtime_deps = [":jsch-agent-proxy"]
+)
 ### auto-generated section `build intellij.libraries.jsch.agent.proxy` end
+
+### auto-generated section `iml intellij.libraries.jsch.agent.proxy` start
+exports_files([
+  "intellij.libraries.jsch.agent.proxy.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.libraries.jsch.agent.proxy` end
