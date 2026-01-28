@@ -35,7 +35,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiFileImpl
@@ -181,15 +180,7 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     val sorter = createSorter(parameters)
     val withRelevanceSorter = resultSet.withRelevanceSorter(sorter)
 
-    resultSet.restartCompletionOnPrefixChange(
-      StandardPatterns.string().with(object : PatternCondition<String>("add filter for command completion") {
-        override fun accepts(prefix: String, context: ProcessingContext?): Boolean {
-          val fullSuffix = commandCompletionFactory.suffix() + (commandCompletionFactory.filterSuffix()?.toString() ?: "")
-          return (!isReadOnly &&
-                  (commandCompletionType.suffix + prefix == fullSuffix) || prefix.endsWith(fullSuffix)) ||
-                 (isReadOnly && (commandCompletionType.suffix + prefix == (commandCompletionFactory.filterSuffix()?.toString() ?: "")))
-        }
-      }))
+    registerRestartPatterns(resultSet, commandCompletionFactory, commandCompletionType, isReadOnly)
 
     // Fetch commands applicable to the position
     processCommandsForContext(commandCompletionFactory = commandCompletionFactory,
@@ -226,6 +217,24 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
         }
       }
       true
+    }
+  }
+
+  private fun registerRestartPatterns(
+    resultSet: CompletionResultSet,
+    commandCompletionFactory: CommandCompletionFactory,
+    commandCompletionType: InvocationCommandType,
+    isReadOnly: Boolean,
+  ) {
+    val filterSuffix = commandCompletionFactory.filterSuffix()?.toString() ?: ""
+    val fullSuffix = commandCompletionFactory.suffix() + filterSuffix
+
+    resultSet.restartCompletionOnPrefixChange(StandardPatterns.string().endsWith(fullSuffix))
+
+    val patternToCheck = if (isReadOnly) filterSuffix else fullSuffix
+    if (patternToCheck.startsWith(commandCompletionType.suffix)) {
+      val patternToRestart = patternToCheck.removePrefix(commandCompletionType.suffix)
+      resultSet.restartCompletionOnPrefixChange(StandardPatterns.string().equalTo(patternToRestart))
     }
   }
 
