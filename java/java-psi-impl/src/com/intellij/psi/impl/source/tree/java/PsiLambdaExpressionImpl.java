@@ -80,31 +80,60 @@ public final class PsiLambdaExpressionImpl extends JavaStubPsiElement<Functional
   }
 
   @Override
-  public boolean isValueCompatible() {
+  public boolean isValueCompatible(@Nullable PsiType functionalInterfaceType) {
     //it could be called when functional type of lambda expression is not yet defined (during lambda expression compatibility constraint reduction)
     //thus inferred results for calls inside could be wrong and should not be cached
-    final Boolean result = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(this, false, () -> isValueCompatibleNoCache());
+    final Boolean result = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(this, false,
+                                                                                      () -> isValueCompatibleNoCache(functionalInterfaceType));
     return result != null && result;
   }
 
-  private boolean isValueCompatibleNoCache() {
+  private boolean isValueCompatibleNoCache(@Nullable PsiType functionalInterfaceType) {
     final PsiElement body = getBody();
     if (body instanceof PsiCodeBlock) {
-      try {
-        ControlFlow controlFlow = ControlFlowFactory.getControlFlow(body, ourPolicy, ControlFlowOptions.NO_CONST_EVALUATE);
-        int startOffset = controlFlow.getStartOffset(body);
-        int endOffset = controlFlow.getEndOffset(body);
-        if (startOffset != -1 && endOffset != -1 && ControlFlowUtil.canCompleteNormally(controlFlow, startOffset, endOffset)) {
-          return false;
-        }
-      }
-      //error would be shown inside body
-      catch (AnalysisCanceledException ignore) {}
+      if (PsiTreeUtil.findChildOfType(body, PsiSwitchStatement.class) != null) {
+        // for switch statements, it is necessary to check that it is not enhanced.
+        // To check it, a proposed function type is necessary,
+        // let's add explicit parameter types to the lambda expression to prevent recursions.
+        if (functionalInterfaceType == null) return noEmptyReturn((PsiCodeBlock)body);
 
-      for (PsiReturnStatement statement : PsiUtil.findReturnStatements((PsiCodeBlock)body)) {
-        if (statement.getReturnValue() == null) {
-          return false;
+        String parameterList =
+          LambdaUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, this, false);
+
+        if (parameterList == null) return noEmptyReturn((PsiCodeBlock)body);
+
+        PsiLambdaExpression psiLambdaExpression = (PsiLambdaExpression)JavaPsiFacade.getElementFactory(this.getProject())
+          .createExpressionFromText(parameterList + "->" + body.getText(), this);
+
+        if (psiLambdaExpression.getBody() instanceof PsiCodeBlock) {
+          return isBodyValueCompatibleNoCache((PsiCodeBlock)psiLambdaExpression.getBody());
         }
+        return noEmptyReturn((PsiCodeBlock)body);
+      }
+      return isBodyValueCompatibleNoCache((PsiCodeBlock)body);
+    }
+    return true;
+  }
+
+  private static boolean isBodyValueCompatibleNoCache(@NotNull PsiCodeBlock body) {
+    try {
+      ControlFlow controlFlow = ControlFlowFactory.getControlFlow(body, ourPolicy, ControlFlowOptions.NO_CONST_EVALUATE);
+      int startOffset = controlFlow.getStartOffset(body);
+      int endOffset = controlFlow.getEndOffset(body);
+      if (startOffset != -1 && endOffset != -1 && ControlFlowUtil.canCompleteNormally(controlFlow, startOffset, endOffset)) {
+        return false;
+      }
+    }
+    //error would be shown inside body
+    catch (AnalysisCanceledException ignore) {}
+
+    return noEmptyReturn(body);
+  }
+
+  private static boolean noEmptyReturn(@NotNull PsiCodeBlock body) {
+    for (PsiReturnStatement statement : PsiUtil.findReturnStatements(body)) {
+      if (statement.getReturnValue() == null) {
+        return false;
       }
     }
     return true;
@@ -211,7 +240,7 @@ public final class PsiLambdaExpressionImpl extends JavaStubPsiElement<Functional
   }
 
   @Override
-  public boolean isPotentiallyCompatible(PsiType left) {
+  public boolean isPotentiallyCompatible(@Nullable PsiType left) {
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(left);
     if (interfaceMethod == null) return false;
 
@@ -228,7 +257,7 @@ public final class PsiLambdaExpressionImpl extends JavaStubPsiElement<Functional
       }
     }
     else {
-      return body instanceof PsiCodeBlock && isValueCompatible() || body instanceof PsiExpression;
+      return body instanceof PsiCodeBlock && isValueCompatible(left) || body instanceof PsiExpression;
     }
   }
 

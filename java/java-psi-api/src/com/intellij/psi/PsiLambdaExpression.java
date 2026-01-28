@@ -50,7 +50,14 @@ public interface PsiLambdaExpression extends PsiFunctionalExpression, PsiParamet
 
   boolean isVoidCompatible();
 
-  boolean isValueCompatible();
+  /**
+   * See jls 15.27.2, check if this lambda expression is value-compatible.
+   * According to it, it is necessary to check that it cannot complete normally.
+   * For switch statements, it is necessary to check that it is not enhanced. To check it, a proposed function type is necessary
+   * @param functionalInterfaceType - proposed function type
+   * @return if it is value-compatible
+   */
+  boolean isValueCompatible(@Nullable PsiType functionalInterfaceType);
 
   /**
    * @return true when lambda declares parameter types explicitly

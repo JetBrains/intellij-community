@@ -72,7 +72,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
         }
       }
       else {
-        if (lambdaBody instanceof PsiCodeBlock && !myExpression.isValueCompatible()) {
+        if (lambdaBody instanceof PsiCodeBlock && !myExpression.isValueCompatible(groundTargetType)) {
           session.registerIncompatibleErrorMessage(JavaPsiBundle.message("error.incompatible.type.expected.value.lambda"));
           return false;
         }
