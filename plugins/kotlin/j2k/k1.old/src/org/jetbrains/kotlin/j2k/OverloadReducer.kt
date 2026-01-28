@@ -3,8 +3,10 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.psi.*
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.ast.*
 
+@K1Deprecation
 class OverloadReducer(
         private val methods: Collection<PsiMethod>,
         private val isOpenClass: Boolean,
@@ -158,6 +160,7 @@ class OverloadReducer(
     }
 }
 
+@K1Deprecation
 fun Converter.convertParameterList(
         method: PsiMethod,
         overloadReducer: OverloadReducer?,

@@ -4,10 +4,12 @@ package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.openapi.components.*
 import com.intellij.util.xmlb.XmlSerializerUtil
+import org.jetbrains.kotlin.K1Deprecation
 
 /**
  * @see KotlinCommonRefactoringSettings
  */
+@K1Deprecation
 @State(name = "KotlinRefactoringSettings", storages = [Storage("kotlinRefactoring.xml")], category = SettingsCategory.CODE)
 class KotlinRefactoringSettings : PersistentStateComponent<KotlinRefactoringSettings> {
     @JvmField

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 object JavaClassOnCompanionFixes : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         val expression = diagnostic.psiElement.parent as? KtDotQualifiedExpression ?: return emptyList()
@@ -27,6 +29,7 @@ object JavaClassOnCompanionFixes : KotlinIntentionActionsFactory() {
     }
 }
 
+@K1Deprecation
 class ReplaceWithCompanionClassJavaFix(
     expression: KtDotQualifiedExpression,
     private val companionName: String
@@ -40,6 +43,7 @@ class ReplaceWithCompanionClassJavaFix(
     }
 }
 
+@K1Deprecation
 class ReplaceWithClassJavaFix(
     expression: KtDotQualifiedExpression
 ) : KotlinQuickFixAction<KtDotQualifiedExpression>(expression), LowPriorityAction {

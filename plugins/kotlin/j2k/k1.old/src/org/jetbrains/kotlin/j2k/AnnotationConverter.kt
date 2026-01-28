@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.j2k
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.j2k.content
 import org.jetbrains.kotlin.j2k.ast.*
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.nj2k.isInSingleLine
 import java.lang.annotation.ElementType
 import java.lang.annotation.Target
 
+@K1Deprecation
 class AnnotationConverter(private val converter: Converter) {
     private val annotationsToRemove: Set<String> = (NullableNotNullManager.getInstance(converter.project).notNulls
                                                     + NullableNotNullManager.getInstance(converter.project).nullables

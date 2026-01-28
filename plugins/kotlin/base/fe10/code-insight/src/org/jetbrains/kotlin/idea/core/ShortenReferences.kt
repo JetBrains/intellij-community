@@ -16,6 +16,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.KotlinBaseFe10CodeInsightBundle
 import org.jetbrains.kotlin.idea.base.psi.*
@@ -47,6 +48,7 @@ import org.jetbrains.kotlin.resolve.scopes.utils.findFirstClassifierWithDeprecat
 import org.jetbrains.kotlin.resolve.scopes.utils.findPackage
 import org.jetbrains.kotlin.resolve.source.getPsi
 
+@K1Deprecation
 class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT }) {
     /**
      * If [shortenNestedReferences] is set to true, references potentially deep inside the specified elements are shortened. Any nested

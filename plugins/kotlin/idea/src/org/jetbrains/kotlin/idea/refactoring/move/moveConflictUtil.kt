@@ -27,6 +27,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewTypeLocation
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -85,6 +86,7 @@ import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.util.*
 
+@K1Deprecation
 fun analyzeConflictsInFile(
     file: KtFile,
     usages: Collection<UsageInfo>,
@@ -114,6 +116,7 @@ fun analyzeConflictsInFile(
     return conflicts
 }
 
+@K1Deprecation
 class KotlinMoveConflictCheckerInfo(
     val project: Project,
     val elementsToMove: Collection<KtElement>,
@@ -126,6 +129,7 @@ class KotlinMoveConflictCheckerInfo(
     fun isToBeMoved(element: PsiElement): Boolean = allElementsToMove.any { it.isAncestor(element, false) }
 }
 
+@K1Deprecation
 fun checkAllConflicts(
     moveCheckerInfo: KotlinMoveConflictCheckerInfo,
     internalUsages: MutableSet<UsageInfo>,
@@ -289,6 +293,7 @@ private fun analyzeModuleConflictsInUsages(
     return conflicts
 }
 
+@K1Deprecation
 fun checkModuleConflictsInUsages(
     moveCheckerInfo: KotlinMoveConflictCheckerInfo,
     externalUsages: MutableSet<UsageInfo>
@@ -315,6 +320,7 @@ private fun getScopeWithPlatformAwareDependencies(module: Module): SearchScope {
         .fold(baseScope as SearchScope) { scope, jdkEntry -> scope and !JdkScope(module.project, jdkEntry) }
 }
 
+@K1Deprecation
 @OptIn(ExperimentalMultiplatform::class)
 fun checkModuleConflictsInDeclarations(
     moveCheckerInfo: KotlinMoveConflictCheckerInfo,
@@ -394,6 +400,7 @@ fun checkModuleConflictsInDeclarations(
     return conflicts
 }
 
+@K1Deprecation
 fun checkVisibilityInUsages(
     moveCheckerInfo: KotlinMoveConflictCheckerInfo,
     usages: Collection<UsageInfo>
@@ -434,6 +441,7 @@ fun checkVisibilityInUsages(
     return conflicts
 }
 
+@K1Deprecation
 fun checkVisibilityInDeclarations(moveCheckerInfo: KotlinMoveConflictCheckerInfo): MultiMap<PsiElement, String> {
     val conflicts = MultiMap<PsiElement, String>()
     val targetContainer = moveCheckerInfo.moveTarget.getContainerDescriptor(moveCheckerInfo.context) ?: return MultiMap.empty()
@@ -516,6 +524,7 @@ fun checkVisibilityInDeclarations(moveCheckerInfo: KotlinMoveConflictCheckerInfo
     return conflicts
 }
 
+@K1Deprecation
 fun checkInternalMemberUsages(moveCheckerInfo: KotlinMoveConflictCheckerInfo): MultiMap<PsiElement, String> {
     val conflicts = MultiMap<PsiElement, String>()
     val targetModule = moveCheckerInfo.moveTarget.getTargetModule(moveCheckerInfo.project) ?: return MultiMap.empty()
@@ -548,6 +557,7 @@ fun checkInternalMemberUsages(moveCheckerInfo: KotlinMoveConflictCheckerInfo): M
     return conflicts
 }
 
+@K1Deprecation
 fun checkSealedClassMove(moveCheckerInfo: KotlinMoveConflictCheckerInfo): MultiMap<PsiElement, String> {
     val languageVersionSettings = moveCheckerInfo.project.languageVersionSettings
     return if (languageVersionSettings.supportsFeature(LanguageFeature.AllowSealedInheritorsInDifferentFilesOfSamePackage)) {
@@ -612,6 +622,7 @@ private fun checkSealedClassMoveWithinPackageAndModule(moveChecker: KotlinMoveCo
     return conflicts
 }
 
+@K1Deprecation
 fun checkNameClashes(moveCheckerInfo: KotlinMoveConflictCheckerInfo): MultiMap<PsiElement, String> {
     fun <T> equivalent(a: T, b: T): Boolean = when (a) {
         is DeclarationDescriptor -> when (a) {

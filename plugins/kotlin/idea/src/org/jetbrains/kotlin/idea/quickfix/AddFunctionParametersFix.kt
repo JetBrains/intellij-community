@@ -11,6 +11,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.isKFunctionType
 import org.jetbrains.kotlin.builtins.isKSuspendFunctionType
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 
+@K1Deprecation
 class AddFunctionParametersFix(
     callElement: KtCallElement,
     functionDescriptor: FunctionDescriptor,

@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.DefaultScriptingSupport
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.psi.KtFile
  * [org.jetbrains.kotlin.idea.core.script.k1.configuration.listener.ScriptChangesNotifier] will call first applicable [ScriptChangeListener] when editor is activated or document changed.
  * Listener should do something to invalidate configuration and schedule reloading.
  */
+@K1Deprecation
 abstract class ScriptChangeListener(val project: Project) {
     val default: DefaultScriptingSupport
         get() = DefaultScriptingSupport.getInstance(project)

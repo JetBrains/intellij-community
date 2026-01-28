@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.SLRUCache
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.analyzer.EmptyResolverForProject
@@ -295,7 +296,9 @@ internal class ProjectResolutionFacade(
     }
 }
 
+@K1Deprecation
 const val CHECK_CANCELLATION_PERIOD_MS: Long = 50
+@K1Deprecation
 inline fun <T> ReentrantLock.tryGuarded(crossinline computable: () -> T): T? =
     if (tryLock(CHECK_CANCELLATION_PERIOD_MS, TimeUnit.MILLISECONDS)) {
         try {

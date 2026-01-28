@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.ModalityUiUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
@@ -49,6 +50,7 @@ import org.jetbrains.kotlin.resolve.scopes.collectSyntheticExtensionProperties
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
+@K1Deprecation
 class ConflictingExtensionPropertyInspection : AbstractKotlinInspection() {
     @OptIn(FrontendInternals::class)
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {

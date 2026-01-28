@@ -2,12 +2,14 @@
 
 package org.jetbrains.kotlin.resolve.scopes
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.Printer
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
+@K1Deprecation
 class ExplicitImportsScope(private val descriptors: Collection<DeclarationDescriptor>) : BaseImportingScope(null) {
     override fun getContributedClassifier(name: Name, location: LookupLocation): ClassifierDescriptor? {
         return descriptors.filter { it.name == name }.firstIsInstanceOrNull<ClassifierDescriptor>()

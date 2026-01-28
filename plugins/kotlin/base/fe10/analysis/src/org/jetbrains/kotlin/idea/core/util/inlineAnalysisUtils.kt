@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.core.util
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.serialization.deserialization.descriptors.Deserializ
  * Analyzes all inline function calls in [file] and returns the list of files (including [file]) that contain all reachable inline
  * functions.
  */
+@K1Deprecation
 fun analyzeInlinedFunctions(
     resolutionFacadeForFile: ResolutionFacade,
     file: KtFile,
@@ -25,6 +27,7 @@ fun analyzeInlinedFunctions(
         allFiles()
     }
 
+@K1Deprecation
 class InlineFunctionAnalyzer(
     private val resolutionFacade: ResolutionFacade,
     private val analyzeOnlyReifiedInlineFunctions: Boolean,

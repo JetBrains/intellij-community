@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.core.quoteSegmentsIfNeeded
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.psi.KtPackageDirective
 
 private const val PACKAGE_NAME_VAR = "PACKAGE_NAME"
 
+@K1Deprecation
 @ApiStatus.Internal
 class ChangePackageIntention : SelfTargetingOffsetIndependentIntention<KtPackageDirective>(
     KtPackageDirective::class.java,

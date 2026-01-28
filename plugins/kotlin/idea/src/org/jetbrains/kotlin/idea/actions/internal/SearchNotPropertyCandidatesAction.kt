@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 
 
+@K1Deprecation
 class SearchNotPropertyCandidatesAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project!!

@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -41,6 +42,7 @@ import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
 
+@K1Deprecation
 class KotlinFunctionCallUsage(
     element: KtCallElement,
     private val callee: KotlinCallableDefinitionUsage<*>,

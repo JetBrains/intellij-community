@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
+@K1Deprecation
 class AnonymousFunctionToLambdaIntention : SelfTargetingRangeIntention<KtNamedFunction>(
     KtNamedFunction::class.java,
     KotlinBundle.messagePointer("convert.to.lambda.expression"),

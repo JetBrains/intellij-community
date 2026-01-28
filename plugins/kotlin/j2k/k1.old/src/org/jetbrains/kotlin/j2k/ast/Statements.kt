@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.j2k.ast
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.j2k.append
 
+@K1Deprecation
 abstract class Statement : Element() {
     object Empty : Statement() {
         override fun generateCode(builder: CodeBuilder) { }
@@ -12,24 +14,28 @@ abstract class Statement : Element() {
     }
 }
 
+@K1Deprecation
 class DeclarationStatement(val elements: List<Element>) : Statement() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append(elements, "\n")
     }
 }
 
+@K1Deprecation
 class ExpressionListStatement(val expressions: List<Expression>) : Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append(expressions, "\n")
     }
 }
 
+@K1Deprecation
 class LabeledStatement(val name: Identifier, val statement: Element) : Statement() {
     override fun generateCode(builder: CodeBuilder) {
         builder append name append "@" append " " append statement
     }
 }
 
+@K1Deprecation
 class ReturnStatement(val expression: Expression, val label: Identifier? = null) : Statement() {
     override fun generateCode(builder: CodeBuilder) {
         builder append "return"
@@ -40,6 +46,7 @@ class ReturnStatement(val expression: Expression, val label: Identifier? = null)
     }
 }
 
+@K1Deprecation
 class IfStatement(
   val condition: Expression,
   private val thenStatement: Element,
@@ -63,6 +70,7 @@ class IfStatement(
 
 // Loops --------------------------------------------------------------------------------------------------
 
+@K1Deprecation
 class WhileStatement(val condition: Expression, val body: Element, singleLine: Boolean) : Statement() {
     private val br = if (singleLine) " " else "\n"
 
@@ -74,6 +82,7 @@ class WhileStatement(val condition: Expression, val body: Element, singleLine: B
     }
 }
 
+@K1Deprecation
 class DoWhileStatement(val condition: Expression, val body: Element, singleLine: Boolean) : Statement() {
     private val br = if (singleLine) " " else "\n"
 
@@ -82,6 +91,7 @@ class DoWhileStatement(val condition: Expression, val body: Element, singleLine:
     }
 }
 
+@K1Deprecation
 class ForeachStatement(
   private val variableName: Identifier,
   private val explicitVariableType: Type?,
@@ -104,12 +114,14 @@ class ForeachStatement(
     }
 }
 
+@K1Deprecation
 class BreakStatement(val label: Identifier = Identifier.Empty) : Statement() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append("break").appendWithPrefix(label, "@")
     }
 }
 
+@K1Deprecation
 class ContinueStatement(val label: Identifier = Identifier.Empty) : Statement() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append("continue").appendWithPrefix(label, "@")
@@ -118,6 +130,7 @@ class ContinueStatement(val label: Identifier = Identifier.Empty) : Statement() 
 
 // Exceptions ----------------------------------------------------------------------------------------------
 
+@K1Deprecation
 class TryStatement(val block: Block, private val catches: List<CatchStatement>, val finallyBlock: Block) : Statement() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append("try\n").append(block).append("\n").append(catches, "\n").append("\n")
@@ -127,12 +140,14 @@ class TryStatement(val block: Block, private val catches: List<CatchStatement>, 
     }
 }
 
+@K1Deprecation
 class ThrowStatement(val expression: Expression) : Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder append "throw " append expression
     }
 }
 
+@K1Deprecation
 class CatchStatement(val variable: FunctionParameter, val block: Block) : Statement() {
     override fun generateCode(builder: CodeBuilder) {
         builder append "catch (" append variable append ") " append block
@@ -141,26 +156,31 @@ class CatchStatement(val variable: FunctionParameter, val block: Block) : Statem
 
 // when --------------------------------------------------------------------------------------------------
 
+@K1Deprecation
 class WhenStatement(val subject: Expression, private val caseContainers: List<WhenEntry>) : Statement() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append("when (").append(subject).append(") {\n").append(caseContainers, "\n").append("\n}")
     }
 }
 
+@K1Deprecation
 class WhenEntry(private val selectors: List<WhenEntrySelector>, val body: Statement) : Statement() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append(selectors, ", ").append(" -> ").append(body)
     }
 }
 
+@K1Deprecation
 abstract class WhenEntrySelector : Statement()
 
+@K1Deprecation
 class ValueWhenEntrySelector(val expression: Expression) : WhenEntrySelector() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append(expression)
     }
 }
 
+@K1Deprecation
 class ElseWhenEntrySelector : WhenEntrySelector() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append("else")
@@ -169,6 +189,7 @@ class ElseWhenEntrySelector : WhenEntrySelector() {
 
 // Other ------------------------------------------------------------------------------------------------------
 
+@K1Deprecation
 class SynchronizedStatement(val expression: Expression, val block: Block) : Statement() {
     override fun generateCode(builder: CodeBuilder) {
         builder append "synchronized (" append expression append ") " append block

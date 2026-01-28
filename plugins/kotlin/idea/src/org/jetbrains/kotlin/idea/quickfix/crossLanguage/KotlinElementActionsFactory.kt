@@ -23,6 +23,7 @@ import com.intellij.psi.util.PropertyUtil
 import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.asSafely
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -63,6 +64,7 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class KotlinElementActionsFactory : JvmElementActionsFactory() {
     companion object {
         val javaPsiModifiersMapping = mapOf(

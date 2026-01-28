@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.DummyHolder
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.j2k.ast.Element
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
+@K1Deprecation
 class OldJavaToKotlinConverter(
     private val project: Project,
     private val settings: ConverterSettings

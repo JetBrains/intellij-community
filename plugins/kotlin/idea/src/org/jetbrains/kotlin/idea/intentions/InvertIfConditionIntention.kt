@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
+@K1Deprecation
 class InvertIfConditionIntention : SelfTargetingIntention<KtIfExpression>(
     KtIfExpression::class.java,
     KotlinBundle.messagePointer("invert.if.condition")

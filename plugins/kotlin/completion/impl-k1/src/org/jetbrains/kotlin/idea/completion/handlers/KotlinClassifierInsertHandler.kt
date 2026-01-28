@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.analysis.canAddRootPrefix
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
@@ -34,6 +35,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.util.unwrapIfTypeAlias
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 object KotlinClassifierInsertHandler : BaseDeclarationInsertHandler() {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         surroundWithBracesIfInStringTemplate(context)

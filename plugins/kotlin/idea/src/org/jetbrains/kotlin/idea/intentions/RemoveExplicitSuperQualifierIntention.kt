@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
@@ -21,11 +22,13 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.error.ErrorUtils
 
+@K1Deprecation
 @Suppress("DEPRECATION")
 class RemoveExplicitSuperQualifierInspection : IntentionBasedInspection<KtSuperExpression>(
     RemoveExplicitSuperQualifierIntention::class
 ), CleanupLocalInspectionTool
 
+@K1Deprecation
 class RemoveExplicitSuperQualifierIntention : SelfTargetingRangeIntention<KtSuperExpression>(
     KtSuperExpression::class.java,
     KotlinBundle.messagePointer("remove.explicit.supertype.qualification")

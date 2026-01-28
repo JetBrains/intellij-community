@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProcessCanceledException
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.CompilerType
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingContext
 import java.util.concurrent.ExecutionException
 
+@K1Deprecation
 abstract class CodeFragmentCompilingStrategy(val codeFragment: KtCodeFragment) {
     internal val stats: CodeFragmentCompilationStats = CodeFragmentCompilationStats()
 
@@ -33,6 +35,7 @@ abstract class CodeFragmentCompilingStrategy(val codeFragment: KtCodeFragment) {
     }
 }
 
+@K1Deprecation
 class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragmentCompilingStrategy(codeFragment) {
     override fun getFilesToCompile(resolutionFacade: ResolutionFacade, bindingContext: BindingContext): List<KtFile> {
         // The IR Evaluator is sensitive to the analysis order of files in fragment compilation:

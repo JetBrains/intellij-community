@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 interface BoundTypeCalculator {
     fun expressionsWithBoundType(): List<Pair<KtExpression, BoundType>>
 
@@ -33,6 +35,7 @@ interface BoundTypeCalculator {
     ): BoundType
 }
 
+@K1Deprecation
 open class BoundTypeCalculatorImpl(
     private val resolutionFacade: ResolutionFacade,
     private val enhancer: BoundTypeEnhancer

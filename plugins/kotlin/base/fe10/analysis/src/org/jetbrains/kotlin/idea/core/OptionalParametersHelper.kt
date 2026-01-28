@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.resolve.calls.model.isReallySuccess
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import java.util.*
 
+@K1Deprecation
 object OptionalParametersHelper {
     fun detectArgumentsToDropForDefaults(
         resolvedCall: ResolvedCall<out CallableDescriptor>,

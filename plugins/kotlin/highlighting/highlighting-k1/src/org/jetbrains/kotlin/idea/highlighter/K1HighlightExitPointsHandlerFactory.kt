@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.highlighter
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.highlighting.AbstractKotlinHighlightExitPointsHandlerFactory
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
+@K1Deprecation
 class K1HighlightExitPointsHandlerFactory : AbstractKotlinHighlightExitPointsHandlerFactory() {
 
     override fun getRelevantReturnDeclaration(returnExpression: KtReturnExpression): KtDeclarationWithBody? {

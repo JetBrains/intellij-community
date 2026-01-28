@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.types.TypeUtils
 
+@K1Deprecation
 class NullChecksToSafeCallInspection : AbstractApplicabilityBasedInspection<KtBinaryExpression>(KtBinaryExpression::class.java) {
     override fun inspectionText(element: KtBinaryExpression): String =
         KotlinBundle.message("null.checks.replaceable.with.safe.calls")

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.resolve.checkers.OptInUsageChecker.Companion.isOptInAllowed
 
+@K1Deprecation
 class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspectionBase() {
 
     context(_: KaSession)

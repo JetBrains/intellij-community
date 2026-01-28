@@ -17,6 +17,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.actions.internal.refactoringTesting.cases.MoveRefactoringCase
 import java.io.File
@@ -25,6 +26,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
+@K1Deprecation
 class MoveRefactoringAction : AnAction() {
 
     companion object {

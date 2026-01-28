@@ -12,6 +12,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
 
+@K1Deprecation
 class KotlinChangeSignatureConflictSearcher(
     private val originalInfo: ChangeInfo,
     private val refUsages: Ref<Array<UsageInfo>>

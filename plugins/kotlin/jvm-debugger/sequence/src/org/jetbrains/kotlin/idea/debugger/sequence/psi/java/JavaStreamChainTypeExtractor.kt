@@ -5,12 +5,14 @@ package org.jetbrains.kotlin.idea.debugger.sequence.psi.java
 import com.intellij.debugger.streams.core.trace.impl.handler.type.ClassTypeImpl
 import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
 import com.intellij.psi.CommonClassNames
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.CallTypeExtractor
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.KotlinPsiUtil
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinSequenceTypes
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.getImmediateSuperclassNotAny
 
+@K1Deprecation
 class JavaStreamChainTypeExtractor : CallTypeExtractor.Base() {
     override fun extractItemsType(type: KotlinType?): GenericType {
         if (type == null) {

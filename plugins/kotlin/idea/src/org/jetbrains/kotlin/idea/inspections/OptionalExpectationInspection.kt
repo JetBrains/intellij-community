@@ -6,6 +6,7 @@ import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.multiplatform.OptionalAnnotationUtil
 
+@K1Deprecation
 class OptionalExpectationInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return classOrObjectVisitor(fun(classOrObject: KtClassOrObject) {

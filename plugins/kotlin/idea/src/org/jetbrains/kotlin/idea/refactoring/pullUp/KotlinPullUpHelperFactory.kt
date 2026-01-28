@@ -9,6 +9,7 @@ import com.intellij.refactoring.memberPullUp.JavaPullUpHelper
 import com.intellij.refactoring.memberPullUp.PullUpData
 import com.intellij.refactoring.memberPullUp.PullUpHelper
 import com.intellij.refactoring.memberPullUp.PullUpHelperFactory
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.ClassKind
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
+@K1Deprecation
 class KotlinPullUpHelperFactory : PullUpHelperFactory {
     private fun PullUpData.toKotlinPullUpData(): KotlinPullUpData? {
         val sourceClass = sourceClass.unwrapped as? KtClassOrObject ?: return null
@@ -41,6 +43,7 @@ class KotlinPullUpHelperFactory : PullUpHelperFactory {
     }
 }
 
+@K1Deprecation
 class JavaToKotlinPullUpHelperFactory : PullUpHelperFactory {
     private fun createJavaToKotlinPullUpHelper(data: PullUpData): PullUpHelper<*>? {
         if (!data.sourceClass.isInheritor(data.targetClass, true)) return null

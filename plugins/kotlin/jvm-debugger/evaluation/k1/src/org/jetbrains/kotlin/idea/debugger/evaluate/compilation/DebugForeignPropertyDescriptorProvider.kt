@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.evaluation.AdditionalContextProvider
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.backend.common.SimpleMemberScope
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.org.objectweb.asm.Type
 
+@K1Deprecation
 class DebugForeignPropertyDescriptorProvider(val codeFragment: KtCodeFragment, val debugProcess: DebugProcessImpl) {
 
     private val moduleDescriptor = DebugForeignPropertyModuleDescriptor

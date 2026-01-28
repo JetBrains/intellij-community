@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.resolve.calls.components.hasDefaultValue
 import org.jetbrains.kotlin.resolve.calls.util.getValueParametersCountFromFunctionType
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 class InsertHandlerProvider(
     private val callType: CallType<*>,
     private val editor: Editor,

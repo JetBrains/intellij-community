@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.actions.generate
 
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.ui.Messages
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassOrAny
 
+@K1Deprecation
 tailrec fun ClassDescriptor.findDeclaredFunction(
     name: String,
     checkSuperClasses: Boolean,
@@ -33,6 +35,7 @@ tailrec fun ClassDescriptor.findDeclaredFunction(
     return if (checkSuperClasses) getSuperClassOrAny().findDeclaredFunction(name, checkSuperClasses = true, filter) else null
 }
 
+@K1Deprecation
 fun getPropertiesToUseInGeneratedMember(classOrObject: KtClassOrObject): List<KtNamedDeclaration> {
     return ArrayList<KtNamedDeclaration>().apply {
         classOrObject.primaryConstructorParameters.filterTo(this) { it.hasValOrVar() }
@@ -53,6 +56,7 @@ private val MEMBER_RENDERER = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_
     parameterNameRenderingPolicy = ParameterNameRenderingPolicy.NONE
 }
 
+@K1Deprecation
 fun confirmMemberRewrite(targetClass: KtClassOrObject, vararg descriptors: FunctionDescriptor): Boolean {
     if (isUnitTestMode()) return true
 
@@ -66,6 +70,7 @@ fun confirmMemberRewrite(targetClass: KtClassOrObject, vararg descriptors: Funct
     ) == Messages.YES
 }
 
+@K1Deprecation
 fun generateFunctionSkeleton(descriptor: FunctionDescriptor, targetClass: KtClassOrObject): KtNamedFunction {
     return OverrideMemberChooserObject
         .create(targetClass.project, descriptor, descriptor, BodyType.FromTemplate)

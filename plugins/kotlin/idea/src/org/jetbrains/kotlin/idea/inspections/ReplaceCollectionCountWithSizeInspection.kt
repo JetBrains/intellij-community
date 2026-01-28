@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.intentions.receiverType
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
+@K1Deprecation
 class ReplaceCollectionCountWithSizeInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return callExpressionVisitor(fun(callExpression: KtCallExpression) {
@@ -38,6 +40,7 @@ class ReplaceCollectionCountWithSizeInspection : AbstractKotlinInspection() {
     }
 }
 
+@K1Deprecation
 class ReplaceCollectionCountWithSizeQuickFix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("replace.collection.count.with.size.quick.fix.text")
 

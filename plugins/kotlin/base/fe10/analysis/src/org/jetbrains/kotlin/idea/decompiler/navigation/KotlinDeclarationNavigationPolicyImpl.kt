@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
 import org.jetbrains.kotlin.psi.KtDeclaration
 
+@K1Deprecation
 class KotlinDeclarationNavigationPolicyImpl : KotlinDeclarationNavigationPolicy {
     override fun getOriginalElement(declaration: KtDeclaration) = SourceNavigationHelper.getOriginalElement(declaration)
 

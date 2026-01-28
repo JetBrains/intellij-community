@@ -14,6 +14,7 @@ create_kotlinc_options(
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
   ]
 )
 

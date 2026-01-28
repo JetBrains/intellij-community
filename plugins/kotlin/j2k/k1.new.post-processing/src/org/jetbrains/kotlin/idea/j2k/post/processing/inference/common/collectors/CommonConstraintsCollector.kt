@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class CommonConstraintsCollector : ConstraintsCollector() {
     override fun ConstraintBuilder.collectConstraints(
         element: KtElement,

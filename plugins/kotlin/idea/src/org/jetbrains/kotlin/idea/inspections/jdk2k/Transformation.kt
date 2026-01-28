@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections.jdk2k
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.core.ShortenReferences
@@ -14,12 +15,14 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.types.isNullable
 
+@K1Deprecation
 interface Transformation {
     operator fun invoke(callExpression: KtCallExpression, replacement: Replacement)
     fun isApplicable(callExpression: KtCallExpression): Boolean = true
     fun isApplicableInContext(callExpression: KtCallExpression, context: BindingContext): Boolean = true
 }
 
+@K1Deprecation
 object WithoutAdditionalTransformation : Transformation {
     override fun invoke(callExpression: KtCallExpression, replacement: Replacement) {
         val psiFactory = KtPsiFactory(callExpression.project)
@@ -31,6 +34,7 @@ object WithoutAdditionalTransformation : Transformation {
     }
 }
 
+@K1Deprecation
 object ToExtensionFunctionWithNonNullableReceiver : Transformation {
     override fun invoke(callExpression: KtCallExpression, replacement: Replacement) {
         val file = callExpression.containingKtFile
@@ -68,6 +72,7 @@ object ToExtensionFunctionWithNonNullableReceiver : Transformation {
             ?.isNullable() == false
 }
 
+@K1Deprecation
 object ToExtensionFunctionWithNullableReceiver : Transformation {
     override fun invoke(callExpression: KtCallExpression, replacement: Replacement) =
         ToExtensionFunctionWithNonNullableReceiver(callExpression, replacement)

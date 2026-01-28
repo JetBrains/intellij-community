@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter
 
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.storage.StorageManager
 
+@K1Deprecation
 object CreateTypeParameterUnmatchedTypeArgumentActionFactory :
     KotlinIntentionActionFactoryWithDelegate<KtTypeArgumentList, CreateTypeParameterData>() {
     override fun getElementOfInterest(diagnostic: Diagnostic) = diagnostic.psiElement as? KtTypeArgumentList

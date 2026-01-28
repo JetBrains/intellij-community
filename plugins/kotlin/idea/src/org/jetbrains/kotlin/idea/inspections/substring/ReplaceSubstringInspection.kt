@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections.substring
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isSimplifiableTo
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluat
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 abstract class ReplaceSubstringInspection : AbstractApplicabilityBasedInspection<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java
 ) {

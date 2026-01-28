@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.refactoring.move.MoveHandler
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
@@ -24,6 +25,7 @@ import java.util.function.Function
 import javax.swing.JComponent
 
 
+@K1Deprecation
 class ScriptingSupportChecker: EditorNotificationProvider {
 
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {

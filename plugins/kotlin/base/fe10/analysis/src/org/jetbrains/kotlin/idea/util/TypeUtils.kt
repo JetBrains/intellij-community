@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.psi.*
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMapper
@@ -46,6 +47,7 @@ import org.jetbrains.kotlin.types.typeUtil.*
 import org.jetbrains.kotlin.utils.SmartSet
 import java.util.LinkedHashMap
 
+@K1Deprecation
 @JvmOverloads // For binary compatibility
 fun KotlinType.approximateFlexibleTypes(
     preferNotNull: Boolean = false,
@@ -57,6 +59,7 @@ fun KotlinType.approximateFlexibleTypes(
     return unwrapEnhancement().approximateNonDynamicFlexibleTypes(preferNotNull, preferStarForRaw, preferUpperBoundsForCollections)
 }
 
+@K1Deprecation
 fun KotlinType.withoutRedundantAnnotations(): KotlinType {
     var argumentsWasChanged = false
     val newArguments = arguments.map(fun(typeProjection: TypeProjection): TypeProjection {
@@ -84,6 +87,7 @@ fun KotlinType.withoutRedundantAnnotations(): KotlinType {
     )
 }
 
+@K1Deprecation
 val FqName.isRedundantJvmAnnotation: Boolean get() = this in NULLABILITY_ANNOTATIONS ||
         this in MUTABLE_ANNOTATIONS ||
         this in READ_ONLY_ANNOTATIONS
@@ -145,6 +149,7 @@ private fun KotlinType.approximateNonDynamicFlexibleTypes(
     )
 }
 
+@K1Deprecation
 fun KotlinType.isResolvableInScope(scope: LexicalScope?, checkTypeParameters: Boolean, allowIntersections: Boolean = false): Boolean {
     if (constructor is IntersectionTypeConstructor) {
         if (!allowIntersections) {
@@ -162,12 +167,14 @@ fun KotlinType.isResolvableInScope(scope: LexicalScope?, checkTypeParameters: Bo
     return scope != null && scope.findClassifier(descriptor.name, NoLookupLocation.FROM_IDE) == descriptor
 }
 
+@K1Deprecation
 fun KotlinType.approximateWithResolvableType(scope: LexicalScope?, checkTypeParameters: Boolean): KotlinType {
     if (isError || isResolvableInScope(scope, checkTypeParameters)) return this
     return supertypes().firstOrNull { it.isResolvableInScope(scope, checkTypeParameters) }
         ?: builtIns.anyType
 }
 
+@K1Deprecation
 fun KotlinType.anonymousObjectSuperTypeOrNull(): KotlinType? {
     val classDescriptor = constructor.declarationDescriptor
     if (classDescriptor != null && DescriptorUtils.isAnonymousObject(classDescriptor)) {
@@ -176,6 +183,7 @@ fun KotlinType.anonymousObjectSuperTypeOrNull(): KotlinType? {
     return null
 }
 
+@K1Deprecation
 fun KotlinType.getResolvableApproximations(
     scope: LexicalScope?,
     checkTypeParameters: Boolean,
@@ -247,6 +255,7 @@ private fun TypeProjection.fixTypeProjection(
     return type.replace(newArguments).asTypeProjection()
 }
 
+@K1Deprecation
 fun KotlinType.isAbstract(): Boolean {
     val modality = (constructor.declarationDescriptor as? ClassDescriptor)?.modality
     return modality == Modality.ABSTRACT || modality == Modality.SEALED
@@ -256,6 +265,7 @@ fun KotlinType.isAbstract(): Boolean {
  * NOTE: this is a very shaky implementation of [PsiType] to [KotlinType] conversion,
  * produced types are fakes and are usable only for code generation. Please be careful using this method.
  */
+@K1Deprecation
 @OptIn(FrontendInternals::class)
 fun PsiType.resolveToKotlinType(resolutionFacade: ResolutionFacade): KotlinType {
     if (this == PsiTypes.nullType()) {
@@ -318,10 +328,12 @@ private fun PsiType.collectTypeParameters(): List<PsiTypeParameter> {
 typealias KotlinTypeSubstitution = Map<TypeConstructor, TypeProjection>
 typealias MutableKotlinTypeSubstitution = LinkedHashMap<TypeConstructor, TypeProjection>
 
+@K1Deprecation
 fun <T: DeclarationDescriptorNonRoot> Substitutable<T>.substitute(substitution: KotlinTypeSubstitution): T {
     return substitute(substitution.toSubstitutor())
 }
 
+@K1Deprecation
 fun getTypeSubstitution(baseType: KotlinType, derivedType: KotlinType): MutableKotlinTypeSubstitution? {
     val substitutedType = TypeCheckingProcedure.findCorrespondingSupertype(derivedType, baseType) ?: return null
 
@@ -333,6 +345,8 @@ fun getTypeSubstitution(baseType: KotlinType, derivedType: KotlinType): MutableK
     return substitution
 }
 
+@K1Deprecation
 fun KotlinTypeSubstitution.toSubstitutor(): TypeSubstitutor = TypeSubstitutor.create(this)
 
+@K1Deprecation
 fun TypeSubstitutor?.orEmpty(): TypeSubstitutor = this ?: TypeSubstitutor.EMPTY

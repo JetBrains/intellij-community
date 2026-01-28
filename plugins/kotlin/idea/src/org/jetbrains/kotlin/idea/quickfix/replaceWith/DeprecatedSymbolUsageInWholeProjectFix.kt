@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInliner.unwrapSpecialUsageOrNull
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 
+@K1Deprecation
 class DeprecatedSymbolUsageInWholeProjectFix(
     element: KtReferenceExpression,
     replaceWith: ReplaceWithData,

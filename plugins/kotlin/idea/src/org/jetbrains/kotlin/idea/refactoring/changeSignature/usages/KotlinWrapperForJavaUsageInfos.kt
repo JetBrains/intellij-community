@@ -5,8 +5,10 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature.usages
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.changeSignature.JavaChangeInfo
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 
+@K1Deprecation
 class KotlinWrapperForJavaUsageInfos(
     val kotlinChangeInfo: KotlinChangeInfo,
     val javaChangeInfo: JavaChangeInfo,

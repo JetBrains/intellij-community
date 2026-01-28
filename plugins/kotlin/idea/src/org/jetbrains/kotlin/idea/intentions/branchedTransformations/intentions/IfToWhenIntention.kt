@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.AddLoopLabelUtil
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
+@K1Deprecation
 class IfToWhenIntention : SelfTargetingRangeIntention<KtIfExpression>(
     KtIfExpression::class.java,
     KotlinBundle.messagePointer("replace.if.with.when")

@@ -2,7 +2,9 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 interface QuickFixContributor {
     companion object {
         internal val EP_NAME: ExtensionPointName<QuickFixContributor> = ExtensionPointName("org.jetbrains.kotlin.quickFixContributor")

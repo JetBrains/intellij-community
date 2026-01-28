@@ -4,12 +4,14 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.util.descendantsOfType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.ConvertToStringTemplateIntention.Holder.buildReplacement
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
+@K1Deprecation
 class ConvertToRawStringTemplateIntention : ConvertToStringTemplateIntention() {
     init {
         setTextGetter(KotlinBundle.messagePointer("convert.concatenation.to.raw.string"))

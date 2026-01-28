@@ -8,6 +8,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPackage
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -130,6 +131,7 @@ internal fun KtSimpleNameExpression.getCreatePackageFixIfApplicable(targetParent
     }
 }
 
+@K1Deprecation
 data class UnsubstitutedTypeConstraintInfo(
     val typeParameter: TypeParameterDescriptor,
     private val originalSubstitution: Map<TypeConstructor, TypeProjection>,
@@ -145,11 +147,13 @@ data class UnsubstitutedTypeConstraintInfo(
     }
 }
 
+@K1Deprecation
 data class TypeConstraintInfo(
     val typeParameter: TypeParameterDescriptor,
     val upperBound: KotlinType
 )
 
+@K1Deprecation
 fun getUnsubstitutedTypeConstraintInfo(element: KtTypeElement): UnsubstitutedTypeConstraintInfo? {
     val context = element.analyze(BodyResolveMode.PARTIAL)
     val containingTypeArg = (element.parent as? KtTypeReference)?.parent as? KtTypeProjection ?: return null
@@ -163,4 +167,5 @@ fun getUnsubstitutedTypeConstraintInfo(element: KtTypeElement): UnsubstitutedTyp
     return UnsubstitutedTypeConstraintInfo(typeParameter, substitution, upperBound)
 }
 
+@K1Deprecation
 fun getTypeConstraintInfo(element: KtTypeElement) = getUnsubstitutedTypeConstraintInfo(element)?.performSubstitution()

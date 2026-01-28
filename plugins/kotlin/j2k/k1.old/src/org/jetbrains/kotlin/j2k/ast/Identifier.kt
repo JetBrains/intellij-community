@@ -3,16 +3,19 @@
 package org.jetbrains.kotlin.j2k.ast
 
 import com.intellij.psi.PsiNameIdentifierOwner
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 
+@K1Deprecation
 fun PsiNameIdentifierOwner.declarationIdentifier(): Identifier {
     val name = name
     return if (name != null) Identifier(name, false).assignPrototype(nameIdentifier) else Identifier.Empty
 }
 
+@K1Deprecation
 class Identifier(
         val name: String,
         override val isNullable: Boolean = true,

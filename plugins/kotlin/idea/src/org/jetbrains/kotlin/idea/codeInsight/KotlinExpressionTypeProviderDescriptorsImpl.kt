@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.expressions.typeInfoFactory.noTypeInfo
 
 
+@K1Deprecation
 class KotlinExpressionTypeProviderDescriptorsImpl : KotlinExpressionTypeProvider() {
 
     private val typeRenderer = KotlinIdeDescriptorRenderer.withOptions {

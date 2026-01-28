@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider
 import com.intellij.refactoring.RefactoringActionHandler
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSupportProvider
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractIntroduceAction
 
+@K1Deprecation
 class IntroducePropertyAction : AbstractIntroduceAction() {
     override fun getRefactoringHandler(provider: RefactoringSupportProvider): RefactoringActionHandler? =
         (provider as? KotlinRefactoringSupportProvider)?.getIntroducePropertyHandler()

@@ -2,11 +2,14 @@
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 data class KotlinTypeInfo(val isCovariant: Boolean, val type: KotlinType? = null, val text: String? = null)
 
+@K1Deprecation
 fun KotlinTypeInfo.render(): String = when {
     text != null -> text
     type != null -> renderType()
@@ -18,6 +21,7 @@ private fun KotlinTypeInfo.renderType(): String {
     return renderer.renderType(type!!)
 }
 
+@K1Deprecation
 fun KotlinTypeInfo.isEquivalentTo(other: KotlinTypeInfo): Boolean {
     return if (type != null && other.type != null) renderType() == other.renderType() else text == other.text
 }

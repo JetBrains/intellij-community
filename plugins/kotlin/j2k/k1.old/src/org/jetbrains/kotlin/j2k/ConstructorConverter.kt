@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.j2k
 
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.ast.*
 
+@K1Deprecation
 class ConstructorConverter(
         private val psiClass: PsiClass,
         private val converter: Converter,

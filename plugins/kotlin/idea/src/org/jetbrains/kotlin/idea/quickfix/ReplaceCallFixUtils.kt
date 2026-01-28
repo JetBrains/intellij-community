@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.psi.*
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
+@K1Deprecation
 fun KtExpression.shouldHaveNotNullType(): Boolean {
     val type = when (val parent = parent) {
         is KtBinaryExpression -> parent.left?.let { it.getType(it.analyze()) }

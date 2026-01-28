@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class ReplaceGuardClauseWithFunctionCallInspection : AbstractApplicabilityBasedInspection<KtIfExpression>(
     KtIfExpression::class.java
 ) {

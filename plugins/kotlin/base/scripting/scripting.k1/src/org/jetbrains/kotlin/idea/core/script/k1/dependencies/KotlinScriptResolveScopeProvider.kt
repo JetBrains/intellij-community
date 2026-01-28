@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.ResolveScopeProvider
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.isStandalone
 
+@K1Deprecation
 class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
 
     override fun getResolveScope(file: VirtualFile, project: Project): GlobalSearchScope? =

@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.slicer.*
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -29,6 +30,7 @@ private val LEAF_ELEMENT_EQUALITY = object : SliceLeafEquality() {
     override fun substituteElement(element: PsiElement) = (element as? KtReference)?.resolve() ?: element
 }
 
+@K1Deprecation
 class KotlinSliceProvider : SliceLanguageSupportProvider, SliceUsageTransformer {
     class KotlinGroupByNullnessAction(treeBuilder: SliceTreeBuilder) : GroupByNullnessActionBase(treeBuilder) {
         override fun isAvailable() = true

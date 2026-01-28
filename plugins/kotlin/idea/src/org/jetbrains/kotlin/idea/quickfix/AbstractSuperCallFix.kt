@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateEqualsAndHashcodeAction
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateEqualsAndHashcodeAction.Info
@@ -34,6 +35,7 @@ private const val EQUALS = "equals"
 private const val HASH_CODE = "hashCode"
 private const val TO_STRING = "toString"
 
+@K1Deprecation
 class AbstractSuperCallFix(element: KtNameReferenceExpression) : KotlinPsiOnlyQuickFixAction<KtNameReferenceExpression>(element) {
 
     companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {

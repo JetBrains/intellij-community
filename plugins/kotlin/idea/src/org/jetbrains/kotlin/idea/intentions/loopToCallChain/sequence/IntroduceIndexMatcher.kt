@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.Instruction
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.AccessTarget
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.ReadValueInstruction
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isAncestor
  * Analyzes the rest of the loop and detects index variable manually incremented inside.
  * So it does not produce any transformation in its result but adds an index variable.
  */
+@K1Deprecation
 object IntroduceIndexMatcher : TransformationMatcher {
     override val indexVariableAllowed: Boolean
         get() = false // old index variable is still needed - cannot introduce another one

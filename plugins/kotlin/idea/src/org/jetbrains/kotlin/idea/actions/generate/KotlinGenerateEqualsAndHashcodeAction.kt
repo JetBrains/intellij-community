@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
@@ -41,6 +42,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 fun ClassDescriptor.findDeclaredEquals(checkSupers: Boolean): FunctionDescriptor? {
     return findDeclaredFunction("equals", checkSupers) {
         it.modality != Modality.ABSTRACT &&
@@ -50,12 +52,14 @@ fun ClassDescriptor.findDeclaredEquals(checkSupers: Boolean): FunctionDescriptor
     }
 }
 
+@K1Deprecation
 fun ClassDescriptor.findDeclaredHashCode(checkSupers: Boolean): FunctionDescriptor? {
     return findDeclaredFunction("hashCode", checkSupers) {
         it.modality != Modality.ABSTRACT && it.valueParameters.isEmpty() && it.typeParameters.isEmpty()
     }
 }
 
+@K1Deprecation
 class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<KotlinGenerateEqualsAndHashcodeAction.Info>() {
     companion object {
         private val LOG = Logger.getInstance(KotlinGenerateEqualsAndHashcodeAction::class.java)

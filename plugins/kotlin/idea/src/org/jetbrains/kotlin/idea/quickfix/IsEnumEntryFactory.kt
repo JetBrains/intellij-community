@@ -2,10 +2,12 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 object IsEnumEntryFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val element = diagnostic.psiElement.safeAs<KtTypeReference>()?.parent ?: return null

@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -39,6 +40,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.resolve.calls.tower.isSynthesized
 
+@K1Deprecation
 class JavaToKotlinInlineHandler : AbstractCrossLanguageInlineHandler() {
     override fun prepareReference(reference: PsiReference, referenced: PsiElement): MultiMap<PsiElement, String> {
         val referenceElement = reference.element
@@ -152,6 +154,7 @@ private fun unwrapElement(unwrappedUsage: KtReferenceExpression, referenced: Psi
     return resultExpression.getQualifiedElementSelector() as KtReferenceExpression
 }
 
+@K1Deprecation
 class J2KInlineCache(private val strategy: UsageReplacementStrategy, private val originalText: String) {
     /**
      * @return [strategy] without validation if [elementToValidation] is null

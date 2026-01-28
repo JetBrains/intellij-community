@@ -14,6 +14,7 @@ import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.gradle.scripting.k1.GradleScriptDefinitionsContributor
 import org.jetbrains.kotlin.gradle.scripting.k1.roots.GradleScriptingSupport.Companion.isApplicable
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.getFullDefinitionsClasspath
@@ -57,6 +58,7 @@ import kotlin.io.path.invariantSeparatorsPathString
  *   - [org.jetbrains.kotlin.gradle.scripting.shared.roots.New] - not yet imported
  *   - [org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported] - imported
  */
+@K1Deprecation
 class GradleBuildRootsLocatorImpl(val project: Project, private val coroutineScope: CoroutineScope) : GradleBuildRootsLocator(project) {
     private val modifiedFilesCheckScheduled = AtomicBoolean()
     private val modifiedFiles = ConcurrentLinkedQueue<String>()
@@ -261,6 +263,7 @@ class GradleBuildRootsLocatorImpl(val project: Project, private val coroutineSco
     }
 }
 
+@K1Deprecation
 class GradleScriptingSupport(val project: Project) : ScriptingSupport {
     private val manager: GradleBuildRootsLocator
         get() = GradleBuildRootsLocator.getInstance(project)

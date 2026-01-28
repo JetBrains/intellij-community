@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.idea.core.expectActual
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 object ExpectActualGenerationUtils {
     /**
      * Returns an 'actual' declaration for the corresponding [expectDeclaration] in the context of the provided [module]

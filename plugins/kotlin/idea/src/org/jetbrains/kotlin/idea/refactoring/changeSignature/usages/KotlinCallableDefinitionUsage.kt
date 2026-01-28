@@ -9,6 +9,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
@@ -44,6 +45,7 @@ import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.utils.ifEmpty
 import org.jetbrains.kotlin.utils.sure
 
+@K1Deprecation
 class KotlinCallableDefinitionUsage<T : PsiElement>(
     function: T,
     val originalCallableDescriptor: CallableDescriptor,

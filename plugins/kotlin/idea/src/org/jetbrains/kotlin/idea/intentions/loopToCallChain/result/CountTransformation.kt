@@ -2,12 +2,14 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.result
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.*
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.FilterTransformationBase
 import org.jetbrains.kotlin.psi.*
 
+@K1Deprecation
 class CountTransformation(
     loop: KtForExpression,
     private val inputVariable: KtCallableDeclaration,

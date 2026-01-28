@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.extractParameterNameFromFunctionTypeArgument
 import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
 import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeProjection
 
+@K1Deprecation
 object LambdaSignatureTemplates {
     fun insertTemplate(
         context: InsertionContext,

@@ -8,10 +8,12 @@ import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiReference
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
+@K1Deprecation
 fun isCallHierarchyElement(e: PsiElement): Boolean {
     return (e is KtNamedFunction && e.name != null) ||
             e is KtSecondaryConstructor ||
@@ -21,6 +23,7 @@ fun isCallHierarchyElement(e: PsiElement): Boolean {
             e is KtFile
 }
 
+@K1Deprecation
 fun getCallHierarchyElement(element: PsiElement) = element.parentsWithSelf.firstOrNull(::isCallHierarchyElement) as? KtElement
 
 private fun NodeDescriptor<*>.incrementUsageCount() {

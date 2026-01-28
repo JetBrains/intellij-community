@@ -18,6 +18,7 @@ import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.structuralsearch.getCommentText
 import org.jetbrains.kotlin.idea.structuralsearch.handler.CommentedDeclarationHandler
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.psi2ir.deparenthesize
 import java.util.regex.Pattern
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
+@K1Deprecation
 class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisitor) : KotlinRecursiveElementVisitor() {
     private val mySubstitutionPattern = Pattern.compile("\\b(_____\\w+)\\b")
 

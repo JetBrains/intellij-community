@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageViewTypeLocation
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.typeUtil.isNullableAny
 import org.jetbrains.kotlin.utils.SmartList
 
+@K1Deprecation
 class CreateTypeParameterFromUsageFix(
     originalElement: KtElement,
     private val data: CreateTypeParameterData,

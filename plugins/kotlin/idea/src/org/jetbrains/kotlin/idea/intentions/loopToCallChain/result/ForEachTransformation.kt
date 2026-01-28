@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.result
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.*
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 
+@K1Deprecation
 class ForEachTransformation(
     loop: KtForExpression,
     private val inputVariable: KtCallableDeclaration,

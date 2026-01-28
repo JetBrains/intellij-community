@@ -9,7 +9,9 @@ import com.intellij.debugger.streams.core.trace.dsl.impl.VariableImpl
 import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class KotlinStatementFactory(private val peekCallFactory: PeekCallFactory) : StatementFactory {
     override fun createNewListExpression(elementType: GenericType, vararg args: Expression): Expression =
         TextExpression("kotlin.collections.mutableListOf<${elementType.genericTypeName}>(${StatementFactory.commaSeparate(*args)})")

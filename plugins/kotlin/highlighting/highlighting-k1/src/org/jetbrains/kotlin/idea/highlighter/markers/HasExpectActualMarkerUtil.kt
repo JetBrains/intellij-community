@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.highlighter.markers
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.moduleInfo
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
@@ -9,6 +10,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.nameForTooltip
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 
+@K1Deprecation
 @ApiStatus.Internal
 fun getModulesStringForExpectActualMarkerTooltip(
     descriptors: List<DeclarationDescriptor>

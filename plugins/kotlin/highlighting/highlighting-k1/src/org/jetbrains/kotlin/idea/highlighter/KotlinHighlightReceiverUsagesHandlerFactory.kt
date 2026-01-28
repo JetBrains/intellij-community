@@ -12,6 +12,7 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parents
 import com.intellij.util.Consumer
 import com.intellij.util.containers.sequenceOfNotNull
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.resolve.source.getPsi
 
+@K1Deprecation
 class KotlinHighlightReceiverUsagesHandlerFactory : HighlightUsagesHandlerFactoryBase() {
     override fun createHighlightUsagesHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
         if (!Registry.`is`(REGISTRY_FLAG)) return null
@@ -42,6 +44,7 @@ class KotlinHighlightReceiverUsagesHandlerFactory : HighlightUsagesHandlerFactor
     }
 }
 
+@K1Deprecation
 object ReceiverInfoSearcher {
     fun findReceiverInfoForUsageHighlighting(target: PsiElement): ReceiverInfo? =
         checkIfInThisReference(target) ?: checkIfInReceiverTypeReference(target)
@@ -127,6 +130,7 @@ object ReceiverInfoSearcher {
     }
 }
 
+@K1Deprecation
 @Suppress("StatefulEp")
 sealed class ReceiverInfo {
     abstract val psi: KtCallableDeclaration
@@ -177,6 +181,7 @@ sealed class ReceiverInfo {
     }
 }
 
+@K1Deprecation
 class KotlinHighlightReceiverUsagesHandler(
     private val receiverInfo: ReceiverInfo, editor: Editor,
     private val allowUsagesFromOtherHandlers: Boolean

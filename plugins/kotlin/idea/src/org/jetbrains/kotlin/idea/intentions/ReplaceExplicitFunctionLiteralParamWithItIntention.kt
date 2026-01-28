@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ParameterDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class ReplaceExplicitFunctionLiteralParamWithItIntention : PsiElementBaseIntentionAction() {
     override fun getFamilyName() = KotlinBundle.message("replace.explicit.lambda.parameter.with.it")
 

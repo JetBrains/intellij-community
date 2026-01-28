@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
 import java.util.*
 
+@K1Deprecation
 open class ChangeVariableTypeFix(element: KtCallableDeclaration, type: KotlinType) : KotlinQuickFixAction<KtCallableDeclaration>(element) {
     private val typeContainsError = ErrorUtils.containsErrorType(type)
     private val typePresentation = IdeDescriptorRenderers.SOURCE_CODE_TYPES_WITH_SHORT_NAMES.renderType(type)

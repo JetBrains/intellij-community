@@ -12,6 +12,7 @@ import com.intellij.refactoring.ui.NameSuggestionsField
 import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.ui.NonFocusableCheckBox
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -35,6 +36,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
+@K1Deprecation
 class KotlinIntroduceParameterDialog private constructor(
   project: Project,
   val editor: Editor,

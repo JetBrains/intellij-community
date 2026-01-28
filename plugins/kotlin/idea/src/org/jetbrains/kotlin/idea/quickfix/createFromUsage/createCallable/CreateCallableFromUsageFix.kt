@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.functions.FunctionClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
@@ -35,6 +36,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.classValueType
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import java.lang.ref.WeakReference
 
+@K1Deprecation
 class CreateExtensionCallableFromUsageFix<E : KtElement>(
     originalExpression: E,
     private val callableInfosFactory: (E) -> List<CallableInfo>?
@@ -48,6 +50,7 @@ class CreateExtensionCallableFromUsageFix<E : KtElement>(
         get() = element?.let { callableInfosFactory(it) } ?: emptyList()
 }
 
+@K1Deprecation
 class CreateCallableFromUsageFix<E : KtElement>(
     originalExpression: E,
     private val callableInfosFactory: (E) -> List<CallableInfo>?
@@ -62,6 +65,7 @@ class CreateCallableFromUsageFix<E : KtElement>(
 
 }
 
+@K1Deprecation
 abstract class AbstractCreateCallableFromUsageFixWithTextAndFamilyName<E : KtElement>(
     providedText: String,
     @Nls private val familyName: String,
@@ -73,6 +77,7 @@ abstract class AbstractCreateCallableFromUsageFixWithTextAndFamilyName<E : KtEle
     override fun getFamilyName(): String = familyName
 }
 
+@K1Deprecation
 abstract class CreateCallableFromUsageFixBase<E : KtElement>(
     originalExpression: E,
     val isExtension: Boolean

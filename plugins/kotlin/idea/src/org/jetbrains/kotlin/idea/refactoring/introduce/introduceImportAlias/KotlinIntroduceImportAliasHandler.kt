@@ -15,6 +15,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.fileScope
@@ -42,6 +43,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.exceptions.checkWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
+@K1Deprecation
 object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
     private val REFACTORING_NAME = KotlinBundle.message("name.introduce.import.alias")
 

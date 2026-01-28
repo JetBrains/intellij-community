@@ -5,7 +5,9 @@ package org.jetbrains.kotlin.j2k
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 fun ReferenceSearcher.findMethodCalls(method: PsiMethod, scope: PsiElement): Collection<PsiMethodCallExpression> {
     return findLocalUsages(method, scope).mapNotNull {
         if (it is PsiReferenceExpression) {
@@ -18,6 +20,7 @@ fun ReferenceSearcher.findMethodCalls(method: PsiMethod, scope: PsiElement): Col
     }
 }
 
+@K1Deprecation
 fun PsiField.isVar(searcher: ReferenceSearcher): Boolean {
     if (hasModifierProperty(PsiModifier.FINAL)) return false
     if (!hasModifierProperty(PsiModifier.PRIVATE)) return true
@@ -40,6 +43,7 @@ fun PsiField.isVar(searcher: ReferenceSearcher): Boolean {
     return true
 }
 
+@K1Deprecation
 fun PsiVariable.isInVariableInitializer(searcher: ReferenceSearcher, scope: PsiElement?): Boolean {
     return if (scope != null) searcher.findVariableUsages(this, scope).any {
         val parent = PsiTreeUtil.skipParentsOfType(it, PsiParenthesizedExpression::class.java)

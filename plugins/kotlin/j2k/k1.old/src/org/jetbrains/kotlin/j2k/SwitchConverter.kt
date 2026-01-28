@@ -6,9 +6,11 @@ import com.intellij.psi.*
 import com.intellij.psi.controlFlow.ControlFlowFactory
 import com.intellij.psi.controlFlow.ControlFlowUtil
 import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.ast.*
 
 
+@K1Deprecation
 class SwitchConverter(private val codeConverter: CodeConverter) {
     fun convert(statement: PsiSwitchStatement): WhenStatement
             = WhenStatement(codeConverter.convertExpression(statement.expression), switchBodyToWhenEntries(statement.body))

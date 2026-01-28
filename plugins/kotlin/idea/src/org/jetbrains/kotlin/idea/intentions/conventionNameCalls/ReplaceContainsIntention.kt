@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions.conventionNameCalls
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
+@K1Deprecation
 class ReplaceContainsIntention : SelfTargetingRangeIntention<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java, KotlinBundle.messagePointer("replace.contains.call.with.in.operator")
 ), HighPriorityAction {

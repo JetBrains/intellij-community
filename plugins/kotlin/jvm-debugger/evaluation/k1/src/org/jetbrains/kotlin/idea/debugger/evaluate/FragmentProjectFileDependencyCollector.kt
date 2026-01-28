@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.descriptors.utils.collectReachableInlineDelegatedPropertyAccessors
 import org.jetbrains.kotlin.analysis.api.descriptors.utils.getInlineFunctionAnalyzer
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.*
  *   - local objects captured by the fragment.
  *   - local classes constructed by the fragment.
  */
+@K1Deprecation
 fun gatherProjectFilesDependedOnByFragment(fragment: KtCodeFragment, bindingContext: BindingContext): Set<KtFile> {
     val result = mutableSetOf<KtFile>()
     analyze(fragment) {

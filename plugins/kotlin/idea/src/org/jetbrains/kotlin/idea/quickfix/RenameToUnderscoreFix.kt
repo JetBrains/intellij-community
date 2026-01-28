@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.psi.*
 
 // In K2, the counterpart is org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.UnusedVariableInspection,
 // see https://youtrack.jetbrains.com/issue/KTIJ-29532/K2-IDE-Port-RenameToUnderscoreFix#focus=Change-27-10072644.0-0
+@K1Deprecation
 class RenameToUnderscoreFix(element: KtCallableDeclaration) : KotlinQuickFixAction<KtCallableDeclaration>(element) {
     override fun getText() = KotlinBundle.message("rename.to.underscore")
     override fun getFamilyName() = text

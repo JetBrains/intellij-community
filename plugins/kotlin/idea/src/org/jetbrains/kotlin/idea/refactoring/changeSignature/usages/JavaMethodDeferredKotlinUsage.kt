@@ -4,16 +4,19 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature.usages
 
 import com.intellij.psi.PsiElement
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 abstract class JavaMethodDeferredKotlinUsage<T : PsiElement>(element: T) : UsageInfo(element) {
     abstract fun resolve(javaMethodChangeInfo: KotlinChangeInfo): JavaMethodKotlinUsageWithDelegate<T>
 }
 
+@K1Deprecation
 class DeferredJavaMethodOverrideOrSAMUsage(
     val function: KtFunction,
     val functionDescriptor: FunctionDescriptor,
@@ -30,6 +33,7 @@ class DeferredJavaMethodOverrideOrSAMUsage(
         }
 }
 
+@K1Deprecation
 class DeferredJavaMethodKotlinCallerUsage(
     val declaration: KtNamedDeclaration
 ) : JavaMethodDeferredKotlinUsage<KtNamedDeclaration>(declaration) {

@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common
 
+import org.jetbrains.kotlin.K1Deprecation
+
+@K1Deprecation
 abstract class DefaultStateProvider {
     abstract fun defaultStateFor(typeVariable: TypeVariable): State
 }

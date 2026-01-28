@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.inspections.dfa.getKotlinType
 import org.jetbrains.kotlin.psi.KtConstantExpression
@@ -31,6 +32,7 @@ import java.math.BigDecimal
  */
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
+@K1Deprecation
 class FloatingPointLiteralPrecisionInspection : AbstractKotlinInspection() {
     private object Holder {
         val FLOAT_LITERAL: KtConstantExpressionElementType = KtConstantExpressionElementType.kindToConstantElementType(ConstantValueKind.FLOAT_CONSTANT)

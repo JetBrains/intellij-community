@@ -12,6 +12,7 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.*
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.lang.ref.SoftReference
 import java.util.*
 
+@K1Deprecation
 @Service(Service.Level.PROJECT)
 class CompletionBindingContextProvider(project: Project) {
     private val LOG = Logger.getInstance(CompletionBindingContextProvider::class.java)

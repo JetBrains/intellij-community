@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.psi.*
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.ast.*
 import org.jetbrains.kotlin.j2k.usageProcessing.AccessorToPropertyProcessing
 import org.jetbrains.kotlin.j2k.usageProcessing.MemberIntoObjectProcessing
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.j2k.usageProcessing.ToObjectWithOnlyMethodsProcessin
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.SpecialNames
 
+@K1Deprecation
 enum class ClassKind {
     FINAL_CLASS,
     OPEN_CLASS,
@@ -25,6 +27,7 @@ enum class ClassKind {
     fun isEnum() = this == FINAL_ENUM || this == OPEN_ENUM
 }
 
+@K1Deprecation
 class ClassBodyConverter(private val psiClass: PsiClass,
                          private val classKind: ClassKind,
                          private val converter: Converter

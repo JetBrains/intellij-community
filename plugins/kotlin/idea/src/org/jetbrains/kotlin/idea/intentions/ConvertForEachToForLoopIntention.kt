@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 
+@K1Deprecation
 class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention<KtSimpleNameExpression>(
     KtSimpleNameExpression::class.java, KotlinBundle.messagePointer("replace.with.a.for.loop")
 ) {

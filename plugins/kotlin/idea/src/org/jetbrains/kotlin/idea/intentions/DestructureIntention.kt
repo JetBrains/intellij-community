@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 
+@K1Deprecation
 class DestructureInspection : IntentionBasedInspection<KtDeclaration>(
     DestructureIntention::class,
     { element, _ ->
@@ -50,6 +52,7 @@ class DestructureInspection : IntentionBasedInspection<KtDeclaration>(
     }
 )
 
+@K1Deprecation
 class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
     KtDeclaration::class.java,
     KotlinBundle.messagePointer("use.destructuring.declaration")

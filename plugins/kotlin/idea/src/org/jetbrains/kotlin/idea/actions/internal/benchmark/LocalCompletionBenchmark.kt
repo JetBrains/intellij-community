@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBTextField
 import com.intellij.uiDesigner.core.GridLayoutManager
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.actions.internal.benchmark.AbstractCompletionBenchmarkAction.Companion.randomElement
 import org.jetbrains.kotlin.idea.completion.CompletionBenchmarkSink
@@ -19,6 +20,7 @@ import java.util.*
 import kotlin.properties.Delegates
 
 
+@K1Deprecation
 class LocalCompletionBenchmarkAction : AbstractCompletionBenchmarkAction() {
 
     override fun createBenchmarkScenario(

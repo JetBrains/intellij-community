@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class ReplaceWithOperatorAssignmentInspection : AbstractApplicabilityBasedInspection<KtBinaryExpression>(
     KtBinaryExpression::class.java
 ) {

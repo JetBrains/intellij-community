@@ -24,6 +24,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.uiDesigner.core.GridConstraints
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
@@ -39,6 +40,7 @@ import java.util.*
 import javax.swing.JFileChooser
 import javax.swing.JPanel
 
+@K1Deprecation
 abstract class AbstractCompletionBenchmarkAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return

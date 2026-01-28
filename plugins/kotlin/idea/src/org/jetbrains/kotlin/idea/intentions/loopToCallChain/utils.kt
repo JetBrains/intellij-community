@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 fun generateLambda(inputVariable: KtCallableDeclaration, expression: KtExpression, reformat: Boolean): KtLambdaExpression {
     val psiFactory = KtPsiFactory(expression.project)
 
@@ -57,6 +59,7 @@ fun generateLambda(inputVariable: KtCallableDeclaration, expression: KtExpressio
     return psiFactory.createExpressionByPattern("{ $0 }", lambdaBodyExpression, reformat = reformat) as KtLambdaExpression
 }
 
+@K1Deprecation
 fun generateLambda(
     inputVariable: KtCallableDeclaration,
     indexVariable: KtCallableDeclaration?,
@@ -88,6 +91,7 @@ fun generateLambda(
     return lambdaExpression
 }
 
+@K1Deprecation
 fun removePlusPlus(indexPlusPlus: KtUnaryExpression, reformat: Boolean) {
     val operand = indexPlusPlus.baseExpression!!
     val replacement = if (indexPlusPlus is KtPostfixExpression) // index++
@@ -97,6 +101,7 @@ fun removePlusPlus(indexPlusPlus: KtUnaryExpression, reformat: Boolean) {
     indexPlusPlus.replace(replacement)
 }
 
+@K1Deprecation
 fun generateLambda(expression: KtExpression, vararg inputVariables: KtCallableDeclaration, reformat: Boolean): KtLambdaExpression {
     return KtPsiFactory(expression.project).buildExpression(reformat = reformat) {
         appendFixedText("{")
@@ -129,6 +134,7 @@ private fun KtLambdaExpression.analyzeInContext(context: KtExpression): BindingC
     return analyzeInContext(resolutionScope, contextExpression = context)
 }
 
+@K1Deprecation
 data class VariableInitialization(
     val variable: KtProperty,
     val initializationStatement: KtExpression,
@@ -136,6 +142,7 @@ data class VariableInitialization(
 )
 
 //TODO: we need more correctness checks (if variable is non-local or is local but can be changed by some local functions)
+@K1Deprecation
 fun KtExpression?.findVariableInitializationBeforeLoop(
     loop: KtForExpression,
     checkNoOtherUsagesInLoop: Boolean
@@ -181,10 +188,12 @@ private fun extractVariableInitialization(statement: KtExpression, variable: KtP
     return VariableInitialization(variable, assignment, initializer)
 }
 
+@K1Deprecation
 enum class CollectionKind {
     LIST, SET/*, MAP*/
 }
 
+@K1Deprecation
 fun KtExpression.isSimpleCollectionInstantiation(): CollectionKind? {
     val callExpression = this as? KtCallExpression ?: return null //TODO: it can be qualified too
     if (callExpression.valueArguments.isNotEmpty()) return null
@@ -213,12 +222,14 @@ fun KtExpression.isSimpleCollectionInstantiation(): CollectionKind? {
     }
 }
 
+@K1Deprecation
 fun canChangeLocalVariableType(variable: KtProperty, newTypeText: String, loop: KtForExpression): Boolean {
     return tryChangeAndCheckErrors(variable, loop) { property ->
         property.typeReference = KtPsiFactory(property.project).createType(newTypeText)
     }
 }
 
+@K1Deprecation
 fun <TExpression : KtExpression> tryChangeAndCheckErrors(
     expressionToChange: TExpression,
     scopeToExclude: KtElement? = null,
@@ -279,6 +290,7 @@ private val NO_SIDE_EFFECT_STANDARD_CLASSES = setOf(
     "java.util.LinkedHashMap"
 )
 
+@K1Deprecation
 fun KtExpression.hasNoSideEffect(): Boolean {
     val bindingContext = analyze(BodyResolveMode.PARTIAL)
     if (ConstantExpressionEvaluator.getConstant(this, bindingContext) != null) return true
@@ -294,6 +306,7 @@ fun KtExpression.hasNoSideEffect(): Boolean {
 }
 
 //TODO: we need more correctness checks (if variable is non-local or is local but can be changed by some local functions)
+@K1Deprecation
 fun canSwapExecutionOrder(expressionBefore: KtExpression, expressionAfter: KtExpression): Boolean {
     assert(expressionBefore.isPhysical)
     assert(expressionAfter.isPhysical)
@@ -329,6 +342,7 @@ fun canSwapExecutionOrder(expressionBefore: KtExpression, expressionAfter: KtExp
     return false
 }
 
+@K1Deprecation
 fun KtExpression.isStableInLoop(loop: KtLoopExpression, checkNoOtherUsagesInLoop: Boolean): Boolean {
     when {
         isConstant() -> return true
@@ -354,10 +368,12 @@ fun KtExpression.isStableInLoop(loop: KtLoopExpression, checkNoOtherUsagesInLoop
     }
 }
 
+@K1Deprecation
 fun KtExpression.containsEmbeddedBreakOrContinue(): Boolean {
     return anyDescendantOfType(::isEmbeddedBreakOrContinue)
 }
 
+@K1Deprecation
 fun KtExpression.countEmbeddedBreaksAndContinues(): Int {
     return collectDescendantsOfType(::isEmbeddedBreakOrContinue).size
 }
@@ -376,6 +392,7 @@ private fun isEmbeddedBreakOrContinue(expression: KtExpressionWithLabel): Boolea
     }
 }
 
+@K1Deprecation
 fun MatchingState.unwrapBlock(): MatchingState {
     val block = statements.singleOrNull() as? KtBlockExpression ?: return this
     return this.copy(statements = block.statements)

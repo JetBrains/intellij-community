@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.util.kind
 
+@K1Deprecation
 class ConvertSecondaryConstructorToPrimaryInspection : IntentionBasedInspection<KtSecondaryConstructor>(
     ConvertSecondaryConstructorToPrimaryIntention::class,
     fun(constructor: KtSecondaryConstructor): Boolean {
@@ -42,6 +44,7 @@ class ConvertSecondaryConstructorToPrimaryInspection : IntentionBasedInspection<
     override fun inspectionTarget(element: KtSecondaryConstructor): PsiElement = element.getConstructorKeyword()
 }
 
+@K1Deprecation
 class ConvertSecondaryConstructorToPrimaryIntention : SelfTargetingRangeIntention<KtSecondaryConstructor>(
     KtSecondaryConstructor::class.java,
     KotlinBundle.messagePointer("convert.to.primary.constructor")

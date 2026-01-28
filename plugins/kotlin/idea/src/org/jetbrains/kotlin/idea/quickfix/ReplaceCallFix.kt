@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 object ReplaceWithSafeCallFixFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val psiElement = diagnostic.psiElement
@@ -47,6 +49,7 @@ object ReplaceWithSafeCallFixFactory : KotlinSingleIntentionActionFactory() {
     }
 }
 
+@K1Deprecation
 object ReplaceWithSafeCallForScopeFunctionFixFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val element = diagnostic.psiElement

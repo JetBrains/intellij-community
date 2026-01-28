@@ -9,6 +9,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 
+@K1Deprecation
 fun analyzePushDownConflicts(
     context: K1PushDownContext,
     usages: Array<out UsageInfo>

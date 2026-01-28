@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.checkers.utils.DebugInfoUtil
 import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightErrors
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.psi.KtReferenceExpression
 /**
  * Quick showing possible problems with Kotlin internals in IDEA with tooltips
  */
+@K1Deprecation
 class DebugInfoHighlightingPass(file: KtFile, document: Document) : AbstractBindingContextAwareHighlightingPassBase(file, document) {
 
     override fun annotate(element: PsiElement, holder: HighlightInfoHolder) {

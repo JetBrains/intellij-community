@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.SmartList
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinIcons
@@ -35,10 +36,12 @@ import org.jetbrains.kotlin.types.typeUtil.isBooleanOrNullableBoolean
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.utils.addIfNotNull
 
+@K1Deprecation
 interface InheritanceItemsSearcher {
     fun search(nameFilter: (String) -> Boolean, consumer: (LookupElement) -> Unit)
 }
 
+@K1Deprecation
 class SmartCompletion(
     private val expression: KtExpression,
     private val resolutionFacade: ResolutionFacade,

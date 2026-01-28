@@ -6,6 +6,7 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.cli.common.repl.replNormalizeLineBreaks
 import org.jetbrains.kotlin.cli.common.repl.replUnescapeLineBreaks
@@ -19,8 +20,10 @@ import java.io.ByteArrayInputStream
 import java.nio.charset.Charset
 import javax.xml.parsers.DocumentBuilderFactory
 
+@K1Deprecation
 data class SeverityDetails(val severity: Severity, val description: String, val range: TextRange)
 
+@K1Deprecation
 class ReplOutputHandler(
     private val runner: KotlinConsoleRunner,
     process: Process,

@@ -6,12 +6,14 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.psi.*
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
+@K1Deprecation
 class ConvertPropertyGetterToInitializerIntention : SelfTargetingIntention<KtPropertyAccessor>(
     KtPropertyAccessor::class.java, KotlinBundle.messagePointer("convert.property.getter.to.initializer")
 ) {

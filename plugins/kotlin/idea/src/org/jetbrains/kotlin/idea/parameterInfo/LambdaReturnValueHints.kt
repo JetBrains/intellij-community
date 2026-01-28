@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.resolve.BindingContext.USED_AS_RESULT_OF_LAMBDA
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 fun KtExpression.isLambdaReturnValueHintsApplicable(allowOneLiner: Boolean = false): Boolean {
     //if (allowOneLiner && this.isOneLiner()) {
     //    val literalWithBody = this is KtBlockExpression && isFunctionalLiteralWithBody()
@@ -61,6 +63,7 @@ private fun KtExpression.isFunctionalLiteralWithBody(): Boolean {
     return !(body.statements.size == 1 && body.statements[0] == this)
 }
 
+@K1Deprecation
 fun provideLambdaReturnValueHints(expression: KtExpression): InlayInfoDetails? {
     if (!expression.isLambdaReturnValueHintsApplicable()) {
         return null
@@ -81,6 +84,7 @@ fun provideLambdaReturnValueHints(expression: KtExpression): InlayInfoDetails? {
     } else null
 }
 
+@K1Deprecation
 fun provideLambdaReturnTypeHints(expression: KtExpression): InlayInfoDetails? {
     if (!expression.isLambdaReturnValueHintsApplicable(allowOneLiner = true)) {
         return null

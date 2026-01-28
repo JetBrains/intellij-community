@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 
+@K1Deprecation
 class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpression>(
     KtLambdaExpression::class.java,
     KotlinBundle.messagePointer("convert.to.anonymous.function"),

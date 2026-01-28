@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.ui.NonFocusableCheckBox
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractKotlinInplaceIntroducer
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.types.KotlinType
 import javax.swing.JCheckBox
 
+@K1Deprecation
 class KotlinVariableInplaceIntroducer(
     addedVariable: KtProperty,
     originalExpression: KtExpression?,

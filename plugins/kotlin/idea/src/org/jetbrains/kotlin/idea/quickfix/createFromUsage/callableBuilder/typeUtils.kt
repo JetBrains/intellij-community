@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder
 
 import com.intellij.refactoring.psi.SearchUtils
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.cfg.pseudocode.*
 import org.jetbrains.kotlin.descriptors.*
@@ -107,8 +108,10 @@ internal fun getTypeParameterNamesNotInScope(
     }
 }
 
+@K1Deprecation
 fun KotlinType.containsStarProjections(): Boolean = arguments.any { it.isStarProjection || it.type.containsStarProjections() }
 
+@K1Deprecation
 fun KotlinType.getTypeParameters(): Set<TypeParameterDescriptor> {
     val visitedTypes = HashSet<KotlinType>()
     val typeParameters = LinkedHashSet<TypeParameterDescriptor>()
@@ -132,6 +135,7 @@ fun KotlinType.getTypeParameters(): Set<TypeParameterDescriptor> {
     return typeParameters
 }
 
+@K1Deprecation
 fun KtExpression.guessTypes(
     context: BindingContext,
     module: ModuleDescriptor,
@@ -326,12 +330,15 @@ internal fun KotlinType.substitute(substitution: KotlinTypeSubstitution, varianc
     }
 }
 
+@K1Deprecation
 fun KtExpression.getExpressionForTypeGuess() = getAssignmentByLHS()?.right ?: this
 
+@K1Deprecation
 fun KtCallElement.getTypeInfoForTypeArguments(): List<TypeInfo> {
     return typeArguments.mapNotNull { it.typeReference?.let { TypeInfo(it, Variance.INVARIANT) } }
 }
 
+@K1Deprecation
 fun KtCallExpression.getParameterInfos(): List<ParameterInfo> {
     val anyType = this.builtIns.nullableAnyType
     return valueArguments.map {

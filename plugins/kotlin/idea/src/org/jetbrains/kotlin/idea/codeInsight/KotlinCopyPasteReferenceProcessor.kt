@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parents
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.concurrency.CancellablePromise
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
@@ -79,6 +80,7 @@ import java.util.concurrent.Callable
 /**
  * Tests: [org.jetbrains.kotlin.idea.codeInsight.InsertImportOnPasteTestGenerated]
  */
+@K1Deprecation
 @Suppress("DEPRECATION") // K1 API
 class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinReferenceTransferableData>(), ReferenceCopyPasteProcessor {
 

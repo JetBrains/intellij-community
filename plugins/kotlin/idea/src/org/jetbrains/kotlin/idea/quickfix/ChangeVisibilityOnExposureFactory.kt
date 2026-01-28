@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.*
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 
+@K1Deprecation
 object ChangeVisibilityOnExposureFactory : KotlinIntentionActionsFactory() {
 
     private fun addFixToTargetVisibility(

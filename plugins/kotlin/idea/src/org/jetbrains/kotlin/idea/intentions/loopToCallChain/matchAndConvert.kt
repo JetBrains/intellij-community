@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.cfg.pseudocode.Pseudocode
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.resolve.calls.smartcasts.ExplicitSmartCasts
 import org.jetbrains.kotlin.resolve.calls.smartcasts.ImplicitSmartCasts
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 object MatcherRegistrar {
     val matchers: Collection<TransformationMatcher> = listOf(
         FindTransformationMatcher,
@@ -40,6 +42,7 @@ object MatcherRegistrar {
     )
 }
 
+@K1Deprecation
 data class MatchResult(
     val sequenceExpression: KtExpression,
     val transformationMatch: TransformationMatch.Result,
@@ -47,6 +50,7 @@ data class MatchResult(
 )
 
 //TODO: loop which is already over Sequence
+@K1Deprecation
 fun match(loop: KtForExpression, useLazySequence: Boolean, reformat: Boolean): MatchResult? {
     val (inputVariable, indexVariable, sequenceExpression) = extractLoopData(loop) ?: return null
 
@@ -139,6 +143,7 @@ fun match(loop: KtForExpression, useLazySequence: Boolean, reformat: Boolean): M
     }
 }
 
+@K1Deprecation
 fun convertLoop(loop: KtForExpression, matchResult: MatchResult): KtExpression {
     val resultTransformation = matchResult.transformationMatch.resultTransformation
 
@@ -165,6 +170,7 @@ fun convertLoop(loop: KtForExpression, matchResult: MatchResult): KtExpression {
     return result
 }
 
+@K1Deprecation
 data class LoopData(
     val inputVariable: KtCallableDeclaration,
     val indexVariable: KtCallableDeclaration?,
@@ -364,12 +370,14 @@ private fun mergeTransformations(match: TransformationMatch.Result, reformat: Bo
     )
 }
 
+@K1Deprecation
 data class IntroduceIndexData(
     val indexVariable: KtCallableDeclaration,
     val initializationStatement: KtExpression,
     val incrementExpression: KtUnaryExpression
 )
 
+@K1Deprecation
 fun matchIndexToIntroduce(loop: KtForExpression, reformat: Boolean): IntroduceIndexData? {
     if (loop.destructuringDeclaration != null) return null
     val (inputVariable, indexVariable) = extractLoopData(loop) ?: return null

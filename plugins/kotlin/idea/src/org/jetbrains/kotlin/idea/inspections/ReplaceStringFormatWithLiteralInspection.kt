@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -26,6 +27,7 @@ import java.util.*
 private val placeHolder: Regex by lazy { "%".toRegex() }
 private val stringPlaceHolder: Regex by lazy { "%s".toRegex() }
 
+@K1Deprecation
 class ReplaceStringFormatWithLiteralInspection : AbstractKotlinInspection() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {

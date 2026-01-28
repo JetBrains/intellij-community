@@ -11,6 +11,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 
+@K1Deprecation
 class ConvertReceiverToParameterIntention : SelfTargetingOffsetIndependentIntention<KtTypeReference>(
     KtTypeReference::class.java,
     KotlinBundle.messagePointer("convert.receiver.to.parameter")

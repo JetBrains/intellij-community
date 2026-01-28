@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 
+@K1Deprecation
 class MakePrivateAndOverrideMemberFix(
     propertyOrParameter: KtDeclaration,
     private val memberToOverride: OverrideMemberChooserObject

@@ -13,6 +13,7 @@ import com.intellij.psi.impl.source.PsiExtensibleClass
 import com.intellij.psi.impl.source.PsiImmediateClassType
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod
 import com.siyeh.ig.psiutils.TypeUtils
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.cannotModify
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.elements.KtLightElementBase
@@ -46,6 +47,7 @@ private val javaGetterNameToKotlinGetterName: Map<String, String> =
         Pair(javaGetterShortName.asString(), JvmAbi.getterName(propertyFqName.shortName().asString()))
     }.toMap()
 
+@K1Deprecation
 fun platformMutabilityWrapper(fqName: FqName, findJavaClass: (String) -> PsiClass?): PsiClass? {
     readOnlyQualifiedNamesToJavaClass[fqName]?.let { (javaClass, kotlinReadOnly) ->
         val javaBaseClass = findJavaClass(javaClass.asSingleFqName().asString()) ?: return null
@@ -70,6 +72,7 @@ private fun getOrCreateWrapper(javaBaseClass: PsiClass, kotlinFqName: FqName, is
 private var PsiClass.readOnlyWrapper: KtLightMutabilityPlatformWrapper? by UserDataProperty(Key.create("READ_ONLY_WRAPPER"))
 private var PsiClass.mutableWrapper: KtLightMutabilityPlatformWrapper? by UserDataProperty(Key.create("MUTABLE_WRAPPER"))
 
+@K1Deprecation
 class KtLightMutabilityPlatformWrapper(
     private val javaBaseClass: PsiClass,
     private val kotlinInterfaceFqName: FqName,
@@ -319,6 +322,7 @@ private class KtLightMethodWrapper(
 }
 
 
+@K1Deprecation
 abstract class KtAbstractContainerWrapper(internal val fqName: FqName, private val superInterface: PsiClass) :
     LightElement(superInterface.manager, KotlinLanguage.INSTANCE), PsiExtensibleClass {
 

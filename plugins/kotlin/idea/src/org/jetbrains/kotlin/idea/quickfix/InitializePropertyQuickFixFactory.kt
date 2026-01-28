@@ -12,6 +12,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.searches.MethodReferencesSearch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
     class AddInitializerFix(property: KtProperty) : KotlinQuickFixAction<KtProperty>(property) {
         override fun getText() = KotlinBundle.message("add.initializer")

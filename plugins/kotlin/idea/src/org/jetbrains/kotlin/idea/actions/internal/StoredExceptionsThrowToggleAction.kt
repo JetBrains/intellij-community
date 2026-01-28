@@ -6,10 +6,12 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ApplicationManager
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.utils.WrappedValues
 
 
+@K1Deprecation
 class StoredExceptionsThrowToggleAction :
     ToggleAction(
         KotlinBundle.message("internal.toggle.throwing.cached.pce.title"),

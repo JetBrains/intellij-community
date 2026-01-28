@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeInsight
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
 import java.io.Serializable
 
+@K1Deprecation
 data class KotlinReferenceData(
     var startOffset: Int,
     var endOffset: Int,

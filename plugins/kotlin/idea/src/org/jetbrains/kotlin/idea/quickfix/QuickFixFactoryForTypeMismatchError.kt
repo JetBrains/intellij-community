@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.addIfNotNull
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isKFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -50,6 +51,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
 //TODO: should use change signature to deal with cases of multiple overridden descriptors
+@K1Deprecation
 class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
 
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {

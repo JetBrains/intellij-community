@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.usages
 
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.core.ShortenReferences.Options
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 
 // Explicit reference to function parameter or outer this
+@K1Deprecation
 abstract class KotlinExplicitReferenceUsage<T : KtElement>(element: T) : KotlinUsageInfo<T>(element) {
     abstract fun getReplacementText(changeInfo: KotlinChangeInfo): String
 
@@ -28,6 +30,7 @@ abstract class KotlinExplicitReferenceUsage<T : KtElement>(element: T) : KotlinU
     }
 }
 
+@K1Deprecation
 class KotlinParameterUsage(
   element: KtElement,
   private val parameterInfo: KotlinParameterInfo,
@@ -49,6 +52,7 @@ class KotlinParameterUsage(
     }
 }
 
+@K1Deprecation
 class KotlinNonQualifiedOuterThisUsage(
     element: KtThisExpression,
     val targetDescriptor: DeclarationDescriptor
@@ -60,6 +64,7 @@ class KotlinNonQualifiedOuterThisUsage(
     override fun getReplacementText(changeInfo: KotlinChangeInfo): String = "this@${targetDescriptor.name.asString()}"
 }
 
+@K1Deprecation
 class KotlinNonQualifiedOuterThisCallUsage(
   element: KtCallExpression,
   val parameterInfo: KotlinParameterInfo,

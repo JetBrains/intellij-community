@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyEquals
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
+@K1Deprecation
 class UnusedEqualsInspection : AbstractKotlinInspection() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {

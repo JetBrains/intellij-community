@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.core.script.k1.configuration.loader
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.cache.ScriptConfigurationSnapshot
 import org.jetbrains.kotlin.idea.core.script.shared.CachedConfigurationInputs
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
 import kotlin.script.experimental.api.*
 
+@K1Deprecation
 open class DefaultScriptConfigurationLoader(val project: Project) : ScriptConfigurationLoader {
     override fun shouldRunInBackground(scriptDefinition: ScriptDefinition): Boolean =
         scriptDefinition.compilationConfiguration[ScriptCompilationConfiguration.asyncDependenciesResolver] ?: false

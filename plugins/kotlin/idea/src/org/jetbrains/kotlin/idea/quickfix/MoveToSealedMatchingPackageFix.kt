@@ -14,6 +14,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.PackageWrapper
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.MoveHandler
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.isSealed
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedClassDescriptor
 
+@K1Deprecation
 class MoveToSealedMatchingPackageFix(element: KtTypeReference) : KotlinQuickFixAction<KtTypeReference>(element) {
 
     private val moveHandler = 

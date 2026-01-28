@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -20,9 +21,12 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
 
 // Debugging tip: use 'PsiTreeUtilsKt.printTree' to see PSI trees in the runtime. See fun documentation for details.
 
+@K1Deprecation
 data class TypeArgsWithOffset(val args: KtTypeArgumentList, val offset: Int)
+@K1Deprecation
 var UserDataHolder.argList: TypeArgsWithOffset? by UserDataProperty(Key("KotlinInsertTypeArgument.ARG_LIST"))
 
+@K1Deprecation
 fun addParamTypesIfNeeded(position: PsiElement): PsiElement {
     if (!callExprToUpdateExists(position)) return position
     return addParamTypes(position)

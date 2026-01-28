@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -35,6 +36,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.firstArgument
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class AddAnnotationTargetFix(annotationEntry: KtAnnotationEntry) : KotlinQuickFixAction<KtAnnotationEntry>(annotationEntry) {
 
     override fun getText() = KotlinBundle.message("fix.add.annotation.target")

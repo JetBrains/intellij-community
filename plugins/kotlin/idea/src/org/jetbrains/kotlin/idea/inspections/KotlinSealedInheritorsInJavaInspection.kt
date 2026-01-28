@@ -7,12 +7,14 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.descriptors.isSealed
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.getClassDescriptorIfAny
 
 
+@K1Deprecation
 class KotlinSealedInheritorsInJavaInspection : LocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return object : JavaElementVisitor() {

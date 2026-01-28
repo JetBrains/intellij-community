@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.jvm.k1.scratch.K1KotlinScratchFile
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class ScratchRunLineMarkerContributor : RunLineMarkerContributor() {
     @OptIn(UnsafeCastFunction::class)
     override fun getInfo(element: PsiElement): Info? {

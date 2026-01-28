@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 
+@K1Deprecation
 class BooleanLiteralArgumentInspection(
     @JvmField var reportSingle: Boolean = false
 ) : AbstractKotlinInspection() {

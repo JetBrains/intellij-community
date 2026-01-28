@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.*
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import java.awt.Font
 import javax.swing.Icon
 
+@K1Deprecation
 class BasicLookupElementFactory(
     private val project: Project,
     val insertHandlerProvider: InsertHandlerProvider

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.codegen.AsmUtil
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
+@K1Deprecation
 fun AsmType.getClassDescriptor(
     scope: GlobalSearchScope,
     mapBuiltIns: Boolean = true,

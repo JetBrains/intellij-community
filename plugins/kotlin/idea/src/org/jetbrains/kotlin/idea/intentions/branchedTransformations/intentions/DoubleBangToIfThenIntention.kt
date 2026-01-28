@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseStringExpression
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
 
+@K1Deprecation
 class DoubleBangToIfThenIntention : SelfTargetingRangeIntention<KtPostfixExpression>(
     KtPostfixExpression::class.java,
     KotlinBundle.messagePointer("replace.expression.with.if.expression")

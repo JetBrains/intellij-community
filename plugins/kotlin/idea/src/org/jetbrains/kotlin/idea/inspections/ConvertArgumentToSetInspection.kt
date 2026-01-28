@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.ConvertArgumentToSetIntention.Holder.getConvertibleArguments
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.psi.*
  * and implementation details.
  */
 
+@K1Deprecation
 class ConvertArgumentToSetInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return expressionVisitor { expression ->

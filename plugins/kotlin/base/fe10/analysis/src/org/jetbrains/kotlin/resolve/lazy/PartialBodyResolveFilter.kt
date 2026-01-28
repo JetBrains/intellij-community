@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.resolve.lazy
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.PsiRecursiveVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.swap
 
 //TODO: do resolve anonymous object's body
 
+@K1Deprecation
 class PartialBodyResolveFilter(
     elementsToResolve: Collection<KtElement>,
     private val declaration: KtDeclaration,

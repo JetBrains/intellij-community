@@ -4,6 +4,7 @@
 
 package org.jetbrains.kotlin.idea.highlighter
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.diagnostics.rendering.*
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.resolve.calls.inference.InferenceErrorData
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ConflictingJvmDeclarationsData
 
+@K1Deprecation
 object IdeRenderers {
 
     @JvmField

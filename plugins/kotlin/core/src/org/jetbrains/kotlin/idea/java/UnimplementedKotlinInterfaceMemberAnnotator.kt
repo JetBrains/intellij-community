@@ -11,6 +11,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.*
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.KtLightClassMarker
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.load.java.structure.LightClassOriginKind
 import org.jetbrains.kotlin.name.JvmStandardClassIds.JVM_STATIC_FQ_NAME
 import org.jetbrains.kotlin.utils.ifEmpty
 
+@K1Deprecation
 class UnimplementedKotlinInterfaceMemberAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         if (element !is PsiClass || element.language == KotlinLanguage.INSTANCE) return

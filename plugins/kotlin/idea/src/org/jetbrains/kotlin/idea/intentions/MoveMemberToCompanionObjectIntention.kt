@@ -27,6 +27,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -68,6 +69,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 import java.util.*
 
+@K1Deprecation
 class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamedDeclaration>(
     KtNamedDeclaration::class.java,
     KotlinBundle.messagePointer("move.to.companion.object")

@@ -10,11 +10,13 @@ import com.intellij.debugger.streams.core.resolve.PairMapResolver
 import com.intellij.debugger.streams.core.trace.impl.handler.unified.DistinctTraceHandler
 import com.intellij.debugger.streams.core.trace.impl.interpret.SimplePeekCallTraceInterpreter
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.debugger.sequence.resolve.FilteredMapResolver
 import org.jetbrains.kotlin.idea.debugger.sequence.resolve.WindowedResolver
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.sequence.FilterIsInstanceHandler
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.sequence.KotlinDistinctByHandler
 
+@K1Deprecation
 class KotlinSequencesSupport : LibrarySupportBase() {
     init {
         addIntermediateOperationsSupport(

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryWithPsiElement
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class ReplaceTypeArgumentWithUnderscoreIntention : SelfTargetingRangeIntention<KtTypeProjection>(
     KtTypeProjection::class.java, KotlinBundle.messagePointer("replace.with.underscore")
 ), LowPriorityAction {

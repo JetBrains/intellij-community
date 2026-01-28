@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.extractParameterNameFromFunctionTypeArgument
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getParentResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class ReplaceUnderscoreWithParameterNameIntention : SelfTargetingOffsetIndependentIntention<KtCallableDeclaration>(
     KtCallableDeclaration::class.java,
     KotlinBundle.messagePointer("replace.with.parameter.name")

@@ -6,6 +6,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
@@ -42,6 +43,7 @@ import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import java.util.*
 
+@K1Deprecation
 class UnifierParameter(
     val descriptor: DeclarationDescriptor,
     val expectedType: KotlinType?
@@ -50,6 +52,7 @@ class UnifierParameter(
 /**
  * For the K2 Mode-specific version of this functionality, see [org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher].  
  */
+@K1Deprecation
 class KotlinPsiUnifier(
     parameters: Collection<UnifierParameter> = Collections.emptySet(),
     val allowWeakMatches: Boolean = false
@@ -951,9 +954,12 @@ class KotlinPsiUnifier(
         unify(targetElement.toRange(), patternElement.toRange())
 }
 
+@K1Deprecation
 fun PsiElement?.matches(e: PsiElement?): Boolean = KotlinPsiUnifier.DEFAULT.unify(this, e).isMatched
+@K1Deprecation
 fun KotlinPsiRange.matches(r: KotlinPsiRange): Boolean = KotlinPsiUnifier.DEFAULT.unify(this, r).isMatched
 
+@K1Deprecation
 fun KotlinPsiRange.match(scope: PsiElement, unifier: KotlinPsiUnifier): List<Success<UnifierParameter>> {
     return match(scope) { target, pattern ->
         @Suppress("UNCHECKED_CAST")

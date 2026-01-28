@@ -12,6 +12,7 @@ import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
 import com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstitutionHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
@@ -55,6 +56,7 @@ import org.jetbrains.kotlin.types.typeUtil.supertypes
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.match
 
+@K1Deprecation
 class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor) : SSRKtVisitor() {
     /** Gets the next element in the query tree and removes unnecessary parentheses. */
     private inline fun <reified T> getTreeElementDepar(): T? = when (val element = myMatchingVisitor.element) {

@@ -12,6 +12,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.asJava.toFakeLightClass
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
+@K1Deprecation
 class KotlinTypeHierarchyProvider : JavaTypeHierarchyProvider() {
     private fun getOriginalPsiClassOrCreateLightClass(classOrObject: KtClassOrObject, module: Module?): PsiClass? {
         val fqName = classOrObject.fqName

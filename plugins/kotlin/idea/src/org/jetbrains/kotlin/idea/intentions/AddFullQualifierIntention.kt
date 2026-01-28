@@ -9,6 +9,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.prevLeaf
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComme
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class AddFullQualifierIntention : SelfTargetingIntention<KtNameReferenceExpression>(
     KtNameReferenceExpression::class.java,
     KotlinBundle.messagePointer("add.full.qualifier")

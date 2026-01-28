@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.project
 
 import com.intellij.psi.stubs.StubInconsistencyReporter
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.statistics.KotlinFailureCollector
 import org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactory
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.resolve.lazy.*
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactory
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class IdeaLocalDescriptorResolver(
     private val resolveElementCache: ResolveElementCache,
     private val absentDescriptorHandler: AbsentDescriptorHandler
@@ -25,6 +27,7 @@ class IdeaLocalDescriptorResolver(
     }
 }
 
+@K1Deprecation
 class IdeaAbsentDescriptorHandler(
     private val declarationProviderFactory: DeclarationProviderFactory
 ) : AbsentDescriptorHandler {

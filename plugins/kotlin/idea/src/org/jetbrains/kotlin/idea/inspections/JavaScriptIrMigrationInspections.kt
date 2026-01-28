@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
 import org.jetbrains.kotlin.types.typeUtil.isBoolean
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
 
+@K1Deprecation
 class NonExternalClassifierExtendingStateOrPropsInspection : AbstractKotlinInspection() {
     override fun buildVisitor(
         holder: ProblemsHolder, isOnTheFly: Boolean,
@@ -56,6 +58,7 @@ class NonExternalClassifierExtendingStateOrPropsInspection : AbstractKotlinInspe
     }
 }
 
+@K1Deprecation
 class NonNullableBooleanPropertyInExternalInterfaceInspection : AbstractKotlinInspection() {
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -73,6 +76,7 @@ class NonNullableBooleanPropertyInExternalInterfaceInspection : AbstractKotlinIn
     }
 }
 
+@K1Deprecation
 class NonVarPropertyInExternalInterfaceInspection : AbstractKotlinInspection() {
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -107,6 +111,7 @@ private val ClassDescriptor.implementsRState: Boolean
 private val ClassDescriptor.implementsRProps: Boolean
     get() = getSuperInterfaces().any { it.fqNameSafe == PROPS || it.fqNameSafe == R_PROPS || it.implementsRProps }
 
+@K1Deprecation
 object AddExternalQuickFix : LocalQuickFix {
     override fun getName(): String = KotlinBundle.message("add.external.keyword")
 
@@ -120,6 +125,7 @@ object AddExternalQuickFix : LocalQuickFix {
     }
 }
 
+@K1Deprecation
 class ConvertToNullableTypeFix : LocalQuickFix {
     override fun getName(): String = KotlinBundle.message("convert.to.nullable.type")
 

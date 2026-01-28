@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
 import com.intellij.psi.PsiReference
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.types.checker.createClassicTypeCheckerState
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.model.TypeConstructorMarker
 
+@K1Deprecation
 class KotlinParameterInfo(
     val callableDescriptor: CallableDescriptor,
     override val originalIndex: Int = -1,

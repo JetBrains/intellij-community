@@ -5,11 +5,13 @@ package org.jetbrains.kotlin.j2k.ast
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.j2k.append
 import org.jetbrains.kotlin.lexer.KtTokens
 import java.util.*
 
+@K1Deprecation
 class ArrayAccessExpression(val expression: Expression, val index: Expression, private val lvalue: Boolean) : Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.appendOperand(this, expression)
@@ -18,6 +20,7 @@ class ArrayAccessExpression(val expression: Expression, val index: Expression, p
     }
 }
 
+@K1Deprecation
 open class AssignmentExpression(val left: Expression, val right: Expression, val op: Operator) : Expression() {
 
     fun isMultiAssignment() = right is AssignmentExpression
@@ -37,6 +40,7 @@ open class AssignmentExpression(val left: Expression, val right: Expression, val
     }
 }
 
+@K1Deprecation
 class BangBangExpression(val expr: Expression) : Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.appendOperand(this, expr).append("!!")
@@ -52,18 +56,21 @@ class BangBangExpression(val expr: Expression) : Expression() {
     }
 }
 
+@K1Deprecation
 class BinaryExpression(val left: Expression, val right: Expression, val op: Operator) : Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.appendOperand(this, left, false).append(" ").append(op).append(" ").appendOperand(this, right, true)
     }
 }
 
+@K1Deprecation
 class IsOperator(val expression: Expression, val type: Type) : Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.appendOperand(this, expression).append(" is ").append(type)
     }
 }
 
+@K1Deprecation
 class TypeCastExpression(val type: Type, val expression: Expression) : Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.appendOperand(this, expression).append(" as ").append(type)
@@ -73,6 +80,7 @@ class TypeCastExpression(val type: Type, val expression: Expression) : Expressio
         get() = type.isNullable
 }
 
+@K1Deprecation
 open class LiteralExpression(private val literalText: String) : Expression() {
 
     override fun generateCode(builder: CodeBuilder) {
@@ -85,6 +93,7 @@ open class LiteralExpression(private val literalText: String) : Expression() {
     }
 }
 
+@K1Deprecation
 class ArrayLiteralExpression(val expressions: List<Expression>) : Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append("[")
@@ -93,12 +102,14 @@ class ArrayLiteralExpression(val expressions: List<Expression>) : Expression() {
     }
 }
 
+@K1Deprecation
 class ParenthesizedExpression(val expression: Expression) : Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder append "(" append expression append ")"
     }
 }
 
+@K1Deprecation
 class PrefixExpression(val op: Operator, val expression: Expression) : Expression() {
     override fun generateCode(builder: CodeBuilder){
         builder.append(op).appendOperand(this, expression)
@@ -108,24 +119,28 @@ class PrefixExpression(val op: Operator, val expression: Expression) : Expressio
         get() = expression.isNullable
 }
 
+@K1Deprecation
 class PostfixExpression(val op: Operator, val expression: Expression) : Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.appendOperand(this, expression) append op
     }
 }
 
+@K1Deprecation
 class ThisExpression(val identifier: Identifier) : Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append("this").appendWithPrefix(identifier, "@")
     }
 }
 
+@K1Deprecation
 class SuperExpression(val identifier: Identifier) : Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append("super").appendWithPrefix(identifier, "@")
     }
 }
 
+@K1Deprecation
 class QualifiedExpression(val qualifier: Expression, val identifier: Expression, dotPrototype: PsiElement?) : Expression() {
     private val dot = Dot().assignPrototype(dotPrototype, CommentsAndSpacesInheritance.LINE_BREAKS)
 
@@ -148,6 +163,7 @@ class QualifiedExpression(val qualifier: Expression, val identifier: Expression,
     }
 }
 
+@K1Deprecation
 open class Operator(private val operatorType: IElementType): Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append(asString(operatorType))
@@ -216,6 +232,7 @@ open class Operator(private val operatorType: IElementType): Expression() {
     }
 }
 
+@K1Deprecation
 class LambdaExpression(val parameterList: ParameterList?, val block: Block) : Expression() {
     init {
         assignPrototypesFrom(block)
@@ -238,36 +255,42 @@ class LambdaExpression(val parameterList: ParameterList?, val block: Block) : Ex
     }
 }
 
+@K1Deprecation
 class StarExpression(val operand: Expression) : Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append("*").appendOperand(this, operand)
     }
 }
 
+@K1Deprecation
 class RangeExpression(val start: Expression, val end: Expression): Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.appendOperand(this, start).append("..").appendOperand(this, end)
     }
 }
 
+@K1Deprecation
 class UntilExpression(val start: Expression, val end: Expression): Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.appendOperand(this, start).append(" until ").appendOperand(this, end)
     }
 }
 
+@K1Deprecation
 class DownToExpression(val start: Expression, val end: Expression): Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.appendOperand(this, start).append(" downTo ").appendOperand(this, end)
     }
 }
 
+@K1Deprecation
 class ClassLiteralExpression(val type: Type): Expression() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append(type).append("::class")
     }
 }
 
+@K1Deprecation
 fun createArrayInitializerExpression(arrayType: ArrayType, initializers: List<Expression>, needExplicitType: Boolean = true) : MethodCallExpression {
     val elementType = arrayType.elementType
     @Suppress("DEPRECATION")

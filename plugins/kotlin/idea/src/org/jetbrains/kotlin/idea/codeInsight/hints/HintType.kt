@@ -8,6 +8,7 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.getReturnTypeReference
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import kotlin.enums.EnumEntries
 
+@K1Deprecation
 enum class HintType(
     @Nls private val description: String,
     @Nls @IntentionName val showDescription: String,
@@ -214,16 +216,21 @@ enum class HintType(
         get() = option.get()
 }
 
+@K1Deprecation
 data class InlayInfoDetails(val inlayInfo: InlayInfo, val details: List<InlayInfoDetail>, val option: InlayInfoOption? = NoInlayInfoOption)
 
+@K1Deprecation
 sealed class InlayInfoDetail(val text: String)
 
+@K1Deprecation
 class TextInlayInfoDetail(text: String, val smallText: Boolean = true): InlayInfoDetail(text) {
     override fun toString(): String = "[$text]"
 }
+@K1Deprecation
 class TypeInlayInfoDetail(text: String, val fqName: String?): InlayInfoDetail(text) {
     override fun toString(): String = "[$text :$fqName]"
 }
+@K1Deprecation
 class PsiInlayInfoDetail(text: String, val element: PsiElement): InlayInfoDetail(text) {
     override fun toString(): String = "[$text @ $element]"
 }

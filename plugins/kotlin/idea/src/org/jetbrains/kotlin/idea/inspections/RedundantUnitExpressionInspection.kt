@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.cfg.WhenChecker
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isDynamic
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
+@K1Deprecation
 class RedundantUnitExpressionInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = referenceExpressionVisitor(fun(expression) {
         if (Util.isRedundantUnit(expression)) {

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.getAllSuperclassesWithoutAny
 
+@K1Deprecation
 object MakeVisibleFactory : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         val element = diagnostic.psiElement as? KtElement ?: return emptyList()

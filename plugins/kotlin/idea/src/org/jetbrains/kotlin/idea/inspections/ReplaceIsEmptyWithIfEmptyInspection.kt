@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -41,6 +42,7 @@ private val replacements: Map<FqName, Replacement> = listOf(
 
 private val conditionFunctionShortNames: Set<String> = replacements.keys.map { it.shortName().asString() }.toSet()
 
+@K1Deprecation
 class ReplaceIsEmptyWithIfEmptyInspection : AbstractKotlinInspection() {
 
     internal data class Replacement(

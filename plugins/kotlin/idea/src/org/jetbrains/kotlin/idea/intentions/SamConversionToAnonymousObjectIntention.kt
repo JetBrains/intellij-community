@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
@@ -39,6 +40,7 @@ import org.jetbrains.kotlin.types.isFlexible
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCallExpression>(
     KtCallExpression::class.java, KotlinBundle.messagePointer("convert.to.anonymous.object")
 ), LowPriorityAction {

@@ -16,6 +16,7 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackages
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.getPackage
@@ -96,6 +97,7 @@ private val defaultHandlerActions = object : MoveKotlinDeclarationsHandlerAction
     }
 }
 
+@K1Deprecation
 class MoveKotlinDeclarationsHandler internal constructor(private val handlerActions: MoveKotlinDeclarationsHandlerActions) :
     MoveHandlerDelegate() {
 

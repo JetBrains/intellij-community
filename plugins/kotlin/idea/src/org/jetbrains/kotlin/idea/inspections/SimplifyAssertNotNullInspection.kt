@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.psi.expressionComparedToNull
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.calls.model.isReallySuccess
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
+@K1Deprecation
 class SimplifyAssertNotNullInspection : AbstractApplicabilityBasedInspection<KtCallExpression>(KtCallExpression::class.java) {
 
     override fun isApplicable(element: KtCallExpression): Boolean {

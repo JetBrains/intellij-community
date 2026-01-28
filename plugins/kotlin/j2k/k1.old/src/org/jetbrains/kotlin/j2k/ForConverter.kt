@@ -5,12 +5,14 @@ package org.jetbrains.kotlin.j2k
 import com.intellij.psi.*
 import com.intellij.psi.tree.IElementType
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.ast.*
 import org.jetbrains.kotlin.nj2k.isInSingleLine
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import kotlin.math.abs
 
+@K1Deprecation
 class ForConverter(
     private val statement: PsiForStatement,
     private val codeConverter: CodeConverter

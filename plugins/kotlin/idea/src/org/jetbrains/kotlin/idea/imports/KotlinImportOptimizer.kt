@@ -9,6 +9,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.resolve.scopes.HierarchicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.*
 import org.jetbrains.kotlin.types.error.ErrorFunctionDescriptor
 
+@K1Deprecation
 class KotlinImportOptimizer : ImportOptimizer {
     override fun supports(file: PsiFile) = file is KtFile
 

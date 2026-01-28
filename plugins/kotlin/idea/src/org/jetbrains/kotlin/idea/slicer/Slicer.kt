@@ -12,6 +12,7 @@ import com.intellij.slicer.JavaSliceUsage
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.cfg.pseudocode.PseudoValue
@@ -51,6 +52,7 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addIfNotNull
 
+@K1Deprecation
 abstract class Slicer(
     protected val element: KtElement,
     protected val processor: Processor<in SliceUsage>,
@@ -365,6 +367,7 @@ abstract class Slicer(
     }
 }
 
+@K1Deprecation
 fun CallableDescriptor.isImplicitInvokeFunction(): Boolean {
     if (this !is FunctionDescriptor) return false
     if (!isOperator) return false

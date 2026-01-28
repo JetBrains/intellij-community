@@ -9,6 +9,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.Instruction
@@ -42,6 +43,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
+@K1Deprecation
 class InflowSlicer(
     element: KtElement,
     processor: Processor<in SliceUsage>,

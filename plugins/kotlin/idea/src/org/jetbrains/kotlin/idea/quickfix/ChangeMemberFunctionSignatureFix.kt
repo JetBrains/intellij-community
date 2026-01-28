@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.IconManager
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.SimpleFunctionDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
@@ -40,6 +41,7 @@ import java.util.*
 /**
  * Fix that changes member function's signature to match one of super functions' signatures.
  */
+@K1Deprecation
 class ChangeMemberFunctionSignatureFix private constructor(
     element: KtNamedFunction,
     private val signatures: List<Signature>

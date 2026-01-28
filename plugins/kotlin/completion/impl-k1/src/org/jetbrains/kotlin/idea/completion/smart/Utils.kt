@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.util.Key
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.ReflectionTypes
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.types.typeUtil.isNothing
 import org.jetbrains.kotlin.types.typeUtil.isNullableNothing
 import org.jetbrains.kotlin.util.descriptorsEqualWithSubstitution
 
+@K1Deprecation
 class ArtificialElementInsertHandler(
     private val textBeforeCaret: String,
     private val textAfterCaret: String,
@@ -49,8 +51,10 @@ class ArtificialElementInsertHandler(
     }
 }
 
+@K1Deprecation
 fun mergeTails(tails: Collection<Tail?>): Tail? = tails.singleOrNull() ?: tails.toSet().singleOrNull()
 
+@K1Deprecation
 fun LookupElement.addTail(tail: Tail?): LookupElement = when (tail) {
     null -> this
     Tail.COMMA -> LookupElementDecorator.withDelegateInsertHandler(this, WithTailInsertHandler.COMMA)
@@ -60,6 +64,7 @@ fun LookupElement.addTail(tail: Tail?): LookupElement = when (tail) {
     Tail.RBRACE -> LookupElementDecorator.withDelegateInsertHandler(this, WithTailInsertHandler.RBRACE)
 }
 
+@K1Deprecation
 fun LookupElement.withOptions(options: ItemOptions): LookupElement =
     if (options.starPrefix) {
         object : LookupElementDecorator<LookupElement>(this) {
@@ -74,6 +79,7 @@ fun LookupElement.withOptions(options: ItemOptions): LookupElement =
         this
     }
 
+@K1Deprecation
 fun LookupElement.addTailAndNameSimilarity(
     matchedExpectedInfos: Collection<ExpectedInfo>,
     nameSimilarityExpectedInfos: Collection<ExpectedInfo> = matchedExpectedInfos
@@ -86,6 +92,7 @@ fun LookupElement.addTailAndNameSimilarity(
     return lookupElement
 }
 
+@K1Deprecation
 class ExpectedInfoMatch
 private constructor(
     val substitutor: TypeSubstitutor?,
@@ -100,6 +107,7 @@ private constructor(
     }
 }
 
+@K1Deprecation
 fun Collection<FuzzyType>.matchExpectedInfo(expectedInfo: ExpectedInfo): ExpectedInfoMatch {
     val sequence = asSequence()
     val substitutor = sequence.map { expectedInfo.matchingSubstitutor(it) }.firstOrNull()
@@ -117,8 +125,10 @@ fun Collection<FuzzyType>.matchExpectedInfo(expectedInfo: ExpectedInfo): Expecte
     return ExpectedInfoMatch.noMatch
 }
 
+@K1Deprecation
 fun FuzzyType.matchExpectedInfo(expectedInfo: ExpectedInfo) = listOf(this).matchExpectedInfo(expectedInfo)
 
+@K1Deprecation
 fun <TDescriptor : DeclarationDescriptor?> MutableCollection<LookupElement>.addLookupElements(
     descriptor: TDescriptor,
     expectedInfos: Collection<ExpectedInfo>,
@@ -208,6 +218,7 @@ private fun MutableCollection<LookupElement>.addLookupElementsForNullable(
     }
 }
 
+@K1Deprecation
 @OptIn(FrontendInternals::class)
 fun CallableDescriptor.callableReferenceType(resolutionFacade: ResolutionFacade, lhs: DoubleColonLHS?, settings: LanguageVersionSettings): FuzzyType? {
     if (!CallType.CallableReference(settings).descriptorKindFilter.accepts(this)) return null // not supported by callable references
@@ -220,6 +231,7 @@ fun CallableDescriptor.callableReferenceType(resolutionFacade: ResolutionFacade,
     )?.toFuzzyType(emptyList())
 }
 
+@K1Deprecation
 enum class SmartCompletionItemPriority {
     ARRAY_LITERAL_IN_ANNOTATION,
     MULTIPLE_ARGUMENTS_ITEM,
@@ -247,8 +259,10 @@ enum class SmartCompletionItemPriority {
     INHERITOR_INSTANTIATION
 }
 
+@K1Deprecation
 val SMART_COMPLETION_ITEM_PRIORITY_KEY = Key<SmartCompletionItemPriority>("SMART_COMPLETION_ITEM_PRIORITY_KEY")
 
+@K1Deprecation
 fun LookupElement.assignSmartCompletionPriority(priority: SmartCompletionItemPriority): LookupElement {
     putUserData(SMART_COMPLETION_ITEM_PRIORITY_KEY, priority)
     return this
@@ -268,6 +282,7 @@ internal enum class KeywordProbability {
 internal var LookupElement.keywordProbability: KeywordProbability
     by NotNullableUserDataProperty(Key.create("KEYWORD_PROBABILITY_KEY"), KeywordProbability.DEFAULT)
 
+@K1Deprecation
 fun DeclarationDescriptor.fuzzyTypesForSmartCompletion(
     smartCastCalculator: SmartCastCalculator,
     callTypeAndReceiver: CallTypeAndReceiver<*, *>,
@@ -317,5 +332,6 @@ fun DeclarationDescriptor.fuzzyTypesForSmartCompletion(
     }
 }
 
+@K1Deprecation
 fun Collection<ExpectedInfo>.filterCallableExpected() =
     filter { it.fuzzyType != null && ReflectionTypes.isCallableType(it.fuzzyType!!.type) }

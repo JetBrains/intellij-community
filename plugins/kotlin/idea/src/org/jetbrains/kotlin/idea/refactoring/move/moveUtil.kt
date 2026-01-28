@@ -23,6 +23,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.SmartList
 import com.intellij.util.containers.addIfNotNull
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -109,6 +110,7 @@ internal fun cleanUpInternalUsages(usages: Collection<UsageInfo>) {
     usages.forEach { (it.element as? KtSimpleNameExpression)?.internalUsageInfo = null }
 }
 
+@K1Deprecation
 fun guessNewFileName(declarationsToMove: Collection<KtNamedDeclaration>): String? {
     if (declarationsToMove.isEmpty()) return null
     val representative = declarationsToMove.singleOrNull()
@@ -340,6 +342,7 @@ internal fun isQualifiable(callableReferenceExpression: KtCallableReferenceExpre
     return lhs is DoubleColonLHS.Type
 }
 
+@K1Deprecation
 fun traverseOuterInstanceReferences(
     member: KtNamedDeclaration,
     stopAtFirst: Boolean

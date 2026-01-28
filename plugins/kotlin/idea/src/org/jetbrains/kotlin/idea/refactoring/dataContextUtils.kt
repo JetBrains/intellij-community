@@ -7,12 +7,16 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 val DataContext.project: Project
     get() = CommonDataKeys.PROJECT.getData(this)!!
 
+@K1Deprecation
 val DataContext.hostEditor: Editor?
     get() = CommonDataKeys.HOST_EDITOR.getData(this)
 
+@K1Deprecation
 val DataContext.psiElement: PsiElement?
     get() = CommonDataKeys.PSI_ELEMENT.getData(this)

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.MultiMap
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressableWarningP
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
+@K1Deprecation
 class AnnotationPresentationInfo(
     val ranges: List<TextRange>,
     @Nls val nonDefaultMessage: String? = null,

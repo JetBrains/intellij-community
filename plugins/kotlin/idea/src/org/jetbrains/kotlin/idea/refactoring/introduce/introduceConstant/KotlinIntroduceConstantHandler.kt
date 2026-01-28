@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.refactoring.RefactoringActionHandler
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluat
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class KotlinIntroduceConstantHandler(
     val helper: ExtractionEngineHelper = InteractiveExtractionHelper
 ) : RefactoringActionHandler {
@@ -171,6 +173,7 @@ class KotlinIntroduceConstantHandler(
     }
 }
 
+@K1Deprecation
 val INTRODUCE_CONSTANT: String
     @Nls
     get() = KotlinBundle.message("introduce.constant")

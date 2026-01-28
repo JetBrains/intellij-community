@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.openapi.progress.ProcessCanceledException
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.codegen.state.GenerationState
@@ -39,6 +40,7 @@ import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.utils.Printer
 
+@K1Deprecation
 class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
     fun compile(
         codeFragment: KtCodeFragment, filesToCompile: List<KtFile>,

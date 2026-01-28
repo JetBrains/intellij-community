@@ -12,6 +12,7 @@ import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.MoveHandlerDelegate
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -26,6 +27,7 @@ private const val optionName = "kotlin.enable.move.method.refactoring"
 private val refactoringIsDisabled: Boolean
     get() = !Registry.`is`(optionName) && !isUnitTestMode()
 
+@K1Deprecation
 class MoveKotlinMethodHandler : MoveHandlerDelegate() {
     private fun showErrorHint(project: Project, dataContext: DataContext?, @Nls message: String) {
         val editor = dataContext?.let { CommonDataKeys.EDITOR.getData(it) }

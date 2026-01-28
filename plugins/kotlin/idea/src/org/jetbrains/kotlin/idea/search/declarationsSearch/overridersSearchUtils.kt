@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiSuperMethodUtil
 import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -37,6 +38,7 @@ import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 
+@K1Deprecation
 @ApiStatus.Internal
 fun forEachKotlinOverride(
     ktClass: KtClass,
@@ -94,6 +96,7 @@ fun forEachKotlinOverride(
     return true
 }
 
+@K1Deprecation
 fun PsiMethod.forEachImplementation(
     scope: SearchScope = runReadAction { useScope() },
     processor: (PsiElement) -> Boolean
@@ -102,6 +105,7 @@ fun PsiMethod.forEachImplementation(
     scope.excludeKotlinSources(project)
 ).forEach(Processor { processor(it) })
 
+@K1Deprecation
 fun PsiMethod.forEachOverridingMethod(
     scope: SearchScope = runReadAction { useScope() },
     processor: (PsiMethod) -> Boolean
@@ -123,6 +127,7 @@ fun PsiMethod.forEachOverridingMethod(
     }
 }
 
+@K1Deprecation
 fun findSuperMethodsNoWrapping(method: PsiElement, deepest: Boolean): List<PsiElement> {
     return when (val element = method.unwrapped) {
         is PsiMethod -> (if (deepest) element.findDeepestSuperMethods() else element.findSuperMethods()).toList()
@@ -138,6 +143,7 @@ fun findSuperMethodsNoWrapping(method: PsiElement, deepest: Boolean): List<PsiEl
     }
 }
 
+@K1Deprecation
 fun findSuperDescriptors(declaration: KtDeclaration, descriptor: DeclarationDescriptor): Sequence<DeclarationDescriptor> {
     val sequenceOfExpectedDescriptor = declaration.takeIf { it.hasActualModifier() }
         ?.resolveToExpectedDescriptorIfPossible()

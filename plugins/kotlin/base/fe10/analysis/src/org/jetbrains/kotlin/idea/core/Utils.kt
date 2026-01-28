@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.core
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
@@ -44,6 +45,7 @@ import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 /**
  * See `ArgumentsToParametersMapper` class in the compiler.
  */
+@K1Deprecation
 fun Call.mapArgumentsToParameters(targetDescriptor: CallableDescriptor): Map<ValueArgument, ValueParameterDescriptor> {
     val parameters = targetDescriptor.valueParameters
     if (parameters.isEmpty()) return emptyMap()
@@ -85,6 +87,7 @@ fun Call.mapArgumentsToParameters(targetDescriptor: CallableDescriptor): Map<Val
     return map
 }
 
+@K1Deprecation
 fun ImplicitReceiver.asExpression(resolutionScope: LexicalScope, psiFactory: KtPsiFactory): KtExpression? {
     val expressionFactory = resolutionScope.getImplicitReceiversWithInstanceToExpression()
         .entries
@@ -93,6 +96,7 @@ fun ImplicitReceiver.asExpression(resolutionScope: LexicalScope, psiFactory: KtP
     return expressionFactory.createExpression(psiFactory)
 }
 
+@K1Deprecation
 fun KtImportDirective.targetDescriptors(resolutionFacade: ResolutionFacade = this.getResolutionFacade()): Collection<DeclarationDescriptor> {
     // For codeFragments imports are created in dummy file
     if (this.containingKtFile.doNotAnalyze != null) return emptyList()
@@ -100,6 +104,7 @@ fun KtImportDirective.targetDescriptors(resolutionFacade: ResolutionFacade = thi
     return nameExpression.mainReference.resolveToDescriptors(resolutionFacade.analyze(nameExpression))
 }
 
+@K1Deprecation
 fun Call.resolveCandidates(
     bindingContext: BindingContext,
     resolutionFacade: ResolutionFacade,
@@ -157,6 +162,7 @@ private fun expectedType(call: Call, bindingContext: BindingContext): KotlinType
     } ?: TypeUtils.NO_EXPECTED_TYPE
 }
 
+@K1Deprecation
 fun KtCallableDeclaration.canOmitDeclaredType(initializerOrBodyExpression: KtExpression, canChangeTypeToSubtype: Boolean): Boolean {
     val declaredType = (unsafeResolveToDescriptor() as? CallableDescriptor)?.returnType ?: return false
     val bindingContext = initializerOrBodyExpression.analyze()
@@ -166,19 +172,24 @@ fun KtCallableDeclaration.canOmitDeclaredType(initializerOrBodyExpression: KtExp
     return canChangeTypeToSubtype && expressionType.isSubtypeOf(declaredType)
 }
 
+@K1Deprecation
 fun FqName.quoteSegmentsIfNeeded(): String {
     return quoteIfNeeded().asString()
 }
 
+@K1Deprecation
 fun KtCallExpression.receiverValue(): ReceiverValue? {
     val resolvedCall = getResolvedCall(safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)) ?: return null
     return resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver
 }
 
+@K1Deprecation
 fun KtCallExpression.receiverType(): KotlinType? = receiverValue()?.type
 
+@K1Deprecation
 fun KtExpression.resolveType(context: BindingContext = this.analyze(BodyResolveMode.PARTIAL)): KotlinType? = context.getType(this)
 
+@K1Deprecation
 fun KtModifierKeywordToken.toVisibility(): DescriptorVisibility {
     return when (this) {
         KtTokens.PUBLIC_KEYWORD -> DescriptorVisibilities.PUBLIC

@@ -3,17 +3,21 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.psi.*
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.ast.*
 import org.jetbrains.kotlin.nj2k.isInSingleLine
 
+@K1Deprecation
 interface StatementConverter {
     fun convertStatement(statement: PsiStatement, codeConverter: CodeConverter): Statement
 }
 
+@K1Deprecation
 interface SpecialStatementConverter {
     fun convertStatement(statement: PsiStatement, codeConverter: CodeConverter): Statement?
 }
 
+@K1Deprecation
 fun StatementConverter.withSpecialConverter(specialConverter: SpecialStatementConverter): StatementConverter {
     return object: StatementConverter {
         override fun convertStatement(statement: PsiStatement, codeConverter: CodeConverter): Statement
@@ -21,6 +25,7 @@ fun StatementConverter.withSpecialConverter(specialConverter: SpecialStatementCo
     }
 }
 
+@K1Deprecation
 class DefaultStatementConverter : JavaElementVisitor(), StatementConverter {
     private var _codeConverter: CodeConverter? = null
     private var result: Statement = Statement.Empty
@@ -241,6 +246,7 @@ class DefaultStatementConverter : JavaElementVisitor(), StatementConverter {
     }
 }
 
+@K1Deprecation
 fun CodeConverter.convertStatementOrBlock(statement: PsiStatement?): Statement {
     return if (statement is PsiBlockStatement)
         convertBlock(statement.codeBlock)

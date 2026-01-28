@@ -8,6 +8,7 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
 import com.intellij.util.asSafely
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.structuralsearch.resolveDeclType
 import org.jetbrains.kotlin.idea.structuralsearch.resolveExprType
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 
+@K1Deprecation
 class KotlinExprTypePredicate(
     private val search: String,
     private val withinHierarchy: Boolean,

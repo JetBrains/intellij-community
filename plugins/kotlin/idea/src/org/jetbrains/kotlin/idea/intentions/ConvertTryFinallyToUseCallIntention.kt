@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 @Suppress("DEPRECATION")
 class ConvertTryFinallyToUseCallInspection : IntentionBasedInspection<KtTryExpression>(
     ConvertTryFinallyToUseCallIntention::class,
@@ -29,6 +31,7 @@ class ConvertTryFinallyToUseCallInspection : IntentionBasedInspection<KtTryExpre
     override fun inspectionTarget(element: KtTryExpression) = element.tryKeyword ?: element.tryBlock
 }
 
+@K1Deprecation
 class ConvertTryFinallyToUseCallIntention : SelfTargetingRangeIntention<KtTryExpression>(
     KtTryExpression::class.java, KotlinBundle.messagePointer("convert.try.finally.to.use")
 ) {

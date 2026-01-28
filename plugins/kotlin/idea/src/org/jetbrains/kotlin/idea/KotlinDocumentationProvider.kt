@@ -26,6 +26,7 @@ import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -74,6 +75,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.constant
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.function.Consumer
 
+@K1Deprecation
 class HtmlClassifierNamePolicy(val base: ClassifierNamePolicy) : ClassifierNamePolicyEx {
 
     override fun renderClassifier(classifier: ClassifierDescriptor, renderer: DescriptorRenderer): String =
@@ -112,6 +114,7 @@ class HtmlClassifierNamePolicy(val base: ClassifierNamePolicy) : ClassifierNameP
     }
 }
 
+@K1Deprecation
 class WrapValueParameterHandler(val base: DescriptorRenderer.ValueParametersHandler) : DescriptorRenderer.ValueParametersHandler {
 
 
@@ -148,6 +151,7 @@ class WrapValueParameterHandler(val base: DescriptorRenderer.ValueParametersHand
     }
 }
 
+@K1Deprecation
 class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDocumentationProvider {
 
     override fun collectDocComments(file: PsiFile, sink: Consumer<in PsiDocCommentBase>) {

@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.DfaUtil
 import com.intellij.codeInspection.dataFlow.NullabilityUtil
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.j2k.ast.*
@@ -29,6 +30,7 @@ private object JavaDataFlowAnalyzerFacade {
     }
 }
 
+@K1Deprecation
 class TypeConverter(val converter: Converter) {
     private val typesBeingConverted = HashSet<PsiType>()
 
@@ -525,6 +527,7 @@ private class TypeFlavorCalculator(val converter: TypeFlavorConverterFacade) {
     }
 }
 
+@K1Deprecation
 fun PsiExpression.getTypeConversionMethod(expectedType: PsiType): String? {
     val actualType = this.type ?: return null
     if (actualType == expectedType) return null
@@ -541,6 +544,7 @@ fun PsiExpression.getTypeConversionMethod(expectedType: PsiType): String? {
     }
 }
 
+@K1Deprecation
 fun PsiType.needTypeConversion(expected: PsiType): Boolean {
     val expectedStr = expected.canonicalText
     val actualStr = canonicalText

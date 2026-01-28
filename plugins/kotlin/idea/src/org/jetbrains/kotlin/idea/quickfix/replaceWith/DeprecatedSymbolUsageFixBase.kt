@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.base.fe10.analysis.getAnnotationValue
 import org.jetbrains.kotlin.base.fe10.analysis.getArrayValue
 import org.jetbrains.kotlin.base.fe10.analysis.getStringValue
@@ -52,6 +53,7 @@ import org.jetbrains.kotlin.util.mapAll
 
 //TODO: different replacements for property accessors
 
+@K1Deprecation
 abstract class DeprecatedSymbolUsageFixBase(
     element: KtReferenceExpression,
     val replaceWith: ReplaceWithData

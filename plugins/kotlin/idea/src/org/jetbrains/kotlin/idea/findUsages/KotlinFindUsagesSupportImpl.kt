@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
@@ -28,6 +29,7 @@ private val FUNCTION_RENDERER = DescriptorRenderer.withOptions {
     parameterNameRenderingPolicy = ParameterNameRenderingPolicy.NONE
 }
 
+@K1Deprecation
 class KotlinFindUsagesSupportImpl : KotlinFindUsagesSupport {
     override fun processCompanionObjectInternalReferences(
         companionObject: KtObjectDeclaration,

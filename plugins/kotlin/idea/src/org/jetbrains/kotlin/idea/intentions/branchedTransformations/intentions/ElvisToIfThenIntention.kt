@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 
+@K1Deprecation
 class ElvisToIfThenIntention : SelfTargetingRangeIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
     KotlinBundle.messagePointer("replace.elvis.expression.with.if.expression")

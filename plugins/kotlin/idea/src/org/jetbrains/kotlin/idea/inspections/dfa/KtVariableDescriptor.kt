@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.util.match
 
+@K1Deprecation
 class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDescriptor() {
     val stable: Boolean = calculateStable()
 
@@ -173,8 +175,10 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDes
                     target.findAnnotation(VOLATILE_ANNOTATION_FQ_NAME) == null
     }
 }
+@K1Deprecation
 enum class LambdaVariableKind { IT, THIS }
 
+@K1Deprecation
 class KtLambdaSpecialVariableDescriptor(val lambda: KtFunctionLiteral, val kind: LambdaVariableKind, val type: KotlinType): JvmVariableDescriptor() {
     override fun getDfType(qualifier: DfaVariableValue?): DfType = type.toDfType()
     override fun isStable(): Boolean = true

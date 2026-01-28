@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.kdoc
 
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.utils.Printer
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addIfNotNull
 
+@K1Deprecation
 fun resolveKDocLink(
     context: BindingContext,
     resolutionFacade: ResolutionFacade,
@@ -63,6 +65,7 @@ fun resolveKDocLink(
     return resolveDefaultKDocLink(context, resolutionFacade, contextElement, qualifiedName, contextScope)
 }
 
+@K1Deprecation
 fun getParamDescriptors(fromDescriptor: DeclarationDescriptor): List<DeclarationDescriptor> {
     // TODO resolve parameters of functions passed as parameters
     when (fromDescriptor) {
@@ -168,6 +171,7 @@ private fun getClassInnerScope(outerScope: LexicalScope, descriptor: ClassDescri
     )
 }
 
+@K1Deprecation
 fun getKDocLinkResolutionScope(resolutionFacade: ResolutionFacade, contextDescriptor: DeclarationDescriptor): LexicalScope {
     return when (contextDescriptor) {
         is PackageFragmentDescriptor ->
@@ -209,6 +213,7 @@ private fun getOuterScope(descriptor: DeclarationDescriptorWithSource, resolutio
     }
 }
 
+@K1Deprecation
 fun getKDocLinkMemberScope(descriptor: DeclarationDescriptor, contextScope: LexicalScope): MemberScope {
     return when (descriptor) {
         is PackageFragmentDescriptor -> getPackageInnerScope(descriptor)

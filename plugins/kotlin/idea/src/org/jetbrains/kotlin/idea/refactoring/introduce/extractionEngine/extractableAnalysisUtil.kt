@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.builtins.isSuspendFunctionType
@@ -401,6 +402,7 @@ private fun ExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
     )
 }
 
+@K1Deprecation
 class KotlinTypeDescriptor(private val data: ExtractionData) : TypeDescriptor<KotlinType> {
     private val module = data.commonParent.containingKtFile.findModuleDescriptor()
 
@@ -483,6 +485,7 @@ class KotlinTypeDescriptor(private val data: ExtractionData) : TypeDescriptor<Ko
     }
 }
 
+@K1Deprecation
 object ExtractNameSuggester : IExtractionNameSuggester<KotlinType> {
 
     override fun suggestNamesByType(
@@ -594,6 +597,7 @@ private class ExtractionDataAnalyzer(private val extractionData: ExtractionData)
     }
 }
 
+@K1Deprecation
 fun ExtractionData.performAnalysis(): AnalysisResult<KotlinType> {
     return ExtractionDataAnalyzer(this).performAnalysis()
 }
@@ -667,6 +671,7 @@ private fun ExtractionData.createOutputDescriptor(pseudocode: Pseudocode, localI
     )
 }
 
+@K1Deprecation
 @JvmOverloads
 fun ExtractableCodeDescriptor.validate(target: ExtractionTarget = ExtractionTarget.FUNCTION): ExtractableCodeDescriptorWithConflicts {
     fun getDeclarationMessage(declaration: PsiElement, messageKey: String, capitalize: Boolean = true): String {

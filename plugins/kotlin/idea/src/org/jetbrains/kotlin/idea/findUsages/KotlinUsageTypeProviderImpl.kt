@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.psi.PsiPackage
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinUsageTypeProvider
 import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class KotlinUsageTypeProviderImpl : KotlinUsageTypeProvider() {
 
     override fun getUsageTypeEnumByReference(refExpr: KtReferenceExpression): UsageTypeEnum? {

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.codeInsight
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
@@ -44,6 +45,7 @@ import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.suppressedByNotPropertyList
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 @Deprecated("Only supported for Kotlin Plugin K1 mode. Use Kotlin Analysis API instead, which works for both K1 and K2 modes. See https://kotl.in/analysis-api and `org.jetbrains.kotlin.analysis.api.analyze` for details.")
 @ApiStatus.ScheduledForRemoval
 @OptIn(FrontendInternals::class)
@@ -521,6 +523,7 @@ private fun MemberScope.collectStaticMembers(
     )
 }
 
+@K1Deprecation
 @OptIn(FrontendInternals::class)
 fun ResolutionScope.collectSyntheticStaticMembersAndConstructors(
     resolutionFacade: ResolutionFacade,
@@ -551,6 +554,7 @@ fun ResolutionScope.collectSyntheticStaticMembersAndConstructors(
 // - to show both option (with SAM-conversion signature, and without) in completion
 // - for various intentions and checks (see RedundantSamConstructorInspection, ConflictingExtensionPropertyIntention and other)
 // TODO(dsavvinov): review clients, rewrite them to not rely on synthetic adapetrs
+@K1Deprecation
 fun SyntheticScopes.forceEnableSamAdapters(): SyntheticScopes {
     return if (this !is JavaSyntheticScopes)
         this

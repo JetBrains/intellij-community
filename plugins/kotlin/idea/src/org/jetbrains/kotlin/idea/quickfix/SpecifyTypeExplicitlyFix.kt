@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.types.KotlinTypeFactory
 import org.jetbrains.kotlin.types.asSimpleType
 import org.jetbrains.kotlin.types.isError
 
+@K1Deprecation
 class SpecifyTypeExplicitlyFix(private val convertToNullable: Boolean = false) : PsiElementBaseIntentionAction() {
     override fun getFamilyName() = KotlinBundle.message("specify.type.explicitly")
 
@@ -44,4 +46,5 @@ class SpecifyTypeExplicitlyFix(private val convertToNullable: Boolean = false) :
     }
 }
 
+@K1Deprecation
 fun KotlinType.convertToNullable(): KotlinType = KotlinTypeFactory.simpleType(asSimpleType(), nullable = true)

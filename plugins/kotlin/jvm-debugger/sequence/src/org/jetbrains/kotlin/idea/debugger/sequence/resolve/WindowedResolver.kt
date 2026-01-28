@@ -5,7 +5,9 @@ package org.jetbrains.kotlin.idea.debugger.sequence.resolve
 import com.intellij.debugger.streams.core.resolve.ValuesOrderResolver
 import com.intellij.debugger.streams.core.trace.TraceElement
 import com.intellij.debugger.streams.core.trace.TraceInfo
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class WindowedResolver : ValuesOrderResolver {
     override fun resolve(info: TraceInfo): ValuesOrderResolver.Result {
         val indexBefore = info.valuesOrderBefore

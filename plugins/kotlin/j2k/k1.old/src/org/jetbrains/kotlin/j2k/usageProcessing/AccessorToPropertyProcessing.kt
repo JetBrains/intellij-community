@@ -3,12 +3,14 @@
 package org.jetbrains.kotlin.j2k.usageProcessing
 
 import com.intellij.psi.*
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.AccessorKind
 import org.jetbrains.kotlin.j2k.CodeConverter
 import org.jetbrains.kotlin.j2k.ast.*
 import org.jetbrains.kotlin.j2k.dot
 import org.jetbrains.kotlin.psi.*
 
+@K1Deprecation
 class AccessorToPropertyProcessing(val accessorMethod: PsiMethod, val accessorKind: AccessorKind, val propertyName: String) : UsageProcessing {
     override val targetElement: PsiElement get() = accessorMethod
 

@@ -14,6 +14,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -49,6 +50,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntention<KtTypeReference>(
     KtTypeReference::class.java,
     KotlinBundle.messagePointer("convert.function.type.receiver.to.parameter")

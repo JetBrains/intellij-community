@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleStandaloneScriptActions
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleStandaloneScriptActionsManager
 import org.jetbrains.kotlin.gradle.scripting.shared.getGradleScriptInputsStamp
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
  *
  * TODO(gradle6): remove
  */
+@K1Deprecation
 class GradleLegacyScriptConfigurationLoader(project: Project, private val coroutineScope: CoroutineScope) : DefaultScriptConfigurationLoader(project) {
     override fun interceptBackgroundLoading(file: VirtualFile, isFirstLoad: Boolean, doLoad: () -> Unit): Boolean {
         if (!isGradleKotlinScript(file)) return false

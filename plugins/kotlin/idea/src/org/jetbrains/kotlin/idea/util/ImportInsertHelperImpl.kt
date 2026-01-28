@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
@@ -34,6 +35,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport as _addImport
 
+@K1Deprecation
 class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper() {
     private fun getCodeStyleSettings(contextFile: KtFile): KotlinCodeStyleSettings = contextFile.kotlinCustomSettings
 

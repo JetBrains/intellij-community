@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core.script.v1
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
+@K1Deprecation
 @OptIn(K1ModeProjectStructureApi::class)
 data class ScriptModuleInfo(
   override val project: Project,

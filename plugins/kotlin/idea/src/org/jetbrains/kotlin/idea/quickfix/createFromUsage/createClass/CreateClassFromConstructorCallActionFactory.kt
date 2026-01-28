@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.ifEmpty
 import java.util.*
 
+@K1Deprecation
 object CreateClassFromConstructorCallActionFactory : CreateClassFromUsageFactory<KtCallExpression>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtCallExpression? {
         val diagElement = diagnostic.psiElement

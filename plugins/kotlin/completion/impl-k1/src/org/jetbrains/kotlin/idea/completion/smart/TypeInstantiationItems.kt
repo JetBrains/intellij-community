@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionType
@@ -43,6 +44,7 @@ import org.jetbrains.kotlin.util.constructors
 import org.jetbrains.kotlin.util.kind
 import org.jetbrains.kotlin.utils.addIfNotNull
 
+@K1Deprecation
 class TypeInstantiationItems(
   val resolutionFacade: ResolutionFacade,
   val bindingContext: BindingContext,

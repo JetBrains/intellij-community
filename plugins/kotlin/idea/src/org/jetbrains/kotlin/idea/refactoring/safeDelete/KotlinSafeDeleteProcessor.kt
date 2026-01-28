@@ -21,6 +21,7 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDe
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
@@ -51,6 +52,7 @@ import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.kotlin.utils.ifEmpty
 import java.util.*
 
+@K1Deprecation
 class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
 
     override fun handlesElement(element: PsiElement): Boolean = element.canDeleteElement()

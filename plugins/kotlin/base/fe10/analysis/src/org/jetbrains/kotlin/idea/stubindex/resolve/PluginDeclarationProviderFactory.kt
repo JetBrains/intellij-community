@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.resolve.lazy.data.KtClassLikeInfo
 import org.jetbrains.kotlin.resolve.lazy.declarations.*
 import org.jetbrains.kotlin.storage.StorageManager
 
+@K1Deprecation
 class PluginDeclarationProviderFactory(
   private val project: Project,
   private val indexedFilesScope: GlobalSearchScope,

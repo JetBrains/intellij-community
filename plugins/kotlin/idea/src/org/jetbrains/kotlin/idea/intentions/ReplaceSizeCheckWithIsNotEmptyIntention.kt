@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 @Suppress("DEPRECATION")
 class ReplaceSizeCheckWithIsNotEmptyInspection : IntentionBasedInspection<KtBinaryExpression>(
     ReplaceSizeCheckWithIsNotEmptyIntention::class

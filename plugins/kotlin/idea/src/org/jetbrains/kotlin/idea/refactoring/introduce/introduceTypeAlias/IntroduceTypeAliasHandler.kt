@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
+@K1Deprecation
 open class KotlinIntroduceTypeAliasHandler : RefactoringActionHandler {
     companion object {
         @JvmStatic
@@ -132,6 +134,7 @@ open class KotlinIntroduceTypeAliasHandler : RefactoringActionHandler {
     }
 }
 
+@K1Deprecation
 class IntroduceTypeAliasAction : AbstractIntroduceAction() {
     override fun getRefactoringHandler(provider: RefactoringSupportProvider): RefactoringActionHandler? {
         return if (provider is KotlinRefactoringSupportProvider) KotlinIntroduceTypeAliasHandler.INSTANCE else null

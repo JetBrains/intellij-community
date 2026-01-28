@@ -27,6 +27,7 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.findFacadeClass
@@ -73,6 +74,7 @@ private object ElementHashingStrategy : HashingStrategy<PsiElement> {
     }
 }
 
+@K1Deprecation
 @IntellijInternalApi
 open class MoveKotlinDeclarationsProcessor(
     val descriptor: MoveDeclarationsDescriptor,

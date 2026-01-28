@@ -7,6 +7,7 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ConcurrentFactoryMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
 import org.jetbrains.kotlin.asJava.classes.KtUltraLightSupport
 import org.jetbrains.kotlin.asJava.classes.cleanFromAnonymousTypes
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import java.util.concurrent.ConcurrentMap
 
+@K1Deprecation
 class IDELightClassGenerationSupport : LightClassGenerationSupport() {
     private class KtUltraLightSupportImpl(private val element: KtElement) : KtUltraLightSupport {
 

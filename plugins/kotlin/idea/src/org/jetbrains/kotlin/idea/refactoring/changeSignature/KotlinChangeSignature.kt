@@ -20,6 +20,7 @@ import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.util.VisibilityUtil
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -35,6 +36,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
+@K1Deprecation
 interface KotlinChangeSignatureConfiguration {
     fun configure(originalDescriptor: KotlinMethodDescriptor): KotlinMethodDescriptor = originalDescriptor
     fun isPerformSilently(affectedFunctions: Collection<PsiElement>): Boolean = false
@@ -43,12 +45,14 @@ interface KotlinChangeSignatureConfiguration {
     object Empty : KotlinChangeSignatureConfiguration
 }
 
+@K1Deprecation
 fun KotlinMethodDescriptor.modify(action: (KotlinMutableMethodDescriptor) -> Unit): KotlinMethodDescriptor {
     val newDescriptor = KotlinMutableMethodDescriptor(this)
     action(newDescriptor)
     return newDescriptor
 }
 
+@K1Deprecation
 fun runChangeSignature(
     project: Project,
     editor: Editor?,
@@ -64,6 +68,7 @@ fun runChangeSignature(
     return result
 }
 
+@K1Deprecation
 class KotlinChangeSignature(
   project: Project,
   editor: Editor?,

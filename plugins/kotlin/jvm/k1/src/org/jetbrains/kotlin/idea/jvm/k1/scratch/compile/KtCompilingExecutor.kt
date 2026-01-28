@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.jvm.k1.scratch.compile
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.resolve.AnalyzingUtils
 
+@K1Deprecation
 class KtCompilingExecutor(file: ScratchFile) : ScratchExecutor(file) {
     private var session: KtScratchExecutionSession? = null
 

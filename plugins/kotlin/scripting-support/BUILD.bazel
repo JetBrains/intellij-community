@@ -1,5 +1,14 @@
 ### auto-generated section `build kotlin.scripting-support` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_scripting-support",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
 
 jvm_library(
   name = "scripting-support",
@@ -18,6 +27,7 @@ jvm_library(
   module_name = "kotlin.scripting-support",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_scripting-support",
   deps = [
     "//platform/analysis-api:analysis",
     "@lib//:kotlin-stdlib",

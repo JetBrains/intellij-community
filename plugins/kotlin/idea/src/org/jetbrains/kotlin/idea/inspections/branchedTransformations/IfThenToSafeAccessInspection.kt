@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.util.getType
 
+@K1Deprecation
 class IfThenToSafeAccessInspection @JvmOverloads constructor(private val inlineWithPrompt: Boolean = true) :
     AbstractApplicabilityBasedInspection<KtIfExpression>(KtIfExpression::class.java) {
 

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.isValidOperator
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 fun getAddExclExclCallFix(element: PsiElement?, checkImplicitReceivers: Boolean = false): AddExclExclCallFix? {
     fun KtExpression?.asFix(implicitReceiver: Boolean = false) = this?.let { AddExclExclCallFix(it, implicitReceiver) }
 
@@ -80,6 +82,7 @@ fun getAddExclExclCallFix(element: PsiElement?, checkImplicitReceivers: Boolean 
     }
 }
 
+@K1Deprecation
 object UnsafeCallExclExclFixFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val psiElement = diagnostic.psiElement
@@ -91,6 +94,7 @@ object UnsafeCallExclExclFixFactory : KotlinSingleIntentionActionFactory() {
     }
 }
 
+@K1Deprecation
 object SmartCastImpossibleExclExclFixFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         if (diagnostic.factory !== Errors.SMARTCAST_IMPOSSIBLE) return null
@@ -110,6 +114,7 @@ object SmartCastImpossibleExclExclFixFactory : KotlinSingleIntentionActionFactor
     }
 }
 
+@K1Deprecation
 object MissingIteratorExclExclFixFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val element = diagnostic.psiElement as? KtExpression ?: return null

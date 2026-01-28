@@ -5,6 +5,7 @@ import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.psi.PsiType
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.PropertyInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.types.Variance
 
+@K1Deprecation
 class AddPropertyActionCreateCallableFromUsageFix(
     targetContainer: KtElement,
     modifierList: KtModifierList,

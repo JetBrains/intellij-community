@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
+@K1Deprecation
 class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<KotlinGenerateSecondaryConstructorAction.Info>() {
     class Info(
         val propertiesToInitialize: List<PropertyDescriptor>,

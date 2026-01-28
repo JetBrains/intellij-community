@@ -10,6 +10,7 @@ import com.intellij.refactoring.introduceParameter.IntroduceParameterData
 import com.intellij.refactoring.introduceParameter.IntroduceParameterMethodUsagesProcessor
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import java.util.*
 
+@K1Deprecation
 class KotlinIntroduceParameterMethodUsageProcessor : IntroduceParameterMethodUsagesProcessor {
     override fun isMethodUsage(usage: UsageInfo): Boolean = (usage.element as? KtElement)?.let {
         it.getParentOfTypeAndBranch<KtCallElement>(true) { calleeExpression } != null

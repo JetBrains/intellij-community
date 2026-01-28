@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -45,6 +46,7 @@ import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addIfNotNull
 
+@K1Deprecation
 object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
     private const val DISPLAY_MAX_PARAMS = 5
 

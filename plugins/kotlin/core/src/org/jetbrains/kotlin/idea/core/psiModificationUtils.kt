@@ -9,6 +9,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
@@ -61,6 +62,7 @@ import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 fun KtLambdaArgument.moveInsideParentheses(bindingContext: BindingContext): KtCallExpression {
     val ktExpression = this.getArgumentExpression()
         ?: throw KotlinExceptionWithAttachments("no argument expression for $this")
@@ -77,6 +79,7 @@ fun KtLambdaArgument.moveInsideParentheses(bindingContext: BindingContext): KtCa
  * @return The modified `KtCallExpression` with the lambda argument moved inside parentheses and replaced with
  * the specified replacement expression.
  */
+@K1Deprecation
 fun KtLambdaArgument.moveInsideParenthesesAndReplaceWith(
     replacement: KtExpression,
     bindingContext: BindingContext
@@ -87,12 +90,14 @@ fun KtLambdaArgument.moveInsideParenthesesAndReplaceWith(
     return this.moveInsideParenthesesAndReplaceWith(replacement, lambdaArgumentName)
 }
 
+@K1Deprecation
 fun KtLambdaArgument.getLambdaArgumentName(bindingContext: BindingContext): Name? {
     val callExpression = parent as KtCallExpression
     val resolvedCall = callExpression.getResolvedCall(bindingContext)
     return (resolvedCall?.getArgumentMapping(this) as? ArgumentMatch)?.valueParameter?.name
 }
 
+@K1Deprecation
 fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
     val valueArgument = parentOfType<KtValueArgument>()?.takeIf {
         KtPsiUtil.deparenthesize(it.getArgumentExpression()) == this
@@ -104,6 +109,7 @@ fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
     }
 }
 
+@K1Deprecation
 @OptIn(FrontendInternals::class)
 fun KtCallExpression.canMoveLambdaOutsideParentheses(skipComplexCalls: Boolean = true): Boolean {
     if (skipComplexCalls && isComplexCallWithLambdaArgument()) return false
@@ -191,6 +197,7 @@ private fun FunctionDescriptor.allowsMoveOfLastParameterOutsideParentheses(
 }
 
 //TODO: git rid of this method
+@K1Deprecation
 fun PsiElement.deleteElementAndCleanParent() {
     val parent = parent
 
@@ -226,12 +233,14 @@ private fun deleteElementWithDelimiters(element: PsiElement) {
     parent.deleteChildRange(from, to)
 }
 
+@K1Deprecation
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
     ReplaceWith("this.appendDeclaration(declaration)", "org.jetbrains.kotlin.idea.base.psi.appendDeclaration")
 )
 inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T): T  = appendDeclaration(declaration)
 
+@K1Deprecation
 fun KtDeclaration.toDescriptor(): DeclarationDescriptor? {
     if (this is KtScriptInitializer) {
         return null
@@ -240,6 +249,7 @@ fun KtDeclaration.toDescriptor(): DeclarationDescriptor? {
     return resolveToDescriptorIfAny()
 }
 
+@K1Deprecation
 fun KtModifierListOwner.setVisibility(visibilityModifier: KtModifierKeywordToken, addImplicitVisibilityModifier: Boolean = false) {
     if (this is KtDeclaration && !addImplicitVisibilityModifier) {
         val defaultVisibilityKeyword = implicitVisibility()
@@ -261,6 +271,7 @@ fun KtModifierListOwner.setVisibility(visibilityModifier: KtModifierKeywordToken
     addModifier(visibilityModifier)
 }
 
+@K1Deprecation
 fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
     return when {
         this is KtPropertyAccessor && isSetter && property.hasModifier(KtTokens.OVERRIDE_KEYWORD) -> {
@@ -299,6 +310,7 @@ fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
     }
 }
 
+@K1Deprecation
 fun KtModifierListOwner.canBePrivate(): Boolean {
     if (modifierList?.hasModifier(KtTokens.ABSTRACT_KEYWORD) == true) return false
     if (this.isAnnotationClassPrimaryConstructor()) return false
@@ -314,8 +326,10 @@ fun KtModifierListOwner.canBePrivate(): Boolean {
     return true
 }
 
+@K1Deprecation
 fun KtModifierListOwner.canBePublic(): Boolean = !isSealedClassConstructor()
 
+@K1Deprecation
 fun KtModifierListOwner.canBeProtected(): Boolean {
     return when (val parent = if (this is KtPropertyAccessor) this.property.parent else this.parent) {
         is KtClassBody -> {
@@ -329,6 +343,7 @@ fun KtModifierListOwner.canBeProtected(): Boolean {
     }
 }
 
+@K1Deprecation
 fun KtModifierListOwner.canBeInternal(): Boolean {
     if (containingClass()?.isInterface() == true) {
         val objectDeclaration = getStrictParentOfType<KtObjectDeclaration>() ?: return false
@@ -353,6 +368,7 @@ private fun KtModifierListOwner.isSealedClassConstructor(): Boolean {
     return ktClass.isSealed()
 }
 
+@K1Deprecation
 fun KtClass.isInheritable(): Boolean {
     return when (getModalityFromDescriptor()) {
         KtTokens.ABSTRACT_KEYWORD, KtTokens.OPEN_KEYWORD, KtTokens.SEALED_KEYWORD -> true
@@ -360,9 +376,11 @@ fun KtClass.isInheritable(): Boolean {
     }
 }
 
+@K1Deprecation
 val KtParameter.isOverridable: Boolean
     get() = hasValOrVar() && !isEffectivelyFinal
 
+@K1Deprecation
 val KtProperty.isOverridable: Boolean
     get() = !isTopLevel && !isEffectivelyFinal
 
@@ -384,6 +402,7 @@ private val KtClass.isEffectivelyFinal: Boolean
 /**
  * copy-paste in K2: [org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupportFirImpl.isOverridable]
  */
+@K1Deprecation
 fun KtDeclaration.isOverridable(): Boolean =
     !hasModifier(KtTokens.PRIVATE_KEYWORD) &&  // 'private' is incompatible with 'open'
             (parents.match(KtParameterList::class, KtPrimaryConstructor::class, last = KtClass::class)
@@ -391,6 +410,7 @@ fun KtDeclaration.isOverridable(): Boolean =
                 ?.let { it.isInheritable() || it.isEnum() } == true &&
             getModalityFromDescriptor() in setOf(KtTokens.ABSTRACT_KEYWORD, KtTokens.OPEN_KEYWORD)
 
+@K1Deprecation
 fun KtDeclaration.getModalityFromDescriptor(descriptor: DeclarationDescriptor? = resolveToDescriptorIfAny()): KtModifierKeywordToken? {
     if (descriptor is MemberDescriptor) {
         return mapModality(descriptor.modality)
@@ -399,6 +419,7 @@ fun KtDeclaration.getModalityFromDescriptor(descriptor: DeclarationDescriptor? =
     return null
 }
 
+@K1Deprecation
 fun KtDeclaration.implicitModality(): KtModifierKeywordToken {
     var predictedModality = predictImplicitModality()
     val bindingContext = safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
@@ -423,6 +444,7 @@ fun KtDeclaration.implicitModality(): KtModifierKeywordToken {
     return predictedModality
 }
 
+@K1Deprecation
 fun mapModality(accurateModality: Modality): KtModifierKeywordToken = when (accurateModality) {
     Modality.FINAL -> KtTokens.FINAL_KEYWORD
     Modality.SEALED -> KtTokens.SEALED_KEYWORD
@@ -438,12 +460,14 @@ private fun mapModalityToken(modalityToken: IElementType): Modality = when (moda
     else -> error("Unexpected modality keyword $modalityToken")
 }
 
+@K1Deprecation
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
     ReplaceWith("this.addTypeParameter(typeParameter)", "org.jetbrains.kotlin.idea.base.psi.addTypeParameter")
 )
 fun KtTypeParameterListOwner.addTypeParameter(typeParameter: KtTypeParameter) = addTypeParameter(typeParameter)
 
+@K1Deprecation
 fun KtNamedFunction.getOrCreateValueParameterList(): KtParameterList {
     valueParameterList?.let { return it }
     val parameterList = KtPsiFactory(project).createParameterList("()")
@@ -451,11 +475,13 @@ fun KtNamedFunction.getOrCreateValueParameterList(): KtParameterList {
     return addAfter(parameterList, anchor) as KtParameterList
 }
 
+@K1Deprecation
 fun KtCallableDeclaration.setType(type: KotlinType, shortenReferences: Boolean = true) {
     if (type.isError) return
     setType(IdeDescriptorRenderers.SOURCE_CODE.renderType(type), shortenReferences)
 }
 
+@K1Deprecation
 fun KtCallableDeclaration.setType(typeString: String, shortenReferences: Boolean = true) {
     val typeReference = KtPsiFactory(project).createType(typeString)
     setTypeReference(typeReference)
@@ -464,6 +490,7 @@ fun KtCallableDeclaration.setType(typeString: String, shortenReferences: Boolean
     }
 }
 
+@K1Deprecation
 fun KtCallableDeclaration.setReceiverType(type: KotlinType) {
     if (type.isError) return
     val typeReference = KtPsiFactory(project).createType(IdeDescriptorRenderers.SOURCE_CODE.renderType(type))
@@ -471,6 +498,7 @@ fun KtCallableDeclaration.setReceiverType(type: KotlinType) {
     ShortenReferences.DEFAULT.process(receiverTypeReference!!)
 }
 
+@K1Deprecation
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
     ReplaceWith("this.setDefaultValue(newDefaultValue)", "org.jetbrains.kotlin.idea.base.psi.setDefaultValue")
@@ -478,10 +506,12 @@ fun KtCallableDeclaration.setReceiverType(type: KotlinType) {
 @ApiStatus.ScheduledForRemoval
 fun KtParameter.setDefaultValue(newDefaultValue: KtExpression): PsiElement = setDefaultValue(newDefaultValue)
 
+@K1Deprecation
 fun KtModifierList.appendModifier(modifier: KtModifierKeywordToken) {
     add(KtPsiFactory(project).createModifier(modifier))
 }
 
+@K1Deprecation
 fun KtModifierList.normalize(): KtModifierList {
     val psiFactory = KtPsiFactory(project)
     return psiFactory.createEmptyModifierList().also { newList ->

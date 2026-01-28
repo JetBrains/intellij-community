@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiRecursiveVisitor
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
@@ -50,6 +51,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return object : KtVisitorVoid() {
@@ -174,6 +176,7 @@ class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
     }
 }
 
+@K1Deprecation
 fun isUsageOfDescriptor(descriptor: DeclarationDescriptor, element: KtElement, context: BindingContext): Boolean {
     fun isUsageOfDescriptorInResolvedCall(resolvedCall: ResolvedCall<*>): Boolean {
         // As receiver of call

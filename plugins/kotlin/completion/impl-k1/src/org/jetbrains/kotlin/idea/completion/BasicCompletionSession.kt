@@ -17,6 +17,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -66,6 +67,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class BasicCompletionSession(
     configuration: CompletionSessionConfiguration,
     completionParameters: CompletionParameters,

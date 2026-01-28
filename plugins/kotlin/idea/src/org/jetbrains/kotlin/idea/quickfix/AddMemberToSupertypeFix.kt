@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.ui.IconManager
 import com.intellij.util.PlatformIcons
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -43,6 +44,7 @@ import org.jetbrains.kotlin.types.typeUtil.supertypes
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.Icon
 
+@K1Deprecation
 abstract class AddMemberToSupertypeFix(element: KtCallableDeclaration, private val candidateMembers: List<MemberData>) :
   KotlinQuickFixAction<KtCallableDeclaration>(element), LowPriorityAction {
 
@@ -123,6 +125,7 @@ abstract class AddMemberToSupertypeFix(element: KtCallableDeclaration, private v
         )
 }
 
+@K1Deprecation
 abstract class AddMemberToSupertypeFactory : KotlinSingleIntentionActionFactory() {
     protected fun getCandidateMembers(memberElement: KtCallableDeclaration): List<MemberData> {
         val descriptors = generateCandidateMembers(memberElement)
@@ -184,6 +187,7 @@ abstract class AddMemberToSupertypeFactory : KotlinSingleIntentionActionFactory(
     }
 }
 
+@K1Deprecation
 class AddFunctionToSupertypeFix private constructor(element: KtNamedFunction, functions: List<MemberData>) :
     AddMemberToSupertypeFix(element, functions) {
 
@@ -228,6 +232,7 @@ class AddFunctionToSupertypeFix private constructor(element: KtNamedFunction, fu
     }
 }
 
+@K1Deprecation
 class AddPropertyToSupertypeFix private constructor(element: KtProperty, properties: List<MemberData>) :
     AddMemberToSupertypeFix(element, properties) {
 

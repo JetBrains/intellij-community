@@ -11,11 +11,13 @@ import com.intellij.debugger.streams.core.wrapper.CallArgument
 import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.core.wrapper.impl.CallArgumentImpl
 import com.intellij.debugger.streams.core.wrapper.impl.IntermediateStreamCallImpl
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinSequenceTypes
 
 /**
  * Based on com.intellij.debugger.streams.trace.impl.handler.unified.DistinctByKeyHandler
  */
+@K1Deprecation
 class KotlinDistinctByHandler(callNumber: Int, private val call: IntermediateStreamCall, dsl: Dsl) : HandlerBase.Intermediate(dsl) {
     private companion object {
         const val KEY_EXTRACTOR_VARIABLE_PREFIX = "keyExtractor"

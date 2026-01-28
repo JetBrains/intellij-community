@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
@@ -35,6 +36,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.getAbbreviatedType
 
+@K1Deprecation
 class AddThrowsAnnotationIntention : SelfTargetingIntention<KtThrowExpression>(
     KtThrowExpression::class.java, KotlinBundle.messagePointer("add.throws.annotation")
 ) {

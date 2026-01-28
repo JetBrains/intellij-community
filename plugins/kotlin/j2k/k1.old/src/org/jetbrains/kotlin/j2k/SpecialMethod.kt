@@ -6,10 +6,12 @@ import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
 import com.intellij.psi.impl.PsiExpressionEvaluator
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.ast.*
 import java.io.PrintStream
 import java.util.*
 
+@K1Deprecation
 enum class SpecialMethod(private val qualifiedClassName: String?, val methodName: String, val parameterCount: Int?) {
     CHAR_SEQUENCE_LENGTH(CharSequence::class.java.name, "length", 0) {
         override fun ConvertCallData.convertCall() = convertMethodCallToPropertyUse()

@@ -5,12 +5,14 @@ package org.jetbrains.kotlin.idea.core.script.k1.configuration.utils
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
+import org.jetbrains.kotlin.K1Deprecation
 
 /**
  * This cache is used by [org.jetbrains.kotlin.idea.core.script.k1.configuration.DefaultScriptingSupport] only.
  * @see org.jetbrains.kotlin.idea.core.script.k1.configuration.DefaultScriptingSupport.collectConfigurations
  *
  */
+@K1Deprecation
 @Service(Service.Level.PROJECT)
 @State(
     name = "ScriptClassRootsStorage",

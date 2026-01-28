@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import javax.swing.Icon
 
+@K1Deprecation
 class PsiClassLookupObject(val psiClass: PsiClass) : DeclarationLookupObjectImpl(null) {
     override val psiElement: PsiElement
         get() = psiClass

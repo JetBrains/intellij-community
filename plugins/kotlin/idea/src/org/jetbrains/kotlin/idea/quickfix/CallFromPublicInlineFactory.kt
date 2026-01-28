@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.util.parentOfTypes
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 object CallFromPublicInlineFactory : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         val fixes = mutableListOf<IntentionAction>()

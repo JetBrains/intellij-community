@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.core.script.k1.ucache
 
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.K1Deprecation
 import java.nio.file.Path
 import kotlin.io.path.exists
 
@@ -10,6 +11,7 @@ import kotlin.io.path.exists
  *
  * null means default sdk
  */
+@K1Deprecation
 class SdkId private constructor(val homeDirectory: String?) {
     companion object {
         val default = SdkId(null as String?)

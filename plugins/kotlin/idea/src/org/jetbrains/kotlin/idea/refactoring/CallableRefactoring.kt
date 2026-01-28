@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.*
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.memberScopeAsImportingScope
 
+@K1Deprecation
 abstract class CallableRefactoring<out T : CallableDescriptor>(
     val project: Project,
     val editor: Editor?,
@@ -175,6 +177,7 @@ abstract class CallableRefactoring<out T : CallableDescriptor>(
     }
 }
 
+@K1Deprecation
 fun getAffectedCallables(project: Project, descriptorsForChange: Collection<CallableDescriptor>): Collection<PsiElement> {
     val results = hashSetOf<PsiElement>()
     for (descriptor in descriptorsForChange) {
@@ -208,6 +211,7 @@ private fun collectAffectedCallables(declaration: PsiElement, results: MutableCo
     }
 }
 
+@K1Deprecation
 fun DeclarationDescriptor.getContainingScope(): LexicalScope? {
     val declaration = DescriptorToSourceUtils.descriptorToDeclaration(this)
     val block = declaration?.parent as? KtBlockExpression
@@ -224,6 +228,7 @@ fun DeclarationDescriptor.getContainingScope(): LexicalScope? {
     }
 }
 
+@K1Deprecation
 fun KtDeclarationWithBody.getBodyScope(bindingContext: BindingContext): LexicalScope? {
     val expression = bodyExpression?.children?.firstOrNull { it is KtExpression } ?: return null
     return expression.getResolutionScope(bindingContext, getResolutionFacade())

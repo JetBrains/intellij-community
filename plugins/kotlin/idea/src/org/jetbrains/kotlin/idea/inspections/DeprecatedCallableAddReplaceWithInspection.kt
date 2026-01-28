@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiRecursiveVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
@@ -34,6 +35,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
+@K1Deprecation
 class DeprecatedCallableAddReplaceWithInspection : AbstractApplicabilityBasedInspection<KtCallableDeclaration>(
     KtCallableDeclaration::class.java
 ) {

@@ -3,8 +3,10 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.psi.*
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.ast.*
 
+@K1Deprecation
 class CodeConverter(
         val converter: Converter,
         private val expressionConverter: ExpressionConverter,

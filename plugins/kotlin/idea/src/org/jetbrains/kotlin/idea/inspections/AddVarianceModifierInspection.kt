@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.MemberDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.resolve.VarianceCheckerCore
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
+@K1Deprecation
 class AddVarianceModifierInspection : AbstractKotlinInspection() {
 
     private fun VarianceCheckerCore.checkClassOrObject(klass: KtClassOrObject): Boolean {

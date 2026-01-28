@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.analysisContext
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 @Deprecated("Use AbstractKotlinInlayHintsProvider instead")
 abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
 
@@ -85,6 +87,7 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
     }
 }
 
+@K1Deprecation
 fun getInlayPresentationForInlayInfoDetails(
     element: PsiElement,
     hintType: HintType?,

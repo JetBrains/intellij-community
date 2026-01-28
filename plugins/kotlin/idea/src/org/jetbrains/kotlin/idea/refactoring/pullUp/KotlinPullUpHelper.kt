@@ -10,6 +10,7 @@ import com.intellij.refactoring.classMembers.MemberInfoBase
 import com.intellij.refactoring.memberPullUp.PullUpData
 import com.intellij.refactoring.memberPullUp.PullUpHelper
 import com.intellij.refactoring.util.RefactoringUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -41,6 +42,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.Variance
 
+@K1Deprecation
 class KotlinPullUpHelper(
     private val javaData: PullUpData,
     private val data: KotlinPullUpData

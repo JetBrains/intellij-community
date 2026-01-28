@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.core.script.k1.ucache
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.SdkId
 
+@K1Deprecation
 class ScriptSdks(
   val sdks: Map<SdkId, Sdk?>,
   val nonIndexedClassRoots: Set<VirtualFile>,

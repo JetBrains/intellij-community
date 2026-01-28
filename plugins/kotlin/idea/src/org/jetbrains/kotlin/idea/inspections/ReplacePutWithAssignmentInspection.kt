@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 import org.jetbrains.kotlin.resolve.descriptorUtil.overriddenTreeAsSequence
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class ReplacePutWithAssignmentInspection : AbstractApplicabilityBasedInspection<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java
 ) {

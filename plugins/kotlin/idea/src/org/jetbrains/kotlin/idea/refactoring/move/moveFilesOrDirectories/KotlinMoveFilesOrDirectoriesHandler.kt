@@ -11,6 +11,7 @@ import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.MoveHandler
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.KotlinAwareMoveFilesOrDirectoriesDialog
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.KotlinAwareMoveFilesOrDirectoriesModel
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 
+@K1Deprecation
 class KotlinMoveFilesOrDirectoriesHandler : MoveFilesOrDirectoriesHandler() {
     private fun adjustElements(elements: Array<out PsiElement>): Array<PsiFileSystemItem>? {
         return elements.map {

@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -34,6 +35,7 @@ private val transformationsAndTerminations: Map<String, FqName> =
 private val terminations: Map<String, FqName> =
     StandardKotlinNames.Sequences.terminations.associateBy { it.shortName().asString() }
 
+@K1Deprecation
 class RedundantAsSequenceInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = qualifiedExpressionVisitor(fun(qualified) {
         val call = qualified.callExpression ?: return

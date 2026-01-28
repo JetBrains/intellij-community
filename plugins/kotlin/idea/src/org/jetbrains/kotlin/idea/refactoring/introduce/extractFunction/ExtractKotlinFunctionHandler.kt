@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.refactoring.KotlinNamesValidator
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class ExtractKotlinFunctionHandler(
     val allContainersEnabled: Boolean = false,
     private val helper: ExtractionEngineHelper = getDefaultHelper(allContainersEnabled)

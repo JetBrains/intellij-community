@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.j2k
 import com.intellij.psi.*
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.j2k.ast.*
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.utils.addIfNotNull
 
+@K1Deprecation
 class PropertyInfo(
     val identifier: Identifier,
     val isVar: Boolean,
@@ -88,6 +90,7 @@ class PropertyInfo(
     }
 }
 
+@K1Deprecation
 class PropertyDetectionCache(private val converter: Converter) {
     private val cache = HashMap<PsiClass, Map<PsiMember, PropertyInfo>>()
 
@@ -102,6 +105,7 @@ class PropertyDetectionCache(private val converter: Converter) {
     }
 }
 
+@K1Deprecation
 sealed class SuperInfo {
     class Property(
         val isVar: Boolean,

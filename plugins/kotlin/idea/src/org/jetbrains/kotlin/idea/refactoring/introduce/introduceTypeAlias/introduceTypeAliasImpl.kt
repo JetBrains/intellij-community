@@ -9,6 +9,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.containers.LinkedMultiMap
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -35,6 +36,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.types.TypeUtils
 
+@K1Deprecation
 sealed class IntroduceTypeAliasAnalysisResult {
     class Error(@NlsContexts.DialogMessage val message: String) : IntroduceTypeAliasAnalysisResult()
     class Success(val descriptor: IntroduceTypeAliasDescriptor) : IntroduceTypeAliasAnalysisResult()
@@ -42,6 +44,7 @@ sealed class IntroduceTypeAliasAnalysisResult {
 
 private fun IntroduceTypeAliasData.getTargetScope() = targetSibling.getResolutionScope(bindingContext, resolutionFacade)
 
+@K1Deprecation
 fun IntroduceTypeAliasData.analyze(): IntroduceTypeAliasAnalysisResult {
     val psiFactory = KtPsiFactory(originalTypeElement.project)
 
@@ -110,12 +113,14 @@ fun IntroduceTypeAliasData.analyze(): IntroduceTypeAliasAnalysisResult {
     return IntroduceTypeAliasAnalysisResult.Success(descriptor.copy(name = initialName))
 }
 
+@K1Deprecation
 fun IntroduceTypeAliasData.getApplicableVisibilities(): List<KtModifierKeywordToken> = when (targetSibling.parent) {
     is KtClassBody -> listOf(PRIVATE_KEYWORD, PUBLIC_KEYWORD, INTERNAL_KEYWORD, PROTECTED_KEYWORD)
     is KtFile -> listOf(PRIVATE_KEYWORD, PUBLIC_KEYWORD, INTERNAL_KEYWORD)
     else -> emptyList()
 }
 
+@K1Deprecation
 fun IntroduceTypeAliasDescriptor.validate(): IntroduceTypeAliasDescriptorWithConflicts {
     val conflicts = MultiMap<PsiElement, String>()
 
@@ -140,6 +145,7 @@ fun IntroduceTypeAliasDescriptor.validate(): IntroduceTypeAliasDescriptorWithCon
     return IntroduceTypeAliasDescriptorWithConflicts(this, conflicts)
 }
 
+@K1Deprecation
 fun findDuplicates(typeAlias: KtTypeAlias): Map<KotlinPsiRange, () -> Unit> {
     val aliasName = typeAlias.name?.quoteIfNeeded() ?: return emptyMap()
     val aliasRange = typeAlias.textRange
@@ -237,6 +243,7 @@ fun findDuplicates(typeAlias: KtTypeAlias): Map<KotlinPsiRange, () -> Unit> {
 
 private var KtTypeReference.typeParameterInfo: TypeParameter? by CopyablePsiUserDataProperty(Key.create("TYPE_PARAMETER_INFO"))
 
+@K1Deprecation
 fun IntroduceTypeAliasDescriptor.generateTypeAlias(previewOnly: Boolean = false): KtTypeAlias {
     val originalElement = originalData.originalTypeElement
     val psiFactory = KtPsiFactory(originalElement.project)

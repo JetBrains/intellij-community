@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.j2k.post.processing
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
+@K1Deprecation
 class NewJ2kPostProcessor : PostProcessor {
     companion object {
         private val LOG = Logger.getInstance("@org.jetbrains.kotlin.idea.j2k.post.processings.NewJ2kPostProcessor")

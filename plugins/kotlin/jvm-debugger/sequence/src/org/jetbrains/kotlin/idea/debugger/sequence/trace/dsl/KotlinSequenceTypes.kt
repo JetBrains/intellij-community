@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 
 import com.intellij.debugger.streams.core.trace.dsl.Types
 import com.intellij.debugger.streams.core.trace.impl.handler.type.*
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 
+@K1Deprecation
 object KotlinSequenceTypes : Types {
     override val ANY: GenericType = ClassTypeImpl(FqNames.any.asString(), "kotlin.Any()")
 

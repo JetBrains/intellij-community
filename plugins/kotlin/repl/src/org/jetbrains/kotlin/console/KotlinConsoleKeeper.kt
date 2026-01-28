@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import com.intellij.execution.JavaParametersBuilder
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.projectStructure.version
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
@@ -26,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.notExists
 
+@K1Deprecation
 class KotlinConsoleKeeper(val project: Project) {
     private val consoleMap: MutableMap<VirtualFile, KotlinConsoleRunner> = ConcurrentHashMap()
 

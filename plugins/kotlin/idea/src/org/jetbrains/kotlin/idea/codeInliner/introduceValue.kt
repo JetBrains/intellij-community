@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeInliner
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -128,6 +129,7 @@ internal fun MutableCodeToInline.introduceValue(
     }
 }
 
+@K1Deprecation
 fun String.nameHasConflictsInScope(lexicalScope: LexicalScope, languageVersionSettings: LanguageVersionSettings): Boolean {
     return lexicalScope.getAllAccessibleVariables(Name.identifier(this)).any {
         !it.isExtension && it.isVisible(lexicalScope.ownerDescriptor, languageVersionSettings)

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasUsages
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.*
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.idea.util.FuzzyType
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class FlatMapTransformation(
     override val loop: KtForExpression,
     val inputVariable: KtCallableDeclaration,

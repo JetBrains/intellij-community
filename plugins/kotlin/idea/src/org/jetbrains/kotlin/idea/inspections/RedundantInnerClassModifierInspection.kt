@@ -15,6 +15,7 @@ import com.intellij.psi.util.parentsOfType
 import com.intellij.util.containers.OrderedSet
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
     @Suppress("MemberVisibilityCanBePrivate")
     var ignorableAnnotations = OrderedSet(listOf(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED))

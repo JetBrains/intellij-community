@@ -10,9 +10,11 @@ import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.core.wrapper.StreamCall
 import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
 import com.intellij.debugger.streams.core.wrapper.impl.CallArgumentImpl
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.typeBefore
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.withArgs
 
+@K1Deprecation
 class FilterCallHandler : BothSemanticsHandler {
     private companion object {
         const val VALUES_ARRAY_NAME = "objectsInPredicate"

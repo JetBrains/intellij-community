@@ -2,11 +2,13 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasUsages
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
+@K1Deprecation
 class MapTransformation(
     override val loop: KtForExpression,
     val inputVariable: KtCallableDeclaration,

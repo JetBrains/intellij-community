@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.KotlinBaseFe10HighlightingBundle
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class KotlinSuspendCallLineMarkerProvider : LineMarkerProviderDescriptor() {
     private class SuspendCallMarkerInfo(callElement: PsiElement, message: String) : LineMarkerInfo<PsiElement>(
         callElement,
@@ -71,6 +73,7 @@ class KotlinSuspendCallLineMarkerProvider : LineMarkerProviderDescriptor() {
     }
 }
 
+@K1Deprecation
 sealed class SuspendCallKind<T : KtExpression>(val element: T) {
     class Iteration(element: KtForExpression) : SuspendCallKind<KtForExpression>(element) {
         override val anchor get() = element.loopRange
@@ -96,6 +99,7 @@ sealed class SuspendCallKind<T : KtExpression>(val element: T) {
     abstract val description: String
 }
 
+@K1Deprecation
 fun getSuspendCallKind(expression: KtExpression, bindingContext: BindingContext): SuspendCallKind<*>? {
     fun isSuspend(descriptor: CallableDescriptor): Boolean = when (descriptor) {
         is FunctionDescriptor -> descriptor.isSuspend

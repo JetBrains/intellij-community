@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.codeInliner
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 
+@K1Deprecation
 class ClassUsageReplacementStrategy(
     typeReplacement: KtUserType?,
     constructorReplacement: CodeToInline?,

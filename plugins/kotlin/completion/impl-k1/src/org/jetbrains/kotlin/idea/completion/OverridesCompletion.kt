@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion
 import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
 import com.intellij.ui.RowIcon
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
+@K1Deprecation
 class OverridesCompletion(
     private val collector: LookupElementsCollector,
     private val lookupElementFactory: BasicLookupElementFactory

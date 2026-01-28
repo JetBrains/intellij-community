@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.util.PsiUtilCore
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -21,12 +22,14 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class ConvertToStringTemplateInspection : IntentionBasedInspection<KtBinaryExpression>(
     ConvertToStringTemplateIntention::class,
     ConvertToStringTemplateIntention.Holder::shouldSuggestToConvert,
     problemText = KotlinBundle.message("convert.concatenation.to.template.before.text")
 )
 
+@K1Deprecation
 open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
     KotlinBundle.messagePointer("convert.concatenation.to.template")

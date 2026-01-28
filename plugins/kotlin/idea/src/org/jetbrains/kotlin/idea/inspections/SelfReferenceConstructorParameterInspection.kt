@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.setType
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.types.typeUtil.makeNullable
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
+@K1Deprecation
 class SelfReferenceConstructorParameterInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = primaryConstructorVisitor(fun(constructor) {
         val parameter = constructor.valueParameterList?.selfReferenceParameter() ?: return

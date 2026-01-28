@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections.migration
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluat
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class FromClosedRangeMigrationInspection : AbstractKotlinInspection(), MigrationFix, CleanupLocalInspectionTool {
     override fun isApplicable(migrationInfo: MigrationInfo): Boolean {
         return migrationInfo.isLanguageVersionUpdate(LanguageVersion.KOTLIN_1_2, LanguageVersion.KOTLIN_1_3)

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class FunctionConstraintsCollector(
     private val superFunctionsProvider: SuperFunctionsProvider
 ) : ConstraintsCollector() {

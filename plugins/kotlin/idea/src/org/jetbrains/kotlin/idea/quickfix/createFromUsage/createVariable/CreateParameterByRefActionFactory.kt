@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 object CreateParameterByRefActionFactory : CreateParameterFromUsageFactory<KtSimpleNameExpression>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtSimpleNameExpression? {
         val refExpr = diagnostic.psiElement.findParentOfType<KtNameReferenceExpression>(strict = false) ?: return null
@@ -85,6 +87,7 @@ object CreateParameterByRefActionFactory : CreateParameterFromUsageFactory<KtSim
     override fun extractFixData(element: KtSimpleNameExpression, diagnostic: Diagnostic): CreateParameterData<KtSimpleNameExpression>? = extractFixData(element)
 }
 
+@K1Deprecation
 fun KotlinType.hasTypeParametersToAdd(functionDescriptor: FunctionDescriptor, context: BindingContext): Boolean {
     val typeParametersToAdd = LinkedHashSet(getTypeParameters())
     typeParametersToAdd.removeAll(functionDescriptor.typeParameters)

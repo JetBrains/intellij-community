@@ -6,6 +6,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.classMembers.ClassMembersRefactoringSupport
 import com.intellij.refactoring.classMembers.DependentMembersCollectorBase
 import com.intellij.refactoring.classMembers.MemberInfoBase
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.refactoring.pullUp.KotlinPullUpData
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 
+@K1Deprecation
 class KotlinClassMembersRefactoringSupport : ClassMembersRefactoringSupport<PsiNamedElement> {
     override fun isProperMember(memberInfo: MemberInfoBase<*>): Boolean {
         val member = memberInfo.member

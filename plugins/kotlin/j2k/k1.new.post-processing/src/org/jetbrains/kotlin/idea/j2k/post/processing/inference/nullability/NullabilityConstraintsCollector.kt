@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.nullability
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeCalculator
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintBuilder
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.psi.*
 
+@K1Deprecation
 class NullabilityConstraintsCollector : ConstraintsCollector() {
     override fun ConstraintBuilder.collectConstraints(
         element: KtElement,

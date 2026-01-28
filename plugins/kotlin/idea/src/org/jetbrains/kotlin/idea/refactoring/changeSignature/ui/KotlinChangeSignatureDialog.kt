@@ -13,6 +13,7 @@ import com.intellij.refactoring.changeSignature.ParameterTableModelItemBase
 import com.intellij.refactoring.ui.ComboBoxVisibilityPanel
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Consumer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.caches.resolve.CodeFragmentAnalyzer
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.isError
 
+@K1Deprecation
 class KotlinChangeSignatureDialog (
     project: Project,
     editor: Editor?,

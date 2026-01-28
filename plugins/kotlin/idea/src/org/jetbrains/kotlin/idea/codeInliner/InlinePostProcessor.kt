@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeInliner
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.OptionalParametersHelper
@@ -46,6 +47,7 @@ import kotlin.collections.orEmpty
 import kotlin.let
 import kotlin.to
 
+@K1Deprecation
 object InlinePostProcessor: AbstractInlinePostProcessor() {
     override fun shortenReferences(pointers: List<SmartPsiElementPointer<KtElement>>): List<KtElement> {
         val shortenFilter = { element: PsiElement ->

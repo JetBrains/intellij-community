@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -13,11 +14,13 @@ import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 abstract class SuperFunctionsProvider {
     abstract fun provideSuperFunctionDescriptors(function: KtFunction): List<FunctionDescriptor>?
     lateinit var inferenceContext: InferenceContext
 }
 
+@K1Deprecation
 class ResolveSuperFunctionsProvider(private val resolutionFacade: ResolutionFacade) : SuperFunctionsProvider() {
     override fun provideSuperFunctionDescriptors(function: KtFunction): List<FunctionDescriptor>? =
         function.resolveToDescriptorIfAny(resolutionFacade)
@@ -27,6 +30,7 @@ class ResolveSuperFunctionsProvider(private val resolutionFacade: ResolutionFaca
             ?.toList()
 }
 
+@K1Deprecation
 class ByInfoSuperFunctionsProvider(
     private val resolutionFacade: ResolutionFacade,
     private val converterContext: ConverterContext

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.parameterInfo
 import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.types.typeUtil.immediateSupertypes
 import org.jetbrains.kotlin.types.typeUtil.isEnum
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
+@K1Deprecation
 fun providePropertyTypeHint(elem: PsiElement, inlayInfoOption: InlayInfoOption): List<InlayInfoDetails> {
     (elem as? KtCallableDeclaration)?.let { property ->
         property.nameIdentifier?.let { ident ->
@@ -40,6 +42,7 @@ fun providePropertyTypeHint(elem: PsiElement, inlayInfoOption: InlayInfoOption):
     return emptyList()
 }
 
+@K1Deprecation
 fun provideTypeHint(element: KtCallableDeclaration, offset: Int, inlayInfoOption: InlayInfoOption): InlayInfoDetails? {
     var type: KotlinType = SpecifyTypeExplicitlyIntention.getTypeForDeclaration(element).unwrap()
     if (type.containsError()) return null

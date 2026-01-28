@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
+@K1Deprecation
 open class Fe10KotlinNewDeclarationNameValidator(
     private val visibleDeclarationsContext: KtElement?,
     private val checkDeclarationsIn: Sequence<PsiElement>,

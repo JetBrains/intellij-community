@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 
+@K1Deprecation
 class CreateParameterFromUsageFix<E : KtElement>(
     originalExpression: E,
     private val dataProvider: (E) -> CreateParameterData<E>?

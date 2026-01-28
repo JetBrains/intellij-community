@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.psi.mustHaveOnlyPropertiesInPrimaryConstructor
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
+@K1Deprecation
 interface AddValVarToConstructorParameterAction {
     fun canInvoke(element: KtParameter): Boolean =
         element.valOrVarKeyword == null && ((element.parent as? KtParameterList)?.parent as? KtPrimaryConstructor)?.takeIf { it.mustHaveValOrVar() || !it.isExpectDeclaration() } != null

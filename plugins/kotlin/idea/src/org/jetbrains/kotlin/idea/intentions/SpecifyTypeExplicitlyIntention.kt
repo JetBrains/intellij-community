@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -43,6 +44,7 @@ import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.utils.ifEmpty
 
+@K1Deprecation
 class SpecifyTypeExplicitlyIntention : SelfTargetingRangeIntention<KtCallableDeclaration>(
     KtCallableDeclaration::class.java,
     KotlinBundle.messagePointer("specify.type.explicitly")

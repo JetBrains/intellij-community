@@ -22,6 +22,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.siyeh.ig.psiutils.CollectionUtils
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -70,6 +71,7 @@ import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
+@K1Deprecation
 class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
     // This is special 'PsiElement' whose purpose is to wrap JetMethodDescriptor so that it can be kept in the usage list

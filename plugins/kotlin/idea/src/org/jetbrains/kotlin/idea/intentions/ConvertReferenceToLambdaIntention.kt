@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.StandardNames.KOTLIN_REFLECT_FQ_NAME
@@ -33,12 +34,14 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 @Suppress("DEPRECATION")
 class ConvertReferenceToLambdaInspection : IntentionBasedInspection<KtCallableReferenceExpression>(
     ConvertReferenceToLambdaIntention::class,
     problemText = KotlinBundle.message("convert.reference.to.lambda.before.text")
 )
 
+@K1Deprecation
 class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntention<KtCallableReferenceExpression>(
     KtCallableReferenceExpression::class.java, KotlinBundle.messagePointer("convert.reference.to.lambda")
 ) {

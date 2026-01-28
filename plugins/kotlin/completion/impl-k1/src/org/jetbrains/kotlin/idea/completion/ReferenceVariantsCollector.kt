@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.PrefixMatcher
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.util.ImportableFqNameClassifier
@@ -27,12 +28,14 @@ import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeSmartForCompiler
 
+@K1Deprecation
 data class ReferenceVariants(val imported: Collection<DeclarationDescriptor>, val notImportedExtensions: Collection<CallableDescriptor>)
 
 private operator fun ReferenceVariants.plus(other: ReferenceVariants): ReferenceVariants {
     return ReferenceVariants(imported.union(other.imported), notImportedExtensions.union(other.notImportedExtensions))
 }
 
+@K1Deprecation
 class ReferenceVariantsCollector(
     private val referenceVariantsHelper: ReferenceVariantsHelper,
     private val indicesHelper: KotlinIndicesHelper,

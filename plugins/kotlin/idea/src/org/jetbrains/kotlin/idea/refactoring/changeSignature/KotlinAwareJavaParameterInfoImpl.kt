@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
 import com.intellij.psi.PsiType
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtExpression
 
+@K1Deprecation
 class KotlinAwareJavaParameterInfoImpl(
     oldParameterIndex: Int,
     name: String,

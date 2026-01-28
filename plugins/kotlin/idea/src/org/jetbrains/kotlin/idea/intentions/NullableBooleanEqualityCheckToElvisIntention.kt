@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.typeUtil.isBooleanOrNullableBoolean
 
+@K1Deprecation
 class NullableBooleanEqualityCheckToElvisIntention : SelfTargetingIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java, KotlinBundle.messagePointer("convert.boolean.const.to.elvis")
 ) {

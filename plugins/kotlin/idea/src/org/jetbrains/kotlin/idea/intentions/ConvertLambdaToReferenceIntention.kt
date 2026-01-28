@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.builtins.isFunctionType
@@ -67,6 +68,7 @@ import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.function.Supplier
 
+@K1Deprecation
 @Suppress("DEPRECATION")
 class ConvertLambdaToReferenceInspection : IntentionBasedInspection<KtLambdaExpression>(
     ConvertLambdaToReferenceIntention::class,

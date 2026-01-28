@@ -13,6 +13,7 @@ import com.intellij.refactoring.util.DocCommentPolicy
 import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.refactoring.util.classMembers.MemberInfo
 import com.intellij.util.VisibilityUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
 
+@K1Deprecation
 class JavaToKotlinPreconversionPullUpHelper(
     private val data: PullUpData,
     private val dummyTargetClass: PsiClass,

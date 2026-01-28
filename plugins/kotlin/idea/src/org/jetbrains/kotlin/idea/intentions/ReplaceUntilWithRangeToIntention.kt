@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
@@ -19,6 +20,7 @@ internal fun KtExpression.getArguments() = when (this) {
     else -> null
 }
 
+@K1Deprecation
 class ReplaceUntilWithRangeToIntention : SelfTargetingIntention<KtExpression>(
     KtExpression::class.java,
     KotlinBundle.messagePointer("replace.with.0.operator", "..")

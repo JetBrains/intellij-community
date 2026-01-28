@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.idea.core.script.k1.ucache
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.kotlin.K1Deprecation
 
 
 // Use "Generate Workspace Model Implementation" action once interface is updated.
+@K1Deprecation
 interface KotlinScriptEntity : WorkspaceEntityWithSymbolicId {
 
     val path: String
@@ -18,8 +20,10 @@ interface KotlinScriptEntity : WorkspaceEntityWithSymbolicId {
 
 }
 
+@K1Deprecation
 data class KotlinScriptEntitySource(override val virtualFileUrl: VirtualFileUrl?) : EntitySource
 
+@K1Deprecation
 data class KotlinScriptId(val path: String) : SymbolicEntityId<KotlinScriptEntity> {
     override val presentableName: String
         get() = path

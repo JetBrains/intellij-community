@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.base.facet.isTestModule
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.types.typeUtil.isNullableAny
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class TypeAccessibilityCheckerImpl(
     override val project: Project,
     override val targetModule: Module,

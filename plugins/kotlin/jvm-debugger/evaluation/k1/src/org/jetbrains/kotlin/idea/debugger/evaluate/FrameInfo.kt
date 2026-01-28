@@ -11,11 +11,13 @@ import com.intellij.psi.PsiNameHelper
 import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
 import com.sun.jdi.*
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeThisObject
 import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariables
 import org.jetbrains.kotlin.idea.j2k.j2k
 import org.jetbrains.kotlin.psi.KtProperty
 
+@K1Deprecation
 class FrameInfo private constructor(val project: Project, thisObject: Value?, variables: Map<LocalVariableProxyImpl, Value>) {
     val thisObject = run {
         if (thisObject == null) {

@@ -3,7 +3,9 @@
 package org.jetbrains.kotlin.j2k.usageProcessing
 
 import com.intellij.psi.*
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class MemberIntoObjectProcessing(private val member: PsiMember, private val objectName: String) : UsageProcessing {
     override val targetElement: PsiElement get() = member
 

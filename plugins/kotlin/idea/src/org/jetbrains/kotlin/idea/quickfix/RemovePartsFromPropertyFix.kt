@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtProperty
 
+@K1Deprecation
 open class RemovePartsFromPropertyFix(
     element: KtProperty,
     private val removeInitializer: Boolean,

@@ -12,6 +12,7 @@ import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -35,6 +36,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.utils.findFunction
 
+@K1Deprecation
 class ConvertPropertyToFunctionIntention : SelfTargetingIntention<KtProperty>(
     KtProperty::class.java,
     KotlinBundle.messagePointer("convert.property.to.function")

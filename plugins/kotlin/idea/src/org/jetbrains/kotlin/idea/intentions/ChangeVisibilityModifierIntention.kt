@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifier
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 
+@K1Deprecation
 open class ChangeVisibilityModifierIntention protected constructor(val modifier: KtModifierKeywordToken) :
   SelfTargetingRangeIntention<KtDeclaration>(KtDeclaration::class.java, KotlinBundle.messagePointer("make.0", modifier.value)) {
     override fun startInWriteAction(): Boolean = false

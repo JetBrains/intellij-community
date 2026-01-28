@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
 import com.intellij.util.concurrency.ThreadingAssertions
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.copyPaste.K1J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.psi.KtFile
 
+@K1Deprecation
 class NewJ2kConverterExtension : J2kConverterExtension() {
     override val kind: Kind = K1_NEW
 

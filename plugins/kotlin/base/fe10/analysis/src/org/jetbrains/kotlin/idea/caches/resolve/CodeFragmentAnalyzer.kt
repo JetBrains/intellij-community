@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.util.analyzeControlFlow
 import org.jetbrains.kotlin.idea.core.util.externalDescriptors
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingServices
 import javax.inject.Inject
 
+@K1Deprecation
 class CodeFragmentAnalyzer(
     private val resolveSession: ResolveSession,
     private val qualifierResolver: QualifiedExpressionResolver,

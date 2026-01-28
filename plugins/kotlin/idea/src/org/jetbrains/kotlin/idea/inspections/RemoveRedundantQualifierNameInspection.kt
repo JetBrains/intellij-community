@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
@@ -37,6 +38,7 @@ import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyClassDescriptor
 import org.jetbrains.kotlin.resolve.scopes.utils.findFirstClassifierWithDeprecationStatus
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     /**
      * In order to detect that `foo()` and `GrandBase.foo()` point to the same method,
@@ -202,6 +204,7 @@ private fun reportProblem(holder: ProblemsHolder, element: KtElement) {
     )
 }
 
+@K1Deprecation
 class RemoveRedundantQualifierNameQuickFix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("remove.redundant.qualifier.name.quick.fix.text")
     override fun getFamilyName() = name

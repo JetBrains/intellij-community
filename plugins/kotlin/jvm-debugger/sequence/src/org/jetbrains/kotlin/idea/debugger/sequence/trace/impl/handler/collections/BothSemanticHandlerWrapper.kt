@@ -7,11 +7,13 @@ import com.intellij.debugger.streams.core.trace.TerminatorCallHandler
 import com.intellij.debugger.streams.core.trace.dsl.Dsl
 import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
+import org.jetbrains.kotlin.K1Deprecation
 
 /**
  * Unlike java streams, most operations in kotlin collections are intermediate and terminal simultaneously.
  * To avoid using of the same code in two places we will implement common logic in the {@link BothSemanticsHandler}.
  */
+@K1Deprecation
 class BothSemanticHandlerWrapper(private val handler: BothSemanticsHandler) {
     fun createIntermediateHandler(order: Int, call: IntermediateStreamCall, dsl: Dsl): IntermediateCallHandler =
         CollectionIntermediateHandler(order, call, dsl, handler)

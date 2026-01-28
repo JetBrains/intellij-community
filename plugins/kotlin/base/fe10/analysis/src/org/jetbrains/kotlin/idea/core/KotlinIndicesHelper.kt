@@ -9,6 +9,7 @@ import com.intellij.psi.impl.CompositeShortNamesCache
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
@@ -52,6 +53,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 
+@K1Deprecation
 class KotlinIndicesHelper(
     private val resolutionFacade: ResolutionFacade,
     private val scope: GlobalSearchScope,

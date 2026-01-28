@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.SYNTHESIZED
@@ -35,6 +36,7 @@ import org.jetbrains.kotlin.resolve.isValueClass
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 
+@K1Deprecation
 abstract class ChangeFunctionSignatureFix(
     element: PsiElement,
     protected val functionDescriptor: FunctionDescriptor

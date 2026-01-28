@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPs
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
+@K1Deprecation
 class DeclaringJavaClassMigrationFix(element: PsiElement) : KotlinPsiOnlyQuickFixAction<PsiElement>(element) {
     companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
         override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> = listOf(DeclaringJavaClassMigrationFix(psiElement))

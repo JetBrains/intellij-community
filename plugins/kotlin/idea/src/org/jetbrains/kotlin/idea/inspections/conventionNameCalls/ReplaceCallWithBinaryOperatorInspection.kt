@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -44,6 +45,7 @@ import org.jetbrains.kotlin.types.typeUtil.*
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
+@K1Deprecation
 class ReplaceCallWithBinaryOperatorInspection : AbstractApplicabilityBasedInspection<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java
 ) {

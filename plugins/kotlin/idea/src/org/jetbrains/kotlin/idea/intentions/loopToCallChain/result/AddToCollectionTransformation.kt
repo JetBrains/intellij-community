@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.result
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.overriddenTreeUniqueAsSequence
 
+@K1Deprecation
 class AddToCollectionTransformation(
     loop: KtForExpression,
     private val targetCollection: KtExpression
@@ -221,6 +223,7 @@ private fun DeclarationDescriptor.isCollectionAdd(): Boolean {
     }
 }
 
+@K1Deprecation
 class FilterToTransformation private constructor(
     loop: KtForExpression,
     private val inputVariable: KtCallableDeclaration,
@@ -279,6 +282,7 @@ class FilterToTransformation private constructor(
     }
 }
 
+@K1Deprecation
 class FilterNotNullToTransformation private constructor(
     loop: KtForExpression,
     private val targetCollection: KtExpression
@@ -307,6 +311,7 @@ class FilterNotNullToTransformation private constructor(
     }
 }
 
+@K1Deprecation
 class MapToTransformation private constructor(
     loop: KtForExpression,
     private val inputVariable: KtCallableDeclaration,
@@ -350,6 +355,7 @@ class MapToTransformation private constructor(
     }
 }
 
+@K1Deprecation
 class FlatMapToTransformation private constructor(
     loop: KtForExpression,
     private val inputVariable: KtCallableDeclaration,
@@ -388,6 +394,7 @@ class FlatMapToTransformation private constructor(
     }
 }
 
+@K1Deprecation
 class AssignToListTransformation(
     loop: KtForExpression,
     initialization: VariableInitialization,
@@ -408,6 +415,7 @@ class AssignToListTransformation(
     }
 }
 
+@K1Deprecation
 class AssignToMutableListTransformation(
     loop: KtForExpression,
     initialization: VariableInitialization
@@ -421,6 +429,7 @@ class AssignToMutableListTransformation(
     }
 }
 
+@K1Deprecation
 class AssignToSetTransformation(
     loop: KtForExpression,
     initialization: VariableInitialization
@@ -434,6 +443,7 @@ class AssignToSetTransformation(
     }
 }
 
+@K1Deprecation
 class AssignToMutableSetTransformation(
     loop: KtForExpression,
     initialization: VariableInitialization

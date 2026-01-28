@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.types.isNullable
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
+@K1Deprecation
 class RedundantNotNullExtensionReceiverOfInlineInspection : AbstractKotlinInspection() {
 
     private fun ReceiverValue?.isThisExpressionReceiver(): Boolean =

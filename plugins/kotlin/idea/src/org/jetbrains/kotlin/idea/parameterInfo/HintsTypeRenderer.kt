@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.parameterInfo
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.*
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
@@ -39,6 +40,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  *
  * For each type short name and fqName is provided (see [TypeInlayInfoDetail]).
  */
+@K1Deprecation
 class HintsTypeRenderer private constructor(override val options: HintsDescriptorRendererOptions) : KotlinIdeDescriptorRenderer(options) {
 
     init {

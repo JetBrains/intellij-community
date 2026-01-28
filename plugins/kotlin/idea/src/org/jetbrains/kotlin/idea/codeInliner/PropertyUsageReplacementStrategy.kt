@@ -2,10 +2,12 @@
 
 package org.jetbrains.kotlin.idea.codeInliner
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractPropertyUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
 
+@K1Deprecation
 class PropertyUsageReplacementStrategy(readReplacement: CodeToInline?, writeReplacement: CodeToInline?)
     : UsageReplacementStrategy,
       AbstractPropertyUsageReplacementStrategy(readReplacement, writeReplacement) {

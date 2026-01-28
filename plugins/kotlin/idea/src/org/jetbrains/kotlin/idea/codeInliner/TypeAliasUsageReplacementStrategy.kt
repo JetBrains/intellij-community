@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeInliner
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.types.TypeProjectionImpl
 import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.types.Variance
 
+@K1Deprecation
 class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageReplacementStrategy {
     override fun createReplacer(usage: KtReferenceExpression): (() -> KtElement?)? {
         val refElement = usage.getParentOfTypeAndBranch<KtUserType> { referenceExpression }

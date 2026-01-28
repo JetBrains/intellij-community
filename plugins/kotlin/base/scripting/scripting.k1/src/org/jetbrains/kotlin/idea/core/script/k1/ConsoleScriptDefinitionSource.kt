@@ -2,11 +2,13 @@
 package org.jetbrains.kotlin.idea.core.script.k1
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import java.util.concurrent.ConcurrentHashMap
 
+@K1Deprecation
 class ConsoleScriptDefinitionSource : ScriptDefinitionsSource {
 
     private val definitionsSet = ConcurrentHashMap.newKeySet<ScriptDefinition>()

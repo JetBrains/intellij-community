@@ -13,6 +13,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -39,6 +40,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
+@K1Deprecation
 class ConvertFunctionToPropertyIntention :
   SelfTargetingIntention<KtNamedFunction>(KtNamedFunction::class.java, KotlinBundle.messagePointer("convert.function.to.property")),
   LowPriorityAction {

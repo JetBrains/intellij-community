@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
 import com.intellij.util.SmartList
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.ifEmpty
 
+@K1Deprecation
 object CreateFunctionFromCallableReferenceActionFactory : CreateCallableMemberFromUsageFactory<KtCallableReferenceExpression>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtCallableReferenceExpression? {
         return diagnostic.psiElement.getStrictParentOfType<KtCallableReferenceExpression>()

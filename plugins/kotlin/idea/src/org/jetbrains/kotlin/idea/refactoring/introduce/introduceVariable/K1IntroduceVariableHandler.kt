@@ -16,6 +16,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
 import com.intellij.util.application
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
@@ -61,6 +62,7 @@ import org.jetbrains.kotlin.types.checker.createClassicTypeCheckerState
 import org.jetbrains.kotlin.types.model.TypeConstructorMarker
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
+@K1Deprecation
 object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
     private class TypeCheckerImpl(private val project: Project) : KotlinTypeChecker by KotlinTypeChecker.DEFAULT {
         private inner class TypeSystemContextImpl : ClassicTypeSystemContext {

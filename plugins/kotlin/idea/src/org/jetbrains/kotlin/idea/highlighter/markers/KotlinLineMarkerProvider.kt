@@ -20,6 +20,7 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
 import org.jetbrains.kotlin.asJava.toFakeLightClass
@@ -41,6 +42,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import java.awt.event.MouseEvent
 
+@K1Deprecation
 class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
 
     override fun doCollectSlowLineMarkers(elements: List<PsiElement>, result: LineMarkerInfos) {
@@ -82,6 +84,7 @@ class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
     }
 }
 
+@K1Deprecation
 val SUBCLASSED_CLASS: MarkerType = MarkerType(
     "SUBCLASSED_CLASS",
     { getPsiClass(it)?.let(::getModuleSpecificSubclassedClassTooltip) },
@@ -89,6 +92,7 @@ val SUBCLASSED_CLASS: MarkerType = MarkerType(
         override fun getMessageForDumbMode() = JavaBundle.message("notification.navigation.to.overriding.classes")
     })
 
+@K1Deprecation
 val OVERRIDDEN_FUNCTION: MarkerType = MarkerType(
     "OVERRIDDEN_FUNCTION",
     { getPsiMethod(it)?.let(::getOverriddenMethodTooltip) },
@@ -96,6 +100,7 @@ val OVERRIDDEN_FUNCTION: MarkerType = MarkerType(
         override fun getMessageForDumbMode() = KotlinBundle.message("highlighter.notification.text.navigation.to.overriding.classes.is.not.possible.during.index.update")
     })
 
+@K1Deprecation
 val OVERRIDDEN_PROPERTY: MarkerType = MarkerType(
     "OVERRIDDEN_PROPERTY",
     { it?.let { getOverriddenPropertyTooltip(it.parent as KtNamedDeclaration) } },

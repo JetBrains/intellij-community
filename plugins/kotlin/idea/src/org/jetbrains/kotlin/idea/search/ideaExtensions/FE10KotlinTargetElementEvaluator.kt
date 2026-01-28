@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.idea.search.ideaExtensions
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.idea.codeinsight.utils.isReferenceToImplicitLambdaParameter
 
+@K1Deprecation
 class FE10KotlinTargetElementEvaluator : KotlinTargetElementEvaluator() {
     companion object {
         fun findLambdaOpenLBraceForGeneratedIt(ref: PsiReference): PsiElement? {

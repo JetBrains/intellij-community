@@ -6,6 +6,7 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeIntention
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.types.typeUtil.isUnit
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
+@K1Deprecation
 class RedundantUnitReturnTypeInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return namedFunctionVisitor(fun(function) {

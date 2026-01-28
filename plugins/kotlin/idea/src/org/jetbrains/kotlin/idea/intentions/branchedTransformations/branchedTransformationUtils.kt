@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.isNullable
 
+@K1Deprecation
 fun KtWhenCondition.toExpression(subject: KtExpression?, subjectContext: BindingContext? = null): KtExpression {
     val psiFactory = KtPsiFactory(project)
     
@@ -49,6 +51,7 @@ fun KtWhenCondition.toExpression(subject: KtExpression?, subjectContext: Binding
     }
 }
 
+@K1Deprecation
 fun KtWhenExpression.getSubjectToIntroduce(checkConstants: Boolean = true): KtExpression? {
     if (subjectExpression != null) return null
 
@@ -71,6 +74,7 @@ fun KtWhenExpression.getSubjectToIntroduce(checkConstants: Boolean = true): KtEx
     return lastCandidate
 }
 
+@K1Deprecation
 fun KtExpression?.getWhenConditionSubjectCandidate(checkConstants: Boolean): KtExpression? {
     fun KtExpression?.getCandidate(): KtExpression? = when (this) {
         is KtIsExpression -> leftHandSide
@@ -110,6 +114,7 @@ private fun KtExpression.hasCandidateNameReferenceExpression(checkConstants: Boo
     return !(resolved is KtObjectDeclaration || (resolved as? KtProperty)?.hasModifier(KtTokens.CONST_KEYWORD) == true)
 }
 
+@K1Deprecation
 fun KtWhenExpression.introduceSubject(checkConstants: Boolean = true): KtWhenExpression? {
     val subject = getSubjectToIntroduce(checkConstants) ?: return null
 
@@ -175,6 +180,7 @@ private fun BuilderByPattern<KtExpression>.appendConditionWithSubjectRemoved(con
     }
 }
 
+@K1Deprecation
 fun KtPsiFactory.combineWhenConditions(conditions: Array<KtWhenCondition>, subject: KtExpression?) = when (conditions.size) {
     0 -> null
     1 -> conditions[0].toExpression(subject)

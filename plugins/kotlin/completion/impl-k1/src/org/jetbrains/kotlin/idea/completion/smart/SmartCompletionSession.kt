@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getCall
 import org.jetbrains.kotlin.resolve.calls.util.DelegatingCall
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 
+@K1Deprecation
 class SmartCompletionSession(
     configuration: CompletionSessionConfiguration,
     parameters: CompletionParameters,

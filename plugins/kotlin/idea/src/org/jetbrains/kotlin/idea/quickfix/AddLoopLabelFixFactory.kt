@@ -2,11 +2,13 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddLoopLabelFix
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
+@K1Deprecation
 object AddLoopLabelFixFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val element = diagnostic.psiElement as? KtExpressionWithLabel

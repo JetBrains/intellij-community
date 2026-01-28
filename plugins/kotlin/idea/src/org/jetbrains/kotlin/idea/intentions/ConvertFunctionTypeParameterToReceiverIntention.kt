@@ -16,6 +16,7 @@ import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -50,6 +51,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getArgumentByParameterIndex
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 class ConvertFunctionTypeParameterToReceiverIntention : SelfTargetingRangeIntention<KtTypeReference>(
     KtTypeReference::class.java,
     KotlinBundle.messagePointer("convert.function.type.parameter.to.receiver")
@@ -392,6 +394,7 @@ class ConvertFunctionTypeParameterToReceiverIntention : SelfTargetingRangeIntent
         element.getConversionData()?.let { Converter(it, editor).run() }
     }
 }
+@K1Deprecation
 fun PsiElement.searchReferencesOrMethodReferences(): Collection<PsiReference> {
     val lightMethods = toLightMethods()
     return if (lightMethods.isNotEmpty()) {

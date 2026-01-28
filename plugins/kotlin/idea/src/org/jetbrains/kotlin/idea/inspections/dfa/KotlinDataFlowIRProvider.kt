@@ -8,9 +8,11 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
+@K1Deprecation
 class KotlinDataFlowIRProvider : DataFlowIRProvider {
     override fun createControlFlow(factory: DfaValueFactory, psiBlock: PsiElement): ControlFlow? {
         if (psiBlock !is KtExpression) return null

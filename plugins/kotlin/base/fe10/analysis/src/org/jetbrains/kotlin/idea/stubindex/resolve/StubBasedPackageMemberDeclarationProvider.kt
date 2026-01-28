@@ -9,6 +9,7 @@ import com.intellij.psi.stubs.StubInconsistencyReporter
 import com.intellij.util.CommonProcessors
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.statistics.KotlinFailureCollector
 import org.jetbrains.kotlin.idea.stubindex.*
@@ -28,6 +29,7 @@ internal val isShortNameFilteringEnabled: Boolean by lazy {
     System.getProperty("kotlin.indices.short.names.filtering.enabled").toBoolean()
 }
 
+@K1Deprecation
 class StubBasedPackageMemberDeclarationProvider(
   private val fqName: FqName,
   private val project: Project,

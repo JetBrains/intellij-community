@@ -15,6 +15,7 @@ import com.intellij.psi.PsiMember
 import com.intellij.psi.createSmartPointer
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.RowIcon
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.util.findCallableMemberBySignature
 import java.awt.Font
 import javax.swing.Icon
 
+@K1Deprecation
 class KotlinOverrideHierarchyNodeDescriptor(
     parentNode: HierarchyNodeDescriptor?,
     klass: PsiElement,

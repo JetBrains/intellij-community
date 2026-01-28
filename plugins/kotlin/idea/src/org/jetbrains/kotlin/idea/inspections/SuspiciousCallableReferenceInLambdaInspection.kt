@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInspection.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
@@ -37,6 +38,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 
+@K1Deprecation
 class SuspiciousCallableReferenceInLambdaInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
         lambdaExpressionVisitor(fun(lambdaExpression) {

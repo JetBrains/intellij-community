@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.result
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.base.psi.unwrapIfLabeled
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.types.typeUtil.nullability
  *     }
  *     return ...
  */
+@K1Deprecation
 object FindTransformationMatcher : TransformationMatcher {
     override val indexVariableAllowed: Boolean
         get() = false

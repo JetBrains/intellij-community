@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.DescriptorMemberChooserObject
@@ -37,6 +38,7 @@ private fun ClassDescriptor.findDeclaredToString(checkSupers: Boolean): Function
     }
 }
 
+@K1Deprecation
 class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenerateToStringAction.Info>() {
     companion object {
         private val LOG = Logger.getInstance(KotlinGenerateToStringAction::class.java)

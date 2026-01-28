@@ -2,12 +2,14 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.result
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.*
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.MapTransformation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.blockExpressionsOrSingle
 
+@K1Deprecation
 class MaxOrMinTransformation(
     loop: KtForExpression,
     initialization: VariableInitialization,

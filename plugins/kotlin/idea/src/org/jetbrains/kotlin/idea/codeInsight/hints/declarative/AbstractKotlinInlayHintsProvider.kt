@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.codeInsight.hints.HintType
 import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetail
 import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetails
@@ -30,6 +31,7 @@ import kotlin.collections.forEach
 import kotlin.collections.ifEmpty
 import kotlin.let
 
+@K1Deprecation
 abstract class AbstractKotlinInlayHintsProvider(private vararg val hintTypes: HintType): InlayHintsProvider {
 
     override fun createCollector(

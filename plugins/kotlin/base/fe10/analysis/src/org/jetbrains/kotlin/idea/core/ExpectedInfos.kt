@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.core
 
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
 import org.jetbrains.kotlin.builtins.isFunctionType
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.typeUtil.*
 import java.util.*
 
+@K1Deprecation
 enum class Tail {
     COMMA,
     RPARENTH,
@@ -35,6 +37,7 @@ enum class Tail {
     RBRACE
 }
 
+@K1Deprecation
 data class ItemOptions(val starPrefix: Boolean) {
     companion object {
         val DEFAULT = ItemOptions(false)
@@ -42,6 +45,7 @@ data class ItemOptions(val starPrefix: Boolean) {
     }
 }
 
+@K1Deprecation
 interface ByTypeFilter {
     fun matchingSubstitutor(descriptorType: FuzzyType): TypeSubstitutor?
 
@@ -60,6 +64,7 @@ interface ByTypeFilter {
     }
 }
 
+@K1Deprecation
 class ByExpectedTypeFilter(override val fuzzyType: FuzzyType) : ByTypeFilter {
     override fun matchingSubstitutor(descriptorType: FuzzyType) = descriptorType.checkIsSubtypeOf(fuzzyType)
 
@@ -68,6 +73,7 @@ class ByExpectedTypeFilter(override val fuzzyType: FuzzyType) : ByTypeFilter {
     override fun hashCode() = fuzzyType.hashCode()
 }
 
+@K1Deprecation
 data /* for copy() */
 class ExpectedInfo(
     val filter: ByTypeFilter,
@@ -121,12 +127,15 @@ class ExpectedInfo(
     }
 }
 
+@K1Deprecation
 val ExpectedInfo.fuzzyType: FuzzyType?
     get() = filter.fuzzyType
 
+@K1Deprecation
 val ExpectedInfo.multipleFuzzyTypes: Collection<FuzzyType>
     get() = filter.multipleFuzzyTypes
 
+@K1Deprecation
 sealed class ArgumentPositionData(val function: FunctionDescriptor, val callType: Call.CallType) : ExpectedInfo.AdditionalData {
     class Positional(
         function: FunctionDescriptor,
@@ -139,16 +148,22 @@ sealed class ArgumentPositionData(val function: FunctionDescriptor, val callType
     class Named(function: FunctionDescriptor, callType: Call.CallType, val argumentName: Name) : ArgumentPositionData(function, callType)
 }
 
+@K1Deprecation
 class ReturnValueAdditionalData(val callable: CallableDescriptor) : ExpectedInfo.AdditionalData
 
+@K1Deprecation
 class WhenEntryAdditionalData(val whenWithSubject: Boolean) : ExpectedInfo.AdditionalData
 
+@K1Deprecation
 object IfConditionAdditionalData : ExpectedInfo.AdditionalData
 
+@K1Deprecation
 object PropertyDelegateAdditionalData : ExpectedInfo.AdditionalData
 
+@K1Deprecation
 class ComparisonOperandAdditionalData(val suppressNullLiteral: Boolean) : ExpectedInfo.AdditionalData
 
+@K1Deprecation
 class ExpectedInfos(
     private val bindingContext: BindingContext,
     private val resolutionFacade: ResolutionFacade,
@@ -728,5 +743,6 @@ class ExpectedInfos(
     }
 }
 
+@K1Deprecation
 val COMPARISON_TOKENS = setOf(KtTokens.EQEQ, KtTokens.EXCLEQ, KtTokens.EQEQEQ, KtTokens.EXCLEQEQEQ)
 

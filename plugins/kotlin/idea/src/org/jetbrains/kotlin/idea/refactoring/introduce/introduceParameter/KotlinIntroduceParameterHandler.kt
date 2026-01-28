@@ -14,6 +14,7 @@ import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -54,6 +55,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.*
 
 
+@K1Deprecation
 fun IntroduceParameterDescriptor<FunctionDescriptor>.performRefactoring(editor: Editor? = null, onExit: (() -> Unit)? = null) {
     val config = object : KotlinChangeSignatureConfiguration {
         override fun configure(originalDescriptor: KotlinMethodDescriptor): KotlinMethodDescriptor {
@@ -104,6 +106,7 @@ fun IntroduceParameterDescriptor<FunctionDescriptor>.performRefactoring(editor: 
     }.run()
 }
 
+@K1Deprecation
 open class KotlinIntroduceParameterHandler(
     val helper: KotlinIntroduceParameterHelper<FunctionDescriptor> = KotlinIntroduceParameterHelper.Default()
 ) : RefactoringActionHandler {
@@ -373,6 +376,7 @@ private fun findInternalUsagesOfParametersAndReceiver(
     return usages
 }
 
+@K1Deprecation
 interface KotlinIntroduceLambdaParameterHelper<Descriptor> : KotlinIntroduceParameterHelper<Descriptor> {
     class Default<D> : KotlinIntroduceLambdaParameterHelper<D>{
         override fun configure(descriptor: IntroduceParameterDescriptor<D>): IntroduceParameterDescriptor<D> = descriptor
@@ -382,6 +386,7 @@ interface KotlinIntroduceLambdaParameterHelper<Descriptor> : KotlinIntroducePara
     fun configureExtractLambda(descriptor: ExtractableCodeDescriptor): ExtractableCodeDescriptor
 }
 
+@K1Deprecation
 open class KotlinIntroduceLambdaParameterHandler(
     helper: KotlinIntroduceLambdaParameterHelper<FunctionDescriptor> = KotlinIntroduceLambdaParameterHelper.Default()
 ) : KotlinIntroduceParameterHandler(helper) {

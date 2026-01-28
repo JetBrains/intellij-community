@@ -31,6 +31,7 @@ import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import com.intellij.util.Processor
 import com.siyeh.ig.psiutils.SerializationUtils
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
@@ -93,6 +94,7 @@ import org.jetbrains.kotlin.resolve.isInlineClassType
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 
+@K1Deprecation
 class UnusedSymbolInspection : AbstractKotlinInspection() {
     companion object {
         private val javaInspection = UnusedDeclarationInspection()
@@ -729,6 +731,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
     }
 }
 
+@K1Deprecation
 class SafeDeleteFix(declaration: KtDeclaration) : LocalQuickFix {
     @Nls
     private val name: String =

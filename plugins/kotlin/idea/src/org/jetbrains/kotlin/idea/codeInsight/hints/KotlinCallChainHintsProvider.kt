@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.types.isError
  *
  * Test - [org.jetbrains.kotlin.idea.codeInsight.hints.KotlinCallChainHintsProviderTest]
  */
+@K1Deprecation
 @Deprecated("Use org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinCallChainHintsProvider instead")
 open class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedExpression, KotlinType, BindingContext>() {
 

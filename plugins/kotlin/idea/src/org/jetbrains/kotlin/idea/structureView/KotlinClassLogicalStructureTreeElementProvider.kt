@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.idea.structureView
 
 import com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider
 import com.intellij.ide.structureView.StructureViewTreeElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 
+@K1Deprecation
 class KotlinClassLogicalStructureTreeElementProvider: LogicalStructureTreeElementProvider<KtLightClass> {
 
     override fun getModelClass(): Class<KtLightClass> = KtLightClass::class.java

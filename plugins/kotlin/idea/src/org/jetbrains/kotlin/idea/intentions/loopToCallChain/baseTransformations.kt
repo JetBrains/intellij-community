@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 /**
  * Base class for [ResultTransformation]'s that replaces the loop-expression with the result call chain
  */
+@K1Deprecation
 abstract class ReplaceLoopResultTransformation(final override val loop: KtForExpression) : ResultTransformation {
 
     override val commentSavingRange = PsiChildRange.singleElement(loop.unwrapIfLabeled())
@@ -35,6 +37,7 @@ abstract class ReplaceLoopResultTransformation(final override val loop: KtForExp
 /**
  * Base class for [ResultTransformation]'s that replaces initialization of a variable with the result call chain
  */
+@K1Deprecation
 abstract class AssignToVariableResultTransformation(
     final override val loop: KtForExpression,
     protected val initialization: VariableInitialization
@@ -118,6 +121,7 @@ abstract class AssignToVariableResultTransformation(
 /**
  * [ResultTransformation] that replaces initialization of a variable with the call chain produced by the given [SequenceTransformation]
  */
+@K1Deprecation
 class AssignSequenceResultTransformation(
     private val sequenceTransformation: SequenceTransformation,
     initialization: VariableInitialization

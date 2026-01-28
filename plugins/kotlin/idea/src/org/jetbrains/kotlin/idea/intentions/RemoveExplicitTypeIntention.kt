@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.checkers.ExplicitApiDeclarationChecker
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
+@K1Deprecation
 class RemoveExplicitTypeIntention : SelfTargetingRangeIntention<KtCallableDeclaration>(
     KtCallableDeclaration::class.java,
     KotlinBundle.messagePointer("remove.explicit.type.specification")

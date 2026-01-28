@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.util
 
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.load.java.descriptors.JavaCallableMemberDescriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.checker.KotlinTypeCheckerImpl
 import org.jetbrains.kotlin.types.typeUtil.equalTypesOrNulls
 
+@K1Deprecation
 fun descriptorsEqualWithSubstitution(
     descriptor1: DeclarationDescriptor?,
     descriptor2: DeclarationDescriptor?,
@@ -60,6 +62,7 @@ fun descriptorsEqualWithSubstitution(
     return true
 }
 
+@K1Deprecation
 fun ClassDescriptor.findCallableMemberBySignature(
     signature: CallableMemberDescriptor,
     allowOverridabilityConflicts: Boolean = false
@@ -75,6 +78,7 @@ fun ClassDescriptor.findCallableMemberBySignature(
         }
 }
 
+@K1Deprecation
 fun TypeConstructor.supertypesWithAny(): Collection<KotlinType> {
     val supertypes = supertypes
     val noSuperClass = supertypes.map { it.constructor.declarationDescriptor as? ClassDescriptor }.all {
@@ -83,6 +87,7 @@ fun TypeConstructor.supertypesWithAny(): Collection<KotlinType> {
     return if (noSuperClass) supertypes + builtIns.anyType else supertypes
 }
 
+@K1Deprecation
 val ClassifierDescriptorWithTypeParameters.constructors: Collection<ConstructorDescriptor>
     get() = when (this) {
         is TypeAliasDescriptor -> this.constructors
@@ -90,6 +95,7 @@ val ClassifierDescriptorWithTypeParameters.constructors: Collection<ConstructorD
         else -> emptyList()
     }
 
+@K1Deprecation
 val ClassifierDescriptorWithTypeParameters.kind: ClassKind?
     get() = when (this) {
         is TypeAliasDescriptor -> classDescriptor?.kind
@@ -97,19 +103,23 @@ val ClassifierDescriptorWithTypeParameters.kind: ClassKind?
         else -> null
     }
 
+@K1Deprecation
 @get:Deprecated("Only supported for Kotlin Plugin K1 mode. Use Kotlin Analysis API instead, which works for both K1 and K2 modes. See https://kotl.in/analysis-api and `org.jetbrains.kotlin.analysis.api.analyze` for details.")
 @get:ApiStatus.ScheduledForRemoval
 val DeclarationDescriptor.isJavaDescriptor
     get() = this is JavaClassDescriptor || this is JavaCallableMemberDescriptor
 
+@K1Deprecation
 fun FunctionDescriptor.shouldNotConvertToProperty(notProperties: Set<FqNameUnsafe>): Boolean {
     if (fqNameUnsafe in notProperties) return true
     return this.overriddenTreeUniqueAsSequence(false).any { fqNameUnsafe in notProperties }
 }
 
+@K1Deprecation
 fun SyntheticJavaPropertyDescriptor.suppressedByNotPropertyList(set: Set<FqNameUnsafe>) =
     getMethod.shouldNotConvertToProperty(set) || setMethod?.shouldNotConvertToProperty(set) ?: false
 
+@K1Deprecation
 fun DeclarationDescriptor.unwrapIfTypeAlias(): DeclarationDescriptor? =
     when(this) {
         is TypeAliasDescriptor -> this.classDescriptor?.unwrapIfTypeAlias()

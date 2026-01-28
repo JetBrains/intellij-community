@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core.script.k1.configuration.loader
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
  *
  * @see [org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptConfigurationManager] for more details.
  */
+@K1Deprecation
 interface ScriptConfigurationLoader {
     fun shouldRunInBackground(scriptDefinition: ScriptDefinition): Boolean = false
 

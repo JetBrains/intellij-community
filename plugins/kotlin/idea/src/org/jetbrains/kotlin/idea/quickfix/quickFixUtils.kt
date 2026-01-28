@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
+@K1Deprecation
 fun KtElement.containingFunction(): KtNamedFunction? {
     val containingDeclaration = containingDeclarationForPseudocode
     return if (containingDeclaration is KtFunctionLiteral) {

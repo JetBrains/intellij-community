@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.*
 
+@K1Deprecation
 object EqualityNotApplicableFactory : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         val diagnosticWithParameters = Errors.EQUALITY_NOT_APPLICABLE.cast(diagnostic)
@@ -51,6 +53,7 @@ object EqualityNotApplicableFactory : KotlinIntentionActionsFactory() {
     }
 }
 
+@K1Deprecation
 fun prepareNumberConversionElementContext(
     fromType: KotlinType,
     toType: KotlinType
@@ -65,6 +68,7 @@ fun prepareNumberConversionElementContext(
     toByteOrShort = toType.isByte() || toType.isShort(),
 )
 
+@K1Deprecation
 fun isNumberConversionAvailable(
     fromType: KotlinType,
     toType: KotlinType,

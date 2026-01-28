@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions
 
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
+@K1Deprecation
 class FlattenWhenIntention : SelfTargetingIntention<KtWhenExpression>(
     KtWhenExpression::class.java,
     KotlinBundle.messagePointer("flatten.when.expression")

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.parameterInfo
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.isAnyOrNullableAny
 import org.jetbrains.kotlin.types.typeUtil.nullability
 
+@K1Deprecation
 class KotlinClassConstructorInfoHandler : KotlinTypeArgumentInfoHandlerBase<ClassConstructorDescriptor>() {
     override fun fetchTypeParameters(parameterOwner: ClassConstructorDescriptor): List<TypeParameterDescriptor> =
         parameterOwner.typeParameters
@@ -29,6 +31,7 @@ class KotlinClassConstructorInfoHandler : KotlinTypeArgumentInfoHandlerBase<Clas
     override fun getArgumentListAllowedParentClasses() = setOf(KtUserType::class.java)
 }
 
+@K1Deprecation
 class KotlinClassTypeArgumentInfoHandler : KotlinTypeArgumentInfoHandlerBase<ClassDescriptor>() {
     override fun fetchTypeParameters(parameterOwner: ClassDescriptor) = parameterOwner.typeConstructor.parameters
 
@@ -41,6 +44,7 @@ class KotlinClassTypeArgumentInfoHandler : KotlinTypeArgumentInfoHandlerBase<Cla
     override fun getArgumentListAllowedParentClasses() = setOf(KtUserType::class.java)
 }
 
+@K1Deprecation
 class KotlinFunctionTypeArgumentInfoHandler : KotlinTypeArgumentInfoHandlerBase<FunctionDescriptor>() {
     override fun fetchTypeParameters(parameterOwner: FunctionDescriptor) = parameterOwner.typeParameters
 
@@ -57,6 +61,7 @@ class KotlinFunctionTypeArgumentInfoHandler : KotlinTypeArgumentInfoHandlerBase<
     override fun getArgumentListAllowedParentClasses() = setOf(KtCallElement::class.java)
 }
 
+@K1Deprecation
 abstract class KotlinTypeArgumentInfoHandlerBase<TParameterOwner : Any> : AbstractKotlinTypeArgumentInfoHandler() {
     protected abstract fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<TParameterOwner>?
     protected abstract fun fetchTypeParameters(parameterOwner: TParameterOwner): List<TypeParameterDescriptor>

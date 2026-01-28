@@ -2,10 +2,12 @@
 
 package org.jetbrains.kotlin.idea.highlighter
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.diagnostics.rendering.MultiplatformDiagnosticRenderingMode
 import org.jetbrains.kotlin.diagnostics.rendering.RenderingContext
 
+@K1Deprecation
 object IdeMultiplatformDiagnosticRenderingMode : MultiplatformDiagnosticRenderingMode() {
     override fun newLine(sb: StringBuilder) {
         sb.append("<br/>")

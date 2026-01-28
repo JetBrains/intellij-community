@@ -8,8 +8,10 @@ import com.intellij.debugger.streams.core.wrapper.StreamChainBuilder
 import com.intellij.debugger.streams.psi.PsiUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.*
 
+@K1Deprecation
 abstract class KotlinChainBuilderBase(private val transformer: ChainTransformer<KtCallExpression>) : StreamChainBuilder {
     protected abstract val existenceChecker: ExistenceChecker
 

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.util.unwrapIfTypeAlias
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.util.*
 
+@K1Deprecation
 @Suppress("ClassName")
 sealed class CallType<TReceiver : KtElement?>(val descriptorKindFilter: DescriptorKindFilter) {
     object UNKNOWN : CallType<Nothing?>(DescriptorKindFilter.ALL)
@@ -124,6 +126,7 @@ sealed class CallType<TReceiver : KtElement?>(val descriptorKindFilter: Descript
     }
 }
 
+@K1Deprecation
 @Suppress("ClassName")
 sealed class CallTypeAndReceiver<TReceiver : KtElement?, out TCallType : CallType<TReceiver>>(
     val callType: TCallType,
@@ -235,6 +238,7 @@ sealed class CallTypeAndReceiver<TReceiver : KtElement?, out TCallType : CallTyp
     }
 }
 
+@K1Deprecation
 data class ReceiverType(
     val type: KotlinType,
     val receiverIndex: Int,
@@ -247,6 +251,7 @@ data class ReceiverType(
             ?: DslMarkerUtils.extractDslMarkerFqNames(type)
 }
 
+@K1Deprecation
 fun CallTypeAndReceiver<*, *>.receiverTypes(
     bindingContext: BindingContext,
     contextElement: PsiElement,
@@ -257,6 +262,7 @@ fun CallTypeAndReceiver<*, *>.receiverTypes(
     return receiverTypesWithIndex(bindingContext, contextElement, moduleDescriptor, resolutionFacade, stableSmartCastsOnly)?.map { it.type }
 }
 
+@K1Deprecation
 fun CallTypeAndReceiver<*, *>.receiverTypesWithIndex(
     bindingContext: BindingContext,
     contextElement: PsiElement,
@@ -394,6 +400,7 @@ private fun receiverValueTypes(
     }
 }
 
+@K1Deprecation
 fun SmartCastManager.getSmartCastVariantsWithLessSpecificExcluded(
     receiverToCast: ReceiverValue,
     bindingContext: BindingContext,

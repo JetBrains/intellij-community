@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.types.isDefinitelyNotNullType
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
 
+@K1Deprecation
 class CastExpressionFix(element: KtExpression, type: KotlinType) : KotlinQuickFixAction<KtExpression>(element), LowPriorityAction {
     private val typePresentation = IdeDescriptorRenderers.SOURCE_CODE_TYPES_WITH_SHORT_NAMES.renderType(type)
     private val typeSourceCode = IdeDescriptorRenderers.SOURCE_CODE_TYPES.renderType(type).let {

@@ -12,6 +12,7 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.codeStyle.CodeStyleManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 
+@K1Deprecation
 class OldJ2kPostProcessor(private val formatCode: Boolean = true) : PostProcessor {
     override val phasesCount: Int = 1
 

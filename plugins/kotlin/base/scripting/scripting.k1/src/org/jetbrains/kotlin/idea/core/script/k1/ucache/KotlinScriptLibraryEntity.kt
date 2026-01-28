@@ -5,9 +5,11 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.kotlin.K1Deprecation
 import java.io.Serializable
 
 
+@K1Deprecation
 data class KotlinScriptLibraryRootTypeId(val name: String) : Serializable {
     companion object {
         val COMPILED = KotlinScriptLibraryRootTypeId("CLASSES")
@@ -15,16 +17,20 @@ data class KotlinScriptLibraryRootTypeId(val name: String) : Serializable {
     }
 }
 
+@K1Deprecation
 data class KotlinScriptLibraryRoot(val url: VirtualFileUrl, val type: KotlinScriptLibraryRootTypeId) : Serializable
 
+@K1Deprecation
 data class KotlinScriptLibraryId(val name: String) : SymbolicEntityId<KotlinScriptLibraryEntity> {
     override val presentableName: String
         get() = name
 }
 
+@K1Deprecation
 data class KotlinScriptLibraryEntitySource(override val virtualFileUrl: VirtualFileUrl?) : EntitySource
 
 
+@K1Deprecation
 interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
 
     val name: String

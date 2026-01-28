@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.nullability
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.*
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.j2k.ConverterContext
@@ -9,6 +10,7 @@ import org.jetbrains.kotlin.psi.KtNullableType
 import org.jetbrains.kotlin.psi.KtTypeElement
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
+@K1Deprecation
 class NullabilityContextCollector(
     resolutionFacade: ResolutionFacade,
     private val converterContext: ConverterContext

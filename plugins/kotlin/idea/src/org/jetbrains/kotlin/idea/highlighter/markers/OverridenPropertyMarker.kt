@@ -11,12 +11,14 @@ import com.intellij.psi.search.PsiElementProcessorAdapter
 import com.intellij.util.AdapterProcessor
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Function
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
+@K1Deprecation
 fun getOverriddenPropertyTooltip(property: KtNamedDeclaration): String? {
     val overriddenInClassesProcessor = PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5)
 
@@ -54,6 +56,7 @@ fun getOverriddenPropertyTooltip(property: KtNamedDeclaration): String? {
 }
 
 
+@K1Deprecation
 fun isImplemented(declaration: KtNamedDeclaration): Boolean {
     if (declaration.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return true
 

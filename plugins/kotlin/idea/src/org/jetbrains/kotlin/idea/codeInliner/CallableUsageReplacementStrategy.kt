@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.codeInliner
 
 import com.intellij.openapi.diagnostic.Logger
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.OperatorToFunctionConverter
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 private val LOG = Logger.getInstance(CallableUsageReplacementStrategy::class.java)
 
+@K1Deprecation
 class CallableUsageReplacementStrategy(
     private val replacement: CodeToInline,
     private val inlineSetter: Boolean = false

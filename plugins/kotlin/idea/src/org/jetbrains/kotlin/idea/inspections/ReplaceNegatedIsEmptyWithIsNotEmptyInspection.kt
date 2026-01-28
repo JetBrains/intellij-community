@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class ReplaceNegatedIsEmptyWithIsNotEmptyInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return prefixExpressionVisitor(fun(expression) {
@@ -45,6 +47,7 @@ class ReplaceNegatedIsEmptyWithIsNotEmptyInspection : AbstractKotlinInspection()
     }
 }
 
+@K1Deprecation
 class ReplaceNegatedIsEmptyWithIsNotEmptyQuickFix(private val from: String, private val to: String) : LocalQuickFix {
     override fun getName() = KotlinBundle.message("replace.negated.0.with.1", from, to)
 

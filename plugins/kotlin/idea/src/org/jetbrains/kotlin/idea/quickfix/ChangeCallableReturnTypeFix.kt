@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -37,6 +38,7 @@ import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
+@K1Deprecation
 abstract class ChangeCallableReturnTypeFix(
     element: KtCallableDeclaration,
     type: KotlinType

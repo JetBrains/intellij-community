@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.parents
 
+@K1Deprecation
 class ConvertPrimaryConstructorToSecondaryIntention : SelfTargetingRangeIntention<KtClass>(
     KtClass::class.java,
     KotlinBundle.messagePointer("convert.to.secondary.constructor")

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass
 
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAndGetResult
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ClassKind
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.ifEmpty
 import java.util.*
 
+@K1Deprecation
 object CreateClassFromCallWithConstructorCalleeActionFactory : CreateClassFromUsageFactory<KtCallElement>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtCallElement? {
         val diagElement = diagnostic.psiElement

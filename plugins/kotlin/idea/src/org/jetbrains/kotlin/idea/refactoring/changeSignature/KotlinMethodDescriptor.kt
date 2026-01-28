@@ -4,12 +4,14 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
 import com.intellij.psi.PsiElement
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinCallableDefinitionUsage
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 
+@K1Deprecation
 interface KotlinMethodDescriptor : KotlinModifiableMethodDescriptor<KotlinParameterInfo, DescriptorVisibility> {
     override val original: KotlinMethodDescriptor
 
@@ -22,6 +24,7 @@ interface KotlinMethodDescriptor : KotlinModifiableMethodDescriptor<KotlinParame
     override var receiver: KotlinParameterInfo?
 }
 
+@K1Deprecation
 val KotlinMethodDescriptor.returnTypeInfo: KotlinTypeInfo
     get() {
         val type = baseDescriptor.returnType
@@ -32,6 +35,7 @@ val KotlinMethodDescriptor.returnTypeInfo: KotlinTypeInfo
         return KotlinTypeInfo(true, type, text)
     }
 
+@K1Deprecation
 val KotlinMethodDescriptor.receiverTypeInfo: KotlinTypeInfo
     get() {
         val type = baseDescriptor.extensionReceiverParameter?.type

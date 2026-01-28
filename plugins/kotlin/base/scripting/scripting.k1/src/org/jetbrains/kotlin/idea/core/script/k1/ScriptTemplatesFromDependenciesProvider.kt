@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.FilenameIndex
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
@@ -28,6 +29,7 @@ import kotlin.concurrent.withLock
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
+@K1Deprecation
 class ScriptTemplatesFromDependenciesProvider(private val project: Project) : ScriptDefinitionsSource {
     companion object {
         fun getInstance(project: Project): ScriptTemplatesFromDependenciesProvider? =

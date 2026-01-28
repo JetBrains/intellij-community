@@ -26,6 +26,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -65,6 +66,7 @@ import org.jetbrains.kotlin.types.typeUtil.unCapture
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory as newToPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile as newToPsiFile
 
+@K1Deprecation
 @ApiStatus.Internal
 @Deprecated("Was moved to the common part", replaceWith = ReplaceWith("canRefactorElement()"))
 fun PsiElement.canRefactor(): Boolean {
@@ -78,6 +80,7 @@ fun PsiElement.canRefactor(): Boolean {
     }
 }
 
+@K1Deprecation
 @JvmOverloads
 fun getOrCreateKotlinFile(
     fileName: String,
@@ -86,6 +89,7 @@ fun getOrCreateKotlinFile(
 ): KtFile =
     (targetDir.findFile(fileName) ?: createKotlinFile(fileName, targetDir, packageName)) as KtFile
 
+@K1Deprecation
 fun PsiElement.getUsageContext(): PsiElement {
     return when (this) {
         is KtElement -> PsiTreeUtil.getParentOfType(
@@ -100,10 +104,12 @@ fun PsiElement.getUsageContext(): PsiElement {
     }
 }
 
+@K1Deprecation
 fun PsiElement.isInKotlinAwareSourceRoot(): Boolean =
     !isOutsideKotlinAwareSourceRoot(containingFile)
 
 
+@K1Deprecation
 fun reportDeclarationConflict(
     conflicts: MultiMap<PsiElement, String>,
     declaration: PsiElement,
@@ -112,6 +118,7 @@ fun reportDeclarationConflict(
     conflicts.putValue(declaration, message(RefactoringUIUtil.getDescription(declaration, true).capitalize()))
 }
 
+@K1Deprecation
 @Deprecated(
     "Use org.jetbrains.kotlin.idea.base.psi.getLineStartOffset() instead",
     ReplaceWith("this.getLineStartOffset(line)", "org.jetbrains.kotlin.idea.base.psi.getLineStartOffset"),
@@ -178,6 +185,7 @@ internal abstract class CompositeRefactoringRunner(
     }
 }
 
+@K1Deprecation
 @Throws(ConfigurationException::class)
 fun KtElement?.validateElement(@NlsContexts.DialogMessage errorMessage: String) {
     if (this == null) throw ConfigurationException(errorMessage)
@@ -189,6 +197,7 @@ fun KtElement?.validateElement(@NlsContexts.DialogMessage errorMessage: String) 
     }
 }
 
+@K1Deprecation
 fun invokeOnceOnCommandFinish(action: () -> Unit) {
     val simpleConnect = ApplicationManager.getApplication().messageBus.simpleConnect()
     simpleConnect.subscribe(CommandListener.TOPIC, object : CommandListener {
@@ -199,6 +208,7 @@ fun invokeOnceOnCommandFinish(action: () -> Unit) {
     })
 }
 
+@K1Deprecation
 fun PsiNamedElement.isInterfaceClass(): Boolean = when (this) {
     is KtClass -> isInterface()
     is PsiClass -> isInterface
@@ -206,6 +216,7 @@ fun PsiNamedElement.isInterfaceClass(): Boolean = when (this) {
     else -> false
 }
 
+@K1Deprecation
 fun KtNamedDeclaration.isAbstract(): Boolean = when {
     hasModifier(KtTokens.ABSTRACT_KEYWORD) -> true
     containingClassOrObject?.isInterfaceClass() != true -> false
@@ -214,6 +225,7 @@ fun KtNamedDeclaration.isAbstract(): Boolean = when {
     else -> false
 }
 
+@K1Deprecation
 fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration) {
     val callableDescriptor = element.resolveToDescriptorIfAny() as? CallableDescriptor ?: return
     if (callableDescriptor.overriddenDescriptors.isEmpty()) {
@@ -221,6 +233,7 @@ fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration) {
     }
 }
 
+@K1Deprecation
 fun dropOperatorKeywordIfNecessary(element: KtNamedDeclaration) {
     val callableDescriptor = element.resolveToDescriptorIfAny() as? CallableDescriptor ?: return
     val diagnosticHolder = BindingTraceContext(element.project)
@@ -230,6 +243,7 @@ fun dropOperatorKeywordIfNecessary(element: KtNamedDeclaration) {
     }
 }
 
+@K1Deprecation
 fun getQualifiedTypeArgumentList(initializer: KtExpression): KtTypeArgumentList? {
     val call = initializer.resolveToCall() ?: return null
     val typeArgumentMap = call.typeArguments
@@ -241,6 +255,7 @@ fun getQualifiedTypeArgumentList(initializer: KtExpression): KtTypeArgumentList?
     return KtPsiFactory(initializer.project).createTypeArguments(renderedList)
 }
 
+@K1Deprecation
 fun addTypeArgumentsIfNeeded(expression: KtExpression, typeArgumentList: KtTypeArgumentList) {
     val context = expression.analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
     val call = expression.getCallWithAssert(context)
@@ -281,9 +296,11 @@ internal fun ImplicitReceiver.explicateAsText(): String {
     return declarationDescriptor.explicateAsTextForReceiver()
 }
 
+@K1Deprecation
 val PsiFile.isInjectedFragment: Boolean
     get() = InjectedLanguageManager.getInstance(project).isInjectedFragment(this)
 
+@K1Deprecation
 fun checkSuperMethods(
     declaration: KtDeclaration,
     ignore: Collection<PsiElement>?,
@@ -372,6 +389,7 @@ private fun getSuperDescriptors(
     }
 }
 
+@K1Deprecation
 fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?): List<PsiElement> {
     if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return listOf(declaration)
     val (_, overriddenElementsToDescriptor) = getSuperDescriptors(declaration, ignore)
@@ -383,10 +401,12 @@ internal fun KtDeclaration.resolveToExpectedDescriptorIfPossible(): DeclarationD
     return descriptor.liftToExpected() ?: descriptor
 }
 
+@K1Deprecation
 fun DialogWrapper.showWithTransaction() {
     TransactionGuard.submitTransaction(disposable, Runnable { show() })
 }
 
+@K1Deprecation
 fun PsiMethod.checkDeclarationConflict(name: String, conflicts: MultiMap<PsiElement, String>, callables: Collection<PsiElement>) {
     containingClass
         ?.findMethodsByName(name, true)
@@ -395,6 +415,7 @@ fun PsiMethod.checkDeclarationConflict(name: String, conflicts: MultiMap<PsiElem
         ?.let { reportDeclarationConflict(conflicts, it) { s -> "$s already exists" } }
 }
 
+@K1Deprecation
 fun <T : KtExpression> T.replaceWithCopyWithResolveCheck(
     resolveStrategy: (T, BindingContext) -> DeclarationDescriptor?,
     context: BindingContext = analyze(),
@@ -410,6 +431,7 @@ fun <T : KtExpression> T.replaceWithCopyWithResolveCheck(
     return if (originDescriptor.canonicalRender() == newDescriptor.canonicalRender()) elementCopy.postHook() else null
 }
 
+@K1Deprecation
 @Deprecated(
     "Use org.jetbrains.kotlin.idea.core.util.toPsiDirectory() instead",
     ReplaceWith("this.toPsiDirectory(project)", "org.jetbrains.kotlin.idea.core.util.toPsiDirectory"),
@@ -419,6 +441,7 @@ fun VirtualFile.toPsiDirectory(project: Project): PsiDirectory? {
     return newToPsiDirectory(project)
 }
 
+@K1Deprecation
 @Deprecated(
     "Use org.jetbrains.kotlin.idea.core.util.toPsiFile() instead",
     ReplaceWith("this.toPsiFile(project)", "org.jetbrains.kotlin.idea.core.util.toPsiFile"),
@@ -428,6 +451,7 @@ fun VirtualFile.toPsiFile(project: Project): PsiFile? {
     return newToPsiFile(project)
 }
 
+@K1Deprecation
 fun KtTypeReference.classForRefactor(): KtClass? {
     val bindingContext = analyze(BodyResolveMode.PARTIAL)
     val type = bindingContext[BindingContext.TYPE, this] ?: return null

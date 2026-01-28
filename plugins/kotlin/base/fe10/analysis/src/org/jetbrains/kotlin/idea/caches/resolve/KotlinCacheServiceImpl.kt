@@ -16,6 +16,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.uast.UastModificationTracker
 import com.intellij.util.containers.SLRUCache
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.ResolverForProject.Companion.resolverForLibrariesName
 import org.jetbrains.kotlin.analyzer.ResolverForProject.Companion.resolverForModulesName
@@ -56,13 +57,16 @@ import org.jetbrains.kotlin.utils.addToStdlib.sumByLong
 
 internal val LOG = Logger.getInstance(KotlinCacheService::class.java)
 
+@K1Deprecation
 data class PlatformAnalysisSettingsImpl(
     val platform: TargetPlatform,
     val sdk: Sdk?
 ) : PlatformAnalysisSettings
 
+@K1Deprecation
 object CompositeAnalysisSettings : PlatformAnalysisSettings
 
+@K1Deprecation
 fun createPlatformAnalysisSettings(
     project: Project,
     platform: TargetPlatform,
@@ -75,6 +79,7 @@ fun createPlatformAnalysisSettings(
     }
 }
 
+@K1Deprecation
 class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     override fun getResolutionFacade(element: KtElement): ResolutionFacade {
         val file = element.fileForElement()

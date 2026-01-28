@@ -14,6 +14,7 @@ import com.intellij.util.xmlb.SerializationFilterBase
 import com.intellij.util.xmlb.XmlSerializer
 import com.siyeh.ig.BaseInspection
 import org.jdom.Element
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class KotlinLoggerInitializedWithForeignClassInspection : AbstractKotlinInspection() {
     @Suppress("MemberVisibilityCanBePrivate")
     var loggerFactoryClassName: String = DEFAULT_LOGGER_FACTORY_CLASS_NAME

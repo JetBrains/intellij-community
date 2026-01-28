@@ -7,17 +7,20 @@ import com.intellij.ui.BooleanTableCellRenderer
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import javax.swing.JTable
 
+@K1Deprecation
 class ModelDescriptor(
     val definition: ScriptDefinition,
     var isEnabled: Boolean,
     var autoReloadConfigurations: Boolean
 )
 
+@K1Deprecation
 class KotlinScriptDefinitionsModel private constructor(definitions: MutableList<ModelDescriptor>) :
   ListTableModel<ModelDescriptor>(
         arrayOf(

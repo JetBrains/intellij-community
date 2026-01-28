@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.FList
 import com.siyeh.ig.psiutils.TypeUtils
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -73,6 +74,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
 import java.util.concurrent.ConcurrentHashMap
 
+@K1Deprecation
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
     private val flow = ControlFlow(factory, context)
     private val trapTracker = TrapTracker(factory, KtClassDef.typeConstraintFactory(context))

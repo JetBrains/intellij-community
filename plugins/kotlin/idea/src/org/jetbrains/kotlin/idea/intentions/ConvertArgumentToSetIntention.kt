@@ -5,6 +5,7 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.core.receiverType
@@ -41,6 +42,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  * @see org.jetbrains.kotlin.idea.inspections.ConvertArgumentToSetInspection for a matching inspection
  *
  */
+@K1Deprecation
 class ConvertArgumentToSetIntention : SelfTargetingIntention<KtExpression>(
     KtExpression::class.java,
     KotlinBundle.messagePointer("convert.argument.to.set.fix.text")

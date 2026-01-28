@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.console.gutter
 
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class ConsoleIndicatorRenderer(private val iconWithTooltip: IconWithTooltip) : GutterIconRenderer() {
     private val icon = iconWithTooltip.icon
     private val tooltip

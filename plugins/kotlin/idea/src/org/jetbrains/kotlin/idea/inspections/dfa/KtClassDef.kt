@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.TypeConstraint
 import com.intellij.codeInspection.dataFlow.TypeConstraints
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -27,6 +28,7 @@ import java.util.*
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
+@K1Deprecation
 class KtClassDef(val cls: ClassDescriptor) : TypeConstraints.ClassDef {
 
   override fun isInheritor(superType: TypeConstraints.ClassDef): Boolean =

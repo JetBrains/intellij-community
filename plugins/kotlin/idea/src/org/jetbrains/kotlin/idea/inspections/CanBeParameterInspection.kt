@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfTypes
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.getScopeToSearchParameterReferences
@@ -33,6 +34,7 @@ internal val CONSTRUCTOR_VAL_VAR_MODIFIERS = listOf(
 )
 
 
+@K1Deprecation
 class CanBeParameterInspection : AbstractKotlinInspection() {
     private fun PsiReference.usedAsPropertyIn(klass: KtClass): Boolean {
         if (this !is KtSimpleNameReference) return true

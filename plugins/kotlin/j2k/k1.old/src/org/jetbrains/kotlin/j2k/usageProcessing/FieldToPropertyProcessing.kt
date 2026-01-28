@@ -5,12 +5,14 @@ package org.jetbrains.kotlin.j2k.usageProcessing
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.AccessorKind
 import org.jetbrains.kotlin.j2k.CodeConverter
 import org.jetbrains.kotlin.j2k.ast.*
 import org.jetbrains.kotlin.j2k.dot
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
+@K1Deprecation
 class FieldToPropertyProcessing(
         private val field: PsiField,
         private val propertyName: String,
@@ -70,6 +72,7 @@ class FieldToPropertyProcessing(
     }
 }
 
+@K1Deprecation
 class UseAccessorsJavaCodeProcessor(private val factory: PsiElementFactory, private val propertyName: String) : ExternalCodeProcessor {
     override fun processUsage(reference: PsiReference): Array<PsiReference>? {
         val refExpr = reference.element as? PsiReferenceExpression ?: return null

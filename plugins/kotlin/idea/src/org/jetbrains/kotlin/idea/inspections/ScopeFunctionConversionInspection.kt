@@ -6,6 +6,7 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -50,6 +51,7 @@ private val counterpartNames = mapOf(
 )
 
 
+@K1Deprecation
 class ScopeFunctionConversionInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return callExpressionVisitor { expression ->
@@ -96,6 +98,7 @@ private fun nameResolvesToStdlib(expression: KtCallExpression, bindingContext: B
     return descriptors.isNotEmpty() && descriptors.all { it.fqNameSafe.asString() == "kotlin.$name" }
 }
 
+@K1Deprecation
 class Replacement<T : PsiElement> private constructor(
     private val elementPointer: SmartPsiElementPointer<T>,
     private val replacementFactory: KtPsiFactory.(T) -> PsiElement
@@ -116,6 +119,7 @@ class Replacement<T : PsiElement> private constructor(
         get() = elementPointer.element!!.endOffset
 }
 
+@K1Deprecation
 class ReplacementCollection(private val project: Project) {
     private val replacements = mutableListOf<Replacement<out PsiElement>>()
     var createParameter: KtPsiFactory.() -> PsiElement? = { null }
@@ -140,6 +144,7 @@ class ReplacementCollection(private val project: Project) {
     fun isNotEmpty() = replacements.isNotEmpty()
 }
 
+@K1Deprecation
 abstract class ConvertScopeFunctionFix(private val counterpartName: String) : LocalQuickFix {
     override fun getFamilyName() = KotlinBundle.message("convert.scope.function.fix.family.name", counterpartName)
 
@@ -176,6 +181,7 @@ abstract class ConvertScopeFunctionFix(private val counterpartName: String) : Lo
     )
 }
 
+@K1Deprecation
 class ConvertScopeFunctionToParameter(counterpartName: String) : ConvertScopeFunctionFix(counterpartName) {
     override fun analyzeLambda(
         bindingContext: BindingContext,
@@ -301,6 +307,7 @@ class ConvertScopeFunctionToParameter(counterpartName: String) : ConvertScopeFun
     }
 }
 
+@K1Deprecation
 class ConvertScopeFunctionToReceiver(counterpartName: String) : ConvertScopeFunctionFix(counterpartName) {
     override fun analyzeLambda(
         bindingContext: BindingContext,

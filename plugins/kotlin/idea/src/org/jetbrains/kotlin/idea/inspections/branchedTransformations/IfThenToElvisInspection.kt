@@ -7,6 +7,7 @@ import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class IfThenToElvisInspection @JvmOverloads constructor(
     @JvmField var highlightStatement: Boolean = false,
     private val inlineWithPrompt: Boolean = true

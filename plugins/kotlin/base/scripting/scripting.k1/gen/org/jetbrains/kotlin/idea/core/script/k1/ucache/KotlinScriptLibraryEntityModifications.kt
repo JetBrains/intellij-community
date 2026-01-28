@@ -6,7 +6,9 @@ package org.jetbrains.kotlin.idea.core.script.k1.ucache
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 @GeneratedCodeApiVersion(3)
 interface KotlinScriptLibraryEntityBuilder : WorkspaceEntityBuilder<KotlinScriptLibraryEntity> {
   override var entitySource: EntitySource
@@ -37,11 +39,13 @@ internal object KotlinScriptLibraryEntityType : EntityType<KotlinScriptLibraryEn
   }
 }
 
+@K1Deprecation
 fun MutableEntityStorage.modifyKotlinScriptLibraryEntity(
   entity: KotlinScriptLibraryEntity,
   modification: KotlinScriptLibraryEntityBuilder.() -> Unit,
 ): KotlinScriptLibraryEntity = modifyEntity(KotlinScriptLibraryEntityBuilder::class.java, entity, modification)
 
+@K1Deprecation
 @JvmOverloads
 @JvmName("createKotlinScriptLibraryEntity")
 fun KotlinScriptLibraryEntity(

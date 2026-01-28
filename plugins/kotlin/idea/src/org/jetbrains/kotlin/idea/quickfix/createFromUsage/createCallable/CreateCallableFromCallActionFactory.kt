@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -37,6 +38,7 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
+@K1Deprecation
 sealed class CreateCallableFromCallActionFactory<E : KtExpression>(
     extensionsEnabled: Boolean = true
 ) : CreateCallableMemberFromUsageFactory<E>(extensionsEnabled) {

@@ -17,6 +17,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.compiled.ClsMethodImpl
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -70,6 +71,7 @@ import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.shouldNotConvertToProperty
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
+@K1Deprecation
 @Suppress("DEPRECATION")
 class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtExpression>(UsePropertyAccessSyntaxIntention::class),
                                           CleanupLocalInspectionTool {
@@ -160,6 +162,7 @@ class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtExpression>
     }
 }
 
+@K1Deprecation
 class NotPropertiesServiceImpl(private val project: Project) : NotPropertiesService {
     override fun getNotProperties(element: PsiElement): Set<FqNameUnsafe> {
         val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
@@ -178,6 +181,7 @@ class NotPropertiesServiceImpl(private val project: Project) : NotPropertiesServ
  * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.UsePropertyAccessSyntax]
  * [org.jetbrains.kotlin.idea.inspections.MultiFileLocalInspectionTestGenerated]
  */
+@K1Deprecation
 @ApiStatus.Internal
 class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention<KtExpression>(
     KtExpression::class.java,

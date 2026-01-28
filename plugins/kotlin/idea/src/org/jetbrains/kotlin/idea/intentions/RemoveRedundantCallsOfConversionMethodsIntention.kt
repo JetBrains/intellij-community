@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -18,11 +19,13 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.types.isFlexible
 
+@K1Deprecation
 @Suppress("DEPRECATION")
 class RemoveRedundantCallsOfConversionMethodsInspection : IntentionBasedInspection<KtQualifiedExpression>(
     RemoveRedundantCallsOfConversionMethodsIntention::class
 )
 
+@K1Deprecation
 class RemoveRedundantCallsOfConversionMethodsIntention : SelfTargetingRangeIntention<KtQualifiedExpression>(
     KtQualifiedExpression::class.java,
     KotlinBundle.messagePointer("remove.redundant.calls.of.the.conversion.method")

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.psi.LambdaArgument
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
+@K1Deprecation
 class AddNamesToCallArgumentsIntention : SelfTargetingRangeIntention<KtCallElement>(
     KtCallElement::class.java,
     KotlinBundle.messagePointer("add.names.to.call.arguments")

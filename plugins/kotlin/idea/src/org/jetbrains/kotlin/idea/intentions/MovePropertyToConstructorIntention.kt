@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ParameterDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
@@ -34,6 +35,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 class MovePropertyToConstructorIntention :
   SelfTargetingIntention<KtProperty>(KtProperty::class.java, KotlinBundle.messagePointer("move.to.constructor")),
   LocalQuickFix {

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.pullUp
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
@@ -29,6 +30,7 @@ private var KtElement.newFqName: FqName? by CopyablePsiUserDataProperty(Key.crea
 private var KtElement.replaceWithTargetThis: Boolean? by CopyablePsiUserDataProperty(Key.create("REPLACE_WITH_TARGET_THIS"))
 private var KtElement.newTypeText: ((TypeSubstitutor) -> String?)? by CopyablePsiUserDataProperty(Key.create("NEW_TYPE_TEXT"))
 
+@K1Deprecation
 fun markElements(
     declaration: KtNamedDeclaration,
     context: BindingContext,
@@ -93,6 +95,7 @@ fun markElements(
     return affectedElements
 }
 
+@K1Deprecation
 fun applyMarking(
     declaration: KtNamedDeclaration,
     substitutor: TypeSubstitutor, targetClassDescriptor: ClassDescriptor
@@ -146,6 +149,7 @@ fun applyMarking(
     )
 }
 
+@K1Deprecation
 fun clearMarking(markedElements: List<KtElement>) {
     markedElements.forEach {
         it.newFqName = null

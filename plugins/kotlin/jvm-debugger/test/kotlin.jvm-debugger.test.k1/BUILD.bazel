@@ -17,7 +17,16 @@ jps_test(
 ### skip generation section `test kotlin.jvm-debugger.test.k1`
 
 ### auto-generated section `build kotlin.jvm-debugger.test.k1` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_kotlin-jvm-debugger-test-k1",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
 
 jvm_library(
   name = "kotlin-jvm-debugger-test-k1",
@@ -37,6 +46,7 @@ jvm_library(
   module_name = "kotlin.jvm-debugger.test.k1",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-jvm-debugger-test-k1",
   deps = [
     "//plugins/kotlin/jvm-debugger/test",
     "//plugins/kotlin/jvm-debugger/test:test_test_lib",

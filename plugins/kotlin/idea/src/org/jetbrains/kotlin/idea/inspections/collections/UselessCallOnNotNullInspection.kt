@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections.collections
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 // TODO: This inspection has been ported to K2 with an implementation that will also work for K1,
 //  but there is a bug in the analysis API preventing it from being used for both.
 //  Once KT-65376 is fixed, remove this class and use the shared implementation instead.
+@K1Deprecation
 class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
     override val uselessFqNames = mapOf(
         "kotlin.collections.orEmpty" to deleteConversion,

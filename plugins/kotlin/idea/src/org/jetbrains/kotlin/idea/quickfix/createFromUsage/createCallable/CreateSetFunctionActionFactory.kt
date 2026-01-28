@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
 import com.intellij.psi.util.findParentOfType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import java.util.*
 
+@K1Deprecation
 object CreateSetFunctionActionFactory : CreateGetSetFunctionActionFactory(isGet = false) {
     override fun createCallableInfo(element: KtArrayAccessExpression, diagnostic: Diagnostic): CallableInfo? {
         val arrayExpr = element.arrayExpression ?: return null

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.impl.java.stubs.index.JavaMethodNameIndex
 import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.utils.Printer
 
+@K1Deprecation
 class IdeKDocLinkResolutionService(val project: Project) : KDocLinkResolutionService {
     override fun resolveKDocLink(
         context: BindingContext,

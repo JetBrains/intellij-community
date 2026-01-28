@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemsHolder
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.AbbreviatedType
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 class RedundantExplicitTypeInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         propertyVisitor(fun(property) {

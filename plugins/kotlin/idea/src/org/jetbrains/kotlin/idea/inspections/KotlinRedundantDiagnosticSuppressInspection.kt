@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryForDeprecation
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.inspections.suppress.KotlinInspectionSuppressor
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
+@K1Deprecation
 class KotlinRedundantDiagnosticSuppressInspection : AbstractKotlinInspection() {
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
         if (file !is KtFile) return null

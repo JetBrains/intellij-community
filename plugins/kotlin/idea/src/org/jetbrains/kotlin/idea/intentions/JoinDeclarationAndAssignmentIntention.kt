@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceService
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.util.match
 
+@K1Deprecation
 @Suppress("DEPRECATION")
 class JoinDeclarationAndAssignmentInspection : IntentionBasedInspection<KtProperty>(
     JoinDeclarationAndAssignmentIntention::class,
@@ -52,6 +54,7 @@ class JoinDeclarationAndAssignmentInspection : IntentionBasedInspection<KtProper
     )
 }
 
+@K1Deprecation
 class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProperty>(
     KtProperty::class.java,
     KotlinBundle.messagePointer("join.declaration.and.assignment")

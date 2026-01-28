@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.nullability
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.resolve.jvm.checkers.mustNotBeNull
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
 
+@K1Deprecation
 class NullabilityBoundTypeEnhancer(private val resolutionFacade: ResolutionFacade) : BoundTypeEnhancer() {
     override fun enhance(
         expression: KtExpression,

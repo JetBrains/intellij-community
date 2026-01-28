@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
@@ -28,17 +29,20 @@ import org.jetbrains.kotlin.types.TypeProjectionImpl
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.typeUtil.containsError
 
+@K1Deprecation
 data class TypeParameterInfo(
     val name: String,
     val upperBoundType: KotlinType?,
     val fakeTypeParameter: TypeParameterDescriptor
 )
 
+@K1Deprecation
 data class CreateTypeParameterData(
     val declaration: KtTypeParameterListOwner,
     val typeParameters: List<TypeParameterInfo>
 )
 
+@K1Deprecation
 object CreateTypeParameterByUnresolvedRefActionFactory : KotlinIntentionActionFactoryWithDelegate<KtUserType, CreateTypeParameterData>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtUserType? {
         val ktUserType = diagnostic.psiElement.getParentOfTypeAndBranch<KtUserType> { referenceExpression } ?: return null
@@ -93,6 +97,7 @@ object CreateTypeParameterByUnresolvedRefActionFactory : KotlinIntentionActionFa
     }
 }
 
+@K1Deprecation
 fun createFakeTypeParameterDescriptor(
     containingDescriptor: DeclarationDescriptor,
     name: String,
@@ -106,6 +111,7 @@ fun createFakeTypeParameterDescriptor(
         )
 }
 
+@K1Deprecation
 fun getPossibleTypeParameterContainers(startFrom: PsiElement): List<KtTypeParameterListOwner> {
     val stopAt = startFrom.parents.firstOrNull(::isObjectOrNonInnerClass)?.parent
     return (if (stopAt != null) startFrom.parents.takeWhile { it != stopAt } else startFrom.parents)

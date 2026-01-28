@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.Queryable
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
@@ -20,6 +21,7 @@ import javax.swing.Icon
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
+@K1Deprecation
 class KotlinStructureViewElement(
     override val element: NavigatablePsiElement,
     private val isInherited: Boolean = false
@@ -111,6 +113,7 @@ private class AssignableLazyProperty<in R, T : Any>(val init: () -> T) : ReadWri
     }
 }
 
+@K1Deprecation
 @Deprecated("Use KotlinStructureViewUtilkt.getStructureDeclarations(KtClassOrObject) instead")
 fun KtClassOrObject.getStructureDeclarations() =
      buildList {

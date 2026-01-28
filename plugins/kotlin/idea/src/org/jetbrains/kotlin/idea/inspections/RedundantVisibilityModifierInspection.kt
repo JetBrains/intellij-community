@@ -6,6 +6,7 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.descriptors.*
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifier
 import org.jetbrains.kotlin.resolve.descriptorUtil.isEffectivelyPublicApi
 
+@K1Deprecation
 class RedundantVisibilityModifierInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
         declarationVisitor(fun(declaration: KtDeclaration) {

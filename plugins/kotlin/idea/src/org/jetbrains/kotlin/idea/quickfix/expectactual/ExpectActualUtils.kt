@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
+@K1Deprecation
 fun <D : KtNamedDeclaration> generateExpectOrActualInFile(
     project: Project,
     editor: Editor?,
@@ -98,6 +100,7 @@ fun <D : KtNamedDeclaration> generateExpectOrActualInFile(
     })
 }
 
+@K1Deprecation
 fun TypeAccessibilityChecker.isCorrectAndHaveAccessibleModifiers(declaration: KtNamedDeclaration, showErrorHint: Boolean = false): Boolean {
     if (declaration.anyInaccessibleModifier(INACCESSIBLE_MODIFIERS, showErrorHint)) return false
 
@@ -136,18 +139,21 @@ private fun KtModifierListOwner.anyInaccessibleModifier(modifiers: Collection<Kt
     return false
 }
 
+@K1Deprecation
 fun showInaccessibleDeclarationError(element: PsiElement, message: String, editor: Editor? = element.findExistingEditor()) {
     editor?.let {
         showErrorHint(element.project, editor, escapeXml(message), KotlinBundle.message("inaccessible.declaration"))
     }
 }
 
+@K1Deprecation
 fun TypeAccessibilityChecker.Companion.typesToString(types: Collection<FqName?>, separator: CharSequence = "\n"): String {
     return types.toSet().joinToString(separator = separator) {
         it?.shortName()?.asString() ?: "<Unknown>"
     }
 }
 
+@K1Deprecation
 fun TypeAccessibilityChecker.findAndApplyExistingClasses(elements: Collection<KtNamedDeclaration>): Set<String> {
     var classes = elements.filterIsInstance<KtClassOrObject>()
     while (classes.isNotEmpty()) {

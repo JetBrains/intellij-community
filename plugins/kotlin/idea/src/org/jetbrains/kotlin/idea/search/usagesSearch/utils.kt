@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.*
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.util.concurrency.ThreadingAssertions
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -46,6 +47,7 @@ import org.jetbrains.kotlin.types.DelegatingSimpleType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.util.isValidOperator
 
+@K1Deprecation
 inline fun <R> calculateInModalWindow(
     contextElement: PsiElement,
     @NlsContexts.DialogTitle windowTitle: String,
@@ -60,6 +62,7 @@ inline fun <R> calculateInModalWindow(
     return task.result
 }
 
+@K1Deprecation
 class KotlinConstructorCallLazyDescriptorHandle(ktElement: KtDeclaration) :
     KotlinSearchUsagesSupport.ConstructorCallHandle {
     private val descriptor: ConstructorDescriptor? by lazyPub { ktElement.constructor }
@@ -70,6 +73,7 @@ class KotlinConstructorCallLazyDescriptorHandle(ktElement: KtDeclaration) :
         }
 }
 
+@K1Deprecation
 class JavaConstructorCallLazyDescriptorHandle(psiMethod: PsiMethod) :
     KotlinSearchUsagesSupport.ConstructorCallHandle {
 
@@ -81,12 +85,14 @@ class JavaConstructorCallLazyDescriptorHandle(psiMethod: PsiMethod) :
         }
 }
 
+@K1Deprecation
 fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String? =
   KotlinPsiDeclarationRenderer.render(declaration) ?: calculateInModalWindow(
     declaration,
     KotlinBundle.message("find.usages.prepare.dialog.progress")
   ) { declaration.descriptor?.let { DescriptorRenderer.COMPACT.render(it) } }
 
+@K1Deprecation
 val KtDeclaration.constructor: ConstructorDescriptor?
     get() {
         val context = this.analyze()
@@ -97,9 +103,11 @@ val KtDeclaration.constructor: ConstructorDescriptor?
         }
     }
 
+@K1Deprecation
 val KtParameter.propertyDescriptor: PropertyDescriptor?
     get() = this.resolveToDescriptorIfAny(BodyResolveMode.FULL) as? PropertyDescriptor
 
+@K1Deprecation
 fun PsiReference.checkUsageVsOriginalDescriptor(
     targetDescriptor: DeclarationDescriptor,
     declarationToDescriptor: (KtDeclaration) -> DeclarationDescriptor? = { it.descriptor },
@@ -113,6 +121,7 @@ fun PsiReference.checkUsageVsOriginalDescriptor(
         }
 }
 
+@K1Deprecation
 fun PsiReference.isKotlinConstructorUsage(ktClassOrObject: KtClassOrObject): Boolean = with(element) {
     if (this !is KtElement) return false
 
@@ -142,6 +151,7 @@ private fun KtElement.getConstructorCallDescriptor(): DeclarationDescriptor? {
 
 // Check if reference resolves to extension function whose receiver is the same as declaration's parent (or its superclass)
 // Used in extension search
+@K1Deprecation
 fun PsiReference.isExtensionOfDeclarationClassUsage(declaration: KtNamedDeclaration): Boolean {
     val descriptor = declaration.descriptor ?: return false
     return checkUsageVsOriginalDescriptor(descriptor) { usageDescriptor, targetDescriptor ->
@@ -164,6 +174,7 @@ fun PsiReference.isExtensionOfDeclarationClassUsage(declaration: KtNamedDeclarat
 
 // Check if reference resolves to the declaration with the same parent
 // Used in overload search
+@K1Deprecation
 fun PsiReference.isUsageInContainingDeclaration(declaration: KtNamedDeclaration): Boolean {
     val descriptor = declaration.descriptor ?: return false
     return checkUsageVsOriginalDescriptor(descriptor) { usageDescriptor, targetDescriptor ->
@@ -173,6 +184,7 @@ fun PsiReference.isUsageInContainingDeclaration(declaration: KtNamedDeclaration)
     }
 }
 
+@K1Deprecation
 fun PsiReference.isCallableOverrideUsage(declaration: KtNamedDeclaration): Boolean {
     val toDescriptor: (KtDeclaration) -> CallableDescriptor? = { sourceDeclaration ->
         if (sourceDeclaration is KtParameter) {
@@ -204,6 +216,7 @@ fun PsiReference.isCallableOverrideUsage(declaration: KtNamedDeclaration): Boole
     }
 }
 
+@K1Deprecation
 fun KtFile.forceResolveReferences(elements: List<KtElement>) {
     getResolutionFacade().analyze(elements, BodyResolveMode.PARTIAL)
 }
@@ -256,6 +269,7 @@ private fun PsiElement.extractReceiverType(isDestructionDeclarationSearch: Boole
     }
 }
 
+@K1Deprecation
 fun PsiElement.getReceiverTypeSearcherInfo(isDestructionDeclarationSearch: Boolean): ReceiverTypeSearcherInfo? {
     val receiverType = runReadAction { extractReceiverType(isDestructionDeclarationSearch) } ?: return null
     val psiClass = runReadAction { receiverType.toPsiClass(project) }
@@ -264,6 +278,7 @@ fun PsiElement.getReceiverTypeSearcherInfo(isDestructionDeclarationSearch: Boole
     }
 }
 
+@K1Deprecation
 fun KtFile.getDefaultImports(): List<ImportPath> {
     return platform
         .findAnalyzerServices(project)

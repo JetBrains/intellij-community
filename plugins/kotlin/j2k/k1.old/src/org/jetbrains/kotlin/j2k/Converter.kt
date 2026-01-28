@@ -9,6 +9,7 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiMethodUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.j2k.IdeaDocCommentConverter
 import org.jetbrains.kotlin.j2k.ast.*
 import org.jetbrains.kotlin.j2k.ast.Annotation
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.types.expressions.OperatorConventions.*
 
+@K1Deprecation
 class Converter private constructor(
     private val elementToConvert: PsiElement,
     val settings: ConverterSettings,
@@ -931,6 +933,7 @@ class Converter private constructor(
     }
 }
 
+@K1Deprecation
 val PRIMITIVE_TYPE_CONVERSIONS: Map<String, String> = mapOf(
     "byte" to BYTE.asString(),
     "short" to SHORT.asString(),

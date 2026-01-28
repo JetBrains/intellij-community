@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.caches.resolve
 
 import com.intellij.openapi.diagnostic.Logger
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.container.StorageComponentContainer
@@ -33,6 +34,7 @@ import kotlin.io.path.exists
 
 private val LOG = Logger.getInstance(JsResolverForModuleFactory::class.java)
 
+@K1Deprecation
 class JsResolverForModuleFactory(
     private val targetEnvironment: TargetEnvironment
 ) : ResolverForModuleFactory() {

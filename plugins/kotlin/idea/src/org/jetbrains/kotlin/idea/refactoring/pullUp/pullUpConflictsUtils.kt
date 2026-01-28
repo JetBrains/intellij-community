@@ -9,6 +9,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
@@ -96,6 +97,7 @@ private val CALLABLE_RENDERER = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_N
     startFromName = false
 }
 
+@K1Deprecation
 @Nls
 fun DeclarationDescriptor.renderForConflicts(): String {
     return when (this) {

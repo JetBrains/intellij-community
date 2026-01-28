@@ -23,6 +23,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.ui.JBUI
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -57,6 +58,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 
+@K1Deprecation
 class CreateMissedActualsFix(
   val declaration: KtNamedDeclaration,
   private val notActualizedLeafModules: Collection<Module>

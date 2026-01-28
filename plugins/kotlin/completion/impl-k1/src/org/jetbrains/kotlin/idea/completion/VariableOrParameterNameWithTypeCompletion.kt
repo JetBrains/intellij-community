@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.NameUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isError
 import java.util.*
 
+@K1Deprecation
 class VariableOrParameterNameWithTypeCompletion(
     private val collector: LookupElementsCollector,
     private val lookupElementFactory: BasicLookupElementFactory,

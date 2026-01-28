@@ -9,6 +9,7 @@ import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsFilter.k
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocCommentOwner
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
@@ -43,6 +44,7 @@ import org.jetbrains.kotlin.resolve.checkers.explicitApiEnabled
 import org.jetbrains.kotlin.resolve.descriptorUtil.setSingleOverridden
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 
+@K1Deprecation
 interface OverrideMemberChooserObject : ClassMember {
 
     val descriptor: CallableMemberDescriptor
@@ -106,11 +108,13 @@ interface OverrideMemberChooserObject : ClassMember {
     }
 }
 
+@K1Deprecation
 fun OverrideMemberChooserObject.generateMember(
     targetClass: KtClassOrObject,
     copyDoc: Boolean
 ) = generateMember(targetClass, copyDoc, targetClass.project, mode = MemberGenerateMode.OVERRIDE)
 
+@K1Deprecation
 fun OverrideMemberChooserObject.generateMember(
     targetClass: KtClassOrObject?,
     copyDoc: Boolean,
@@ -342,6 +346,7 @@ private fun generateFunction(
     }
 }
 
+@K1Deprecation
 fun generateUnsupportedOrSuperCall(
     project: Project,
     descriptor: CallableMemberDescriptor,
@@ -385,10 +390,12 @@ fun generateUnsupportedOrSuperCall(
     }
 }
 
+@K1Deprecation
 fun KtModifierListOwner.makeNotActual() {
     removeModifier(KtTokens.ACTUAL_KEYWORD)
 }
 
+@K1Deprecation
 fun KtModifierListOwner.makeActual() {
     addModifier(KtTokens.ACTUAL_KEYWORD)
 }

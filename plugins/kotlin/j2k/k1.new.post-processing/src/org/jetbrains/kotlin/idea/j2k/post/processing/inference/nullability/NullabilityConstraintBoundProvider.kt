@@ -2,8 +2,10 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.nullability
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.*
 
+@K1Deprecation
 class NullabilityConstraintBoundProvider : ConstraintBoundProviderImpl() {
     override fun BoundTypeLabel.constraintBound(): ConstraintBound? = when (this) {
         is TypeVariableLabel -> typeVariable.constraintBound()

@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.siblings
 import com.intellij.util.ThreeState
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
@@ -59,6 +60,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 import org.jetbrains.kotlin.types.typeUtil.isNullableNothing
 
+@K1Deprecation
 class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     private enum class ConstantValue {
         TRUE, FALSE, NULL, ZERO, UNKNOWN

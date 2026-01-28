@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections.collections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -43,6 +44,7 @@ import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
+@K1Deprecation
 class SimplifiableCallChainInspection : AbstractCallChainChecker() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid {
         return qualifiedExpressionVisitor(fun(expression) {

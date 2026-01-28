@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 class ChangeTypeFix(element: KtTypeReference, private val type: KotlinType) : KotlinQuickFixAction<KtTypeReference>(element) {
     override fun getFamilyName() = KotlinBundle.message("fix.change.type.family")
 

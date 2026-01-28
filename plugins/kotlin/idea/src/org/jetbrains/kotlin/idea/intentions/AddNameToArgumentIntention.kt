@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatchStatus.SUCCESS
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VarargValueArgument
 
+@K1Deprecation
 class AddNameToArgumentIntention : SelfTargetingIntention<KtValueArgument>(
     KtValueArgument::class.java, KotlinBundle.messagePointer("add.name.to.argument")
 ), LowPriorityAction {

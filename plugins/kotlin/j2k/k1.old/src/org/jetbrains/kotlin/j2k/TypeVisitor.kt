@@ -5,12 +5,14 @@ package org.jetbrains.kotlin.j2k
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.ast.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 
 private val PRIMITIVE_TYPES_NAMES = JvmPrimitiveType.values().map { it.javaKeywordName }
 
+@K1Deprecation
 class TypeVisitor(
         private val converter: Converter,
         private val topLevelType: PsiType,

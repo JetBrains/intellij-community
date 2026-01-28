@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -30,21 +31,25 @@ import org.jetbrains.kotlin.serialization.deserialization.descriptors.Deserializ
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedSimpleFunctionDescriptor
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedTypeAliasDescriptor
 
+@K1Deprecation
 @Deprecated("For binary compatibility with AS, see KT-42061", replaceWith = ReplaceWith("mainReference"))
 @get:JvmName("getMainReference")
 val KtSimpleNameExpression.mainReferenceCompat: KtSimpleNameReference
     get() = mainReference
 
+@K1Deprecation
 @Deprecated("For binary compatibility with AS, see KT-42061", replaceWith = ReplaceWith("mainReference"))
 @get:JvmName("getMainReference")
 val KtReferenceExpression.mainReferenceCompat: KtReference
     get() = mainReference
 
+@K1Deprecation
 @Deprecated("For binary compatibility with AS, see KT-42061", replaceWith = ReplaceWith("mainReference"))
 @get:JvmName("getMainReference")
 val KtElement.mainReferenceCompat: KtReference?
     get() = mainReference
 
+@K1Deprecation
 fun DeclarationDescriptor.findPsiDeclarations(project: Project, resolveScope: GlobalSearchScope): Collection<PsiElement> {
     val fqName = importableFqName ?: return emptyList()
 
@@ -70,17 +75,20 @@ fun DeclarationDescriptor.findPsiDeclarations(project: Project, resolveScope: Gl
     }
 }
 
+@K1Deprecation
 fun KtElement.resolveMainReferenceToDescriptors(): Collection<DeclarationDescriptor> {
     val bindingContext = safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
     return mainReference?.resolveToDescriptors(bindingContext) ?: emptyList()
 }
 
+@K1Deprecation
 fun PsiReference.getImportAlias(): KtImportAlias? {
     return (this as? KtSimpleNameReference)?.getImportAlias()
 }
 
 // ----------- Read/write access -----------------------------------------------------------------------------------------------------------------------
 
+@K1Deprecation
 fun KtReference.canBeResolvedViaImport(target: DeclarationDescriptor, bindingContext: BindingContext): Boolean {
     if (this is KDocReference) {
         val qualifier = element.getQualifier() ?: return true
@@ -95,6 +103,7 @@ fun KtReference.canBeResolvedViaImport(target: DeclarationDescriptor, bindingCon
     return element.canBeResolvedViaImport(target, bindingContext)
 }
 
+@K1Deprecation
 fun KtElement.canBeResolvedViaImport(target: DeclarationDescriptor, bindingContext: BindingContext): Boolean {
     if (!target.canBeReferencedViaImport()) return false
     if (target.isExtension) return true // assume that any type of reference can use imports when resolved to extension

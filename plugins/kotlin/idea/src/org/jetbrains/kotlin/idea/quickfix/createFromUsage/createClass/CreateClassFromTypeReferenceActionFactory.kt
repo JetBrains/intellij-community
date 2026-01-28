@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass
 
 import com.intellij.psi.util.findParentOfType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAndGetResult
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.ifEmpty
 import java.util.*
 
+@K1Deprecation
 object CreateClassFromTypeReferenceActionFactory : CreateClassFromUsageFactory<KtUserType>(), UnresolvedReferenceQuickFixFactory {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtUserType? {
         return diagnostic.psiElement.findParentOfType(strict = false)

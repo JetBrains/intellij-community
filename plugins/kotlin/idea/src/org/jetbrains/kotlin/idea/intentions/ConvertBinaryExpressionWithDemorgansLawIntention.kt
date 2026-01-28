@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.types.typeUtil.isBoolean
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class ConvertBinaryExpressionWithDemorgansLawIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
     KotlinBundle.messagePointer("demorgan.law")

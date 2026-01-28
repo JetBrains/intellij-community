@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.sequenceOfNotNull
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
+@K1Deprecation
 @K1ModeProjectStructureApi
 sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleInfo, BinaryModuleInfo {
     abstract val sdk: Sdk?

@@ -3,9 +3,11 @@
 package org.jetbrains.kotlin.idea.presentation
 
 import com.intellij.psi.presentation.java.ClassPresentationUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.name.FqName
 
+@K1Deprecation
 class KtLightClassListCellRenderer : KtModuleSpecificListCellRenderer<KtLightClass>() {
     override fun getElementText(element: KtLightClass) = ClassPresentationUtil.getNameForClass(element, false)
 

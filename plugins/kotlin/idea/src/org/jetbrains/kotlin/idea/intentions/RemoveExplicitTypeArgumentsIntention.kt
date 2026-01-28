@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueDescriptor
@@ -37,6 +38,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 
+@K1Deprecation
 @Suppress("DEPRECATION")
 class RemoveExplicitTypeArgumentsInspection : IntentionBasedInspection<KtTypeArgumentList>(RemoveExplicitTypeArgumentsIntention::class) {
     override val problemText: String = KotlinBundle.message("explicit.type.arguments.can.be.inferred")
@@ -70,6 +72,7 @@ class RemoveExplicitTypeArgumentsInspection : IntentionBasedInspection<KtTypeArg
  * [org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated.ExtractFunction]
  * [org.jetbrains.kotlin.nj2k.*]
  */
+@K1Deprecation
 class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentIntention<KtTypeArgumentList>(
     KtTypeArgumentList::class.java,
     KotlinBundle.messagePointer("remove.explicit.type.arguments")

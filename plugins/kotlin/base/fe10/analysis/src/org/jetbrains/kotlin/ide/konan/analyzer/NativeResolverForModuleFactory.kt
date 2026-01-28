@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.ide.konan.analyzer
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.caches.resolve.resolution
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.resolve.lazy.ResolveSession
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService.Companion.createDeclarationProviderFactory
 import org.jetbrains.kotlin.resolve.scopes.optimization.OptimizingOptions
 
+@K1Deprecation
 class NativeResolverForModuleFactory(
     private val platformAnalysisParameters: PlatformAnalysisParameters,
     private val targetEnvironment: TargetEnvironment,

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.descriptors.*
@@ -457,6 +458,7 @@ private class OnceUsedChecker(private val clazz: Class<*>) {
     }
 }
 
+@K1Deprecation
 fun getCallLabelForLambdaArgument(declaration: KtFunctionLiteral, bindingContext: BindingContext): String? {
     val lambdaExpression = declaration.parent as? KtLambdaExpression ?: return null
     val lambdaExpressionParent = lambdaExpression.parent

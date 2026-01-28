@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.cfg.WhenChecker
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.types.TypeConstructor
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
+@K1Deprecation
 object BranchedFoldingUtils {
     private fun getFoldableBranchedAssignment(branch: KtExpression?): KtBinaryExpression? {
         fun checkAssignment(expression: KtBinaryExpression): Boolean {

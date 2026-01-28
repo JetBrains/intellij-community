@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.search
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.psi.KtDeclaration
 import com.intellij.openapi.module.Module
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
 
+@K1Deprecation
 class KotlinExpectActualSupportImpl: ExpectActualSupport {
     override fun actualsForExpect(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> =
         declaration.actualsForExpected(module)

@@ -8,6 +8,7 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -34,6 +35,7 @@ private val toolTipHandler = Function<PsiElement, String> {
     KotlinBundle.message("highlighter.tool.tip.marker.annotation.for.dsl")
 }
 
+@K1Deprecation
 fun collectHighlightingColorsMarkers(
     ktClass: KtClass,
     result: LineMarkerInfos
@@ -66,6 +68,7 @@ private fun KtClass.styleIdForMarkerAnnotation(): Int? {
 }
 
 // TODO: copy-paste
+@K1Deprecation
 fun KtDeclaration.toDescriptor(): DeclarationDescriptor? {
     if (this is KtScriptInitializer) {
         return null

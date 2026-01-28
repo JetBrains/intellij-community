@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.jvm.k1.scratch
 
 
 import com.intellij.openapi.actionSystem.*
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.jvm.k1.scratch.actions.RunScratchAction
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.ModulesComboBoxAction
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.SmallBorderCheckboxAction
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.updateToolbar
 
+@K1Deprecation
 class ScratchTopPanel(val scratchFile: K1KotlinScratchFile) {
     val actionsToolbar: ActionToolbar
 

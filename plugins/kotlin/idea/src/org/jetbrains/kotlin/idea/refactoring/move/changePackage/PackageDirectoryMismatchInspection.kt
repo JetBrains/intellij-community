@@ -18,6 +18,7 @@ import com.intellij.refactoring.move.moveClassesOrPackages.AutocreatingSingleSou
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import com.intellij.refactoring.util.CommonMoveClassesOrPackagesUtil
 import com.intellij.refactoring.util.RefactoringMessageUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.findExistingNonGeneratedKotlinSourceRootFiles
 import org.jetbrains.kotlin.idea.core.getFqNameByDirectory
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPackageDirective
 import org.jetbrains.kotlin.psi.packageDirectiveVisitor
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+@K1Deprecation
 class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = packageDirectiveVisitor(fun(directive: KtPackageDirective) {
         val file = directive.containingKtFile

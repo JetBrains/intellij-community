@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix.replaceWith
 
 import com.intellij.openapi.diagnostic.ControlFlowException
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
@@ -34,6 +35,7 @@ import org.jetbrains.kotlin.resolve.scopes.utils.memberScopeAsImportingScope
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingServices
 
+@K1Deprecation
 @OptIn(FrontendInternals::class)
 object ReplaceWithAnnotationAnalyzer {
     fun analyzeCallableReplacement(

@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
+@K1Deprecation
 class KotlinRecursiveCallLineMarkerProvider : LineMarkerProviderDescriptor() {
     override fun getName() = KotlinBundle.message("highlighter.tool.tip.text.recursive.call")
     override fun getIcon() = AllIcons.Gutter.RecursiveMethod

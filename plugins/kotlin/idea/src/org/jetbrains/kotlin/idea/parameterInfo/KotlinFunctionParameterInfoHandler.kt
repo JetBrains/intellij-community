@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -54,6 +55,7 @@ import org.jetbrains.kotlin.utils.checkWithAttachment
 import java.awt.Color
 import kotlin.reflect.KClass
 
+@K1Deprecation
 class KotlinFunctionParameterInfoHandler :
     KotlinParameterInfoWithCallHandlerBase<KtValueArgumentList, KtValueArgument>(KtValueArgumentList::class, KtValueArgument::class) {
 
@@ -64,6 +66,7 @@ class KotlinFunctionParameterInfoHandler :
     override fun getArgumentListAllowedParentClasses() = setOf(KtCallElement::class.java)
 }
 
+@K1Deprecation
 class KotlinLambdaParameterInfoHandler :
     KotlinParameterInfoWithCallHandlerBase<KtLambdaArgument, KtLambdaArgument>(KtLambdaArgument::class, KtLambdaArgument::class) {
 
@@ -79,6 +82,7 @@ class KotlinLambdaParameterInfoHandler :
     }
 }
 
+@K1Deprecation
 class KotlinArrayAccessParameterInfoHandler :
     KotlinParameterInfoWithCallHandlerBase<KtContainerNode, KtExpression>(KtContainerNode::class, KtExpression::class) {
 
@@ -90,6 +94,7 @@ class KotlinArrayAccessParameterInfoHandler :
     override fun getActualParametersRBraceType(): KtSingleValueToken = KtTokens.RBRACKET
 }
 
+@K1Deprecation
 abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement, TArgument : KtElement>(
     private val argumentListClass: KClass<TArgumentList>,
     private val argumentClass: KClass<TArgument>

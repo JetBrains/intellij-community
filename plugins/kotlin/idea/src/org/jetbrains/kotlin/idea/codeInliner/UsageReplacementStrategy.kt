@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeInliner
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
+@K1Deprecation
 fun unwrapSpecialUsageOrNull(
     usage: KtReferenceExpression
 ): KtSimpleNameExpression? {

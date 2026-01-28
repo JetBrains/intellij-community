@@ -2,11 +2,13 @@
 
 package org.jetbrains.kotlin.j2k
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 object ResolverForConverter {
     fun resolveToDescriptor(declaration: KtDeclaration): DeclarationDescriptor? =
         declaration.resolveToDescriptorIfAny(BodyResolveMode.FULL)

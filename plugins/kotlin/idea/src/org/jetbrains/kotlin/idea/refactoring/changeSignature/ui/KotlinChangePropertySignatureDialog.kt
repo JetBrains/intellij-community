@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiCodeFragment
 import com.intellij.refactoring.BaseRefactoringProcessor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeCodeFragment
 import javax.swing.DefaultComboBoxModel
 
+@K1Deprecation
 class KotlinChangePropertySignatureDialog(
     project: Project,
     private val methodDescriptor: KotlinMethodDescriptor,

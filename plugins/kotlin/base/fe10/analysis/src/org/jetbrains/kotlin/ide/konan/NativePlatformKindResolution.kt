@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.ide.konan
 
 import com.intellij.openapi.components.service
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.base.fe10.analysis.decompiler.konan.CachingIdeKlibMetadataLoader
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.resolve.KlibCompilerDeserializationConfiguration
 import org.jetbrains.kotlin.resolve.TargetEnvironment
 import org.jetbrains.kotlin.storage.StorageManager
 
+@K1Deprecation
 class NativePlatformKindResolution : IdePlatformKindResolution {
     override fun createKlibPackageFragmentProvider(
         moduleInfo: ModuleInfo,

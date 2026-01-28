@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.idea.core.script.k1.configuration.listener
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.scripting.definitions.isNonScript
 
+@K1Deprecation
 open class DefaultScriptChangeListener(project: Project) : ScriptChangeListener(project) {
     override fun editorActivated(vFile: VirtualFile) {
         val file = getAnalyzableKtFileForScript(vFile) ?: return

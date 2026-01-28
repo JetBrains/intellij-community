@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.isNullabilityMismatch
 
+@K1Deprecation
 class WrapWithSafeLetCallFix(
     expression: KtExpression,
     nullableExpression: KtExpression

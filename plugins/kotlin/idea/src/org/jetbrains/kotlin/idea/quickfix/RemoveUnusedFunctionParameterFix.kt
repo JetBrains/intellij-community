@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class RemoveUnusedFunctionParameterFix(parameter: KtParameter, private val checkUsages: Boolean = true) :
   KotlinQuickFixAction<KtParameter>(parameter) {
     override fun getFamilyName() = ChangeFunctionSignatureFix.FAMILY_NAME

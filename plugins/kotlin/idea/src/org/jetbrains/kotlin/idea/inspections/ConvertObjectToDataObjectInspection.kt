@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.asSafely
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -46,6 +47,7 @@ private typealias CallChain = List<CallChainElement>
  * Tests:
  * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.ConvertObjectToDataObject]
  */
+@K1Deprecation
 class ConvertObjectToDataObjectInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         if (holder.file.languageVersionSettings.supportsFeature(LanguageFeature.DataObjects)) ObjectVisitor(holder)

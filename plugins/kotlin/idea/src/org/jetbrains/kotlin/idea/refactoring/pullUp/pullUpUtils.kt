@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
+@K1Deprecation
 fun KtClassOrObject.getSuperTypeEntryByDescriptor(
     descriptor: ClassDescriptor,
     context: BindingContext
@@ -28,6 +30,7 @@ fun KtClassOrObject.getSuperTypeEntryByDescriptor(
     }
 }
 
+@K1Deprecation
 fun makeAbstract(
     member: KtCallableDeclaration,
     originalMemberDescriptor: CallableMemberDescriptor,
@@ -70,6 +73,7 @@ fun makeAbstract(
     }
 }
 
+@K1Deprecation
 fun addSuperTypeEntry(
     delegator: KtSuperTypeListEntry,
     targetClass: KtClassOrObject,

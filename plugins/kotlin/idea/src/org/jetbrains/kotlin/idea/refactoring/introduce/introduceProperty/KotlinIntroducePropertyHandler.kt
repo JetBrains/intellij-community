@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.util.ElementKind
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtProperty
 
+@K1Deprecation
 class KotlinIntroducePropertyHandler(
     val helper: ExtractionEngineHelper = InteractiveExtractionHelper
 ) : RefactoringActionHandler {
@@ -120,6 +122,7 @@ class KotlinIntroducePropertyHandler(
     }
 }
 
+@K1Deprecation
 val INTRODUCE_PROPERTY: String
     @Nls
     get() = KotlinBundle.message("introduce.property")

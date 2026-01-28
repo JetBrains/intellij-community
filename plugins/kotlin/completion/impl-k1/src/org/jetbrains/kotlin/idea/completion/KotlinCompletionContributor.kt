@@ -16,6 +16,7 @@ import com.intellij.platform.ml.impl.turboComplete.KindExecutingCompletionContri
 import com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorExecutor
 import com.intellij.psi.PsiComment
 import com.intellij.util.indexing.DumbModeAccessType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.InsertStringTemplateBracesInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.StringTemplateCompletion
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import kotlin.math.max
 
+@K1Deprecation
 class KotlinCompletionContributor : KindExecutingCompletionContributor() {
     override val kindVariety = KotlinKindVariety
 

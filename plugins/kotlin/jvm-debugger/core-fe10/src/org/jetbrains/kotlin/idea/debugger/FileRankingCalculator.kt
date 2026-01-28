@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
 import kotlinx.coroutines.CancellationException
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.descriptors.*
@@ -31,10 +32,12 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import kotlin.jvm.internal.FunctionBase
 
+@K1Deprecation
 object FileRankingCalculatorForIde : FileRankingCalculator() {
     override fun analyze(element: KtElement) = element.analyze(BodyResolveMode.PARTIAL)
 }
 
+@K1Deprecation
 abstract class FileRankingCalculator(private val checkClassFqName: Boolean = true) : KotlinFileSelector {
     abstract fun analyze(element: KtElement): BindingContext
 

@@ -20,6 +20,7 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.functions.FunctionClassDescriptor
 import org.jetbrains.kotlin.cfg.pseudocode.Pseudocode
@@ -88,6 +89,7 @@ import java.util.*
 /**
  * Represents a single choice for a type (e.g. parameter type or return type).
  */
+@K1Deprecation
 class TypeCandidate(val theType: KotlinType, scope: HierarchicalScope? = null) {
     val typeParameters: Array<TypeParameterDescriptor>
     var renderedTypes: List<String> = emptyList()
@@ -115,15 +117,18 @@ class TypeCandidate(val theType: KotlinType, scope: HierarchicalScope? = null) {
     override fun toString(): String = theType.toString()
 }
 
+@K1Deprecation
 data class RenderedTypeParameter(
     val typeParameter: TypeParameterDescriptor,
     val fake: Boolean,
     val text: String
 )
 
+@K1Deprecation
 fun List<TypeCandidate>.getTypeByRenderedType(renderedTypes: List<String>): KotlinType? =
     firstOrNull { it.renderedTypes == renderedTypes }?.theType
 
+@K1Deprecation
 class CallableBuilderConfiguration(
     val callableInfos: List<CallableInfo>,
     val originalElement: KtElement,
@@ -133,11 +138,13 @@ class CallableBuilderConfiguration(
     val enableSubstitutions: Boolean = true
 )
 
+@K1Deprecation
 sealed class CallablePlacement {
     class WithReceiver(val receiverTypeCandidate: TypeCandidate) : CallablePlacement()
     class NoReceiver(val containingElement: PsiElement) : CallablePlacement()
 }
 
+@K1Deprecation
 class CallableBuilder(val config: CallableBuilderConfiguration) {
     private var finished: Boolean = false
 
@@ -1034,10 +1041,12 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
     }
 }
 
+@K1Deprecation
 @Deprecated(
     message = "Use org.jetbrains.kotlin.idea.base.psi.KotlinPsiUtils.getReturnTypeReference instead",
     ReplaceWith("getReturnTypeReference", "org.jetbrains.kotlin.idea.base.psi.KotlinPsiUtils")
 )
 fun KtNamedDeclaration.getReturnTypeReference(): KtTypeReference? = getReturnTypeReference()
 
+@K1Deprecation
 fun CallableBuilderConfiguration.createBuilder(): CallableBuilder = CallableBuilder(this)

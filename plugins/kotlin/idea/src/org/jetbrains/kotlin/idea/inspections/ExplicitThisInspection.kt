@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyClassDescriptor
 import org.jetbrains.kotlin.resolve.scopes.utils.getImplicitReceiversHierarchy
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
+@K1Deprecation
 class ExplicitThisInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
         override fun visitExpression(expression: KtExpression) {
@@ -96,6 +98,7 @@ class ExplicitThisInspection : AbstractKotlinInspection() {
     }
 }
 
+@K1Deprecation
 class ExplicitThisExpressionFix(private val text: String) : LocalQuickFix {
     override fun getFamilyName(): String = KotlinBundle.message("explicit.this.expression.fix.family.name", text)
 

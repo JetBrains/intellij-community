@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.prevLeafs
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.extractParameterNameFromFunctionTypeArgument
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.isAnnotationConstructor
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 fun provideArgumentNameHints(element: KtCallElement): List<InlayInfo> {
     if (element.valueArguments.none { it.getArgumentExpression()?.isUnclearExpression() == true }) return emptyList()
     val ctx = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)

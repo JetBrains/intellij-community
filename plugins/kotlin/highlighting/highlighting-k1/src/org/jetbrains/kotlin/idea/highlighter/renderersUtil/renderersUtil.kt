@@ -5,6 +5,7 @@
 package org.jetbrains.kotlin.idea.highlighter.renderersUtil
 
 import com.google.common.html.HtmlEscapers
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.diagnostics.rendering.LegacyRenderingContextApi
@@ -25,10 +26,13 @@ import org.jetbrains.kotlin.types.error.ErrorUtils
 private const val RED_TEMPLATE = "<font color=red><b>%s</b></font>"
 private const val STRONG_TEMPLATE = "<b>%s</b>"
 
+@K1Deprecation
 fun renderStrong(o: Any): String = STRONG_TEMPLATE.format(o)
 
+@K1Deprecation
 fun renderError(o: Any): String = RED_TEMPLATE.format(o)
 
+@K1Deprecation
 fun renderStrong(o: Any, error: Boolean): String = (if (error) RED_TEMPLATE else STRONG_TEMPLATE).format(o)
 
 private val HTML_FOR_UNINFERRED_TYPE_PARAMS: DescriptorRenderer = DescriptorRenderer.withOptions {
@@ -38,6 +42,7 @@ private val HTML_FOR_UNINFERRED_TYPE_PARAMS: DescriptorRenderer = DescriptorRend
     textFormat = RenderingFormat.HTML
 }
 
+@K1Deprecation
 fun renderResolvedCall(resolvedCall: ResolvedCall<*>, context: RenderingContext): String {
     val typeRenderer = SmartTypeRenderer(HTML_FOR_UNINFERRED_TYPE_PARAMS)
     val descriptorRenderer = HTML_FOR_UNINFERRED_TYPE_PARAMS.asRenderer()

@@ -7,6 +7,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.refactoring.changeSignature.MethodDescriptor
 import com.intellij.refactoring.changeSignature.OverriderUsageInfo
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 
+@K1Deprecation
 class KotlinChangeSignatureData(
     override val baseDescriptor: CallableDescriptor,
     override val baseDeclaration: PsiElement,

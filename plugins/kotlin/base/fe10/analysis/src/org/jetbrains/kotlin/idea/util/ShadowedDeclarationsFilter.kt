@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.imports.importableFqName
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.resolve.scopes.utils.addImportingScope
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.util.descriptorsEqualWithSubstitution
 
+@K1Deprecation
 class ShadowedDeclarationsFilter(
     private val bindingContext: BindingContext,
     private val resolutionFacade: ResolutionFacade,

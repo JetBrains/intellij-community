@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.psi.*
 
+@K1Deprecation
 class AddJvmNameAnnotationFix(element: KtElement, private val jvmName: String) : KotlinQuickFixAction<KtElement>(element) {
     override fun getText(): String = if (element is KtAnnotationEntry) {
         KotlinBundle.message("fix.change.jvm.name")

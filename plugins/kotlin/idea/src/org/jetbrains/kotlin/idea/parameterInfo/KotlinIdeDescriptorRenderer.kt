@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.*
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import java.util.*
 
 
+@K1Deprecation
 open class KotlinIdeDescriptorRenderer(
     open val options: KotlinIdeDescriptorOptions
 ) : DescriptorRenderer(), DescriptorRendererOptions by options /* this gives access to options without qualifier */ {

@@ -17,6 +17,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.*
 import com.intellij.psi.PsiMethod
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.contracts.description.*
 import org.jetbrains.kotlin.contracts.description.expressions.*
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.resolve.source.PsiSourceElement
 
 // TODO: support Java contracts
+@K1Deprecation
 class KotlinFunctionCallInstruction(
     private val call: KtExpression,
     private val argCount: Int,

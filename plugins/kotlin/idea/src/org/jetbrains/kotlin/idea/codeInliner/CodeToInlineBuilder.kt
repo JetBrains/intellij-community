@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.codeInliner
 
 import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.descriptors.*
@@ -45,6 +46,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
 
+@K1Deprecation
 class CodeToInlineBuilder(private val targetCallable: CallableDescriptor,
                           private val resolutionFacade: ResolutionFacade,
                           originalDeclaration: KtDeclaration?,

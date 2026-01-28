@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.RangeKtExpressionType
 import org.jetbrains.kotlin.idea.codeinsight.utils.RangeKtExpressionType.*
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getType
  * [org.jetbrains.kotlin.idea.codeInsight.InspectionTestGenerated.Inspections.testEmptyRange_inspectionData_Inspections_test]
  * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.EmptyRange]
  */
+@K1Deprecation
 class EmptyRangeInspection : AbstractRangeInspection() {
     override fun visitRange(
         range: KtExpression,

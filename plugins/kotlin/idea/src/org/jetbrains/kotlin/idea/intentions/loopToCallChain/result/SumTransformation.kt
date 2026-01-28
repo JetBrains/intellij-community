@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.result
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 abstract class SumTransformationBase(
     loop: KtForExpression,
     initialization: VariableInitialization
@@ -143,6 +145,7 @@ abstract class SumTransformationBase(
     }
 }
 
+@K1Deprecation
 class SumTransformation(loop: KtForExpression, initialization: VariableInitialization) : SumTransformationBase(loop, initialization) {
     override val presentation: String
         get() = "sum()"
@@ -152,6 +155,7 @@ class SumTransformation(loop: KtForExpression, initialization: VariableInitializ
     }
 }
 
+@K1Deprecation
 class SumByTransformation(
     loop: KtForExpression,
     initialization: VariableInitialization,

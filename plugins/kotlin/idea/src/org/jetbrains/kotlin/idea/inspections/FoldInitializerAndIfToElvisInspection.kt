@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.base.psi.expressionComparedToNull
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -42,6 +43,7 @@ import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class FoldInitializerAndIfToElvisInspection : AbstractApplicabilityBasedInspection<KtIfExpression>(KtIfExpression::class.java) {
     override fun inspectionText(element: KtIfExpression): String = KotlinBundle.message("if.null.return.break.foldable.to")
 

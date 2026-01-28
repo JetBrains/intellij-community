@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.decompiler.navigation
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtDecompiledFile
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.base.fe10.analysis.decompiler.ByDescriptorIndexer
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.types.error.ErrorUtils
 
+@K1Deprecation
 fun findDecompiledDeclaration(
     project: Project,
     referencedDescriptor: DeclarationDescriptor,

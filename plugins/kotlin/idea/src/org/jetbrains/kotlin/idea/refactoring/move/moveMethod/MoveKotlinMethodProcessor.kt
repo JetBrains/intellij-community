@@ -16,6 +16,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -43,6 +44,7 @@ import org.jetbrains.kotlin.resolve.scopes.utils.getImplicitReceiversHierarchy
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.kotlin.util.containingNonLocalDeclaration
 
+@K1Deprecation
 class MoveKotlinMethodProcessor(
     private val method: KtNamedFunction,
     private val targetVariable: KtNamedDeclaration,

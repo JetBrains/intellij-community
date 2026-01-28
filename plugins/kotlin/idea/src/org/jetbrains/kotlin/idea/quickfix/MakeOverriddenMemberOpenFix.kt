@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.PsiModificationTracker
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.caches.project.CachedValue
 import org.jetbrains.kotlin.caches.project.getValue
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class MakeOverriddenMemberOpenFix(declaration: KtDeclaration) : KotlinQuickFixAction<KtDeclaration>(declaration) {
 
     private val myQuickFixInfo: QuickFixInfo by CachedValue(declaration.project) {

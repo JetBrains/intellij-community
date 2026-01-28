@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
@@ -34,6 +35,7 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 class IterateExpressionIntention : SelfTargetingIntention<KtExpression>(
     KtExpression::class.java,
     KotlinBundle.messagePointer("iterate.over.collection")

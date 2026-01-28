@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.StandardPatterns
 import com.intellij.util.ProcessingContext
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.kdoc.getKDocLinkMemberScope
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.utils.collectDescriptorsFiltered
 
+@K1Deprecation
 class KDocCompletionContributor : CompletionContributor() {
     init {
         extend(
@@ -45,12 +47,14 @@ class KDocCompletionContributor : CompletionContributor() {
     }
 }
 
+@K1Deprecation
 object KDocNameCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         KDocNameCompletionSession(parameters, result).complete()
     }
 }
 
+@K1Deprecation
 class KDocNameCompletionSession(
     parameters: CompletionParameters,
     resultSet: CompletionResultSet

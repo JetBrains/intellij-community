@@ -15,6 +15,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.ui.LayeredIcon
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import java.awt.Font
 
+@K1Deprecation
 class KotlinCallHierarchyNodeDescriptor(
     parentDescriptor: HierarchyNodeDescriptor?,
     element: KtElement,

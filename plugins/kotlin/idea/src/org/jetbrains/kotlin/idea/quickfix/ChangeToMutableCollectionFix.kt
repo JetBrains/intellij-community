@@ -7,6 +7,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 class ChangeToMutableCollectionFix(property: KtProperty, context: ElementContext) :
     KotlinPsiUpdateModCommandAction.ElementBased<KtProperty, ChangeToMutableCollectionFix.ElementContext>(property, context) {
 

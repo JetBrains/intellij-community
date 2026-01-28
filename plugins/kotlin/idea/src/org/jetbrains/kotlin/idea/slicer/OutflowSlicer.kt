@@ -11,6 +11,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.cfg.pseudocode.PseudoValue
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class OutflowSlicer(
     element: KtElement,
     processor: Processor<in SliceUsage>,

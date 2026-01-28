@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -35,6 +36,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
  * [org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated.CanSealedSubClassBeObject]
  * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.ConvertSealedSubClassToObject]
  */
+@K1Deprecation
 class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         fun reportPossibleObject(klass: KtClass) {

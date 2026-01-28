@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
+@K1Deprecation
 class RemoveSingleLambdaParameterFix(element: KtParameter) : KotlinQuickFixAction<KtParameter>(element) {
     override fun getFamilyName() = KotlinBundle.message("remove.single.lambda.parameter.declaration")
     override fun getText() = familyName

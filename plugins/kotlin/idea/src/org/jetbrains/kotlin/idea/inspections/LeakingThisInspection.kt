@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.cfg.LeakingThisDescriptor.*
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContext.LEAKING_THIS
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 
+@K1Deprecation
 class LeakingThisInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = classVisitor { klass ->
         // We still use analyzeWithAllCompilerChecks() here.

@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArguments
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class InconsistentCommentForJavaParameterInspection: AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : KtVisitorVoid() {
         override fun visitCallExpression(callExpression: KtCallExpression) = callExpression.check()

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.caches.resolve
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.container.StorageComponentContainer
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.resolve.scopes.optimization.OptimizingOptions
 import org.jetbrains.kotlin.wasm.resolve.WasmJsPlatformAnalyzerServices
 import org.jetbrains.kotlin.wasm.resolve.WasmWasiPlatformAnalyzerServices
 
+@K1Deprecation
 class WasmResolverForModuleFactory(
     private val targetEnvironment: TargetEnvironment
 ) : ResolverForModuleFactory() {

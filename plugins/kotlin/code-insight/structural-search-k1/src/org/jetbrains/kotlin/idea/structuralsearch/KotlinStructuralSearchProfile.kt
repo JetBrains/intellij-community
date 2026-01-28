@@ -23,6 +23,7 @@ import com.intellij.structuralsearch.plugin.replace.impl.Replacer
 import com.intellij.structuralsearch.plugin.ui.Configuration
 import com.intellij.structuralsearch.plugin.ui.UIUtil
 import com.intellij.util.SmartList
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -42,6 +43,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import kotlin.math.min
 
+@K1Deprecation
 class KotlinStructuralSearchProfile : StructuralSearchProfile() {
     override fun isMatchNode(element: PsiElement?): Boolean = element !is PsiWhiteSpace
 

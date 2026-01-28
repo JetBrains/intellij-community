@@ -9,6 +9,7 @@ import com.intellij.structuralsearch.plugin.ui.filters.FilterEditor
 import com.intellij.ui.SimpleColoredComponent
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.K1Deprecation
 import java.util.function.Supplier
 import javax.swing.GroupLayout
 import javax.swing.JComponent
@@ -18,6 +19,7 @@ import javax.swing.JLabel
  * Simple one state [FilterAction] with a minimal UI – one label.
  * Used to add a boolean constraint.
  */
+@K1Deprecation
 abstract class OneStateFilter(@Nls val name: Supplier<String>, @Nls val label: String, @NonNls val constraintName: String) :
     FilterAction(name) {
 

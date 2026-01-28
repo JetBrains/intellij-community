@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.imports
 
 import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.resolve.scopes.utils.parentsWithSelf
 import org.jetbrains.kotlin.resolve.scopes.utils.replaceImportingScopes
 
+@K1Deprecation
 class OptimizedImportsBuilder(
     private val file: KtFile,
     private val data: InputData,

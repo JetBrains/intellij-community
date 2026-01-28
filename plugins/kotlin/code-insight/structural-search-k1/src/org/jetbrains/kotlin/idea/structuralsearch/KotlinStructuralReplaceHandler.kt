@@ -16,6 +16,7 @@ import com.intellij.structuralsearch.impl.matcher.PatternTreeContext
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.addTypeParameter
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 
+@K1Deprecation
 class KotlinStructuralReplaceHandler(private val project: Project) : StructuralReplaceHandler() {
     override fun replace(info: ReplacementInfo, options: ReplaceOptions) {
         val searchTemplate = StructuralSearchUtil.getPresentableElement(

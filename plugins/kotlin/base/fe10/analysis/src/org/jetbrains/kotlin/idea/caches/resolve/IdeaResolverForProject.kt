@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ModificationTracker
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.analyzer.common.CommonAnalysisParameters
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -42,6 +43,7 @@ import org.jetbrains.kotlin.types.checker.Ref
 import org.jetbrains.kotlin.types.checker.TypeRefinementSupport
 import java.util.*
 
+@K1Deprecation
 class IdeaResolverForProject(
     debugName: String,
     projectContext: ProjectContext,

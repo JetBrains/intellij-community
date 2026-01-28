@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.slicer
 
 import com.intellij.slicer.SliceUsage
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.descriptorUtil.isCompanionObject
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 
+@K1Deprecation
 object KotlinSliceUsageSuffix {
   private val descriptorRenderer = DescriptorRenderer.ONLY_NAMES_WITH_SHORT_TYPES.withOptions {
     withoutReturnType = true

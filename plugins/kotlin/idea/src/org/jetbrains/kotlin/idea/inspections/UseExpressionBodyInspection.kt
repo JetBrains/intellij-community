@@ -15,6 +15,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.siblings
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -35,6 +36,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 
+@K1Deprecation
 class UseExpressionBodyInspection(private val convertEmptyToUnit: Boolean) : AbstractKotlinInspection() {
 
     constructor() : this(convertEmptyToUnit = true)

@@ -12,6 +12,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.MethodSignature
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.builtins.PrimitiveType
@@ -27,14 +28,17 @@ import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 import java.math.BigInteger
 
+@K1Deprecation
 interface ExpressionConverter {
     fun convertExpression(expression: PsiExpression, codeConverter: CodeConverter): Expression
 }
 
+@K1Deprecation
 interface SpecialExpressionConverter {
     fun convertExpression(expression: PsiExpression, codeConverter: CodeConverter): Expression?
 }
 
+@K1Deprecation
 fun ExpressionConverter.withSpecialConverter(specialConverter: SpecialExpressionConverter): ExpressionConverter {
     return object : ExpressionConverter {
         override fun convertExpression(expression: PsiExpression, codeConverter: CodeConverter)
@@ -42,6 +46,7 @@ fun ExpressionConverter.withSpecialConverter(specialConverter: SpecialExpression
     }
 }
 
+@K1Deprecation
 class DefaultExpressionConverter : JavaElementVisitor(), ExpressionConverter {
     private var _codeConverter: CodeConverter? = null
     private var result: Expression = Expression.Empty

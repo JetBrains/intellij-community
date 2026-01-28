@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInliner
 
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.LocalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -50,6 +51,7 @@ import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class CodeInliner (
     private val languageVersionSettings: LanguageVersionSettings,
     private val usageExpression: KtSimpleNameExpression?,

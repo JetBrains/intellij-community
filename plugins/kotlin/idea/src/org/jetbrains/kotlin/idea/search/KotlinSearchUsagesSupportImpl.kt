@@ -11,6 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FileBasedIndex
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 
+@K1Deprecation
 class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
   override fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean {
     return false

@@ -22,6 +22,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.elementType
 import com.intellij.util.Processors
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
@@ -80,6 +81,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 /**
  * Check possibility and perform fix for unresolved references.
  */
+@K1Deprecation
 @IntellijInternalApi
 abstract class ImportFixBase<T : KtExpression> protected constructor(
     expression: T,
@@ -356,6 +358,7 @@ abstract class ImportFixBase<T : KtExpression> protected constructor(
     abstract class FactoryWithUnresolvedReferenceQuickFix: Factory(), UnresolvedReferenceQuickFixFactory
 }
 
+@K1Deprecation
 @IntellijInternalApi
 abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, factory: Factory) : ImportFixBase<T>(expression, factory) {
     override fun fillCandidates(
@@ -437,6 +440,7 @@ abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, factory: F
 }
 
 // This is required to be abstract to reduce bunch file size
+@K1Deprecation
 @IntellijInternalApi
 abstract class AbstractImportFix(expression: KtSimpleNameExpression, factory: Factory) :
     OrdinaryImportFixBase<KtSimpleNameExpression>(expression, factory) {

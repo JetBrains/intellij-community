@@ -6,7 +6,9 @@ import com.intellij.debugger.streams.core.trace.dsl.*
 import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.core.trace.dsl.impl.common.MapVariableBase
 import com.intellij.debugger.streams.core.trace.impl.handler.type.MapType
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class KotlinMapVariable(type: MapType, name: String) : MapVariableBase(type, name) {
     override operator fun get(key: Expression): Expression = this.call("getValue", key)
 

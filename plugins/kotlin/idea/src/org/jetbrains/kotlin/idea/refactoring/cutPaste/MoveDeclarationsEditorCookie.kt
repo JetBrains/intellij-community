@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.refactoring.cutPaste
 
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.util.Key
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class MoveDeclarationsEditorCookie(
     val data: MoveDeclarationsTransferableData,
     val bounds: RangeMarker,

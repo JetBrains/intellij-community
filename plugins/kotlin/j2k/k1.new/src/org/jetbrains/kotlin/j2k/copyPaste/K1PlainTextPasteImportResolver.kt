@@ -10,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.concurrency.ThreadingAssertions
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 /**
  * Tests: [org.jetbrains.kotlin.nj2k.K1JavaToKotlinCopyPasteConversionTestGenerated].
  */
+@K1Deprecation
 class K1PlainTextPasteImportResolver(private val conversionData: ConversionData, private val targetKotlinFile: KtFile) :
     PlainTextPasteImportResolver {
     private val sourceJavaFile: PsiJavaFile = conversionData.sourceJavaFile

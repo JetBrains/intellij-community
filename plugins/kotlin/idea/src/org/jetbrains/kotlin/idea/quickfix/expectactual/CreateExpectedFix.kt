@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -42,6 +43,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getSuperNames
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 sealed class CreateExpectedFix<D : KtNamedDeclaration>(
   declaration: D,
   targetExpectedClass: KtClassOrObject?,
@@ -130,6 +132,7 @@ private tailrec fun findFirstActualWithExpectedClass(declaration: KtNamedDeclara
         declaration to expectedContainingClass
 }
 
+@K1Deprecation
 class CreateExpectedClassFix(
     klass: KtClassOrObject,
     outerExpectedClass: KtClassOrObject?,
@@ -245,6 +248,7 @@ private class Member(val prefix: String, element: KtElement, descriptor: Declara
     }
 }
 
+@K1Deprecation
 fun KtClassOrObject.collectDeclarationsForAddActualModifier(withSelf: Boolean = true): Sequence<KtNamedDeclaration> {
     val thisSequence: Sequence<KtNamedDeclaration> = if (withSelf) sequenceOf(this) else emptySequence()
     val primaryConstructorSequence: Sequence<KtNamedDeclaration> = primaryConstructorParameters.asSequence() + primaryConstructor.let {
@@ -292,6 +296,7 @@ private fun KtNamedDeclaration.selected(): Sequence<KtNamedDeclaration> {
     return sequenceOf(this) + additionalSequence + containingClassOrObject?.selected().orEmpty()
 }
 
+@K1Deprecation
 class CreateExpectedCallableMemberFix(
     declaration: KtCallableDeclaration,
     targetExpectedClass: KtClassOrObject?,

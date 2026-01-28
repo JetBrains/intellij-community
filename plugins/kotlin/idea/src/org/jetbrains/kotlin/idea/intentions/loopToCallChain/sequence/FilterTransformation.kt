@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasUsages
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.psi.psiUtil.blockExpressionsOrSingle
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 abstract class FilterTransformationBase : SequenceTransformation {
     abstract val effectiveCondition: Condition
 
@@ -286,6 +288,7 @@ abstract class FilterTransformationBase : SequenceTransformation {
     }
 }
 
+@K1Deprecation
 class FilterTransformation(
     override val loop: KtForExpression,
     override val inputVariable: KtCallableDeclaration,
@@ -323,6 +326,7 @@ class FilterTransformation(
     }
 }
 
+@K1Deprecation
 class FilterIsInstanceTransformation(
     override val loop: KtForExpression,
     override val inputVariable: KtCallableDeclaration,
@@ -340,6 +344,7 @@ class FilterIsInstanceTransformation(
     }
 }
 
+@K1Deprecation
 class FilterNotNullTransformation(
     override val loop: KtForExpression,
     override val inputVariable: KtCallableDeclaration,
@@ -369,6 +374,7 @@ class FilterNotNullTransformation(
     }
 }
 
+@K1Deprecation
 class TakeWhileTransformation(
     override val loop: KtForExpression,
     val inputVariable: KtCallableDeclaration,

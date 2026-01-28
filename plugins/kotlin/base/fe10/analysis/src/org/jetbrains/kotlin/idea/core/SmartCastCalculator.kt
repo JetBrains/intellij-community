@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core
 
 import com.intellij.psi.PsiElement
 import io.vavr.Tuple2
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
@@ -26,6 +27,7 @@ import java.util.*
 private operator fun <T> Tuple2<T, *>.component1(): T = _1()
 private operator fun <T> Tuple2<*, T>.component2(): T = _2()
 
+@K1Deprecation
 class SmartCastCalculator(
   val bindingContext: BindingContext,
   private val containingDeclarationOrModule: DeclarationDescriptor,

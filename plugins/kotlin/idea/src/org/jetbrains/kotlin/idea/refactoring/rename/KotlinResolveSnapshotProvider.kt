@@ -8,6 +8,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.refactoring.rename.ResolveSnapshotProvider
 import com.intellij.util.containers.HashMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.core.ShortenReferences
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 
+@K1Deprecation
 class KotlinResolveSnapshotProvider : ResolveSnapshotProvider() {
     override fun createSnapshot(scope: PsiElement) = object : ResolveSnapshot() {
         private val project = scope.project

@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
@@ -55,6 +56,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  * any names. For these redundant markers, the inspection proposes a quick fix to remove the marker
  * or the entire unnecessary `@OptIn` annotation if it contains a single marker.
  */
+@K1Deprecation
 class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
 
     /**

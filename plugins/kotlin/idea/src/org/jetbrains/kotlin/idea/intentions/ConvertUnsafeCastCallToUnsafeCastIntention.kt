@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 
+@K1Deprecation
 class ConvertUnsafeCastCallToUnsafeCastIntention : SelfTargetingIntention<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java,
     KotlinBundle.messagePointer("convert.to.unsafe.cast"),

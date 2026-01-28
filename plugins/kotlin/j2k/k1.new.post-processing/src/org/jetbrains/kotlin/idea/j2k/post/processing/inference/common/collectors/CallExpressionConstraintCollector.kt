@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ParameterDescriptor
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class CallExpressionConstraintCollector : ConstraintsCollector() {
     override fun ConstraintBuilder.collectConstraints(
         element: KtElement,

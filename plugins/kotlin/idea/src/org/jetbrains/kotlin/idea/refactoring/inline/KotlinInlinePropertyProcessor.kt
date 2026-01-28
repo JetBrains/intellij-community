@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.inline
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiReference
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.codeInliner.CodeToInlineBuilder
 import org.jetbrains.kotlin.idea.codeInliner.PropertyUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.codeInliner.unwrapSpecialUsageOrNull
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.psi.*
 
+@K1Deprecation
 class KotlinInlinePropertyProcessor(
     declaration: KtProperty,
     reference: PsiReference?,

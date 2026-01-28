@@ -11,6 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.base.fe10.analysis.decompiler.ByDescriptorIndexer
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.SmartList
 
+@K1Deprecation
 @ApiStatus.Internal
 class Fe10LibrarySourceScopeService: LibrarySourceScopeService {
     override fun targetClassFilesToSourcesScopes(virtualFile: VirtualFile, project: Project): List<GlobalSearchScope> =
@@ -43,6 +45,7 @@ class Fe10LibrarySourceScopeService: LibrarySourceScopeService {
 
 }
 
+@K1Deprecation
 object SourceNavigationHelper {
     private val LOG = Logger.getInstance(SourceNavigationHelper::class.java)
 

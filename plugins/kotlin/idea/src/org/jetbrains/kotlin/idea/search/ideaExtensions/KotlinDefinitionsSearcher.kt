@@ -14,6 +14,7 @@ import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import com.intellij.util.Processor
 import com.intellij.util.QueryExecutor
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toFakeLightClass
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import java.util.concurrent.Callable
 
+@K1Deprecation
 class KotlinDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScopedSearch.SearchParameters> {
     override fun execute(queryParameters: DefinitionsScopedSearch.SearchParameters, consumer: Processor<in PsiElement>): Boolean {
         val processor = skipDelegatedMethodsConsumer(consumer)

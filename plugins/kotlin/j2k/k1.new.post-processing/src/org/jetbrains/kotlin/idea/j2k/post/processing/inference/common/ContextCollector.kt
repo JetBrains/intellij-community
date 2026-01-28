@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 abstract class ContextCollector(private val resolutionFacade: ResolutionFacade) {
     private fun KotlinType.classReference(): ClassReference? =
         when (val descriptor = constructor.declarationDescriptor) {

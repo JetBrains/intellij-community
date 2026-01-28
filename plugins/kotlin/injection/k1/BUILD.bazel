@@ -4,6 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_k1",
+  opt_in = ["org.jetbrains.kotlin.K1Deprecation"],
   x_context_parameters = True
 )
 

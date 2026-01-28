@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.psi.sequence
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.KotlinPsiUtil
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.StreamCallChecker
 import org.jetbrains.kotlin.idea.core.receiverType
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 
+@K1Deprecation
 class SequenceCallChecker : StreamCallChecker {
     override fun isIntermediateCall(expression: KtCallExpression): Boolean {
         val receiverType = expression.receiverType() ?: return false

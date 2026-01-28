@@ -12,6 +12,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.base.fe10.analysis.classId
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -56,6 +57,7 @@ import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.util.match
 
+@K1Deprecation
 class CompletionSessionConfiguration(
     val useBetterPrefixMatcherForNonImportedClasses: Boolean,
     val nonAccessibleDeclarations: Boolean,
@@ -66,6 +68,7 @@ class CompletionSessionConfiguration(
     val excludeEnumEntries: Boolean,
 )
 
+@K1Deprecation
 fun CompletionSessionConfiguration(parameters: CompletionParameters) = CompletionSessionConfiguration(
     useBetterPrefixMatcherForNonImportedClasses = parameters.invocationCount < 2,
     nonAccessibleDeclarations = parameters.invocationCount >= 2,
@@ -76,6 +79,7 @@ fun CompletionSessionConfiguration(parameters: CompletionParameters) = Completio
     excludeEnumEntries = !parameters.position.languageVersionSettings.supportsFeature(LanguageFeature.EnumEntries),
 )
 
+@K1Deprecation
 abstract class CompletionSession(
     protected val configuration: CompletionSessionConfiguration,
     originalParameters: CompletionParameters,

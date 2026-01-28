@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.core.script.v1
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SourceForBinaryModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 
+@K1Deprecation
 @K1ModeProjectStructureApi
 sealed class ScriptDependenciesSourceInfo(override val project: Project) : IdeaModuleInfo, SourceForBinaryModuleInfo {
     override val name = Name.special("<Source for script dependencies>")

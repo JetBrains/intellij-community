@@ -14,6 +14,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.completion.LambdaSignatureTemplates
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.util.CallType
@@ -27,8 +28,10 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
+@K1Deprecation
 class GenerateLambdaInfo(val lambdaType: KotlinType, val explicitParameters: Boolean)
 
+@K1Deprecation
 class KotlinFunctionCompositeDeclarativeInsertHandler(
   handlers: Map<String, Lazy<DeclarativeInsertHandler>>,
   fallbackInsertHandler: InsertHandler<LookupElement>?,
@@ -49,6 +52,7 @@ class KotlinFunctionCompositeDeclarativeInsertHandler(
     }
 }
 
+@K1Deprecation
 fun createNormalFunctionInsertHandler(
     editor: Editor,
     callType: CallType<*>,
@@ -348,6 +352,7 @@ private operator fun OffsetMap.get(key: OffsetKey): Int? {
     return if (containsOffset(key)) getOffset(key) else null
 }
 
+@K1Deprecation
 sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallableInsertHandler(callType) {
 
     class Normal(

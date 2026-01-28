@@ -8,10 +8,12 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.refactoring.move.MoveCallback
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
+@K1Deprecation
 interface MoveKotlinDeclarationsHandlerActions {
     fun invokeMoveKotlinNestedClassesRefactoring(
         project: Project,

@@ -11,9 +11,11 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.console.KotlinConsoleKeeper
 
+@K1Deprecation
 class ConsoleModuleDialog(private val project: Project) {
     fun showIfNeeded(dataContext: DataContext) {
         val module = getModule(dataContext)

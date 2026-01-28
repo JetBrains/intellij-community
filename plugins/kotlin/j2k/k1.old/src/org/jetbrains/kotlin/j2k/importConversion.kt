@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.psi.*
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.annotations.hasJvmStaticAnnotation
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 
+@K1Deprecation
 fun Converter.convertImportList(importList: PsiImportList): ImportList {
     val imports = importList.allImportStatements
             .flatMap { convertImport(it) }
@@ -26,6 +28,7 @@ fun Converter.convertImportList(importList: PsiImportList): ImportList {
     return ImportList(imports).assignPrototype(importList)
 }
 
+@K1Deprecation
 fun Converter.convertImport(anImport: PsiImportStatementBase, dumpConversion: Boolean = false): List<Import> {
     val reference = anImport.importReference ?: return emptyList()
     val fqName = FqName(reference.qualifiedName!!)

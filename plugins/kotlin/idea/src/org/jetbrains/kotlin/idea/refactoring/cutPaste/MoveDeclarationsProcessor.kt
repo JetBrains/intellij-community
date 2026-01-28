@@ -28,7 +28,9 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import com.intellij.openapi.editor.asTextRange
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class MoveDeclarationsProcessor(
     val project: Project,
     private val sourceContainer: KtDeclarationContainer,

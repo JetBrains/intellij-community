@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.caches.resolve
 
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.addIfNotNull
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.analyzer.common.CommonAnalysisParameters
 import org.jetbrains.kotlin.analyzer.common.configureCommonSpecificComponents
@@ -49,6 +50,7 @@ import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragmen
 import org.jetbrains.kotlin.serialization.deserialization.MetadataPartProvider
 import org.jetbrains.kotlin.storage.StorageManager
 
+@K1Deprecation
 class CompositeResolverForModuleFactory(
     private val commonAnalysisParameters: CommonAnalysisParameters,
     private val jvmAnalysisParameters: JvmPlatformParameters,

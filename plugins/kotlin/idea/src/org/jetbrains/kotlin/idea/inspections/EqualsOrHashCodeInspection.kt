@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateEqualsAndHashcodeAction
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
+@K1Deprecation
 object DeleteEqualsAndHashCodeFix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("delete.equals.and.hash.code.fix.text")
 
@@ -35,6 +37,7 @@ object DeleteEqualsAndHashCodeFix : LocalQuickFix {
     }
 }
 
+@K1Deprecation
 sealed class GenerateEqualsOrHashCodeFix : LocalQuickFix {
     object Equals : GenerateEqualsOrHashCodeFix() {
         override fun getName() = KotlinBundle.message("equals.text")
@@ -55,6 +58,7 @@ sealed class GenerateEqualsOrHashCodeFix : LocalQuickFix {
 }
 
 
+@K1Deprecation
 class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return classOrObjectVisitor(fun(classOrObject) {

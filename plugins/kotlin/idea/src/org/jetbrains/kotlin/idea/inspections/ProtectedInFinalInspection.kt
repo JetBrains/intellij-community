@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.implicitVisibility
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.intentions.isFinalizeMethod
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.ProtectedInFinalInspectionBase
 import org.jetbrains.kotlin.psi.KtDeclaration
 
+@K1Deprecation
 class ProtectedInFinalInspection : ProtectedInFinalInspectionBase() {
     override fun isApplicable(parentClass: KtClass, declaration: KtDeclaration) =
         !parentClass.isInheritable() &&

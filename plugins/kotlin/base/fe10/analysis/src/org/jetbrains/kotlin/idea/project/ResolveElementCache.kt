@@ -10,6 +10,7 @@ import com.intellij.psi.util.*
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.SLRUCache
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.base.fe10.analysis.DaemonCodeAnalyzerStatusService
 import org.jetbrains.kotlin.cfg.ControlFlowInformationProviderImpl
@@ -45,6 +46,7 @@ import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingContext
 import java.util.concurrent.ConcurrentMap
 
+@K1Deprecation
 class ResolveElementCache(
     private val resolveSession: ResolveSession,
     private val project: Project,

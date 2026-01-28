@@ -7,12 +7,14 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.*
 import com.intellij.psi.javadoc.PsiInlineDocTag
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.lexer.KtTokens.INTERNAL_KEYWORD
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 
+@K1Deprecation
 class KotlinInternalInJavaInspection : LocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return object : JavaElementVisitor() {

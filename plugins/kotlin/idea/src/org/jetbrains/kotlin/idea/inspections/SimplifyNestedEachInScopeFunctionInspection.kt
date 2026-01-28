@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 class SimplifyNestedEachInScopeFunctionInspection : AbstractKotlinInspection() {
 
     private abstract class ReferenceTreeVisitor : KtTreeVisitorVoid() {

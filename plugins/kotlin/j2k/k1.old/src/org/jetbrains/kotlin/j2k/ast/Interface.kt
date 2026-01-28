@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.j2k.ast
 
+import org.jetbrains.kotlin.K1Deprecation
+
+@K1Deprecation
 class Interface(
         name: Identifier,
         annotations: Annotations,

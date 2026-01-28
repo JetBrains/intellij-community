@@ -13,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
+@K1Deprecation
 class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {

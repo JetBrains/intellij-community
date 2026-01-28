@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 
+@K1Deprecation
 class K1ExtractableSubstringInfo(
     startEntry: KtStringTemplateEntry,
     endEntry: KtStringTemplateEntry,

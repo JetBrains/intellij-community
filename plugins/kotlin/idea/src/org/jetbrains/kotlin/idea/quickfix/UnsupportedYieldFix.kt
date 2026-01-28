@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.MESSAGE_FOR_YIELD_BEFORE_LAMBDA
 
+@K1Deprecation
 class UnsupportedYieldFix(psiElement: PsiElement) : KotlinQuickFixAction<PsiElement>(psiElement), CleanupFix {
     override fun getFamilyName(): String = KotlinBundle.message("migrate.unsupported.yield.syntax")
     override fun getText(): String = familyName

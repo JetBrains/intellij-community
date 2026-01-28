@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.k1.addScriptDependenciesNotificationPanel
 import org.jetbrains.kotlin.idea.core.script.k1.areSimilar
@@ -89,6 +90,7 @@ import kotlin.script.experimental.api.ScriptDiagnostic
  *
  * [reloadOutOfDateConfiguration] guard this states. See it's docs for more details.
  */
+@K1Deprecation
 class DefaultScriptingSupport(val manager: ScriptConfigurationManager) {
     val project: Project
         get() = manager.myProject
@@ -492,6 +494,7 @@ class DefaultScriptingSupport(val manager: ScriptConfigurationManager) {
 
 internal fun isFSRootsStorageEnabled(): Boolean = Registry.`is`("kotlin.scripting.fs.roots.storage.enabled")
 
+@K1Deprecation
 val ScriptConfigurationManager.testingBackgroundExecutor: TestingBackgroundExecutor
     get() {
         @Suppress("TestOnlyProblems")
