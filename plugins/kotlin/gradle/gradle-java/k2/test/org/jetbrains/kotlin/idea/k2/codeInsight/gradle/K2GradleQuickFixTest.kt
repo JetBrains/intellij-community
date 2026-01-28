@@ -41,7 +41,7 @@ class K2GradleQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.9.20+")
-    fun testAddKotlinTestLibraryKmpNativeMain() {
+    fun testAddKotlinCoroutinesLibraryKmpNativeMain() {
         doMultiFileQuickFixTest(
             ignoreChangesInBuildScriptFiles = false,
             additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" },
