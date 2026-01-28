@@ -70,7 +70,7 @@ public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, Di
       <stdsys>Process finished with exit code 1</stdsys>
       """;
 
-  private static AttributesDescriptor[] ATTRS = {
+  private static final AttributesDescriptor[] ATTRS = {
     new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.stdout"), ConsoleViewContentType.NORMAL_OUTPUT_KEY),
     new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.stderr"), ConsoleViewContentType.ERROR_OUTPUT_KEY),
     new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.stdin"), ConsoleViewContentType.USER_INPUT_KEY),
@@ -105,7 +105,7 @@ public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, Di
                              JBTerminalSystemSettingsProviderBase.COMMAND_TO_RUN_USING_IDE_KEY),
   };
 
-  private static ColorDescriptor[] COLORS = {
+  private static final ColorDescriptor[] COLORS = {
     new ColorDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.background"),
                         ConsoleViewContentType.CONSOLE_BACKGROUND_KEY, ColorDescriptor.Kind.BACKGROUND),
   };
@@ -142,13 +142,6 @@ public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, Di
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("white", ConsoleHighlighter.WHITE);
 
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("terminalCommandToRunUsingIDE", JBTerminalSystemSettingsProviderBase.COMMAND_TO_RUN_USING_IDE_KEY);
-
-    if (ExperimentalUI.isNewUI()) {
-      AttributesDescriptor[] terminalAttrs = getReworkedTerminalAttributes();
-      ATTRS = ArrayUtil.mergeArrays(ATTRS, terminalAttrs);
-      ColorDescriptor[] terminalColors = getReworkedTerminalColors();
-      COLORS = ArrayUtil.mergeArrays(COLORS, terminalColors);
-    }
   }
 
   private static AttributesDescriptor[] getReworkedTerminalAttributes() {
@@ -275,11 +268,17 @@ public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, Di
 
   @Override
   public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
+    if (ExperimentalUI.isNewUI()) {
+      return ArrayUtil.mergeArrays(ATTRS, getReworkedTerminalAttributes());
+    }
     return ATTRS;
   }
 
   @Override
   public ColorDescriptor @NotNull [] getColorDescriptors() {
+    if (ExperimentalUI.isNewUI()) {
+      return ArrayUtil.mergeArrays(COLORS, getReworkedTerminalColors());
+    }
     return COLORS;
   }
 
