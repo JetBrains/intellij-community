@@ -11574,6 +11574,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/double.kt");
         }
 
+        @TestMetadata("fixAllProblemsInFile.kt")
+        public void testFixAllProblemsInFile() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/fixAllProblemsInFile.kt");
+        }
+
         @TestMetadata("float.kt")
         public void testFloat() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/removeRedundantCallsOfConversionMethods/float.kt");
