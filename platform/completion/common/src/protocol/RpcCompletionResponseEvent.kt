@@ -47,6 +47,11 @@ sealed interface RpcCompletionResponseEvent {
   object CompletionItemsFinished : RpcCompletionResponseEvent
 
   /**
+   * This event is sent when the backend decided to abort autopopup completion.
+   */
+  @Serializable
+  object SkipAutoPopup: RpcCompletionResponseEvent
+  /**
    * This event is sent when the completion session registers a new advertisement.
    */
   @Serializable
