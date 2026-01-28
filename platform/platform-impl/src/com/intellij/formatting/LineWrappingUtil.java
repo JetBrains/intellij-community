@@ -132,7 +132,8 @@ public final class LineWrappingUtil {
           // No point in splitting line when its left part contains only white spaces, example:
           //    line start -> |                   | <- right margin
           //                  |   aaaaaaaaaaaaaaaa|aaaaaaaaaaaaaaaaaaaa() <- don't want to wrap this line even if it exceeds right margin
-          || CharArrayUtil.shiftBackward(text, startLineOffset, wrapOffset - 1, " \t") < startLineOffset) {
+          || CharArrayUtil.shiftBackward(text, startLineOffset, wrapOffset - 1, " \t") < startLineOffset
+          || wrapOffset <= startLineOffset || wrapOffset >= endLineOffset) {
         continue;
       }
 
