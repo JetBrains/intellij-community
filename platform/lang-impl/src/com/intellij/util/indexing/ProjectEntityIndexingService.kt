@@ -26,7 +26,8 @@ import com.intellij.util.indexing.EntityIndexingServiceImpl.WorkspaceEventRescan
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark
 import com.intellij.util.indexing.roots.*
-import com.intellij.util.indexing.roots.IndexableEntityProvider.*
+import com.intellij.util.indexing.roots.IndexableEntityProvider.Enforced
+import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.workspaceModel.core.fileIndex.*
@@ -122,7 +123,7 @@ class ProjectEntityIndexingService(
         CancelledScanning
       }
       else {
-        ScanningIterators("Changes from WorkspaceFileIndex", predefinedIndexableFilesIterators = iterators)
+        ScanningIterators("Changes from WorkspaceFileIndex (${iterators.size} iterators)", predefinedIndexableFilesIterators = iterators)
       }
     }).executeSynchronously()
   }
