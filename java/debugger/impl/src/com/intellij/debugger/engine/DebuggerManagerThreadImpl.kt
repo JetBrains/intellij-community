@@ -254,29 +254,9 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
   ) {
     coroutineScope.launch(ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()) {
       withModalProgress(project, title) {
-        val progressScope = this@withModalProgress
-        val commandCompleted = CompletableDeferred<Unit>()
         coroutineToIndicator { indicator ->
           val command = commandProvider(indicator)
-
-          progressScope.launch(start = CoroutineStart.UNDISPATCHED) {
-            try {
-              commandCompleted.await()
-            }
-            catch (e: CancellationException) {
-              // if the modal progress is cancelled, we need to release the command,
-              // so invokeAndWait call will be completed (not the command itself!)
-              command.release()
-              throw e
-            }
-          }
-
-          try {
-            invokeAndWait(command)
-          }
-          finally {
-            commandCompleted.complete(Unit)
-          }
+          invokeAndWait(command)
         }
       }
     }
