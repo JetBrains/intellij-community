@@ -24,11 +24,11 @@ import kotlin.time.TimeSource
 
 internal class WaylandUserActivityTracker : TypedHandlerDelegate(), EditorMouseListener, EditorMouseMotionListener {
   override fun mouseClicked(event: EditorMouseEvent) {
-    userActivityHappened(event.editor.project)
+    //userActivityHappened(event.editor.project)
   }
 
   override fun mouseMoved(e: EditorMouseEvent) {
-    userActivityHappened(e.editor.project)
+    //userActivityHappened(e.editor.project)
   }
 
   override fun charTyped(
@@ -37,7 +37,7 @@ internal class WaylandUserActivityTracker : TypedHandlerDelegate(), EditorMouseL
     editor: Editor,
     file: PsiFile,
   ): Result {
-    userActivityHappened(project)
+    //userActivityHappened(project)
     return Result.CONTINUE
   }
 
