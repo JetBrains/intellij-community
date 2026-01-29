@@ -1,0 +1,4 @@
+class Super {
+  void out() {
+  }
+}

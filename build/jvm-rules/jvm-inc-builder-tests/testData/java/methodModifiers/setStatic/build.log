@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+End of files
+Compiling files:
+  java/methodModifiers/setStatic/a/A.java
+End of files
+Cleaning output files:
+  B.class
+  C.class
+End of files
+Compiling files:
+  java/methodModifiers/setStatic/a/B.java
+  java/methodModifiers/setStatic/a/C.java
+End of files
+------------------------------------------
+Exit code: ERROR

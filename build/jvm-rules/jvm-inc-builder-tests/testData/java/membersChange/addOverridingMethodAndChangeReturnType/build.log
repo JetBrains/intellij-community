@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/BaseA.class
+  ppp/BaseB.class
+End of files
+Compiling files:
+  java/membersChange/addOverridingMethodAndChangeReturnType/a/ppp/BaseA.java
+  java/membersChange/addOverridingMethodAndChangeReturnType/a/ppp/BaseB.java
+End of files
+Cleaning output files:
+  ppp/Client.class
+End of files
+Compiling files:
+  java/membersChange/addOverridingMethodAndChangeReturnType/a/ppp/Client.java
+End of files
+------------------------------------------
+Exit code: OK
