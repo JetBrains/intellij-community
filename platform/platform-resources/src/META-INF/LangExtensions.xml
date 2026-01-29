@@ -96,8 +96,6 @@
                  description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
     <registryKey defaultValue="false" key="use.workspace.model.for.calculation.library.scope"
                  description="Calculation of LibraryScopeCache using WorkspaceModel entities"/>
-    <registryKey defaultValue="false" key="search.in.non.indexable" restartRequired="false"
-                 description="Search files in non-indexable filesets with NonIndexableFileNavigationContributor"/>
     <registryKey defaultValue="true" key="se.enable.non.indexable.files.contributor" restartRequired="false"
                  description="Search files in non-indexable filesets with NonIndexableFilesSEContributor"/>
     <registryKey defaultValue="false"
@@ -698,7 +696,6 @@
 
     <searchEverywhereClassifier implementation="com.intellij.ide.actions.DefaultSearchEverywhereClassifier"/>
     <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor"/>
-    <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.NonIndexableFileNavigationContributor"/>
     <gotoRelatedProvider implementation="com.intellij.ide.actions.RelatedItemLineMarkerGotoAdapter"/>
 
     <selectInTarget implementation="com.intellij.ide.impl.ProjectViewSelectInGroupTarget"/>

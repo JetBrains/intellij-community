@@ -32,7 +32,6 @@ import java.nio.file.Files
 
 
 @TestApplication
-@RegistryKey("search.in.non.indexable", "false")
 @RegistryKey("se.enable.non.indexable.files.contributor", "true")
 open class NonIndexableFilesSEContributorTest {
   @RegisterExtension
@@ -208,7 +207,6 @@ open class NonIndexableFilesSEContributorTest {
   }
 
   @Test
-  @RegistryKey("search.in.non.indexable", "false")
   fun `default search everywhere doesn't work`(): Unit = runBlocking {
     val unindexed1 = baseDir.newVirtualDirectory("dir1").toVirtualFileUrl(urlManager)
     baseDir.newVirtualFile("dir1/file1")
