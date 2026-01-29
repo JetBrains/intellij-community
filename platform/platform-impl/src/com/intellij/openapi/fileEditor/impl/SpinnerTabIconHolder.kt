@@ -25,7 +25,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class SpinnerTabIconHolder(composite: EditorComposite, private val owner: TabInfo) : TabInfoIconHolder {
-  val delayFromRegistry = Registry.intValue("editor.loading.spinner.delay.ms", 0).milliseconds
+  private val delayFromRegistry = Registry.intValue("editor.loading.spinner.delay.ms", 0).milliseconds
 
   private var icon: Icon?
 
