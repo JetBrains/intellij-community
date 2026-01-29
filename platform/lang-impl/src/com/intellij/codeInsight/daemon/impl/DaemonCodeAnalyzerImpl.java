@@ -67,6 +67,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.ui.UIUtil;
 import io.opentelemetry.context.Context;
 import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
@@ -520,12 +521,27 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   @TestOnly
+  @RequiresEdt
   public void waitForTermination() throws InterruptedException, ExecutionException {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    AppExecutorUtil.getAppExecutorService().submit(() -> {
+    ThreadingAssertions.assertEventDispatchThread();
+    Future<?> future = AppExecutorUtil.getAppExecutorService().submit(() -> {
       // wait outside EDT to avoid stealing work from FJP
       myPassExecutorService.cancelAll(true, "DaemonCodeAnalyzerImpl.waitForTermination");
-    }).get();
+    });
+    waitWhilePumping(future);
+  }
+
+  private static void waitWhilePumping(@NotNull Future<?> future) {
+    do {
+      try {
+        future.get(10, TimeUnit.MILLISECONDS);
+        return;
+      }
+      catch (Exception ignored) {
+      }
+      UIUtil.dispatchAllInvocationEvents();
+    } while (!future.isDone());
   }
 
   @Override
