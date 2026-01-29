@@ -270,6 +270,16 @@ private constructor(
   private fun requestNewComment(logicalLine: Int) {
     if (editor.caretModel.logicalPosition.line != logicalLine)
       editor.caretModel.moveToOffset(editor.document.getLineEndOffset(logicalLine))
+
+    with(editor.foldingModel) {
+      val logicalPosition = editor.logicalPositionToOffset(LogicalPosition(logicalLine, editor.document.getLineEndOffset(logicalLine)))
+      getCollapsedRegionAtOffset(logicalPosition)?.let { collapsedRegion ->
+        runBatchFoldingOperation {
+          collapsedRegion.isExpanded = true
+        }
+      }
+    }
+
     if (model is CodeReviewCommentableEditorModel.WithMultilineComments) {
       val selectedRange = selectedRangeForMultilineComment
       if (selectedRange != null && logicalLine == selectedRange.end && model.canCreateComment(selectedRange)) {
