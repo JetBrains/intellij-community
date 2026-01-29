@@ -17,7 +17,7 @@ import java.awt.*;
 */
 public final class NavBarBorder implements Border {
   private static final Color BORDER_COLOR = JBColor.namedColor("NavBar.borderColor", new JBColor(Gray.xCD, Gray.x51));
-  private static final JBValue BW = new JBValue.Float(1);
+  private static final JBValue BW = new JBValue.UIInteger("NavBar.borderWidth", 1);
 
   @Override
   public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
