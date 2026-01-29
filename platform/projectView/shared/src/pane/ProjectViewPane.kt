@@ -4,7 +4,7 @@ package com.intellij.platform.projectView.pane
 import com.intellij.ide.CustomDataContextSerializer
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.ui.tree.TreeNodePresentationBuilderImpl
-import com.intellij.ui.treeStructure.TreeNodePresentation
+import com.intellij.ui.treeStructure.TreeNodePresentationImpl
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.serializer
@@ -70,14 +70,3 @@ private data class ProjectViewPaneProviderIdImpl(
 private data class ProjectViewPaneIdImpl(
   override val idString: @NonNls String
 ) : ProjectViewPaneId
-
-@ApiStatus.Internal
-const val SUPER_ROOT_ID: Long = 0L
-
-@ApiStatus.Internal
-object SuperRoot
-
-@ApiStatus.Internal
-val SuperRootPresentation: TreeNodePresentation = TreeNodePresentationBuilderImpl(false).also {
-  it.setMainText("fake root - for convenience, not to display")
-}.build()

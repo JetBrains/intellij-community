@@ -12,10 +12,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.treeStructure.TreeDomainModel
-import com.intellij.ui.treeStructure.TreeNodeDomainModel
-import com.intellij.ui.treeStructure.TreeNodePresentation
-import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
+import com.intellij.ui.treeStructure.*
 import com.intellij.util.SmartList
 import com.intellij.util.ui.tree.LegacyCompatibilityTreeNode
 import kotlinx.coroutines.flow.Flow
@@ -131,7 +128,7 @@ internal fun buildPresentation(builder: TreeNodePresentationBuilder, userObject:
 fun buildPresentation(
   userObject: PresentableNodeDescriptor<*>,
   builder: TreeNodePresentationBuilder,
-): TreeNodePresentation {
+): TreeNodePresentationImpl {
   val colorScheme = EditorColorsManager.getInstance().schemeForCurrentUITheme
   val presentation = userObject.presentation
   return builder.run {
@@ -175,7 +172,7 @@ fun buildPresentation(
       appendTextFragment(prefix + location + suffix, locationAttributes)
     }
     setToolTipText(presentation.tooltip)
-    build()
+    build() as TreeNodePresentationImpl
   }
 }
 

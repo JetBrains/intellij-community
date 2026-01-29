@@ -13,3 +13,10 @@ sealed class ProjectViewPaneRequest
 data class ProjectViewPaneLoadChildrenRequest(
   val nodeId: Long,
 ) : ProjectViewPaneRequest()
+
+@ApiStatus.Internal
+@Serializable
+data class ProjectViewPaneNavigateRequest(
+  val nodeId: Long,
+  val requestFocus: Boolean,
+) : ProjectViewPaneRequest()

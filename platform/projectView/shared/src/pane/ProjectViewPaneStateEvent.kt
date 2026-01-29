@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.pane
 
-import com.intellij.ui.treeStructure.TreeNodePresentation
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -28,24 +27,21 @@ sealed class ProjectViewPaneStateSerializableEvent : ProjectViewPaneStateEvent, 
 data class ProjectViewNodeAdded(
   val parentId: Long,
   val index: Int,
-  val nodeId: Long,
-  val presentation: TreeNodePresentation,
+  val model: ProjectViewNodeModel,
 ) : ProjectViewPaneStateEvent {
   override fun toDTO(): ProjectViewPaneStateEventDTO = ProjectViewNodeAddedDTO(
-    parentId, index, nodeId, presentation.toDTO()
+    parentId, index, model.toDTO()
   )
 }
 
-@ApiStatus.Internal
 @Serializable
-data class ProjectViewNodeAddedDTO(
+internal data class ProjectViewNodeAddedDTO(
   val parentId: Long,
   val index: Int,
-  val nodeId: Long,
-  val presentationDTO: TreeNodePresentationDTO,
+  val modelDTO: ProjectViewNodeModelDTO,
 ) : ProjectViewPaneStateEventDTO {
   override fun toEvent(): ProjectViewPaneStateEvent = ProjectViewNodeAdded(
-    parentId, index, nodeId, presentationDTO.toPresentation()
+    parentId, index, modelDTO.toModel()
   )
 }
 
@@ -62,22 +58,18 @@ data class ProjectViewChildrenRemoved(val parentId: Long) : ProjectViewPaneState
 
 @ApiStatus.Internal
 data class ProjectViewNodeUpdated(
-  val nodeId: Long,
-  val presentation: TreeNodePresentation,
+  val model: ProjectViewNodeModel,
 ) : ProjectViewPaneStateEvent {
   override fun toDTO(): ProjectViewPaneStateEventDTO = ProjectViewNodeUpdatedDTO(
-    nodeId, presentation.toDTO()
+    model.toDTO()
   )
 }
 
-@ApiStatus.Internal
 @Serializable
-data class ProjectViewNodeUpdatedDTO(
-  val nodeId: Long,
-  val presentationDTO: TreeNodePresentationDTO,
+internal data class ProjectViewNodeUpdatedDTO(
+  val modelDTO: ProjectViewNodeModelDTO,
 ) : ProjectViewPaneStateEventDTO {
   override fun toEvent(): ProjectViewPaneStateEvent = ProjectViewNodeUpdated(
-    nodeId,
-    presentationDTO.toPresentation(),
+    modelDTO.toModel(),
   )
 }

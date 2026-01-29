@@ -8,24 +8,29 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.backend.navigation.NavigationRequests
+import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPane
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneProvider
 import com.intellij.platform.projectView.backend.pane.projectViewPaneStateBuilder
 import com.intellij.platform.projectView.impl.legacy.LEGACY_PROVIDER_ID
 import com.intellij.platform.projectView.pane.*
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.pom.Navigatable
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.TreeNodePresentationBuilderImpl
 import com.intellij.ui.tree.buildPresentation
 import com.intellij.ui.treeStructure.CachingTreePath
-import com.intellij.ui.treeStructure.TreeNodePresentation
+import com.intellij.ui.treeStructure.TreeNodePresentationImpl
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -62,7 +67,7 @@ private class LegacyBackendProjectViewPaneService(
   }
 
   private fun createLegacyPanes(legacyPane: AbstractProjectViewPane): Iterable<BackendProjectViewPane> {
-    val stateManager = AbstractProjectViewPaneStateManager(coroutineScope.childScope("LegacyBackendProjectViewPane: $legacyPane"), legacyPane)
+    val stateManager = AbstractProjectViewPaneStateManager(project, coroutineScope.childScope("LegacyBackendProjectViewPane: $legacyPane"), legacyPane)
     val subIds = legacyPane.subIds
     if (subIds.isEmpty()) {
       return listOf(LegacyBackendProjectViewPane(stateManager, null))
@@ -99,6 +104,7 @@ private class LegacyBackendProjectViewPane(
 }
 
 private class AbstractProjectViewPaneStateManager(
+  private val project: Project,
   coroutineScope: CoroutineScope,
   private val legacyPane: AbstractProjectViewPane,
 ) {
@@ -117,7 +123,7 @@ private class AbstractProjectViewPaneStateManager(
   
   private val requestChannel = Channel<ProjectViewPaneRequest>(capacity = Channel.BUFFERED)
 
-  private val modelUpdateChannel = Channel<ProjectViewPaneStateEvent>(capacity = Channel.UNLIMITED)
+  private val modelUpdateChannel = Channel<ModelUpdateRequest>(capacity = Channel.UNLIMITED)
 
   private val stateBuilder = projectViewPaneStateBuilder()
   
@@ -170,14 +176,15 @@ private class AbstractProjectViewPaneStateManager(
           treeModel.addTreeModelListener(treeModelListener)
           loadInitialState()
           launch(CoroutineName("tree model events")) {
-            for (event in modelUpdateChannel) {
-              stateBuilder.updateState(event)
+            for (request in modelUpdateChannel) {
+              stateBuilder.updateState(buildStateUpdateEvent(request))
             }
           }
-          launch(CoroutineName("load children requests")) {
+          launch(CoroutineName("requests from the frontend")) {
             for (request in requestChannel) {
               when (request) {
                 is ProjectViewPaneLoadChildrenRequest -> loadChildren(request.nodeId)
+                is ProjectViewPaneNavigateRequest -> navigate(request.nodeId)
               }
             }
           }
@@ -191,6 +198,57 @@ private class AbstractProjectViewPaneStateManager(
         }
       }
     }
+  }
+
+  private suspend fun buildStateUpdateEvent(request: ModelUpdateRequest): ProjectViewPaneStateEvent {
+    return when (request) {
+      is ModelNodeAdded -> {
+        ProjectViewNodeAdded(request.parentId, request.index, createNodeModel(request.nodeId, request.modelNode))
+      }
+      is ModelNodeUpdated -> {
+        ProjectViewNodeUpdated(createNodeModel(request.nodeId, request.modelNode))
+      }
+      is ModelChildrenRemoved -> {
+        ProjectViewChildrenRemoved(request.parentId)
+      }
+      is ModelChildRemoved -> {
+        ProjectViewChildRemoved(request.parentId, request.index)
+      }
+    }
+  }
+
+  private suspend fun createNodeModel(id: Long, node: Any): ProjectViewNodeModel {
+    val presentation = getNodePresentation(node)
+    val canNavigate = readAction { canNavigate(node) }
+    val canNavigateToSource = readAction { canNavigateToSource(node) }
+    return ProjectViewNodeModel(id, presentation, canNavigate, canNavigateToSource)
+  }
+
+  private fun getNodePresentation(node: Any): TreeNodePresentationImpl {
+    val builder = TreeNodePresentationBuilderImpl(treeModel.isLeaf(node))
+    return when (val userObject = TreeUtil.getUserObject(node)) {
+      is PresentableNodeDescriptor<*> -> {
+        buildPresentation(userObject, builder)
+      }
+      else -> {
+        builder.apply {
+          setMainText(userObject.toString())
+        }.build()
+      }
+    }
+  }
+
+  @RequiresReadLock
+  private fun canNavigate(node: Any): Boolean = (TreeUtil.getUserObject(node) as? Navigatable?)?.canNavigate() == true
+
+  @RequiresReadLock
+  private fun canNavigateToSource(node: Any): Boolean = (TreeUtil.getUserObject(node) as? Navigatable?)?.canNavigateToSource() == true
+
+  private suspend fun navigate(id: Long) {
+    val node = nodeById[id] ?: return
+    val navigatable = TreeUtil.getUserObject(node.modelNode) as? Navigatable? ?: return
+    val navigationRequest = readAction { navigatable.navigationRequest() } ?: return
+    NavigationService.getInstance(project).navigate(navigationRequest)
   }
 
   private fun loadInitialState() {
@@ -234,7 +292,7 @@ private class AbstractProjectViewPaneStateManager(
     }
   }
   
-  private fun handleModelUpdate(update: ProjectViewPaneStateEvent) {
+  private fun handleModelUpdate(update: ModelUpdateRequest) {
     val result = modelUpdateChannel.trySend(update)
     check(result.isSuccess || result.isClosed)
   }
@@ -243,16 +301,14 @@ private class AbstractProjectViewPaneStateManager(
     LOG.trace { "Updating the presentation of the node $modelNode..." }
     val id = getNodeByModelNode(modelNode)?.id ?: return
     LOG.trace { "...which has the ID $id" }
-    val presentation = getNodePresentation(modelNode)
-    LOG.trace { "...and the new presentation $presentation" }
-    handleModelUpdate(ProjectViewNodeUpdated(id, presentation))
+    handleModelUpdate(ModelNodeUpdated(id, modelNode))
   }
   
   private fun updateNodeStructure(modelParent: Any, children: List<Any>) {
     updateNodeValue(modelParent)
     val parent = getNodeByModelNode(modelParent) ?: return
     if (parent.loadChildren) {
-      handleModelUpdate(ProjectViewChildrenRemoved(parent.id))
+      handleModelUpdate(ModelChildrenRemoved(parent.id))
       for ((index, child) in children.withIndex()) {
         addNode(parent.id, index, child)
       }
@@ -273,7 +329,7 @@ private class AbstractProjectViewPaneStateManager(
     nodeByModelNode[modelNode] = newNode
     nodeById[newNodeId] = newNode
     if (parentId != null) {
-      handleModelUpdate(ProjectViewNodeAdded(parentId, index, newNodeId, getNodePresentation(modelNode)))
+      handleModelUpdate(ModelNodeAdded(parentId, index, newNodeId, modelNode))
     }
     if (parentId == SUPER_ROOT_ID) {
       LOG.trace("We have a new real root, loading its children immediatly")
@@ -284,26 +340,12 @@ private class AbstractProjectViewPaneStateManager(
   private fun removeChild(modelParent: Any, index: Int) {
     val parent = getNodeByModelNode(modelParent) ?: return
     if (parent.loadChildren) {
-      handleModelUpdate(ProjectViewChildRemoved(parent.id, index))
+      handleModelUpdate(ModelChildRemoved(parent.id, index))
     }
   }
 
   private fun getNodeByModelNode(node: Any): LegacyProjectViewNode? {
     return nodeByModelNode[node]
-  }
-
-  private fun getNodePresentation(node: Any): TreeNodePresentation {
-    val builder = TreeNodePresentationBuilderImpl(treeModel.isLeaf(node))
-    return when (val userObject = TreeUtil.getUserObject(node)) {
-      is PresentableNodeDescriptor<*> -> {
-        buildPresentation(userObject, builder)
-      }
-      else -> {
-        builder.apply {
-          setMainText(userObject.toString())
-        }.build()
-      }
-    }
   }
 
   fun uiDataSnapshot(sink: DataSink, selectedIds: List<Long>) {
@@ -378,6 +420,16 @@ private class AbstractProjectViewPaneStateManager(
     }
   }
 }
+
+private sealed class ModelUpdateRequest
+
+private data class ModelNodeAdded(val parentId: Long, val index: Int, val nodeId: Long, val modelNode: Any) : ModelUpdateRequest()
+
+private data class ModelNodeUpdated(val nodeId: Long, val modelNode: Any) : ModelUpdateRequest()
+
+private data class ModelChildrenRemoved(val parentId: Long) : ModelUpdateRequest()
+
+private data class ModelChildRemoved(val parentId: Long, val index: Int) : ModelUpdateRequest()
 
 private data class LegacyProjectViewNode(
   val id: Long,

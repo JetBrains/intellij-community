@@ -3,17 +3,20 @@ package com.intellij.platform.projectView.frontend.impl.pane
 
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.pane.*
+import com.intellij.pom.Navigatable
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.ui.treeStructure.TreeNodePresentation
-import com.intellij.ui.treeStructure.TreeNodePresentationImpl
 import com.intellij.ui.treeStructure.TreeNodeWithPresentation
+import com.intellij.util.EditSourceOnDoubleClickHandler
+import com.intellij.util.EditSourceOnEnterKeyHandler
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import javax.swing.JComponent
@@ -43,7 +46,7 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
   }
   
   private val nodeById = hashMapOf<Long, Node>().also { 
-    it[SUPER_ROOT_ID] = Node(SUPER_ROOT_ID, SuperRootPresentation as TreeNodePresentationImpl)
+    it[SUPER_ROOT_ID] = Node(SuperRootModel)
   }
   
   override val component: JComponent
@@ -63,13 +66,15 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
 
       override fun treeCollapsed(event: TreeExpansionEvent) { }
     })
+    EditSourceOnDoubleClickHandler.install(tree)
+    EditSourceOnEnterKeyHandler.install(tree)
   }
 
   override fun applyStateChange(event: ProjectViewPaneStateEvent) {
     when (event) {
       is ProjectViewNodeAdded -> {
         val parent = getNodeById(event.parentId) ?: return
-        val newNode = createNode(event.nodeId, event.presentation)
+        val newNode = createNode(event.model)
         if (event.parentId == SUPER_ROOT_ID) {
           treeModel.setRoot(newNode)
         }
@@ -78,8 +83,8 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
         }
       }
       is ProjectViewNodeUpdated -> {
-        val node = getNodeById(event.nodeId) ?: return
-        node.projectViewNode.presentation = event.presentation as TreeNodePresentationImpl
+        val node = getNodeById(event.model.id) ?: return
+        node.projectViewNode = event.model
         treeModel.nodeChanged(node)
       }
       is ProjectViewChildRemoved -> {
@@ -119,9 +124,9 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
     return parent.getChildAt(index) as Node?
   }
   
-  private fun createNode(id: Long, presentation: TreeNodePresentation): Node {
-    val result = Node(id, presentation as TreeNodePresentationImpl)
-    nodeById[id] = result
+  private fun createNode(model: ProjectViewNodeModel): Node {
+    val result = Node(model)
+    nodeById[model.id] = result
     return result
   }
 
@@ -138,15 +143,32 @@ internal abstract class TreeBasedFrontendProjectViewPane : FrontendProjectViewPa
     sink[PROJECT_VIEW_SELECTED_NODE_IDS_KEY] = tree.selectionPaths?.mapNotNull { path ->
       (path?.lastPathComponent as? Node)?.projectViewNode?.id
     }
+    sink[CommonDataKeys.NAVIGATABLE_ARRAY] = tree.selectionPaths?.mapNotNull { path ->
+      (path?.lastPathComponent as? Node)?.projectViewNode?.toNavigatable()
+    }?.toTypedArray()
+  }
+
+  private fun ProjectViewNodeModel.toNavigatable(): Navigatable = NavigatableNode(this)
+
+  private inner class NavigatableNode(private val model: ProjectViewNodeModel) : Navigatable {
+    override fun navigate(requestFocus: Boolean) {
+      check(_requestChannel.trySend(ProjectViewPaneNavigateRequest(model.id, requestFocus)).isSuccess)
+    }
+
+    override fun canNavigate(): Boolean = model.canNavigate()
+
+    override fun canNavigateToSource(): Boolean = model.canNavigateToSource()
   }
 }
 
 private class Node(
-  id: Long,
-  presentation: TreeNodePresentationImpl,
-) : DefaultMutableTreeNode(ProjectViewNode(id, presentation)), TreeNodeWithPresentation {
-  val projectViewNode: ProjectViewNode
-    get() = userObject as ProjectViewNode
+  model: ProjectViewNodeModel,
+) : DefaultMutableTreeNode(model), TreeNodeWithPresentation {
+  var projectViewNode: ProjectViewNodeModel
+    get() = userObject as ProjectViewNodeModel
+    set(value) {
+      userObject = value
+    }
 
   override val presentation: TreeNodePresentation
     get() = projectViewNode.presentation
@@ -155,8 +177,3 @@ private class Node(
     return projectViewNode.presentation.isLeaf
   }
 }
-
-private class ProjectViewNode(
-  val id: Long,
-  var presentation: TreeNodePresentationImpl,
-)
