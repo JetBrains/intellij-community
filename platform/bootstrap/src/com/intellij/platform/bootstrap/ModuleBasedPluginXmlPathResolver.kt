@@ -66,10 +66,24 @@ internal class ModuleBasedPluginXmlPathResolver(
     dataLoader: DataLoader,
     path: String,
   ): LoadedXIncludeReference? {
-    return fallbackResolver.loadXIncludeReference(
+    val reference = fallbackResolver.loadXIncludeReference(
       dataLoader = dataLoader,
       path = path,
     )
+    if (reference != null) {
+      return reference
+    }
+
+    /* If the IDE is running in 'dev build' mode from sources without using Bazel build, the modules aren't packed to JARs, so the included
+       file may be located in a different directory. We need to search for it in all plugin's modules. */
+    for (module in includedModules) {
+      val inputStream = module.moduleDescriptor.readFile(path)
+      if (inputStream != null) {
+        val bytes = inputStream.use { it.readBytes() }
+        return LoadedXIncludeReference(bytes, module.moduleDescriptor.moduleId.stringId)
+      }
+    }
+    return null
   }
 
   override fun resolvePath(
