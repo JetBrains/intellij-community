@@ -241,7 +241,66 @@
     "transparent": "#FFFFFF00",
     "bg-control-transparent": "#00000015",
     "border-transparent": "#00000020",
-    "bg-selection-hover": "#00000004"
+    "bg-selection-hover": "#00000004",
+
+    "grad-hor-left": "#EBEBED33",
+    "grad-hor-right": "#EBEBED4D",
+    "grad-ver-top": "#EBEBED1A",
+    "grad-ver-bottom": "#EBEBED80",
+
+    "grad-g1-amber-a1": "#FCDFDAFF",
+    "grad-g1-amber-a1-transparent": "#FCDFDA00",
+    "grad-g1-amber-a1-secondary": "#F8E1D6",
+    "grad-g1-amber-a2": "#F8E2E7",
+    "grad-g1-amber-bg": "#F4E8DC",
+
+    "grad-g2-rust-a1": "#F5E5D1FF",
+    "grad-g2-rust-a1-transparent": "#F5E5D100",
+    "grad-g2-rust-a1-secondary": "#F3E5D3",
+    "grad-g2-rust-a2": "#F8E6E3",
+    "grad-g2-rust-bg": "#F7E3DA",
+
+    "grad-g3-olive-a1": "#E6F0C7ff",
+    "grad-g3-olive-a1-transparent": "#E6F0C700",
+    "grad-g3-olive-a1-secondary": "#DFEBD7",
+    "grad-g3-olive-a2": "#D1EAD8",
+    "grad-g3-olive-bg": "#DAE4D2",
+
+    "grad-g4-sky-a1": "#C7E5FEFF",
+    "grad-g4-sky-a1-transparent": "#C7E5FE00",
+    "grad-g4-sky-a1-secondary": "#C9DCF2",
+    "grad-g4-sky-a2": "#D9DFF2",
+    "grad-g4-sky-bg": "#C9DAF3",
+
+    "grad-g5-cobalt-a1": "#D6DFFFFF",
+    "grad-g5-cobalt-a1-transparent": "#D6DFFF00",
+    "grad-g5-cobalt-a1-secondary": "#CBDEF6",
+    "grad-g5-cobalt-a2": "#CDE2F9",
+    "grad-g5-cobalt-bg": "#CCD8F0",
+
+    "grad-g6-plum-a1": "#F1DAE3FF",
+    "grad-g6-plum-a1-transparent": "#F1DAE300",
+    "grad-g6-plum-a1-secondary": "#EADCE4",
+    "grad-g6-plum-a2": "#E5DDF4",
+    "grad-g6-plum-bg": "#E7D9E1",
+
+    "grad-g7-violet-a1": "#E9DBF0FF",
+    "grad-g7-violet-a1-transparent": "#E9DBF000",
+    "grad-g7-violet-a1-secondary": "#E4DCEA",
+    "grad-g7-violet-a2": "#DCDCF4",
+    "grad-g7-violet-bg": "#D5D5F1",
+
+    "grad-g8-ocean-a1": "#C5EDEDFF",
+    "grad-g8-ocean-a1-transparent": "#C5EDED00",
+    "grad-g8-ocean-a1-secondary": "#CDE7EF",
+    "grad-g8-ocean-a2": "#CEE5F3",
+    "grad-g8-ocean-bg": "#DADEEC",
+
+    "grad-g9-grass-a1": "#CCF0DAFF",
+    "grad-g9-grass-a1-transparent": "#CCF0DA00",
+    "grad-g9-grass-a1-secondary": "#DCE4D3",
+    "grad-g9-grass-a2": "#E0E8D4",
+    "grad-g9-grass-bg": "#CBE7D2"
   },
 
   "ui": {
@@ -1141,6 +1200,234 @@
     "RecentProject": {
       "MainToolbarGradient.width": 600,
       "MainToolbarGradient.height": 300
+    },
+
+    "ProjectGradients": {
+      "Group1": {
+        "DiagonalGradient": {
+          "Color1": "grad-g1-amber-a2",
+          "Color2": "grad-g1-amber-a1-secondary",
+          "Color3": "grad-g1-amber-a2",
+          "Color4": "grad-g1-amber-bg",
+
+          "Fraction1": 0.0,
+          "Fraction2": 0.13,
+          "Fraction3": 0.3,
+          "Fraction4": 1.0
+        },
+        "RadialGradient": {
+          "Color1": "grad-g1-amber-a1",
+          "Color2": "grad-g1-amber-a1-transparent"
+        },
+        "HorizontalGradient": {
+          "Color1": "grad-hor-left",
+          "Color2": "grad-hor-right"
+        },
+        "VerticalGradient": {
+          "Color1": "grad-ver-top",
+          "Color2": "grad-ver-bottom"
+        }
+      },
+      "Group2": {
+        "DiagonalGradient": {
+          "Color1": "grad-g2-rust-a2",
+          "Color2": "grad-g2-rust-a1-secondary",
+          "Color3": "grad-g2-rust-a2",
+          "Color4": "grad-g2-rust-bg",
+
+          "Fraction1": 0.0,
+          "Fraction2": 0.13,
+          "Fraction3": 0.3,
+          "Fraction4": 1.0
+        },
+        "RadialGradient": {
+          "Color1": "grad-g2-rust-a1",
+          "Color2": "grad-g2-rust-a1-transparent"
+        },
+        "HorizontalGradient": {
+          "Color1": "grad-hor-left",
+          "Color2": "grad-hor-right"
+        },
+        "VerticalGradient": {
+          "Color1": "grad-ver-top",
+          "Color2": "grad-ver-bottom"
+        }
+      },
+      "Group3": {
+        "DiagonalGradient": {
+          "Color1": "grad-g3-olive-a2",
+          "Color2": "grad-g3-olive-a1-secondary",
+          "Color3": "grad-g3-olive-a2",
+          "Color4": "grad-g3-olive-bg",
+
+          "Fraction1": 0.0,
+          "Fraction2": 0.13,
+          "Fraction3": 0.3,
+          "Fraction4": 1.0
+        },
+        "RadialGradient": {
+          "Color1": "grad-g3-olive-a1",
+          "Color2": "grad-g3-olive-a1-transparent"
+        },
+        "HorizontalGradient": {
+          "Color1": "grad-hor-left",
+          "Color2": "grad-hor-right"
+        },
+        "VerticalGradient": {
+          "Color1": "grad-ver-top",
+          "Color2": "grad-ver-bottom"
+        }
+      },
+      "Group4": {
+        "DiagonalGradient": {
+          "Color1": "grad-g4-sky-a2",
+          "Color2": "grad-g4-sky-a1-secondary",
+          "Color3": "grad-g4-sky-a2",
+          "Color4": "grad-g4-sky-bg",
+
+          "Fraction1": 0.0,
+          "Fraction2": 0.13,
+          "Fraction3": 0.3,
+          "Fraction4": 1.0
+        },
+        "RadialGradient": {
+          "Color1": "grad-g4-sky-a1",
+          "Color2": "grad-g4-sky-a1-transparent"
+        },
+        "HorizontalGradient": {
+          "Color1": "grad-hor-left",
+          "Color2": "grad-hor-right"
+        },
+        "VerticalGradient": {
+          "Color1": "grad-ver-top",
+          "Color2": "grad-ver-bottom"
+        }
+      },
+      "Group5": {
+        "DiagonalGradient": {
+          "Color1": "grad-g5-cobalt-a2",
+          "Color2": "grad-g5-cobalt-a1-secondary",
+          "Color3": "grad-g5-cobalt-a2",
+          "Color4": "grad-g5-cobalt-bg",
+
+          "Fraction1": 0.0,
+          "Fraction2": 0.13,
+          "Fraction3": 0.3,
+          "Fraction4": 1.0
+        },
+        "RadialGradient": {
+          "Color1": "grad-g5-cobalt-a1",
+          "Color2": "grad-g5-cobalt-a1-transparent"
+        },
+        "HorizontalGradient": {
+          "Color1": "grad-hor-left",
+          "Color2": "grad-hor-right"
+        },
+        "VerticalGradient": {
+          "Color1": "grad-ver-top",
+          "Color2": "grad-ver-bottom"
+        }
+      },
+      "Group6": {
+        "DiagonalGradient": {
+          "Color1": "grad-g6-plum-a2",
+          "Color2": "grad-g6-plum-a1-secondary",
+          "Color3": "grad-g6-plum-a2",
+          "Color4": "grad-g6-plum-bg",
+
+          "Fraction1": 0.0,
+          "Fraction2": 0.13,
+          "Fraction3": 0.3,
+          "Fraction4": 1.0
+        },
+        "RadialGradient": {
+          "Color1": "grad-g6-plum-a1",
+          "Color2": "grad-g6-plum-a1-transparent"
+        },
+        "HorizontalGradient": {
+          "Color1": "grad-hor-left",
+          "Color2": "grad-hor-right"
+        },
+        "VerticalGradient": {
+          "Color1": "grad-ver-top",
+          "Color2": "grad-ver-bottom"
+        }
+      },
+      "Group7": {
+        "DiagonalGradient": {
+          "Color1": "grad-g7-violet-a2",
+          "Color2": "grad-g7-violet-a1-secondary",
+          "Color3": "grad-g7-violet-a2",
+          "Color4": "grad-g7-violet-bg",
+
+          "Fraction1": 0.0,
+          "Fraction2": 0.13,
+          "Fraction3": 0.3,
+          "Fraction4": 1.0
+        },
+        "RadialGradient": {
+          "Color1": "grad-g7-violet-a1",
+          "Color2": "grad-g7-violet-a1-transparent"
+        },
+        "HorizontalGradient": {
+          "Color1": "grad-hor-left",
+          "Color2": "grad-hor-right"
+        },
+        "VerticalGradient": {
+          "Color1": "grad-ver-top",
+          "Color2": "grad-ver-bottom"
+        }
+      },
+      "Group8": {
+        "DiagonalGradient": {
+          "Color1": "grad-g8-ocean-a2",
+          "Color2": "grad-g8-ocean-a1-secondary",
+          "Color3": "grad-g8-ocean-a2",
+          "Color4": "grad-g8-ocean-bg",
+
+          "Fraction1": 0.0,
+          "Fraction2": 0.13,
+          "Fraction3": 0.3,
+          "Fraction4": 1.0
+        },
+        "RadialGradient": {
+          "Color1": "grad-g8-ocean-a1",
+          "Color2": "grad-g8-ocean-a1-transparent"
+        },
+        "HorizontalGradient": {
+          "Color1": "grad-hor-left",
+          "Color2": "grad-hor-right"
+        },
+        "VerticalGradient": {
+          "Color1": "grad-ver-top",
+          "Color2": "grad-ver-bottom"
+        }
+      },
+      "Group9": {
+        "DiagonalGradient": {
+          "Color1": "grad-g9-grass-a2",
+          "Color2": "grad-g9-grass-a1-secondary",
+          "Color3": "grad-g9-grass-a2",
+          "Color4": "grad-g9-grass-bg",
+
+          "Fraction1": 0.0,
+          "Fraction2": 0.13,
+          "Fraction3": 0.3,
+          "Fraction4": 1.0
+        },
+        "RadialGradient": {
+          "Color1": "grad-g9-grass-a1",
+          "Color2": "grad-g9-grass-a1-transparent"
+        },
+        "HorizontalGradient": {
+          "Color1": "grad-hor-left",
+          "Color2": "grad-hor-right"
+        },
+        "VerticalGradient": {
+          "Color1": "grad-ver-top",
+          "Color2": "grad-ver-bottom"
+        }
+      }
     },
 
     "LicenseDialog": {
