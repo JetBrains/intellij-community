@@ -6,7 +6,9 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.internal.visitChildrenInVfsRecursively
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -113,6 +115,15 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
       project.workspaceModel.update("Add excluded dir $excludedUrl") {
         it.addEntity(ExcludedTestEntity(excludedUrl, NonPersistentEntitySource))
       }
+
+      // trigger WorkspaceFileIndex in the "before" event (IJPL-228634)
+      VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable({
+        object : AsyncFileListener.ChangeApplier {
+          override fun beforeVfsChange() {
+            WorkspaceFileIndex.getInstance(project).isIndexable(rootVirtualFile)
+          }
+        }
+      }, disposable)
 
       rootDir.newDirectoryPath("d1/excluded/d3")
       delay(1.seconds) // wait for fs events to arrive

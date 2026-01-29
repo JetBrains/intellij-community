@@ -541,12 +541,14 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
     File iParent = new File(ioRoot, "parent");
     assertTrue(iParent.mkdirs());
+    TimeoutUtil.sleep(1000); // wait for fsnotifier to pick up the change
     vRoot.refresh(true, true);
 
     TimeoutUtil.sleep(1000); // hope that now async refresh has found "parent" and is waiting for EDT to fire events
 
     File ioExcluded = new File(iParent, "excluded");
     assertTrue(ioExcluded.mkdirs());
+    TimeoutUtil.sleep(1000); // wait for fsnotifier to pick up the change
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // now events are fired
 
     assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioExcluded));
