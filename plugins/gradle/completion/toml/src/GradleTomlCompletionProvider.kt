@@ -17,13 +17,8 @@ import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
+import com.intellij.repository.search.completion.statistics.BT_COMPLETION_IS_AUTO_POPUP
 import com.intellij.util.ProcessingContext
-import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionService
-import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
-import org.jetbrains.idea.completion.statistics.BT_COMPLETION_IS_AUTO_POPUP
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 import org.toml.lang.psi.TomlLiteral
 
@@ -63,7 +58,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
               resultSet.addElement(
                 it,
                 it.groupId + ":" + it.artifactId,
-                GradleTomlCompletionPosition.MODULE,
+                GradleTomlLibraryCompletionPosition.MODULE,
                 parameters.isAutoPopup,
               )
             }
@@ -75,7 +70,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
         val request = DependencyGroupCompletionRequest(text, artifact, parameters.getCompletionContext())
         runBlockingCancellable {
           completionService.suggestGroupCompletions(request)
-            .collect { resultSet.addElement(it, it.result, GradleTomlCompletionPosition.GROUP, parameters.isAutoPopup) }
+            .collect { resultSet.addElement(it, it.result, GradleTomlLibraryCompletionPosition.GROUP, parameters.isAutoPopup) }
         }
       }
 
@@ -84,7 +79,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
         val request = DependencyArtifactCompletionRequest(group, text, parameters.getCompletionContext())
         runBlockingCancellable {
           completionService.suggestArtifactCompletions(request)
-            .collect { resultSet.addElement(it, it.result, GradleTomlCompletionPosition.ARTIFACT, parameters.isAutoPopup) }
+            .collect { resultSet.addElement(it, it.result, GradleTomlLibraryCompletionPosition.ARTIFACT, parameters.isAutoPopup) }
         }
       }
 
@@ -93,7 +88,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
         val request = DependencyVersionCompletionRequest(group, artifact, text, parameters.getCompletionContext())
         runBlockingCancellable {
           completionService.suggestVersionCompletions(request)
-            .collect { resultSet.addElement(it, it.result, GradleTomlCompletionPosition.VERSION, parameters.isAutoPopup) }
+            .collect { resultSet.addElement(it, it.result, GradleTomlLibraryCompletionPosition.VERSION, parameters.isAutoPopup) }
         }
       }
 
@@ -106,7 +101,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
               resultSet.addElement(
                 it,
                 it.groupId + ":" + it.artifactId + ":" + it.version,
-                GradleTomlCompletionPosition.GAV,
+                GradleTomlLibraryCompletionPosition.GAV,
                 parameters.isAutoPopup,
               )
             }
@@ -119,7 +114,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
   private fun CompletionResultSet.addElement(
     lookupObject: Any,
     lookupString: String,
-    pos: GradleTomlCompletionPosition,
+    pos: GradleTomlLibraryCompletionPosition,
     isAutoPopup: Boolean,
   ) {
     val lookupElement = LookupElementBuilder
@@ -128,7 +123,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
       .withInsertHandler(FullStringInsertHandler)
     lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
     lookupElement.putUserData(BT_COMPLETION_IS_AUTO_POPUP, isAutoPopup)
-    lookupElement.putUserData(GRADLE_TOML_COMPLETION_POSITION_KEY, pos)
+    lookupElement.putUserData(GRADLE_TOML_LIBRARY_COMPLETION_POSITION_KEY, pos)
 
     this.addElement(lookupElement)
   }

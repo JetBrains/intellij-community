@@ -63,31 +63,25 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
 
             // dependencies { implementation(...) { exclude("<caret>") } }
             positionElement.isDependencyArgument(exclude) -> {
-                val invokePosition = if (positionElement.argumentName == "group") {
-                    GradleScriptDependencyCompletionPosition.EXCLUDE_GROUP
-                } else {
-                    GradleScriptDependencyCompletionPosition.EXCLUDE_MODULE
-                }
                 suggestCoordinateCompletions(
                     result,
                     parameters,
                     positionElement.getGroupPrefix(),
                     positionElement.getExcludeArtifactPrefix(),
                     "",
-                    invokePosition
+                    positionElement.getExcludeInvokePosition()
                 )
             }
 
             // dependencies { implementation("juni<caret>", "juni", "") }
             positionElement.isPositionalOrNamedDependencyArgument() -> {
-                val invokePosition = determineInvokePosition(positionElement)
                 suggestCoordinateCompletions(
                     result,
                     parameters,
                     positionElement.getGroupPrefix(),
                     positionElement.getArtifactPrefix(),
                     positionElement.getVersionPrefix(),
-                    invokePosition
+                    positionElement.getPositionalOrNamedInvokePosition()
                 )
             }
 
@@ -97,15 +91,26 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         }
     }
 
-    private fun determineInvokePosition(positionElement: PsiElement): GradleScriptDependencyCompletionPosition {
-        val argumentName = positionElement.argumentName
+    private fun PsiElement.getExcludeInvokePosition(): GradleScriptDependencyCompletionPosition {
+        return when (argumentName) {
+            "group" -> GradleScriptDependencyCompletionPosition.EXCLUDE_GROUP
+            "module" -> GradleScriptDependencyCompletionPosition.EXCLUDE_MODULE
+            else -> {
+                when (argumentIndex) {
+                    0 -> GradleScriptDependencyCompletionPosition.EXCLUDE_GROUP
+                    1 -> GradleScriptDependencyCompletionPosition.EXCLUDE_MODULE
+                    else -> GradleScriptDependencyCompletionPosition.OTHER
+                }
+            }
+        }
+    }
+
+    private fun PsiElement.getPositionalOrNamedInvokePosition(): GradleScriptDependencyCompletionPosition {
         return when (argumentName) {
             "group" -> GradleScriptDependencyCompletionPosition.GROUP
             "name" -> GradleScriptDependencyCompletionPosition.ARTIFACT
             "version" -> GradleScriptDependencyCompletionPosition.VERSION
             else -> {
-                // Determine positional argument type
-                val argumentIndex = positionElement.argumentIndex
                 when (argumentIndex) {
                     0 -> GradleScriptDependencyCompletionPosition.GROUP
                     1 -> GradleScriptDependencyCompletionPosition.ARTIFACT

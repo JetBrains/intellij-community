@@ -10,18 +10,19 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
 import com.intellij.openapi.util.Key
+import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.completion.api.BaseDependencyCompletionResult
 import org.jetbrains.idea.completion.api.DependencyCompletionContributionSource
 
 private val IS_AUTO_POPUP = EventFields.Boolean(
-  "bt_deps_is_auto_popup",
+  "bt_dep_is_auto_popup",
   "True if the completion was triggered by auto popup, false if it was invoked manually"
 )
 
 private val CONTRIBUTION_SOURCE = EventFields.Enum<DependencyCompletionContributionSource>(
-  "bt_deps_contribution_source",
+  "bt_dep_contribution_source",
   "Source of the dependency completion contribution."
 )
 
@@ -36,12 +37,10 @@ internal class DependencyCompletionUsageCollectorExtension : FeatureUsageCollect
 
   override fun getEventId(): String = LookupUsageTracker.FINISHED_EVENT_ID
 
-  override fun getExtensionFields(): List<EventField<*>> {
-    return listOf(
-      IS_AUTO_POPUP,
-      CONTRIBUTION_SOURCE,
-    )
-  }
+  override fun getExtensionFields(): List<EventField<*>> = listOf(
+    IS_AUTO_POPUP,
+    CONTRIBUTION_SOURCE,
+  )
 }
 
 /**
@@ -49,21 +48,19 @@ internal class DependencyCompletionUsageCollectorExtension : FeatureUsageCollect
  * Any fields reported there should be declared in [DependencyCompletionUsageCollectorExtension].
  */
 internal class DependencyCompletionUsageDescriptor : LookupUsageDescriptor {
-  override fun getExtensionKey(): String = "bt_deps"
+  override fun getExtensionKey(): String = "bt_dep"
 
   override fun getAdditionalUsageData(lookupResultDescriptor: LookupResultDescriptor): List<EventPair<*>> {
     val selectedItem = lookupResultDescriptor.selectedItem ?: return emptyList()
-    //val isGradleDependency = selectedItem.getUserData(GRADLE_DEPENDENCY_COMPLETION) ?: return emptyList()
-    //if (!isGradleDependency) return emptyList()
-
     val result = mutableListOf<EventPair<*>>()
 
     selectedItem.getUserData(BT_COMPLETION_IS_AUTO_POPUP)?.let { isAutoPopup ->
       result.add(IS_AUTO_POPUP with isAutoPopup)
     }
 
-    val completionResult = selectedItem.`object` as? BaseDependencyCompletionResult ?: return result
-    result.add(CONTRIBUTION_SOURCE with completionResult.source)
+    selectedItem.`object`.asSafely<BaseDependencyCompletionResult>()?.let { completionResult ->
+      result.add(CONTRIBUTION_SOURCE with completionResult.source)
+    }
 
     return result
   }

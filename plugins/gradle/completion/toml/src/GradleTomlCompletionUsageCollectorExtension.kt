@@ -7,7 +7,6 @@ package com.intellij.gradle.toml
 import com.intellij.codeInsight.lookup.impl.LookupResultDescriptor
 import com.intellij.codeInsight.lookup.impl.LookupUsageDescriptor
 import com.intellij.codeInsight.lookup.impl.LookupUsageTracker
-import com.intellij.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -16,12 +15,15 @@ import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
-private val POSITION = EventFields.Enum<GradleTomlCompletionPosition>(
-  "gradle_toml_position",
-  "Position where the completion was invoked in the libraries table"
+private const val DESCRIPTOR_NAME = "gradle_toml_lib_position"
+
+private val POSITION = EventFields.Enum<GradleTomlLibraryCompletionPosition>(
+  DESCRIPTOR_NAME,
+  "Position where the library completion was invoked in the libraries table"
 )
 
-val GRADLE_TOML_COMPLETION_POSITION_KEY: Key<GradleTomlCompletionPosition> = Key.create("GRADLE_TOML_COMPLETION_POSITION")
+val GRADLE_TOML_LIBRARY_COMPLETION_POSITION_KEY: Key<GradleTomlLibraryCompletionPosition> =
+  Key.create("GRADLE_TOML_LIBRARY_COMPLETION_POSITION")
 
 /**
  * Declares additional fields that can be reported with the "finished" event of "completion" FUS group.
@@ -32,9 +34,7 @@ internal class GradleTomlCompletionUsageCollectorExtension : FeatureUsageCollect
 
   override fun getEventId(): String = LookupUsageTracker.FINISHED_EVENT_ID
 
-  override fun getExtensionFields(): List<EventField<*>> {
-    return listOf(POSITION)
-  }
+  override fun getExtensionFields(): List<EventField<*>> = listOf(POSITION)
 }
 
 /**
@@ -42,24 +42,18 @@ internal class GradleTomlCompletionUsageCollectorExtension : FeatureUsageCollect
  * Any fields reported there should be declared in [GradleTomlCompletionUsageCollectorExtension].
  */
 internal class GradleTomlCompletionUsageDescriptor : LookupUsageDescriptor {
-  override fun getExtensionKey(): String = "gradle_toml"
+  override fun getExtensionKey(): String = DESCRIPTOR_NAME
 
   override fun getAdditionalUsageData(lookupResultDescriptor: LookupResultDescriptor): List<EventPair<*>> {
-    val selectedItem = lookupResultDescriptor.selectedItem ?: return emptyList()
-    val isGradleDependency = selectedItem.getUserData(GRADLE_DEPENDENCY_COMPLETION) ?: return emptyList()
-    if (!isGradleDependency) return emptyList()
-
-    val result = mutableListOf<EventPair<*>>()
-
-    selectedItem.getUserData(GRADLE_TOML_COMPLETION_POSITION_KEY)?.let { invokePosition ->
-      result.add(POSITION with invokePosition)
+    lookupResultDescriptor.selectedItem?.getUserData(GRADLE_TOML_LIBRARY_COMPLETION_POSITION_KEY)?.let { invokePosition ->
+      return listOf(POSITION with invokePosition)
     }
 
-    return result
+    return emptyList()
   }
 }
 
-enum class GradleTomlCompletionPosition {
+enum class GradleTomlLibraryCompletionPosition {
   /**
    * Single GAV string: `junit = "juni<caret>"`
    */
@@ -71,17 +65,17 @@ enum class GradleTomlCompletionPosition {
   MODULE,
 
   /**
-   * Group parameter: `junit = { group = "juni<caret>"}`
+   * Group parameter: `junit = { group = "juni<caret>" }`
    */
   GROUP,
 
   /**
-   * Name parameter: `junit = { name = "juni<caret>"}`
+   * Name parameter: `junit = { name = "juni<caret>" }`
    */
   ARTIFACT,
 
   /**
-   * Version parameter: `junit = { version = "juni<caret>"}`
+   * Version parameter: `junit = { version = "5<caret>" }`
    */
   VERSION
 }

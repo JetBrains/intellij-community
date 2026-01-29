@@ -15,9 +15,11 @@ import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
+private const val DESCRIPTOR_NAME = "gradle_script_dep_position"
+
 private val POSITION = EventFields.Enum<GradleScriptDependencyCompletionPosition>(
-  "gradle_script_deps_position",
-  "Position where the completion was invoked in the dependencies block"
+  DESCRIPTOR_NAME,
+  "Position where the dependency completion was invoked in the dependencies block"
 )
 
 val GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION_KEY: Key<GradleScriptDependencyCompletionPosition> =
@@ -32,9 +34,7 @@ internal class GradleScriptDependencyCompletionUsageCollectorExtension : Feature
 
   override fun getEventId(): String = LookupUsageTracker.FINISHED_EVENT_ID
 
-  override fun getExtensionFields(): List<EventField<*>> {
-    return listOf(POSITION)
-  }
+  override fun getExtensionFields(): List<EventField<*>> = listOf(POSITION)
 }
 
 /**
@@ -42,20 +42,14 @@ internal class GradleScriptDependencyCompletionUsageCollectorExtension : Feature
  * Any fields reported there should be declared in [GradleScriptDependencyCompletionUsageCollectorExtension].
  */
 internal class GradleScriptDependencyCompletionUsageDescriptor : LookupUsageDescriptor {
-  override fun getExtensionKey(): String = "gradle_script_deps"
+  override fun getExtensionKey(): String = DESCRIPTOR_NAME
 
   override fun getAdditionalUsageData(lookupResultDescriptor: LookupResultDescriptor): List<EventPair<*>> {
-    val selectedItem = lookupResultDescriptor.selectedItem ?: return emptyList()
-    val isGradleDependency = selectedItem.getUserData(GRADLE_DEPENDENCY_COMPLETION) ?: return emptyList()
-    if (!isGradleDependency) return emptyList()
-
-    val result = mutableListOf<EventPair<*>>()
-
-    selectedItem.getUserData(GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION_KEY)?.let { invokePosition ->
-      result.add(POSITION with invokePosition)
+    lookupResultDescriptor.selectedItem?.getUserData(GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION_KEY)?.let { invokePosition ->
+      return listOf(POSITION with invokePosition)
     }
 
-    return result
+    return emptyList()
   }
 }
 
