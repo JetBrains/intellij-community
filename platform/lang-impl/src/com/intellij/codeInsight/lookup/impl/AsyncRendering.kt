@@ -14,6 +14,17 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 
+/**
+ * Async rendering of lookup elements.
+ *
+ * When a lookup element is added to lookup, its fast presentation ([LookupElement.renderElement]) is cached via [cachePresentation].
+ *
+ * When the lookup decides that a given lookup element is going be shown in viewport, it schedules slow rendering via [scheduleRendering].
+ *
+ * If the lookup removes a lookup element (e.g., because the limit of results is reached), the computation is canceled via [cancelRendering].
+ *
+ * Cached presentation can be retrieved via [getCachedPresentation].
+ */
 internal class AsyncRendering(
   private val coroutineScope: CoroutineScope,
   private val renderingCallback: () -> Unit,
