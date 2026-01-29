@@ -108,7 +108,6 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     eventMulticaster.addSelectionListener(object : SelectionListener {
       override fun selectionChanged(e: SelectionEvent) {
         alarm.cancelAllRequests()
-        cancelJob(e.editor)
         val editor = e.editor
         if (editor.project !== project) {
           return
@@ -131,7 +130,6 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
       override fun documentChanged(e: DocumentEvent) {
         alarm.cancelAllRequests()
         editorFactory.editors(e.document, project).forEach { editor ->
-          cancelJob(editor)
           updateHighlighted(project, editor, coroutineScope)
           highlightSelection(project, editor, executor)
         }
@@ -144,14 +142,12 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
         alarm.cancelAllRequests()
         val oldEditor = e.oldEditor
         if (oldEditor is TextEditor) {
-          cancelJob(oldEditor.editor)
           BraceHighlightingHandler.clearBraceHighlighters(oldEditor.editor)
         }
 
         val newEditor = e.newEditor
         if (newEditor is TextEditor) {
           val editor = newEditor.editor
-          cancelJob(editor)
           updateHighlighted(project, editor, coroutineScope)
           highlightSelection(project, editor, executor)
         }
@@ -203,7 +199,6 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
 
   private fun onCaretUpdate(editor: Editor, project: Project, executor: Executor, coroutineScope: CoroutineScope) {
     alarm.cancelAllRequests()
-    cancelJob(editor)
     if (editor.project == project) {
       // don't update braces in case of the active selection.
       if (!editor.selectionModel.hasSelection()) {
