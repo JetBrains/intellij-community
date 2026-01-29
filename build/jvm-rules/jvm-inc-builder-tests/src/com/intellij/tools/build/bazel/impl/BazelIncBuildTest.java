@@ -1,6 +1,5 @@
 package com.intellij.tools.build.bazel.impl;
 
-import com.google.devtools.build.runfiles.Runfiles;
 import com.intellij.tools.build.bazel.jvmIncBuilder.DataPaths;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.Utils;
 import org.jetbrains.annotations.NotNull;
@@ -8,14 +7,10 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import static org.junit.Assert.*;
-import static org.junit.Assert.assertTrue;
-
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +18,8 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+
+import static org.junit.Assert.*;
 
 /**
  Base class describing the main test scenario for incremental build tests
@@ -59,6 +56,8 @@ public abstract class BazelIncBuildTest {
   private static Path ourOutputBinRoot;
 
   public static final String BAZEL_EXECUTABLE = "jvm-inc-builder.bazel.executable";
+  public static final String BAZEL_TEST_WORKSPACE_FILE = "jvm-inc-builder.module.bazel.txt";
+  public static final String RULES_JVM_SNAPSHOT_FILE = "jvm-inc-builder.rules.jvm.zip";
 
   /*
     If disabled, the test project output directory will not be deleted. Useful for debugging
@@ -69,22 +68,22 @@ public abstract class BazelIncBuildTest {
   @BeforeClass
   public static void setupWorkDir() throws Exception {
     ourTestDataWorkRoot = Files.createTempDirectory("bazel-rules-jvm-tests");
-    String bazelRelativePath = System.getProperty("jvm-inc-builder.bazel.executable");
-    String moduleBazelTxtRelativePath = System.getProperty("jvm-inc-builder.module.bazel.txt");
-    String rulesJvmRelativePath = System.getProperty("jvm-inc-builder.rules.jvm.zip");
-    Runfiles.Preloaded preloaded = Runfiles.preload();
-    assertNotNull("jvm-inc-builder.bazel.executable system property is not set", bazelRelativePath);
-    assertNotNull("jvm-inc-builder.module.bazel.txt system property is not set", moduleBazelTxtRelativePath);
-    assertNotNull("jvm-inc-builder.rules.jvm.zip system property is not set", rulesJvmRelativePath);
-    ourBazelRunnerPath = preloaded.unmapped().rlocation(bazelRelativePath);
+    String bazelExePath = System.getProperty(BAZEL_EXECUTABLE);
+    String moduleBazelTxtPath = System.getProperty(BAZEL_TEST_WORKSPACE_FILE);
+    String rulesJvmPath = System.getProperty(RULES_JVM_SNAPSHOT_FILE);
 
+    assertNotNull(BAZEL_EXECUTABLE + " system property is not set", bazelExePath);
+    assertNotNull(BAZEL_TEST_WORKSPACE_FILE + " system property is not set", moduleBazelTxtPath);
+    assertNotNull(RULES_JVM_SNAPSHOT_FILE + " system property is not set", rulesJvmPath);
+
+    ourBazelRunnerPath = bazelExePath;
     assertNotNull("Path to bazel executable is expected to be set in \"" + BAZEL_EXECUTABLE + "\" system property", ourBazelRunnerPath);
     assertTrue("Specified path to bazel executable does not exist: \"" + ourBazelRunnerPath + "\"", Files.exists(Path.of(ourBazelRunnerPath)));
 
-    ourTestDataRoot = Paths.get(preloaded.unmapped().rlocation(moduleBazelTxtRelativePath)).getParent();
+    ourTestDataRoot = Paths.get(moduleBazelTxtPath).getParent();
     assertTrue("Test data root \"" + ourTestDataRoot + "\" does not exist", Files.isDirectory(ourTestDataRoot));
 
-    String rulesJvmZipPath = preloaded.unmapped().rlocation(rulesJvmRelativePath);
+    String rulesJvmZipPath = rulesJvmPath;
     assertTrue("Rules JVM zip file does not exist: " + rulesJvmZipPath, Files.exists(Path.of(rulesJvmZipPath)));
 
     Utils.deleteRecursively(ourTestDataWorkRoot);
@@ -243,7 +242,7 @@ public abstract class BazelIncBuildTest {
       @Override
       public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
         if (matches(file, toUpdateSuffix)) {
-          Files.copy(file, getTargetPath(file), StandardCopyOption.REPLACE_EXISTING);
+          copyFile(file, getTargetPath(file));
         }
         else if (matches(file, toRemoveSuffix)) {
           Files.delete(getTargetPath(file));
@@ -373,13 +372,16 @@ public abstract class BazelIncBuildTest {
     if (fName.endsWith(".bazel.txt")) {
       fName = fName.substring(0, fName.length() - ".txt".length());
     }
-    Path targetFile = targetDir.resolve(fName);
+    copyFile(file, targetDir.resolve(fName));
+  }
+
+  private static void copyFile(@NotNull Path sourceFile, Path targetFile) throws IOException {
     try {
-      Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+      Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
     }
     catch (NoSuchFileException e) {
-      Files.createDirectories(targetDir);
-      Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+      Files.createDirectories(targetFile.getParent());
+      Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
     }
   }
 
