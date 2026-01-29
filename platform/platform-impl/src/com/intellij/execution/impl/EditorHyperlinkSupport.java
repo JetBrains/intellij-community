@@ -78,7 +78,10 @@ public final class EditorHyperlinkSupport {
         MouseEvent initialMouseEvent = myInitialMouseEvent;
         myInitialMouseEvent = null;
         MouseEvent mouseEvent = e.getMouseEvent();
-        if (mouseEvent.getButton() == MouseEvent.BUTTON1 && !mouseEvent.isPopupTrigger()) {
+        if (mouseEvent.getButton() == MouseEvent.BUTTON1 &&
+            !mouseEvent.isPopupTrigger() &&
+            e.getCollapsedFoldRegion() == null) {
+
           if (initialMouseEvent != null && (mouseEvent.getComponent() != initialMouseEvent.getComponent() ||
                                        !mouseEvent.getPoint().equals(initialMouseEvent.getPoint()))) {
             return;
