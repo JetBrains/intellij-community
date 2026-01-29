@@ -172,7 +172,18 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     }
   }
 
-  fun interruptKernel(): Unit = interruptKernel.strictClick()
+  fun interruptKernel() {
+    waitFor("cell the first cell starting execution", timeout = 30.seconds) {
+      areTheCellStartExecuting(0)
+    }
+    // update swing
+    clickOnCell(FirstCell)
+
+    waitFor(timeout = 15.seconds, message = "Interrupt kernel button should present") {
+      interruptKernel.present()
+    }
+    interruptKernel.strictClick()
+  }
 
   fun deleteFirstCell() {
     notebookCellEditors.first().strictClick()
@@ -192,6 +203,14 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
            infos.all {
              it.getParent().x { contains(byAttribute("defaulticon", "greenCheckmark.svg")) }.present()
            }
+  }
+
+  fun areTheCellStartExecuting(cellNumber: Int): Boolean {
+    val infos = notebookCellExecutionInfos
+    return infos.isNotEmpty() &&
+           infos[cellNumber].getParent().x {
+             contains(byAttribute("defaulticon", "history.svg"))
+           }.notPresent()
   }
 
   fun clickOnCell(cellSelector: CellSelector) {
