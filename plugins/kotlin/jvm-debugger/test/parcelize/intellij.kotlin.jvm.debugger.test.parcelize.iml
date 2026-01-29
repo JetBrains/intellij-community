@@ -20,6 +20,5 @@
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
-    <orderEntry type="module" module-name="intellij.android.streaming" scope="TEST" />
   </component>
 </module>
