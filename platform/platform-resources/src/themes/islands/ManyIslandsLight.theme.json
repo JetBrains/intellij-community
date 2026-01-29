@@ -666,6 +666,8 @@
       "SearchField.background": "container-popup-bg"
     },
 
+    "NavBar.borderWidth": 0,
+
     "NewUiOnboarding.Dialog.background": "container-popup-bg",
 
     "Ide.Shadow": {
