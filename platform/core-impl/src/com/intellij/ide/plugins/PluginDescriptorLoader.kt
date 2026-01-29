@@ -970,6 +970,7 @@ private fun loadContentModuleDescriptors(
           readContext = loadingContext.readContext,
           xIncludeLoader = createXIncludeLoader(pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, dataLoader = dataLoader),
         )
+        //this is needed to be able to start the frontend process from sources without 'dev build'
         val data =
           if (isRunningFromSourcesWithoutDevBuild && jarFileForModule.isDirectory()) {
             Files.readAllBytes(jarFileForModule.resolve(subDescriptorFile))
