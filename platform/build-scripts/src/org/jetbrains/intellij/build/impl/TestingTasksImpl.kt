@@ -752,7 +752,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     context.compileModules(moduleNames = null, includingTestsInModules = null)
     val tests = spanBuilder("loading all tests annotated with @SkipInHeadlessEnvironment").use { loadTestsSkippedInHeadlessEnvironment() }
     for (it in tests) {
-      options.batchTestIncludes = it.getFirst()
+      options.isDedicatedTestRuntime = "class"
+      options.testPatterns = it.getFirst()
       options.mainModule = it.getSecond()
       runTests()
     }
@@ -779,7 +780,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
                 !testClass.isAnnotationPresent(ignoreAnnotation) &&
                 testClass.isAnnotationPresent(testAnnotation)
               }
-              .map { it.replace('.', '/') + ".class" }
               .map { Pair(it, module.name) }
           }
           else {
