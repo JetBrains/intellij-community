@@ -185,7 +185,7 @@ class AsyncDocumentFormattingSupportImpl(
       )
     }
 
-    @OptIn(DelicateCoroutinesApi::class) // CoroutineStart.ATOMIC
+    @OptIn(DelicateCoroutinesApi::class, ExperimentalStdlibApi::class) // CoroutineStart.ATOMIC
     suspend fun runAndAwaitTask() = coroutineScope {
       val task = checkNotNull(task)
       val taskDispatcher = if (isSync) {
