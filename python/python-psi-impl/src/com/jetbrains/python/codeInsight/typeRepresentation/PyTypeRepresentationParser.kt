@@ -18,6 +18,7 @@ package com.jetbrains.python.codeInsight.typeRepresentation
 import com.intellij.lang.SyntaxTreeBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.tree.IElementType
+import com.jetbrains.python.PYTHON_VERSION_ARG
 import com.jetbrains.python.PyElementTypes
 import com.jetbrains.python.PyParsingBundle
 import com.jetbrains.python.PyTokenTypes
@@ -252,7 +253,7 @@ class PyTypeRepresentationParser : PyParser() {
             }
             namedVarargMarker.done(PyTypeRepresentationElementTypes.NAMED_PARAMETER_TYPE)
           }
-          else {
+          else if (atToken(PyTokenTypes.IDENTIFIER)) {
             // Unnamed *args, just parse the type
             parseExpression()
           }
