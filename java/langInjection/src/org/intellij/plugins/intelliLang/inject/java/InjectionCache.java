@@ -9,8 +9,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.search.AnnotatedElementsSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch.Parameters;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -66,7 +66,7 @@ public final class InjectionCache {
     for (int cursor = 0; cursor < annoClasses.size(); cursor++) {
       Parameters parameters = new Parameters(annoClasses.get(cursor), usageScope, true,
                                              PsiClass.class, PsiParameter.class, PsiMethod.class, PsiRecordComponent.class);
-      AnnotatedElementsSearch.searchElements(parameters).forEach(element -> {
+      new AnnotatedElementsSearcher().execute(parameters, element -> {
         if (element instanceof PsiParameter psiParameter) {
           final PsiElement scope = psiParameter.getDeclarationScope();
           if (scope instanceof PsiMethod psiMethod) {
