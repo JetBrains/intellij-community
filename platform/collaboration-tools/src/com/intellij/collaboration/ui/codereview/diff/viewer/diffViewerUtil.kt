@@ -221,7 +221,7 @@ suspend fun DiffViewerBase.showCodeReview(editorRenderer: EditorCodeReviewRender
                 null,
                 { (side, lineIdx) -> viewer.transferLineToOnesideStrict(side, lineIdx).takeIf { it >= 0 } },
                 { lineIdx ->
-                  val (indices, side) = viewer.transferLineFromOneside(lineIdx)
+                  val (indices, side)  = viewer.transferLineFromOnesideStrict(lineIdx) ?: return@editorRenderer null
                   side.select(indices).takeIf { it >= 0 }?.let { side to it }
                 },
                 { line ->

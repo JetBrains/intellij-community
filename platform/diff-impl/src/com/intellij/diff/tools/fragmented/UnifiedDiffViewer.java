@@ -582,6 +582,17 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
    * This convertor returns 'good enough' position, even if exact matching is impossible
    */
   public @NotNull Pair<int[], @NotNull Side> transferLineFromOneside(int line) {
+    return Objects.requireNonNull(transferLineFromOneside(line, false));
+  }
+
+  /*
+   * This convertor returns position strictly. Returns null if exact matching is not possible
+   */
+  public @Nullable Pair<int[], @NotNull Side> transferLineFromOnesideStrict(int line) {
+    return transferLineFromOneside(line, true);
+  }
+
+  private @Nullable Pair<int[], @NotNull Side> transferLineFromOneside(int line, boolean strictConversion) {
     int[] lines = new int[2];
 
     ChangedBlockData blockData = myModel.getData();
@@ -599,6 +610,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     lines[1] = lineConvertor2.convert(line);
 
     if (lines[0] == -1 && lines[1] == -1) {
+      if(strictConversion) return null;
       lines[0] = lineConvertor1.convertApproximate(line);
       lines[1] = lineConvertor2.convertApproximate(line);
     }

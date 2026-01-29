@@ -841,6 +841,7 @@ c:com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 - scrollToLine(com.intellij.diff.util.Side,I):V
 - transferLineFromOneside(I):com.intellij.openapi.util.Pair
 - transferLineFromOneside(com.intellij.diff.util.Side,I):I
+- transferLineFromOnesideStrict(I):com.intellij.openapi.util.Pair
 - transferLineFromOnesideStrict(com.intellij.diff.util.Side,I):I
 - transferLineToOneside(com.intellij.diff.util.Side,I):I
 - transferLineToOnesideStrict(com.intellij.diff.util.Side,I):I
