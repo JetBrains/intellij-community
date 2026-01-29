@@ -10,7 +10,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
-import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.client.ClientKind
@@ -28,7 +27,6 @@ import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.UnnamedConfigurable
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
@@ -382,11 +380,11 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .bindSelected(optionsProvider::mouseReporting)
         }
         row {
-          checkBox(ApplicationBundle.message("advanced.setting.terminal.escape.moves.focus.to.editor"))
-            .bindSelected(
-              getter = { AdvancedSettings.getBoolean("terminal.escape.moves.focus.to.editor") },
-              setter = { AdvancedSettings.setBoolean("terminal.escape.moves.focus.to.editor", it) },
-            )
+          actionShortcutComboboxWithEnabledCheckbox(
+            labelText = message("settings.move.focus.to.editor.with"),
+            presets = listOf(ESCAPE_SHORTCUT_PRESET),
+            actionId = "Terminal.SwitchFocusToEditor"
+          )
         }
         row {
           checkBox(message("settings.copy.to.clipboard.on.selection"))
@@ -774,6 +772,10 @@ private val TAB_SHORTCUT_PRESET = ShortcutPreset(
 private val ENTER_SHORTCUT_PRESET = ShortcutPreset(
   KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null),
   "Enter"
+)
+private val ESCAPE_SHORTCUT_PRESET = ShortcutPreset(
+  KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), null),
+  "Escape"
 )
 private fun getCtrlSpacePreset(project: Project): ShortcutPreset {
   return ShortcutPreset(
