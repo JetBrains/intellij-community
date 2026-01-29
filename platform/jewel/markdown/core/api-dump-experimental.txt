@@ -101,6 +101,7 @@
 - sf:$stable:I
 - equals(java.lang.Object):Z
 - getContent():java.lang.String
+- f:getLanguage():java.lang.String
 - f:getMimeType-VwCp3SY():java.lang.String
 - hashCode():I
 *f:org.jetbrains.jewel.markdown.MarkdownBlock$CodeBlock$IndentedCodeBlock

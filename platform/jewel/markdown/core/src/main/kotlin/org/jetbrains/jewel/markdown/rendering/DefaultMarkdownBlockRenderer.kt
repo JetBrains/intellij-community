@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.onFirstVisible
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
@@ -51,6 +52,7 @@ import org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.foundation.util.JewelLogger
+import org.jetbrains.jewel.foundation.util.myLogger
 import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.BlockQuote
@@ -76,6 +78,7 @@ import org.jetbrains.jewel.ui.component.HorizontallyScrollableContainer
 import org.jetbrains.jewel.ui.component.Text
 
 private const val DISABLED_CODE_ALPHA = .5f
+private val MIME_TYPE_REGEX = "^\\w+/.+$".toRegex()
 
 /**
  * Default implementation of [MarkdownBlockRenderer] that uses the provided styling, extensions, and inline renderer to
@@ -600,7 +603,7 @@ public open class DefaultMarkdownBlockRenderer(
         enabled: Boolean,
         modifier: Modifier,
     ) {
-        val mimeType = block.mimeType ?: MimeType.Known.UNKNOWN
+        val language = block.language.orEmpty()
         MaybeScrollingContainer(
             isScrollable = styling.scrollsHorizontally,
             modifier
@@ -612,7 +615,7 @@ public open class DefaultMarkdownBlockRenderer(
             Column(Modifier.padding(styling.padding)) {
                 if (styling.infoPosition.verticalAlignment == Alignment.Top) {
                     FencedBlockInfo(
-                        mimeType.displayName(),
+                        language,
                         styling.infoPosition.horizontalAlignment
                             ?: error("No horizontal alignment for position ${styling.infoPosition.name}"),
                         styling.infoTextStyle,
@@ -620,11 +623,18 @@ public open class DefaultMarkdownBlockRenderer(
                     )
                 }
 
-                RenderCodeWithMimeType(block, mimeType, styling, enabled)
+                if (MIME_TYPE_REGEX.matches(language)) {
+                    val mimeType = MimeType.Known.fromMimeTypeString(language)
+                    // Enabled is always true as the container handles the disabled alpha
+                    // Passing the value down would duplicate the alpha, which would produce a 0.25f opacity
+                    RenderCodeWithMimeType(block, mimeType, styling, true)
+                } else {
+                    RenderCodeWithLanguage(block, styling, enabled)
+                }
 
                 if (styling.infoPosition.verticalAlignment == Alignment.Bottom) {
                     FencedBlockInfo(
-                        mimeType.displayName(),
+                        language,
                         styling.infoPosition.horizontalAlignment
                             ?: error("No horizontal alignment for position ${styling.infoPosition.name}"),
                         styling.infoTextStyle,
@@ -635,6 +645,12 @@ public open class DefaultMarkdownBlockRenderer(
         }
     }
 
+    @Deprecated(
+        message =
+            "This class function is not scalable as it relies on a pre-resolved MimeType object. " +
+                "This prevents automatic support for languages not explicitly defined in the MimeType system" +
+                "(e.g., from TextMate bundles)."
+    )
     @Composable
     internal open fun RenderCodeWithMimeType(
         block: FencedCodeBlock,
@@ -645,6 +661,30 @@ public open class DefaultMarkdownBlockRenderer(
         val content = block.content
         val highlighter = LocalCodeHighlighter.current
         val highlightedCode by highlighter.highlight(content, mimeType).collectAsState(AnnotatedString(content))
+        Text(
+            text = highlightedCode,
+            style = styling.editorTextStyle,
+            modifier =
+                Modifier.onFirstVisible {
+                        this@DefaultMarkdownBlockRenderer.myLogger()
+                            .warn("Rendering code block with using deprecated MimeType class.")
+                    }
+                    .focusProperties { canFocus = false }
+                    .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true)
+                    .thenIf(!enabled) { alpha(.5f) },
+        )
+    }
+
+    @Composable
+    internal open fun RenderCodeWithLanguage(
+        block: FencedCodeBlock,
+        styling: MarkdownStyling.Code.Fenced,
+        enabled: Boolean,
+    ) {
+        val content = block.content
+        val highlighter = LocalCodeHighlighter.current
+        val highlightedCode by
+            highlighter.highlight(content, block.language.orEmpty()).collectAsState(AnnotatedString(content))
         Text(
             text = highlightedCode,
             style = styling.editorTextStyle,
@@ -843,3 +883,55 @@ private fun getImages(input: WithInlineMarkdown): List<InlineMarkdown.Image> = b
     }
     collectImagesRecursively(input.inlineContent)
 }
+
+@Deprecated(
+    message =
+        "The MimeType class is deprecated in favor of using the code block info strings (e.g., \"kt\", \"python\"). " +
+            "This class creates an unnecessary layer of abstraction and requires manual maintenance " +
+            "to support new languages. Use the new `highlight(code, language)` function " +
+            "to handle language resolution automatically."
+)
+private fun MimeType.Known.fromMimeTypeString(mimeType: String): MimeType =
+    when (mimeType) {
+        "text/x-java-source",
+        "application/x-java",
+        "text/x-java" -> JAVA
+
+        "application/kotlin-source",
+        "text/x-kotlin",
+        "text/x-kotlin-source" -> KOTLIN
+
+        "application/xml" -> XML
+        "application/json",
+        "application/vnd.api+json",
+        "application/hal+json",
+        "application/ld+json" -> JSON
+
+        "image/svg+xml" -> XML
+        "text/x-python",
+        "application/x-python-script" -> PYTHON
+
+        "text/dart",
+        "text/x-dart",
+        "application/dart",
+        "application/x-dart" -> DART
+
+        "application/javascript",
+        "application/x-javascript",
+        "text/ecmascript",
+        "application/ecmascript",
+        "application/x-ecmascript" -> JAVASCRIPT
+
+        "application/typescript",
+        "application/x-typescript" -> TYPESCRIPT
+        "text/x-rust",
+        "application/x-rust" -> RUST
+
+        "text/x-sksl" -> AGSL
+        "application/yaml",
+        "text/x-yaml",
+        "application/x-yaml" -> YAML
+        "application/x-patch" -> PATCH
+
+        else -> UNKNOWN
+    }
