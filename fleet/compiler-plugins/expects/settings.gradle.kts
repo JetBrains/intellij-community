@@ -2,7 +2,7 @@ rootProject.name = "expects-compiler-plugin"
 
 pluginManagement {
   // the compiler plugin will be built by this Kotlin compiler
-  val KOTLIN_VERSION = "2.3.10-RC"
+  val KOTLIN_VERSION = "2.3.20-RC2"
 
   plugins {
     kotlin("jvm") version KOTLIN_VERSION
@@ -20,6 +20,7 @@ pluginManagement {
   }
   repositories {
     gradlePluginPortal()
+    maven("https://packages.jetbrains.team/maven/p/kt/dev/")
     if ("SNAPSHOT" in KOTLIN_VERSION || "dev" in KOTLIN_VERSION) {
       maven("https://packages.jetbrains.team/maven/p/kt/bootstrap")
       mavenLocal()
