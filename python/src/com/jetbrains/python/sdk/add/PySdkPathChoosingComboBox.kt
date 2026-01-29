@@ -26,9 +26,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBoxWithWidePopup
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.TextComponentAccessor
-import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.AnimatedIcon
@@ -39,8 +36,6 @@ import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.findPreferredVirtualEnvBaseSdk
-import com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor
-import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.target.createDetectedSdk
 import com.jetbrains.python.ui.targetPathEditor.ManualPathEntryDialog
 import org.jetbrains.annotations.ApiStatus
@@ -212,21 +207,6 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(
       is NewPySdkComboBoxItem -> title
       is ExistingPySdkComboBoxItem -> sdk.homePath.orEmpty()
     }
-  }
-}
-
-@ApiStatus.Internal
-fun validateSdkComboBox(field: PySdkPathChoosingComboBox, @NlsContexts.Button defaultButtonName: String): ValidationInfo? {
-  return when (val sdk = field.selectedSdkIfExists) {
-    null -> ValidationInfo(PySdkBundle.message("python.sdk.field.is.empty"), field)
-    is PySdkToInstall -> {
-      val message = sdk.getInstallationWarning(defaultButtonName)
-      ValidationInfo(message).asWarning().withOKEnabled()
-    }
-    is PyDetectedSdk -> {
-      if (SystemInfo.isMac) MacPythonSdkFlavor.checkDetectedPython(sdk) else null
-    }
-    else -> null
   }
 }
 

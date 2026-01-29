@@ -29,8 +29,6 @@ interface PyAddSdkView {
   @RequiresEdt
   fun getOrCreateSdk(): Sdk?
 
-  fun onSelected(): Unit = Unit
-
   /**
    * The [component] *might* return the new [Component] after [next] or
    * [previous].

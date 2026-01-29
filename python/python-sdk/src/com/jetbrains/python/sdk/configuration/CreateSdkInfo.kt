@@ -10,7 +10,6 @@ import com.jetbrains.python.errorProcessing.PyResult
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
-typealias CheckExistence = Boolean
 typealias CheckToml = Boolean
 typealias EnvExists = Boolean
 
