@@ -236,7 +236,7 @@ private fun defineClass(
         throw EvaluateException("Unable to find $name class bytes in idea-rt.jar: $ideaRtPath")
       }
       try {
-        ClassLoadingUtils.defineClass(name, stream.readAllBytes(), evaluationContext, evaluationContext.debugProcess, classLoader)
+        ClassLoadingUtils.defineClass(name, stream.readAllBytes(), evaluationContext, classLoader)
       }
       catch (e: EvaluateException) {
         throw ClassDefineTrialException(listOf(e))

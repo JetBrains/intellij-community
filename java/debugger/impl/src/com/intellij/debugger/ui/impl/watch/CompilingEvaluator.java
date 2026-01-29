@@ -95,7 +95,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
           if (useMagicAccessorImpl) {
             bytes = changeSuperToMagicAccessor(bytes);
           }
-          ClassLoadingUtils.defineClass(cls.getClassName(), bytes, context, process, classLoader);
+          ClassLoadingUtils.defineClass(cls.getClassName(), bytes, context, classLoader);
         }
       }
     }

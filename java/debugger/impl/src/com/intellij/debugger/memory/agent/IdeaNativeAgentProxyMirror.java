@@ -399,7 +399,7 @@ public class IdeaNativeAgentProxyMirror {
     byte[] bytes = readUtilityClass();
     evaluationContext.setAutoLoadClasses(true);
     ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(evaluationContext, debugProcess);
-    ClassLoadingUtils.defineClass(PROXY_CLASS_NAME, bytes, evaluationContext, debugProcess, classLoader);
+    ClassLoadingUtils.defineClass(PROXY_CLASS_NAME, bytes, evaluationContext, classLoader);
 
     try {
       ClassType systemClassType = (ClassType)debugProcess.findClass(evaluationContext, "java.lang.System", null);
