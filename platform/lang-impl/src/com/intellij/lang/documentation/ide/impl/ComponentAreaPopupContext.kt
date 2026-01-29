@@ -221,6 +221,10 @@ internal class ComponentAreaPopupContext(
 
 
     override suspend fun updatePopup(popup: AbstractPopup, resized: Boolean, popupUpdateEvent: PopupUpdateEvent) {
+      if (myComponentReference.get()?.isShowing != true) {
+        popup.cancel()
+        return
+      }
       if (!resized) {
         resizePopup(popup, popupUpdateEvent)
         yield()
