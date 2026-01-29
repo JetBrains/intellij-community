@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.configuration
+package com.jetbrains.python.uv.sdk.configuration
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
@@ -14,6 +14,11 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.baseDir
+import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.EnvCheckerResult
+import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtension
+import com.jetbrains.python.sdk.configuration.findEnvOrNull
+import com.jetbrains.python.sdk.configuration.prepareSdkCreator
 import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.pyvenvContains
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService

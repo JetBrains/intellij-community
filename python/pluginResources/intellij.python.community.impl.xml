@@ -965,20 +965,20 @@
     <runConfigurationEditorExtension implementation="com.jetbrains.python.run.PyRunConfigurationTargetOptions"/>
 
     <projectSdkConfigurationExtension
-      implementation="com.jetbrains.python.sdk.configuration.PyRequirementsTxtOrSetupPySdkConfiguration"
+      implementation="com.jetbrains.python.venv.sdk.configuration.PyRequirementsTxtOrSetupPySdkConfiguration"
       id="requirementsTxtOrSetupPy" order="before uv"/>
     <projectSdkConfigurationExtension
-      implementation="com.jetbrains.python.sdk.configuration.PyEnvironmentYmlSdkConfiguration"
+      implementation="com.jetbrains.python.conda.sdk.configuration.PyEnvironmentYmlSdkConfiguration"
       id="environmentYml"/>
-    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyPipfileSdkConfiguration"
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.pipenv.sdk.configuration.PyPipfileSdkConfiguration"
                                       id="pipfile" order="before requirementsTxtOrSetupPy"/>
-    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyPoetrySdkConfiguration"
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.poetry.sdk.configuration.PyPoetrySdkConfiguration"
                                       id="poetry"/>"/>
-    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyHatchSdkConfiguration"
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.hatch.sdk.configuration.PyHatchSdkConfiguration"
                                       id="hatch" order="after poetry"/>
-    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyUvSdkConfiguration"
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.uv.sdk.configuration.PyUvSdkConfiguration"
                                       id="uv" order="before venv"/>
-    <projectSdkConfigurationExtension implementation="com.jetbrains.python.sdk.configuration.PyVenvSdkConfiguration"
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.venv.sdk.configuration.PyVenvSdkConfiguration"
                                       id="venv" order="last"/>
 
   </extensions>

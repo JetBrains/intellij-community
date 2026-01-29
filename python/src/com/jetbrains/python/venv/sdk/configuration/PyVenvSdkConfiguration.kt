@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.configuration
+package com.jetbrains.python.venv.sdk.configuration
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
@@ -12,6 +12,7 @@ import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
@@ -58,7 +59,7 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
   private suspend fun setupExistingVenv(module: Module, venvsInModule: List<PythonBinary>): PyResult<Sdk> {
     val pythonBinary = withContext(Dispatchers.IO) {
       getVirtualEnv(venvsInModule)?.refreshAndFindVirtualFile()
-    } ?: return PyResult.failure(MessageError("Can't find venv for the module"))
+    } ?: return PyResult.failure(MessageError(PyBundle.message("sdk.cannot.find.venv.for.module")))
 
     val pyDetectedSdk = PyDetectedSdk(pythonBinary.toString())
     val sdk = pyDetectedSdk.setupAssociated(

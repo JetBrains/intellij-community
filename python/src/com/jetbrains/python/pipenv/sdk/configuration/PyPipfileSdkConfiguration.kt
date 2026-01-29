@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.configuration
+package com.jetbrains.python.pipenv.sdk.configuration
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
@@ -18,6 +18,7 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.baseDir
+import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.PipEnvResult
 import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.impl.PySdkBundle
