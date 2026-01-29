@@ -58,7 +58,10 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -306,11 +309,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
   public static boolean canBeExtractedWithoutExplicitType(PsiExpression expr) {
     if (PsiUtil.isAvailable(JavaFeature.LVTI, expr)) {
-      PsiType type = getNormalizedType(expr);
+      PsiType type = GenericsUtil.getVariableTypeByExpressionType(expr.getType());
       if (type != null && !PsiTypes.nullType().equals(type) && PsiTypesUtil.isDenotableType(type, expr)) {
         PsiExpression copy =
           (PsiExpression)(type instanceof PsiDisjunctionType ? expr.copy() : LambdaUtil.copyWithExpectedType(expr, type));
-        if (type.equals(getNormalizedType(copy))) {
+        if (type.equals(GenericsUtil.getVariableTypeByExpressionType(copy.getType()))) {
           return true;
         }
       }
@@ -425,28 +428,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         yield new IntroduceVariableResult.Error(error.message(), false);
       }
     };
-  }
-
-  private static @Nullable PsiType getNormalizedType(PsiExpression expr) {
-    return normalizeType(expr.getType());
-  }
-
-  @Contract("null -> null")
-  private static PsiType normalizeType(PsiType type) {
-    if (type instanceof PsiClassType classType) {
-      PsiClass psiClass = classType.resolve();
-      if (psiClass instanceof PsiAnonymousClass anonymousClass) {
-        return anonymousClass.getBaseClassType();
-      }
-      if (psiClass != null && classType.hasNonTrivialParameters()) {
-        PsiType[] parameters = ContainerUtil.map2Array(classType.getParameters(), PsiType.class, t -> normalizeType(t));
-        return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, parameters);
-      }
-    }
-    if (type instanceof PsiCapturedWildcardType capturedWildcardType) {
-      return capturedWildcardType.getWildcard();
-    }
-    return type;
   }
 
   public static @Nullable PsiElement getAnchor(PsiElement place) {
@@ -774,7 +755,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     private String getChainCallExtractor() {
       if (myHasWriteAccess || myOccurrences.isEmpty()) return null;
-      PsiExpression expression = myOccurrences.get(0);
+      PsiExpression expression = myOccurrences.getFirst();
       // The whole lambda body selected
       if (myOccurrences.size() == 1 && expression.getParent() instanceof PsiLambdaExpression) return null;
       PsiElement parent = PsiTreeUtil.findCommonParent(myOccurrences);
@@ -839,7 +820,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     private void generateScopeBasedChoices(PsiExpression expr,
                                            LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap) {
       // This comparator can correctly compare only elements that represent a single ancestor chain
-      // i.e. for two compared elements a and b either a is ancestor of b or vice versa
+      // i.e., for two compared elements a and b either a is ancestor of b or vice versa
       Comparator<PsiElement> treeOrder = (e1, e2) -> {
         if (PsiTreeUtil.isAncestor(e1, e2, true)) return 1;
         if (PsiTreeUtil.isAncestor(e2, e1, true)) return -1;

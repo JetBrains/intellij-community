@@ -380,6 +380,19 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     });
   }
   
+  public void testVarWithCapture2() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+      JavaRefactoringSettings instance = JavaRefactoringSettings.getInstance();
+      instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE = true;
+      try {
+        doTest(null);
+      }
+      finally {
+        instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE = false;
+      }
+    });
+  }
+  
   public void testSplitMutuallyExclusiveIf() { doTestReplaceChoice("Replace all 0 occurrences"); }
   
   public void testDontSplitNotMutuallyExclusiveIf() { doTestReplaceChoice("Replace all 0 occurrences"); }
