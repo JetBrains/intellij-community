@@ -6,6 +6,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern
@@ -111,7 +112,7 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
         visitElement(expression)
         val handler = getHandler(expression)
         getHandler(expression).filter =
-            if (handler is SubstitutionHandler) NodeFilter { it is PsiElement } // accept all
+            if (handler is SubstitutionHandler) NodeFilter { it is KtElement && it !is PsiFileSystemItem } // match all except files
             else ReferenceExpressionFilter
     }
 
