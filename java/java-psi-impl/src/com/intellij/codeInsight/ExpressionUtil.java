@@ -77,7 +77,7 @@ public final class ExpressionUtil {
    * @return true if this type of switch selector is a type of enhanced switch selector; 
    * false if it's a classic (Java 7) switch selector type.
    */
-  private static boolean isEnhancedSelectorType(@NotNull PsiType type) {
+  public static boolean isEnhancedSelectorType(@NotNull PsiType type) {
     PsiPrimitiveType unboxedType = PsiPrimitiveType.getOptionallyUnboxedType(type);
     if (unboxedType != null &&
         (unboxedType.equals(PsiTypes.booleanType()) ||

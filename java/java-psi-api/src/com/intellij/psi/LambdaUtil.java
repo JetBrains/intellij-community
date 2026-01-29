@@ -1271,7 +1271,7 @@ public final class LambdaUtil {
   public static @Nullable String createLambdaParameterListWithFormalTypes(PsiType functionalInterfaceType,
                                                                           PsiLambdaExpression lambdaExpression,
                                                                           boolean checkApplicability) {
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(normalizeFunctionalType(functionalInterfaceType));
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final StringBuilder buf = new StringBuilder();
     buf.append("(");
     final PsiMethod interfaceMethod = getFunctionalInterfaceMethod(functionalInterfaceType);

@@ -960,25 +960,28 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     if (body != null) {
       PsiStatement[] statements = body.getStatements();
       //16.2.9 (for statements) and 16.1.6 (for expressions)
-      boolean needToCreateDefault = ExpressionUtil.isEnhancedSwitch(statement);
-      PsiType exprType = expr == null ? null : expr.getType();
+      //don't use switch selector to determine it
+      boolean needToCreateDefault = statement instanceof PsiSwitchExpression;
       for (PsiStatement aStatement : statements) {
         ProgressManager.checkCanceled();
         if (!(aStatement instanceof PsiSwitchLabelStatementBase)) continue;
         PsiSwitchLabelStatementBase labelStatement = (PsiSwitchLabelStatementBase)aStatement;
-        if (labelStatement.isDefaultCase()) {
+        if (labelStatement.isDefaultCase() || labelStatement.getGuardExpression() != null) {
           needToCreateDefault = true;
         }
         PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
         if (!needToCreateDefault && labelElementList != null) {
           for (PsiCaseLabelElement element : labelElementList.getElements()) {
             if (element instanceof PsiDefaultCaseLabelElement ||
-                exprType != null && JavaPsiPatternUtil.isUnconditionalForType(element, exprType)) {
+                element instanceof PsiPattern ||
+                ExpressionUtil.isNullLiteral(element) ||
+                element instanceof PsiExpression && isEnhancedCaseType(((PsiExpression)element).getType())) {
               needToCreateDefault = true;
               break;
             }
           }
         }
+
         Instruction instruction = new ConditionalGoToInstruction(0, expr);
         myCurrentFlow.addInstruction(instruction);
         addElementOffsetLater(aStatement, true);
@@ -993,6 +996,19 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     finishElement(statement);
+  }
+
+  /**
+   * Checks if the given type is suitable for enhanced switch case labels.
+   * This method shouldn't trigger selector type check
+   *
+   * @param type the type to check
+   * @return true if the type is suitable for enhanced switch case labels, false otherwise
+   */
+  private boolean isEnhancedCaseType(@Nullable PsiType type) {
+    if (type == null) return false;
+    if (PsiPrimitiveType.getUnboxedType(type) != null) return true;
+    return ExpressionUtil.isEnhancedSelectorType(type);
   }
 
   @Override

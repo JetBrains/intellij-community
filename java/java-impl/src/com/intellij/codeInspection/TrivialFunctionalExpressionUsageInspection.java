@@ -90,7 +90,7 @@ public final class TrivialFunctionalExpressionUsageInspection extends AbstractBa
       final PsiElement callParent = call.getParent();
 
       if (!(body instanceof PsiCodeBlock)) {
-        return callParent instanceof PsiStatement || callParent instanceof PsiLocalVariable || expression.isValueCompatible(expression.getFunctionalInterfaceType());
+        return callParent instanceof PsiStatement || callParent instanceof PsiLocalVariable || expression.isValueCompatible();
       }
 
       if (callParent instanceof PsiReturnStatement) {
@@ -99,7 +99,7 @@ public final class TrivialFunctionalExpressionUsageInspection extends AbstractBa
 
       PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
       if (statements.length == 1) {
-        return statements[0] instanceof PsiReturnStatement && expression.isValueCompatible(expression.getFunctionalInterfaceType());
+        return statements[0] instanceof PsiReturnStatement && expression.isValueCompatible();
       }
 
       final PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements((PsiCodeBlock)body);
