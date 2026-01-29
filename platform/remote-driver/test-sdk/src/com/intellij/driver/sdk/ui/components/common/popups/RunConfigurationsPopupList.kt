@@ -15,7 +15,8 @@ import javax.swing.JList
 import kotlin.time.Duration.Companion.seconds
 
 fun IdeaFrameUI.runConfigurationsPopup(f: PopupUiComponent.() -> Unit = {}) {
-  withRetries("Single popup is present", 2, onError = {mainToolbar.runWidget.click()}) {
+  withRetries("Single popup is present", 2, onError = {keyboard { escape() }}) {
+    mainToolbar.runWidget.click()
     popup().waitFound(2.seconds)
   }.apply(f)
   if (popup().present()) {
