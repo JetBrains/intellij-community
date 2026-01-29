@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.terminal
 
-import com.intellij.execution.vmOptions.VMOptionKind
-import com.intellij.execution.vmOptions.VMOptionVariant
 import com.intellij.execution.vmOptions.VMOptionsService
+import com.intellij.java.terminal.JavaShellCommandUtils.CLASSPATH_ARGUMENT_NAME
+import com.intellij.java.terminal.JavaShellCommandUtils.UIOptionInfo
+import com.intellij.java.terminal.JavaShellCommandUtils.addClassPathOption
+import com.intellij.java.terminal.JavaShellCommandUtils.addOptionsFromData
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.terminal.completion.spec.ShellCommandParserOptions
 import com.intellij.terminal.completion.spec.ShellCommandSpec
@@ -38,6 +40,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
     }
 
     val errorStreamName: @Nls String = JavaTerminalBundle.message("error.stream.name")
+
     description(JavaTerminalBundle.message("java.command.terminal.description"))
     option("-?", "-help", "-h") {
       exclusiveOn(listOf("--help"))
@@ -50,22 +53,19 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       }
       description(JavaTerminalBundle.message("java.command.terminal.jar.option.description"))
     }
+
     option("-version") {
       exclusiveOn(listOf("--version"))
       description(JavaTerminalBundle.message("java.command.terminal.version.option.description", errorStreamName))
     }
-    option("-classpath", "-cp") {
-      exclusiveOn(listOf("--class-path"))
-      description(JavaTerminalBundle.message("java.command.terminal.classpath.option.description"))
-      argument {
-        suggestions(JavaShellCommandUtils.classpathSuggestionsGenerator())
-        displayName(CLASSPATH_ARGUMENT_NAME)
-      }
-    }
+
     option("-showversion") {
       exclusiveOn(listOf("--show-version"))
       description(JavaTerminalBundle.message("java.command.terminal.show.version.option.description", errorStreamName))
     }
+
+    addClassPathOption()
+
     argument {
       displayName(MAIN_CLASS_ARGUMENT_NAME)
       suggestions(ShellDataGenerators.fileSuggestionsGenerator())
@@ -78,29 +78,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       if (path == null) return@withContext null
       optionsService.getOrComputeOptionsForJdk(path).get()
     } ?: optionsService.getStandardOptions()
-    jdkOptionsData.options
-      .filter { (it.kind == VMOptionKind.Standard || it.kind == VMOptionKind.Product) && (it.variant != VMOptionVariant.XX)}
-      .toList()
-      .forEach {
-      val optionName = it.optionName
-      val presentableName = "${it.variant.prefix()}$optionName"
-      option(presentableName) {
-        val optionDescription = it.doc
-        if (optionDescription == null) return@option
-        description(optionDescription)
-
-        val info = OPTION_UI_INFO_MAP[presentableName] ?: DEFAULT_UI_OPTION_INSTANCE
-        repeatTimes(info.repeatTimes)
-        info.separator?.let { separator(it) }
-        val argumentName = info.argumentName
-        if (argumentName != null) {
-          argument {
-            if (info.isArgumentOptional) optional()
-            displayName(argumentName)
-          }
-        }
-      }
-    }
+    addOptionsFromData(jdkOptionsData, OPTION_UI_INFO_MAP)
   }
 
   private fun ShellChildOptionsContext.addOptionsFromJava11() {
@@ -166,7 +144,6 @@ private const val MAIN_CLASS_ARGUMENT_NAME: @NlsSafe String = "mainclass"
 private const val JAR_FILE_ARGUMENT_NAME: @NlsSafe String = "jar file"
 private const val CLASS_GC_GNI_ARGUMENT_NAME: @NlsSafe String = "class|gc|gni"
 private const val CLASS_GC_GNI_MODULE_ARGUMENT_NAME: @NlsSafe String = "$CLASS_GC_GNI_ARGUMENT_NAME|<module>"
-private val CLASSPATH_ARGUMENT_NAME: @NlsSafe String = "filepath[${JavaShellCommandUtils.getClassPathSeparator()}filepath]"
 
 private val OPTION_UI_INFO_MAP = mapOf(
   "-Xms" to UIOptionInfo(separator = "", argumentName = SIZE_ARGUMENT_NAME),
@@ -196,6 +173,3 @@ private val OPTION_UI_INFO_MAP = mapOf(
   "-XX:" to UIOptionInfo(repeatTimes = 0),
   "--source" to UIOptionInfo(argumentName = "version")
  )
-
-private data class UIOptionInfo(val separator: String? = null, @NlsSafe val argumentName: String? = null, val repeatTimes: Int = 1, val isArgumentOptional: Boolean = false)
-private val DEFAULT_UI_OPTION_INSTANCE = UIOptionInfo()
