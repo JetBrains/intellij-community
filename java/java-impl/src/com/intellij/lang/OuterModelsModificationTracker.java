@@ -4,6 +4,7 @@ package com.intellij.lang;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -114,9 +115,12 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
         return;
       }
 
-      if (!file.isDirectory() &&
-          isIgnoredFileType(file.getFileType())) {
-        return;
+      if (!file.isDirectory()) {
+        // avoid reading file content, file name -> file type should be enough for a short circuit
+        var fileTypeByName = FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence());
+        if (isIgnoredFileType(fileTypeByName)) {
+          return;
+        }
       }
 
       incModificationCount();
