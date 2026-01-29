@@ -17,6 +17,7 @@
     <step key="settingsAndCustomization" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.SettingsAndCustomizationStep"/>
     <step key="mainMenu" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.MainMenuStep"/>
     <step key="projectWidget" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.ProjectWidgetStep"/>
+    <step key="gitWidget" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.GitWidgetStep"/>
     <step key="runWidget" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.RunWidgetStep"/>
     <step key="navigationBar" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.NavigationBarStep"/>
   </extensions>
