@@ -75,7 +75,8 @@ public class ReferencesPanel extends JPanel {
 
     for (VcsBookmarkRef bookmark : myBookmarks) {
       Icon icon = new BookmarkIcon(this, height, getBackground(), bookmark);
-      JBLabel label = createLabel(bookmark.getText(), icon);
+      String bookmarkText = bookmark.getText();
+      JBLabel label = createLabel(bookmarkText, icon, bookmarkText);
       label.setIconTextGap(JBUI.scale(2));
       addWrapped(label, firstLabel);
       if (firstLabel == null) firstLabel = label;
