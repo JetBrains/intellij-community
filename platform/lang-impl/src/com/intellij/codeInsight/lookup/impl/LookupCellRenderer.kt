@@ -240,17 +240,14 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     list: JList<out LookupElement>,
     item: LookupElement,
     index: Int,
-    isSelected: Boolean,
+    isSelectedInitial: Boolean,
     cellHasFocus: Boolean,
   ): Component {
     val separator = tryToCreateSeparator(item, index)
     if (separator != null) return separator
-    @Suppress("NAME_SHADOWING")
-    var isSelected = isSelected
-    val nonFocusedSelection = isSelected && lookup.lookupFocusDegree == LookupFocusDegree.SEMI_FOCUSED
-    if (!lookup.isFocused) {
-      isSelected = false
-    }
+
+    val nonFocusedSelection = isSelectedInitial && lookup.lookupFocusDegree == LookupFocusDegree.SEMI_FOCUSED
+    val isSelected = isSelectedInitial && lookup.isFocused
 
     this.isSelected = isSelected
     panel.selectionColor = when {
