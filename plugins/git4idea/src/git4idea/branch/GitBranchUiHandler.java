@@ -105,6 +105,15 @@ public interface GitBranchUiHandler {
                                                          @NotNull Collection<String> trackingBranches,
                                                          @NotNull Collection<GitRepository> repositories);
 
+  /**
+   * Shows confirmation dialog when trying to checkout a branch that is already checked out in another worktree.
+   *
+   * @param branchName    the name of the branch that is already checked out
+   * @param worktreePath  the path to the worktree where the branch is checked out
+   * @return true if user confirmed to proceed with checkout using --ignore-other-worktrees, false otherwise
+   */
+  boolean showBranchAlreadyCheckedOutInWorktreeDialog(@NotNull String branchName, @NotNull String worktreePath);
+
   enum DeleteRemoteBranchDecision {
     CANCEL,
     DELETE,

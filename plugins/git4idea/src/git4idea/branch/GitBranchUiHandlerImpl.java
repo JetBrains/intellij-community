@@ -205,6 +205,25 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
              : CANCEL;
   }
 
+  @Override
+  public boolean showBranchAlreadyCheckedOutInWorktreeDialog(@NotNull String branchName, @NotNull String worktreePath) {
+    AtomicBoolean confirmed = new AtomicBoolean();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      String title = GitBundle.message("checkout.operation.worktree.checkout.title");
+      String message = GitBundle.message("checkout.operation.worktree.checkout.message", branchName, worktreePath);
+      String proceedButton = GitBundle.message("checkout.operation.worktree.checkout.proceed");
+      confirmed.set(YES == DialogManager.showOkCancelDialog(
+        myProject,
+        message,
+        title,
+        proceedButton,
+        getCancelButtonText(),
+        Messages.getWarningIcon()
+      ));
+    });
+    return confirmed.get();
+  }
+
   private static @NotNull @NlsContexts.DialogTitle String unmergedFilesErrorTitle(@NotNull String operationName) {
     return GitBundle.message("branch.ui.handler.can.not.operation.name.because.of.unmerged.files", operationName);
   }
