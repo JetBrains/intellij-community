@@ -58,5 +58,7 @@
     <orderEntry type="module" module-name="intellij.libraries.mvstore" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
   </component>
 </module>

@@ -3,10 +3,12 @@ package com.intellij.gradle.completion.kotlin
 
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
+import com.intellij.repository.search.completion.api.DependencyPartCompletionResult
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.runInEdtAndWait
@@ -27,9 +29,9 @@ internal class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTe
   @ParameterizedTest
   @BaseGradleVersionSource(
     """
-            my-lib.module = "<caret>",
-            my-lib = { module = "<caret>"<comma> version = "1" }
-        """
+      my-lib.module = "<caret>",
+      my-lib = { module = "<caret>"<comma> version = "1" }
+    """
   )
   fun `test module completion`(gradleVersion: GradleVersion, completionEscaped: String) {
     val textBefore = libraries + completionEscaped.unescape()
@@ -37,8 +39,18 @@ internal class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTe
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
       override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> {
         return flowOf(
-          DependencyCompletionResult("org.example.p", "my-long-artifact-id", "2.7.0"),
-          DependencyCompletionResult("org.example.p", "my-long-artifact-id-2", "2.7.1"),
+          DependencyCompletionResult(
+            "org.example.p",
+            "my-long-artifact-id",
+            "2.7.0",
+            source = DependencyCompletionContributionSource.LOCAL
+          ),
+          DependencyCompletionResult(
+            "org.example.p",
+            "my-long-artifact-id-2",
+            "2.7.1",
+            source = DependencyCompletionContributionSource.LOCAL
+          ),
         )
       }
     }, testRootDisposable)
@@ -60,16 +72,19 @@ internal class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTe
   @ParameterizedTest
   @BaseGradleVersionSource(
     """
-            my-lib = { group = "<caret>" },
-            my-lib = { group = "<caret>"<comma> name = ""<comma> version = "1" }
-        """
+      my-lib = { group = "<caret>" },
+      my-lib = { group = "<caret>"<comma> name = ""<comma> version = "1" }
+    """
   )
   fun `test group completion`(gradleVersion: GradleVersion, completionEscaped: String) {
     val textBefore = libraries + completionEscaped.unescape()
     val textAfter = textBefore.replace("<caret>", "org.example.p")
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
-      override fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<String> {
-        return flowOf("org.example.p", "org.example.p2")
+      override fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyPartCompletionResult> {
+        return flowOf(
+          DependencyPartCompletionResult("org.example.p", source = DependencyCompletionContributionSource.LOCAL),
+          DependencyPartCompletionResult("org.example.p2", source = DependencyCompletionContributionSource.LOCAL)
+        )
       }
     }, testRootDisposable)
     test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
@@ -90,16 +105,19 @@ internal class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTe
   @ParameterizedTest
   @BaseGradleVersionSource(
     """
-            my-lib = { name = "<caret>" },
-            my-lib = { group = ""<comma> name = "<caret>"<comma> version = "1" }
-        """
+      my-lib = { name = "<caret>" },
+      my-lib = { group = ""<comma> name = "<caret>"<comma> version = "1" }
+    """
   )
   fun `test artifact completion`(gradleVersion: GradleVersion, completionEscaped: String) {
     val textBefore = libraries + completionEscaped.unescape()
     val textAfter = textBefore.replace("<caret>", "org.example.p")
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
-      override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<String> {
-        return flowOf("org.example.p", "org.example.p2")
+      override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyPartCompletionResult> {
+        return flowOf(
+          DependencyPartCompletionResult("org.example.p", source = DependencyCompletionContributionSource.LOCAL),
+          DependencyPartCompletionResult("org.example.p2", source = DependencyCompletionContributionSource.LOCAL)
+        )
       }
     }, testRootDisposable)
     test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
@@ -120,15 +138,18 @@ internal class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTe
   @ParameterizedTest
   @BaseGradleVersionSource(
     """
-            my-lib = { group = "g"<comma> name = "a"<comma> version = "<caret>" }
-        """
+      my-lib = { group = "g"<comma> name = "a"<comma> version = "<caret>" }
+    """
   )
   fun `test version completion`(gradleVersion: GradleVersion, completionEscaped: String) {
     val textBefore = libraries + completionEscaped.unescape()
     val textAfter = textBefore.replace("<caret>", "org.example.p")
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
-      override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<String> {
-        return flowOf("org.example.p", "org.example.p2")
+      override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyPartCompletionResult> {
+        return flowOf(
+          DependencyPartCompletionResult("org.example.p", source = DependencyCompletionContributionSource.LOCAL),
+          DependencyPartCompletionResult("org.example.p2", source = DependencyCompletionContributionSource.LOCAL)
+        )
       }
     }, testRootDisposable)
     test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
@@ -149,9 +170,9 @@ internal class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTe
   @ParameterizedTest
   @BaseGradleVersionSource(
     """
-            my-lib = "<caret>",
-            my-lib-module = "<caret>"
-        """
+      my-lib = "<caret>",
+      my-lib-module = "<caret>"
+    """
   )
   fun `test coordinates completion`(gradleVersion: GradleVersion, completionEscaped: String) {
     val textBefore = libraries + completionEscaped.unescape()
@@ -159,8 +180,18 @@ internal class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTe
     application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
       override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> {
         return flowOf(
-          DependencyCompletionResult("org.example.p", "my-long-artifact-id", "2.7.0"),
-          DependencyCompletionResult("org.example.p", "my-long-artifact-id-2", "2.7.1"),
+          DependencyCompletionResult(
+            "org.example.p",
+            "my-long-artifact-id",
+            "2.7.0",
+            source = DependencyCompletionContributionSource.LOCAL
+          ),
+          DependencyCompletionResult(
+            "org.example.p",
+            "my-long-artifact-id-2",
+            "2.7.1",
+            source = DependencyCompletionContributionSource.LOCAL
+          ),
         )
       }
     }, testRootDisposable)

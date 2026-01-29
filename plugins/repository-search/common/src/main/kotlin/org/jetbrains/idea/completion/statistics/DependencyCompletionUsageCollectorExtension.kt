@@ -1,0 +1,70 @@
+@file:ApiStatus.Experimental
+
+package org.jetbrains.idea.completion.statistics
+
+import com.intellij.codeInsight.lookup.impl.LookupResultDescriptor
+import com.intellij.codeInsight.lookup.impl.LookupUsageDescriptor
+import com.intellij.codeInsight.lookup.impl.LookupUsageTracker
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
+import com.intellij.openapi.util.Key
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.idea.completion.api.BaseDependencyCompletionResult
+import org.jetbrains.idea.completion.api.DependencyCompletionContributionSource
+
+private val IS_AUTO_POPUP = EventFields.Boolean(
+  "bt_deps_is_auto_popup",
+  "True if the completion was triggered by auto popup, false if it was invoked manually"
+)
+
+private val CONTRIBUTION_SOURCE = EventFields.Enum<DependencyCompletionContributionSource>(
+  "bt_deps_contribution_source",
+  "Source of the dependency completion contribution."
+)
+
+val BT_COMPLETION_IS_AUTO_POPUP: Key<Boolean> = Key.create("BT_COMPLETION_IS_AUTO_POPUP")
+
+/**
+ * Declares additional fields that can be reported with the "finished" event of "completion" FUS group.
+ * Version of [LookupUsageTracker.GROUP] should be incremented every time any field is changed there.
+ */
+internal class DependencyCompletionUsageCollectorExtension : FeatureUsageCollectorExtension {
+  override fun getGroupId(): @NonNls String = LookupUsageTracker.GROUP_ID
+
+  override fun getEventId(): String = LookupUsageTracker.FINISHED_EVENT_ID
+
+  override fun getExtensionFields(): List<EventField<*>> {
+    return listOf(
+      IS_AUTO_POPUP,
+      CONTRIBUTION_SOURCE,
+    )
+  }
+}
+
+/**
+ * Provides additional data for the "finished" event of "completion" FUS group.
+ * Any fields reported there should be declared in [DependencyCompletionUsageCollectorExtension].
+ */
+internal class DependencyCompletionUsageDescriptor : LookupUsageDescriptor {
+  override fun getExtensionKey(): String = "bt_deps"
+
+  override fun getAdditionalUsageData(lookupResultDescriptor: LookupResultDescriptor): List<EventPair<*>> {
+    val selectedItem = lookupResultDescriptor.selectedItem ?: return emptyList()
+    //val isGradleDependency = selectedItem.getUserData(GRADLE_DEPENDENCY_COMPLETION) ?: return emptyList()
+    //if (!isGradleDependency) return emptyList()
+
+    val result = mutableListOf<EventPair<*>>()
+
+    selectedItem.getUserData(BT_COMPLETION_IS_AUTO_POPUP)?.let { isAutoPopup ->
+      result.add(IS_AUTO_POPUP with isAutoPopup)
+    }
+
+    val completionResult = selectedItem.`object` as? BaseDependencyCompletionResult ?: return result
+    result.add(CONTRIBUTION_SOURCE with completionResult.source)
+
+    return result
+  }
+}

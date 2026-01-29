@@ -1,4 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+@file:ApiStatus.Experimental
+
 package com.intellij.gradle.completion
 
 import com.intellij.codeInsight.lookup.impl.LookupResultDescriptor
@@ -12,44 +15,31 @@ import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
-private val IS_AUTO_POPUP = EventFields.Boolean(
-  "gradle_deps_is_auto_popup",
-  "True if the completion was triggered by auto popup, false if it was invoked manually"
-)
-
-private val PROVIDER_TYPE = EventFields.Enum<DependenciesCompletionProviderType>(
-  "gradle_deps_provider_type",
-  "Type of the dependency completion provider"
-)
-
 private val INVOKE_POSITION = EventFields.Enum<DependenciesCompletionInvokePosition>(
   "gradle_deps_invoke_position",
   "Position where the completion was invoked in the dependencies block"
 )
 
-@ApiStatus.Internal
-val GRADLE_COMPLETION_IS_AUTO_POPUP: Key<Boolean> = Key.create("GRADLE_COMPLETION_IS_AUTO_POPUP")
-
-@ApiStatus.Internal
-val GRADLE_COMPLETION_PROVIDER_TYPE: Key<DependenciesCompletionProviderType> = Key.create("GRADLE_COMPLETION_PROVIDER_TYPE")
-
-@ApiStatus.Internal
 val GRADLE_COMPLETION_INVOKE_POSITION: Key<DependenciesCompletionInvokePosition> = Key.create("GRADLE_COMPLETION_INVOKE_POSITION")
 
+/**
+ * Declares additional fields that can be reported with the "finished" event of "completion" FUS group.
+ * Version of [LookupUsageTracker.GROUP] should be incremented every time any field is changed there.
+ */
 internal class GradleDependencyCompletionUsageCollectorExtension : FeatureUsageCollectorExtension {
   override fun getGroupId(): @NonNls String = LookupUsageTracker.GROUP_ID
 
   override fun getEventId(): String = LookupUsageTracker.FINISHED_EVENT_ID
 
   override fun getExtensionFields(): List<EventField<*>> {
-    return listOf(
-      IS_AUTO_POPUP,
-      PROVIDER_TYPE,
-      INVOKE_POSITION,
-    )
+    return listOf(INVOKE_POSITION)
   }
 }
 
+/**
+ * Provides additional data for the "finished" event of "completion" FUS group.
+ * Any fields reported there should be declared in [GradleDependencyCompletionUsageCollectorExtension].
+ */
 internal class GradleDependencyCompletionUsageDescriptor : LookupUsageDescriptor {
   override fun getExtensionKey(): String = "gradle_deps"
 
@@ -60,14 +50,6 @@ internal class GradleDependencyCompletionUsageDescriptor : LookupUsageDescriptor
 
     val result = mutableListOf<EventPair<*>>()
 
-    selectedItem.getUserData(GRADLE_COMPLETION_IS_AUTO_POPUP)?.let { isAutoPopup ->
-      result.add(IS_AUTO_POPUP with isAutoPopup)
-    }
-
-    selectedItem.getUserData(GRADLE_COMPLETION_PROVIDER_TYPE)?.let { providerType ->
-      result.add(PROVIDER_TYPE with providerType)
-    }
-
     selectedItem.getUserData(GRADLE_COMPLETION_INVOKE_POSITION)?.let { invokePosition ->
       result.add(INVOKE_POSITION with invokePosition)
     }
@@ -76,7 +58,6 @@ internal class GradleDependencyCompletionUsageDescriptor : LookupUsageDescriptor
   }
 }
 
-@ApiStatus.Internal
 enum class DependenciesCompletionInvokePosition {
   /**
    * Top-level in dependencies block: `dependencies { juni<caret> }`
@@ -132,9 +113,4 @@ enum class DependenciesCompletionInvokePosition {
    * Other argument position
    */
   OTHER
-}
-
-@ApiStatus.Internal
-enum class DependenciesCompletionProviderType {
-  LOCAL, SERVER, SERVER_CACHE
 }

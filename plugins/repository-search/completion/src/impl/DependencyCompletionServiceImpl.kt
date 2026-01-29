@@ -14,6 +14,15 @@ import com.intellij.repository.search.completion.util.logWarn
 import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
+import org.jetbrains.idea.completion.api.BaseDependencyCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionResult
+import org.jetbrains.idea.completion.api.DependencyCompletionService
+import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyPartCompletionResult
+import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
+import org.jetbrains.idea.completion.util.logWarn
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class DependencyCompletionServiceImpl : DependencyCompletionService {
@@ -24,15 +33,15 @@ internal class DependencyCompletionServiceImpl : DependencyCompletionService {
   override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> =
     parallelStream(contributors(request)) { it.search(request) }
 
-  override fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<String> =
+  override fun suggestGroupCompletions(request: DependencyGroupCompletionRequest): Flow<DependencyPartCompletionResult> =
     parallelStream(contributors(request)) { it.getGroups(request) }
       .distinctUntilChanged()
 
-  override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<String> =
+  override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyPartCompletionResult> =
     parallelStream(contributors(request)) { it.getArtifacts(request) }
       .distinctUntilChanged()
 
-  override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<String> =
+  override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyPartCompletionResult> =
     parallelStream(contributors(request)) { it.getVersions(request) }
       .distinctUntilChanged()
 

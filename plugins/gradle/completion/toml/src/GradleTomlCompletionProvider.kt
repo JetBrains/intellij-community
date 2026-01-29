@@ -53,7 +53,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
         val request = DependencyCompletionRequest(text, parameters.getCompletionContext())
         runBlockingCancellable {
           completionService.suggestCompletions(request)
-            .collect { resultSet.addElement(it.groupId + ":" + it.artifactId) }
+            .collect { resultSet.addElement(it, it.groupId + ":" + it.artifactId) }
         }
       }
 
@@ -62,7 +62,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
         val request = DependencyGroupCompletionRequest(text, artifact, parameters.getCompletionContext())
         runBlockingCancellable {
           completionService.suggestGroupCompletions(request)
-            .collect { resultSet.addElement(it) }
+            .collect { resultSet.addElement(it, it.result) }
         }
       }
 
@@ -71,7 +71,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
         val request = DependencyArtifactCompletionRequest(group, text, parameters.getCompletionContext())
         runBlockingCancellable {
           completionService.suggestArtifactCompletions(request)
-            .collect { resultSet.addElement(it) }
+            .collect { resultSet.addElement(it, it.result) }
         }
       }
 
@@ -80,7 +80,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
         val request = DependencyVersionCompletionRequest(group, artifact, text, parameters.getCompletionContext())
         runBlockingCancellable {
           completionService.suggestVersionCompletions(request)
-            .collect { resultSet.addElement(it) }
+            .collect { resultSet.addElement(it, it.result) }
         }
       }
 
@@ -89,15 +89,14 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
         val request = DependencyCompletionRequest(text, parameters.getCompletionContext())
         runBlockingCancellable {
           completionService.suggestCompletions(request)
-            .collect { resultSet.addElement(it.groupId + ":" + it.artifactId + ":" + it.version) }
+            .collect { resultSet.addElement(it, it.groupId + ":" + it.artifactId + ":" + it.version) }
         }
       }
 
     }
   }
 
-  private fun CompletionResultSet.addElement(lookupString: String) {
-    val lookupObject = "\"$lookupString\""
+  private fun CompletionResultSet.addElement(lookupObject: Any, lookupString: String) {
     val lookupElement = LookupElementBuilder
       .create(lookupObject, lookupString)
       .withPresentableText(lookupString)

@@ -20,6 +20,7 @@ import org.jetbrains.idea.completion.api.DependencyCompletionResult
 import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
 import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.idea.completion.api.*
 
 @ApiStatus.Internal
 class GradleDependencyCompletionContributor : DependencyCompletionContributor {
@@ -54,7 +55,9 @@ class GradleDependencyCompletionContributor : DependencyCompletionContributor {
         indexer.artifacts(eelDescriptor, group)
           .flatMap { artifact ->
             indexer.versions(eelDescriptor, group, artifact)
-              .map { version -> DependencyCompletionResult(group, artifact, version) }
+              .map { version ->
+                DependencyCompletionResult(group, artifact, version, source = DependencyCompletionContributionSource.LOCAL)
+              }
           }
       }.toSet()
     val matchesOnArtifact = indexer.artifacts(eelDescriptor)
@@ -63,7 +66,9 @@ class GradleDependencyCompletionContributor : DependencyCompletionContributor {
         indexer.groups(eelDescriptor, artifact)
           .flatMap { group ->
             indexer.versions(eelDescriptor, group, artifact)
-              .map { version -> DependencyCompletionResult(group, artifact, version) }
+              .map { version ->
+                DependencyCompletionResult(group, artifact, version, source = DependencyCompletionContributionSource.LOCAL)
+              }
           }
       }.toSet()
     return (matchesOnGroup + matchesOnArtifact).toList()
@@ -85,31 +90,36 @@ class GradleDependencyCompletionContributor : DependencyCompletionContributor {
           .flatMap { artifact ->
             indexer.versions(eelDescriptor, group, artifact)
               .filter { it.contains(versionSubstring, ignoreCase = true) }
-              .map { version -> DependencyCompletionResult(group, artifact, version) }
+              .map { version ->
+                DependencyCompletionResult(group, artifact, version, source = DependencyCompletionContributionSource.LOCAL)
+              }
           }
       }
   }
 
-  override suspend fun getGroups(request: DependencyGroupCompletionRequest): List<String> {
+  override suspend fun getGroups(request: DependencyGroupCompletionRequest): List<DependencyPartCompletionResult> {
     val artifactFilter = request.artifact
     val eelDescriptor = request.context.eelDescriptor
     val indexer = service<GradleLocalRepositoryIndexer>()
-    return indexer.groups(eelDescriptor)
+    val results = indexer.groups(eelDescriptor)
       .filter { it.contains(request.groupPrefix, ignoreCase = true) }
       .filter { artifactFilter.isEmpty() || indexer.artifacts(eelDescriptor, it).contains(artifactFilter) }
+    return results.map { DependencyPartCompletionResult(it, source = DependencyCompletionContributionSource.LOCAL) }
   }
 
-  override suspend fun getArtifacts(request: DependencyArtifactCompletionRequest): List<String> {
+  override suspend fun getArtifacts(request: DependencyArtifactCompletionRequest): List<DependencyPartCompletionResult> {
     val eelDescriptor = request.context.eelDescriptor
     val indexer = service<GradleLocalRepositoryIndexer>()
-    return indexer.artifacts(eelDescriptor, request.group)
+    val results = indexer.artifacts(eelDescriptor, request.group)
       .filter { it.contains(request.artifactPrefix, ignoreCase = true) }
+    return results.map { DependencyPartCompletionResult(it, source = DependencyCompletionContributionSource.LOCAL) }
   }
 
-  override suspend fun getVersions(request: DependencyVersionCompletionRequest): List<String> {
+  override suspend fun getVersions(request: DependencyVersionCompletionRequest): List<DependencyPartCompletionResult> {
     val eelDescriptor = request.context.eelDescriptor
     val indexer = service<GradleLocalRepositoryIndexer>()
-    return indexer.versions(eelDescriptor, request.group, request.artifact)
+    val results = indexer.versions(eelDescriptor, request.group, request.artifact)
       .filter { it.contains(request.versionPrefix, ignoreCase = true) }
+    return results.map { DependencyPartCompletionResult(it, source = DependencyCompletionContributionSource.LOCAL) }
   }
 }

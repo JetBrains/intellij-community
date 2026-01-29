@@ -20,11 +20,14 @@ import com.intellij.testFramework.replaceService
 import com.intellij.util.application
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.ListAssert
 import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
 import org.jetbrains.idea.completion.api.DependencyCompletionContext
+import org.jetbrains.idea.completion.api.DependencyCompletionContributionSource
 import org.jetbrains.idea.completion.api.DependencyCompletionRequest
 import org.jetbrains.idea.completion.api.DependencyCompletionResult
 import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyPartCompletionResult
 import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -58,8 +61,8 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.search(request)
 
-    assertThat(results).containsExactlyInAnyOrder(
-      DependencyCompletionResult("group", "artifact", "version")
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
+      Triple("group", "artifact", "version")
     )
   }
 
@@ -87,10 +90,10 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.search(request)
 
-    assertThat(results).containsExactlyInAnyOrder(
-      DependencyCompletionResult("group", "artifact", "version"),
-      DependencyCompletionResult("group", "artifact", "version2"),
-      DependencyCompletionResult("group", "artifact", "version.3"),
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
+      Triple("group", "artifact", "version"),
+      Triple("group", "artifact", "version2"),
+      Triple("group", "artifact", "version.3"),
     )
   }
 
@@ -116,10 +119,10 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.search(request)
 
-    assertThat(results).containsExactlyInAnyOrder(
-      DependencyCompletionResult("group", "artifact", "version"),
-      DependencyCompletionResult("group", "artifactSuffix", "version2"),
-      DependencyCompletionResult("group", "artifact-suffix", "version"),
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
+      Triple("group", "artifact", "version"),
+      Triple("group", "artifactSuffix", "version2"),
+      Triple("group", "artifact-suffix", "version"),
     )
   }
 
@@ -140,9 +143,9 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.search(request)
 
-    assertThat(results).containsExactlyInAnyOrder(
-      DependencyCompletionResult("group", "artifact", "version"),
-      DependencyCompletionResult("group", "artifact", "version2"),
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
+      Triple("group", "artifact", "version"),
+      Triple("group", "artifact", "version2"),
     )
   }
 
@@ -167,9 +170,9 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.search(request)
 
-    assertThat(results).containsExactlyInAnyOrder(
-      DependencyCompletionResult("group", "artifact", "version"),
-      DependencyCompletionResult("group", "artifact", "version2"),
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
+      Triple("group", "artifact", "version"),
+      Triple("group", "artifact", "version2"),
     )
   }
 
@@ -195,10 +198,10 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.search(request)
 
-    assertThat(results).containsExactlyInAnyOrder(
-      DependencyCompletionResult("group", "artifact", "version"),
-      DependencyCompletionResult("group", "artifact", "version2"),
-      DependencyCompletionResult("prefix-group", "artifact", "version"),
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
+      Triple("group", "artifact", "version"),
+      Triple("group", "artifact", "version2"),
+      Triple("prefix-group", "artifact", "version"),
     )
   }
 
@@ -221,12 +224,12 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.search(request)
 
-    assertThat(results).containsExactlyInAnyOrder(
-      DependencyCompletionResult("group", "artifact", "version"),
-      DependencyCompletionResult("group", "artifact", "version2"),
-      DependencyCompletionResult("group", "artifact-suffix", "version"),
-      DependencyCompletionResult("other", "artifact", "version"),
-      DependencyCompletionResult("group", "prefix-artifact", "version"),
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
+      Triple("group", "artifact", "version"),
+      Triple("group", "artifact", "version2"),
+      Triple("group", "artifact-suffix", "version"),
+      Triple("other", "artifact", "version"),
+      Triple("group", "prefix-artifact", "version"),
     )
   }
 
@@ -255,8 +258,8 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.search(request)
 
-    assertThat(results).containsExactlyInAnyOrder(
-      DependencyCompletionResult("group", "artifact", "version")
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
+      Triple("group", "artifact", "version")
     )
   }
 
@@ -278,15 +281,15 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.search(request)
 
-    assertThat(results).containsExactly(
-      DependencyCompletionResult("a", "b", "2"),
-      DependencyCompletionResult("a", "b", "1"),
-      DependencyCompletionResult("a", "c", "2"),
-      DependencyCompletionResult("a", "c", "1"),
-      DependencyCompletionResult("b", "b", "2"),
-      DependencyCompletionResult("b", "b", "1"),
-      DependencyCompletionResult("b", "c", "2"),
-      DependencyCompletionResult("b", "c", "1"),
+    assertThat(results).containsLocalDependenciesExactly(
+      Triple("a", "b", "2"),
+      Triple("a", "b", "1"),
+      Triple("a", "c", "2"),
+      Triple("a", "c", "1"),
+      Triple("b", "b", "2"),
+      Triple("b", "b", "1"),
+      Triple("b", "c", "2"),
+      Triple("b", "c", "1"),
     )
   }
 
@@ -308,15 +311,15 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.search(request)
 
-    assertThat(results).containsExactly(
-      DependencyCompletionResult("group", "artifact", "2.1.0"),
-      DependencyCompletionResult("group", "artifact", "2.0.0"),
-      DependencyCompletionResult("group", "artifact", "1.1.1"),
-      DependencyCompletionResult("group", "artifact", "1.1.0"),
-      DependencyCompletionResult("group", "artifact", "1.1.0-SNAPSHOT"),
-      DependencyCompletionResult("group", "artifact", "1.0.1"),
-      DependencyCompletionResult("group", "artifact", "1.0"),
-      DependencyCompletionResult("group", "artifact", "0.1"),
+    assertThat(results).containsLocalDependenciesExactly(
+      Triple("group", "artifact", "2.1.0"),
+      Triple("group", "artifact", "2.0.0"),
+      Triple("group", "artifact", "1.1.1"),
+      Triple("group", "artifact", "1.1.0"),
+      Triple("group", "artifact", "1.1.0-SNAPSHOT"),
+      Triple("group", "artifact", "1.0.1"),
+      Triple("group", "artifact", "1.0"),
+      Triple("group", "artifact", "0.1"),
     )
   }
 
@@ -349,7 +352,7 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.search(request)
 
-    assertThat(results).containsExactly(DependencyCompletionResult("group", "artifact", "1.0.0"))
+    assertThat(results).containsLocalDependenciesExactly(Triple("group", "artifact", "1.0.0"))
   }
 
   @ParameterizedTest
@@ -371,10 +374,10 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.search(request)
 
-    assertThat(results).containsExactlyInAnyOrder(
-      DependencyCompletionResult("group", "pick-me", "version"),
-      DependencyCompletionResult("pick-me", "artifact", "version"),
-      DependencyCompletionResult("pick-me", "pick-me", "version"),
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
+      Triple("group", "pick-me", "version"),
+      Triple("pick-me", "artifact", "version"),
+      Triple("pick-me", "pick-me", "version"),
     )
   }
 
@@ -398,9 +401,9 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.search(request)
 
-    assertThat(results).containsExactlyInAnyOrder(
-      DependencyCompletionResult("group", "artifact", "version"),
-      DependencyCompletionResult("prefix-groupsuffix", "prefixartifact-suffix", "prefix.version-suffix"),
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
+      Triple("group", "artifact", "version"),
+      Triple("prefix-groupsuffix", "prefixartifact-suffix", "prefix.version-suffix"),
     )
   }
 
@@ -419,7 +422,7 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.getGroups(request)
 
-    assertThat(results).containsExactlyInAnyOrder("group")
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder("group")
   }
 
   @ParameterizedTest
@@ -442,7 +445,7 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.getGroups(request)
 
-    assertThat(results).containsExactlyInAnyOrder(
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
       "group",
       "prefix-group",
       "group-suffix"
@@ -468,7 +471,7 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.getGroups(request)
 
-    assertThat(results).containsExactlyInAnyOrder("group")
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder("group")
   }
 
   @ParameterizedTest
@@ -486,7 +489,7 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.getArtifacts(request)
 
-    assertThat(results).containsExactlyInAnyOrder("artifact")
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder("artifact")
   }
 
   @ParameterizedTest
@@ -509,7 +512,7 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.getArtifacts(request)
 
-    assertThat(results).containsExactlyInAnyOrder(
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
       "artifact",
       "prefix-artifact",
       "artifact-suffix"
@@ -535,7 +538,7 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.getArtifacts(request)
 
-    assertThat(results).containsExactlyInAnyOrder("artifact")
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder("artifact")
   }
 
   @ParameterizedTest
@@ -552,7 +555,7 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.getVersions(request)
 
-    assertThat(results).containsExactlyInAnyOrder("version")
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder("version")
   }
 
   @ParameterizedTest
@@ -573,7 +576,7 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.getVersions(request)
 
-    assertThat(results).containsExactlyInAnyOrder(
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder(
       "version",
       "version2",
       "version.3",
@@ -599,7 +602,7 @@ class GradleDependencyCompletionContributorTest {
     val contributor = GradleDependencyCompletionContributor()
     val results = contributor.getVersions(request)
 
-    assertThat(results).containsExactlyInAnyOrder("version")
+    assertThat(results).containsLocalDependenciesExactlyInAnyOrder("version")
   }
 
   private fun configureLocalIndex(vararg gav: String) {
@@ -608,6 +611,33 @@ class GradleDependencyCompletionContributorTest {
       GradleLocalRepositoryIndexerTestImpl(eelDescriptor, *gav),
       disposable
     )
+  }
+
+  private fun ListAssert<DependencyCompletionResult>.containsLocalDependenciesExactlyInAnyOrder(
+    vararg expected: Triple<String, String, String>,
+  ): ListAssert<DependencyCompletionResult> {
+    val expectedResults = expected.map { (groupId, artifactId, version) ->
+      DependencyCompletionResult(groupId, artifactId, version, source = DependencyCompletionContributionSource.LOCAL)
+    }.toTypedArray()
+    return containsExactlyInAnyOrder(*expectedResults)
+  }
+
+  private fun ListAssert<DependencyCompletionResult>.containsLocalDependenciesExactly(
+    vararg expected: Triple<String, String, String>,
+  ): ListAssert<DependencyCompletionResult> {
+    val expectedResults = expected.map { (groupId, artifactId, version) ->
+      DependencyCompletionResult(groupId, artifactId, version, source = DependencyCompletionContributionSource.LOCAL)
+    }.toTypedArray()
+    return containsExactly(*expectedResults)
+  }
+
+  private fun ListAssert<DependencyPartCompletionResult>.containsLocalDependenciesExactlyInAnyOrder(
+    vararg expected: String,
+  ): ListAssert<DependencyPartCompletionResult> {
+    val expectedResults = expected.map { part ->
+      DependencyPartCompletionResult(part, source = DependencyCompletionContributionSource.LOCAL)
+    }.toTypedArray()
+    return containsExactlyInAnyOrder(*expectedResults)
   }
 }
 

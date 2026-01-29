@@ -6,5 +6,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.repository.search.completion.api.DependencyCompletionService"
                         serviceImplementation="com.intellij.repository.search.completion.impl.DependencyCompletionServiceImpl"/>
+    <statistics.collectorExtension
+      implementation="com.intellij.repository.search.completion.statistics.DependencyCompletionUsageCollectorExtension"/>
+    <lookup.usageDetails implementation="com.intellij.repository.search.completion.statistics.DependencyCompletionUsageDescriptor"/>
   </extensions>
 </idea-plugin>

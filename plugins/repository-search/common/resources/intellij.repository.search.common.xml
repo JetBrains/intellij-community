@@ -1,13 +1,13 @@
 <idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.maven.model"/>
     <module name="intellij.libraries.ktor.client"/>
     <module name="intellij.libraries.kotlinx.io"/>
     <module name="intellij.libraries.kotlinx.coroutines.slf4j"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.idea.reposearch.provider"

@@ -15,6 +15,10 @@ jvm_library(
     "//platform/util/base/multiplatform",
     "//platform/extensions",
     "//platform/eel",
+    "//platform/external-system-api:externalSystem",
+    "//platform/analysis-api:analysis",
+    "//platform/statistics",
+    "//platform/lang-impl",
   ]
 )
 
@@ -31,6 +35,10 @@ jvm_library(
     "//platform/util/base/multiplatform:multiplatform_test_lib",
     "//platform/extensions:extensions_test_lib",
     "//platform/eel:eel_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.repository.search.completion` end

@@ -29,6 +29,13 @@ import com.intellij.repository.search.completion.api.DependencyVersionCompletion
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import kotlinx.coroutines.flow.flowOf
+import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionResult
+import org.jetbrains.idea.completion.api.DependencyCompletionService
+import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
+import org.jetbrains.idea.completion.statistics.BT_COMPLETION_IS_AUTO_POPUP
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 
 private val exclude = setOf(
@@ -137,15 +144,14 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
                 .collect { item ->
                     val lookupString = lookupStringProvider(item)
                     val lookupElement = LookupElementBuilder
-                        .create(lookupString, lookupString)
+                        .create(item, lookupString)
                         .withPresentableText(lookupString)
                         .withInsertHandler(insertHandler)
                     lookupElement.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
                     lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
 
                     // Store FUS metadata
-                    lookupElement.putUserData(GRADLE_COMPLETION_IS_AUTO_POPUP, parameters.isAutoPopup)
-                    // TODO lookupElement.putUserData(GRADLE_COMPLETION_PROVIDER_TYPE, DependenciesCompletionProviderType.SERVER)
+                    lookupElement.putUserData(BT_COMPLETION_IS_AUTO_POPUP, parameters.isAutoPopup)
                     lookupElement.putUserData(GRADLE_COMPLETION_INVOKE_POSITION, DependenciesCompletionInvokePosition.GAV)
 
                     resultSet.addElement(lookupElement)
@@ -199,15 +205,14 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
 
         runBlockingCancellable {
             itemFlow.collect { item ->
-                val lookupElement = LookupElementBuilder.create(item, item)
-                    .withPresentableText(item)
+                val lookupElement = LookupElementBuilder.create(item, item.result)
+                    .withPresentableText(item.result)
                     .withInsertHandler(FullStringInsertHandler)
                 lookupElement.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
                 lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
 
                 // Store FUS metadata
-                lookupElement.putUserData(GRADLE_COMPLETION_IS_AUTO_POPUP, parameters.isAutoPopup)
-                // TODO lookupElement.putUserData(GRADLE_COMPLETION_PROVIDER_TYPE, DependenciesCompletionProviderType.SERVER)
+                lookupElement.putUserData(BT_COMPLETION_IS_AUTO_POPUP, parameters.isAutoPopup)
                 lookupElement.putUserData(GRADLE_COMPLETION_INVOKE_POSITION, invokePosition)
 
                 result.addElement(lookupElement)
