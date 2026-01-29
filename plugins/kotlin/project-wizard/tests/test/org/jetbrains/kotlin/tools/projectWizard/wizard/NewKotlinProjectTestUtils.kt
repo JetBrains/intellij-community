@@ -16,7 +16,7 @@ interface NewKotlinProjectTestUtils {
     fun getTestFolderName(): String
 
     private fun getTestDataFolder(): File {
-        val testRoot = TestMetadataUtil.getTestRoot(GradleKotlinNewProjectWizardTest::class.java)
+        val testRoot = TestMetadataUtil.getTestRoot(MavenNewKotlinModuleTest::class.java)
         return File(testRoot, "$testDirectory/${getTestFolderName()}")
     }
 
