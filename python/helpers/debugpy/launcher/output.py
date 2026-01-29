@@ -3,6 +3,7 @@
 # for license information.
 
 import codecs
+import fcntl
 import os
 import threading
 
@@ -49,6 +50,16 @@ class CaptureOutput(object):
             else:
                 log.info("Using encoding {0!r} for {1}", encoding, category)
 
+            # Set stream to non-blocking mode to prevent worker thread from hanging
+            # when the IDE/adapter doesn't consume output fast enough
+            try:
+                fd = self._stream.fileno()
+                flags = fcntl.fcntl(fd, fcntl.F_GETFL)
+                fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+                log.info("Set {0} stream to non-blocking mode", category)
+            except Exception:
+                log.warning("Could not set {0} stream to non-blocking mode; tee may block", category)
+
         self._worker_thread = threading.Thread(target=self._worker, name=category)
         self._worker_thread.start()
 
@@ -65,11 +76,13 @@ class CaptureOutput(object):
             try:
                 s = os.read(self._fd, 0x1000)
             except Exception:
+                log.info("os.read() raised exception in {0} worker.", self.category)
                 break
             if not len(s):
                 break
             self._process_chunk(s)
 
+        log.info("Worker thread for {0} exiting.", self.category)
         # Flush any remaining data in the incremental decoder.
         self._process_chunk(b"", final=True)
 
