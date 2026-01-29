@@ -1,6 +1,6 @@
 package com.intellij.python.junit5Tests.env.pyproject
 
-import com.intellij.python.community.impl.venv.createVenv
+import com.intellij.python.venv.createVenv
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.pyproject.model.internal.pyProjectToml.walkFileSystemNoTomlContent

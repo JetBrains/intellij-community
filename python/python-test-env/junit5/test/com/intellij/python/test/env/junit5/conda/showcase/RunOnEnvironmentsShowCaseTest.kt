@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.test.env.junit5.conda.showcase
 
-import com.intellij.python.community.impl.venv.createVenv
+import com.intellij.python.venv.createVenv
 import com.intellij.python.junit5Tests.framework.env.BeforeRunOnEnvironmentInvocation
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath

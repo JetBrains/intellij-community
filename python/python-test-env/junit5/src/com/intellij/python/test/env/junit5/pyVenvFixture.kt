@@ -6,7 +6,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.community.impl.venv.createVenv
+import com.intellij.python.venv.createVenv
 import com.intellij.python.junit5Tests.framework.env.SdkFixture
 import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.testFramework.junit5.fixture.TestFixture

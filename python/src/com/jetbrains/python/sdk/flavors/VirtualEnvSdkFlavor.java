@@ -6,7 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.python.community.impl.venv.icons.PythonCommunityImplVenvIcons;
+import com.intellij.python.venv.icons.PythonVenvIcons;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.sdk.BasePySdkExtKt;
@@ -85,6 +85,6 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
 
   @Override
   public @NotNull Icon getIcon() {
-    return PythonCommunityImplVenvIcons.Virtualenv;
+    return PythonVenvIcons.VirtualEnv;
   }
 }

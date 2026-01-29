@@ -8,7 +8,6 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
-    <iconMapper mappingFile="PythonVenvIconMappings.json"/>
-    <python.common.toolToIconMapper implementation="com.intellij.python.community.impl.venv.PyReqToolIdToIconMapper"/>
+    <python.common.toolToIconMapper implementation="com.intellij.python.venv.PyReqToolIdToIconMapper"/>
   </extensions>
 </idea-plugin>

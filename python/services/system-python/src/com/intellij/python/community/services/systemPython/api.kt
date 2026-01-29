@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.community.impl.venv.createVenv
+import com.intellij.python.venv.createVenv
 import com.intellij.python.community.services.shared.PythonInfoWithUiComparator
 import com.intellij.python.community.services.shared.PythonWithUi
 import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo

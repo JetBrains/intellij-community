@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.common.tools.ToolId
-import com.intellij.python.community.impl.venv.PY_REQ_TOOL_ID
+import com.intellij.python.venv.PY_REQ_TOOL_ID
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult

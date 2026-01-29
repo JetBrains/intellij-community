@@ -70,7 +70,7 @@
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.python.community.services.shared" />
     <orderEntry type="module" module-name="intellij.python.community.impl.pipenv" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.venv" />
+    <orderEntry type="module" module-name="intellij.python.venv" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.python.pyproject" />
     <orderEntry type="module" module-name="intellij.python.hatch" />

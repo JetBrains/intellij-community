@@ -35,9 +35,9 @@ import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
 import com.intellij.python.community.impl.uv.common.UV_TOOL_ID
 import com.intellij.python.community.impl.uv.common.icons.PythonCommunityImplUVCommonIcons
-import com.intellij.python.community.impl.venv.icons.PythonCommunityImplVenvIcons
 import com.intellij.python.hatch.icons.PythonHatchIcons
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
+import com.intellij.python.venv.icons.PythonVenvIcons
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
@@ -167,7 +167,7 @@ enum class PythonSupportedEnvironmentManagers(
   val icon: Icon,
   val isFSSupported: (FileSystem<*>) -> Boolean = { (it as? FileSystem.Eel)?.eelApi == localEel },
 ) {
-  VIRTUALENV(VENV_TOOL_ID, "sdk.create.custom.virtualenv", PythonCommunityImplVenvIcons.Virtualenv, { true }),
+  VIRTUALENV(VENV_TOOL_ID, "sdk.create.custom.virtualenv", PythonVenvIcons.VirtualEnv, { true }),
   CONDA(CONDA_TOOL_ID, "sdk.create.custom.conda", PythonIcons.Python.Anaconda, { true }),
   POETRY(POETRY_TOOL_ID, "sdk.create.custom.poetry", PythonCommunityImplPoetryCommonIcons.Poetry),
   PIPENV(PIPENV_TOOL_ID, "sdk.create.custom.pipenv", PIPENV_ICON),

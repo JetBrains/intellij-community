@@ -2,7 +2,7 @@
 package com.jetbrains.python.sdk.add.v2.venv
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.community.impl.venv.createVenv
+import com.intellij.python.venv.createVenv
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.getOr

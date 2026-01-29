@@ -20,7 +20,7 @@
     <module name="intellij.libraries.kotlinx.io"/>
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.community.impl.installer"/>
-    <module name="intellij.python.community.impl.venv"/>
+    <module name="intellij.python.venv"/>
     <module name="intellij.python.community.services.systemPython"/>
     <module name="intellij.python.sdkConfigurator.common"/>
     <module name="intellij.python.processOutput"/>

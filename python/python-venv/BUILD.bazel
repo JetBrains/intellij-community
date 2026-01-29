@@ -1,24 +1,24 @@
-### auto-generated section `build intellij.python.community.impl.venv` start
+### auto-generated section `build intellij.python.venv` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
-  name = "community-impl-venv_resources",
+  name = "venv_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 resourcegroup(
-  name = "community-impl-venv_test_resources",
+  name = "venv_test_resources",
   srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
 jvm_library(
-  name = "community-impl-venv",
-  module_name = "intellij.python.community.impl.venv",
+  name = "venv",
+  module_name = "intellij.python.venv",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":community-impl-venv_resources"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":venv_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
@@ -36,13 +36,13 @@ jvm_library(
 )
 
 jvm_library(
-  name = "community-impl-venv_test_lib",
-  module_name = "intellij.python.community.impl.venv",
+  name = "venv_test_lib",
+  module_name = "intellij.python.venv",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":community-impl-venv_test_resources"],
+  resources = [":venv_test_resources"],
   runtime_deps = [
-    ":community-impl-venv",
+    ":venv",
     "//python/openapi:community_test_lib",
     "//python/python-exec-service:community-execService_test_lib",
     "//python/python-sdk:sdk_test_lib",
@@ -58,4 +58,4 @@ jvm_library(
     "//python/testFramework",
   ]
 )
-### auto-generated section `build intellij.python.community.impl.venv` end
+### auto-generated section `build intellij.python.venv` end
