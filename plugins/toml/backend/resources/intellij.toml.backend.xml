@@ -12,8 +12,6 @@
         <indexPatternBuilder implementation="org.toml.ide.todo.TomlTodoIndexPatternBuilder"/>
         <todoIndexer filetype="TOML" implementationClass="org.toml.ide.todo.TomlTodoIndexer"/>
 
-        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlAnnotator"/>
-
         <psi.referenceContributor language="TOML"
                                   implementation="org.toml.ide.resolve.TomlReferenceContributor"/>
 
