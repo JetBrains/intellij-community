@@ -22,6 +22,7 @@
     <module name="intellij.gradle.completion"/>
     <module name="intellij.gradle.toml"/>
     <module name="intellij.gradle.properties"/>
+    <module name="intellij.gradle.kotlin"/>
   </content>
 
   <dependencies>

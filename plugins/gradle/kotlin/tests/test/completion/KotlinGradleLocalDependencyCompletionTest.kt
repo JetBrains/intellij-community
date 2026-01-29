@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle.scripting.k2.completion
+package com.intellij.gradle.kotlin.tests.completion
 
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerTestImpl
@@ -9,8 +9,7 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.scripting.k2.K2GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.junit.jupiter.params.ParameterizedTest
 
 class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() {
@@ -26,7 +25,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test no suggestions`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -44,7 +43,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test version suggestions after artifact`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -68,7 +67,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test version suggestions after a colon`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -92,7 +91,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test version suggestions`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -115,7 +114,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test version suggestions after a dot`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -138,7 +137,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test version auto completion`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -164,7 +163,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test custom configuration`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -188,7 +187,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test custom string configuration`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -212,7 +211,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test suggestions after org`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -239,7 +238,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test extra artifact suggestions`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -265,7 +264,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test artifact suggestions caret after group`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -292,7 +291,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test artifact suggestions caret after group colon`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -319,7 +318,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test artifact suggestions caret in artifact`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -347,7 +346,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test caret in empty string`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -377,7 +376,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test single part being artifact`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -398,7 +397,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test single part being group`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -420,7 +419,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test single part being artifact or group`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -444,7 +443,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test each part uses contains`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -464,7 +463,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test no suggestions outside dependencies block`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -481,7 +480,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test no suggestions in comments`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -499,7 +498,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test whitespace inside string is tolerated`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -519,7 +518,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test caret after a dash`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -539,7 +538,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test named dependencyNotation argument`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -561,7 +560,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     // NAMED ARGUMENTS NOTATION
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test named arguments empty group with no name and no version`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -586,7 +585,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test named arguments partial group with no name and no version`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -609,7 +608,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test named arguments empty group with name and empty version`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -631,7 +630,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test named arguments partial group with name and empty version`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -657,7 +656,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test named arguments empty group with empty name and empty version`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -682,7 +681,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test named arguments empty group with name and no version`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -703,7 +702,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test named arguments empty version with group and name`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -725,7 +724,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test named arguments empty name with group and empty version`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -748,7 +747,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test named arguments partial name with group and empty version`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -771,7 +770,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test out-of-order named arguments empty group with name and no version`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -792,7 +791,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test out-of-order named arguments empty group with name and empty version`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -813,7 +812,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test positional arguments empty group with name and empty version`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -834,7 +833,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test positional arguments empty name with group and no version`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -857,7 +856,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test positional arguments empty name with group and empty version`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -880,7 +879,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test positional arguments partial name with group and no version`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(
@@ -904,7 +903,7 @@ class KotlinGradleLocalDependencyCompletionTest : K2GradleCodeInsightTestCase() 
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
+    @BaseGradleVersionSource
     fun `test positional arguments empty version with group and name`(gradleVersion: GradleVersion) {
         test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
             configureLocalIndex(

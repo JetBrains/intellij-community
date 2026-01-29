@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeInsight.gradle.completion
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.kotlin.tests.completion
 
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.gradle.kotlin.completion.KotlinGradleScriptCompletionContributor
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.TestDataPath
@@ -18,19 +19,24 @@ import org.jetbrains.idea.completion.api.DependencyCompletionRequest
 import org.jetbrains.idea.completion.api.DependencyCompletionResult
 import org.jetbrains.idea.completion.api.DependencyCompletionService
 import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
-import org.jetbrains.kotlin.gradle.scripting.shared.completion.KotlinGradleScriptCompletionContributor
 import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
+import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 
+@UseK2PluginMode
+@GradleProjectTestApplication
+@AssertKotlinPluginMode
 @TestRoot("idea/tests/testData/")
-@TestDataPath("\$CONTENT_ROOT")
-@TestMetadata("../../../idea/tests/testData/gradle/completion/buildGradleKts/dependencies")
-abstract class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompletionTest() {
+@TestDataPath("/")
+@TestMetadata("testData/gradle/completion/buildGradleKts/dependencies")
+internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompletionTest() {
 
     private val testCompletionService = object : DependencyCompletionService {
         override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> {

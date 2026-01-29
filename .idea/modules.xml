@@ -473,6 +473,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/intellij.gradle.java.tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/intellij.gradle.java.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/toml/intellij.gradle.java.toml.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/toml/intellij.gradle.java.toml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/jps-plugin/intellij.gradle.jps.iml" filepath="$PROJECT_DIR$/plugins/gradle/jps-plugin/intellij.gradle.jps.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/kotlin/intellij.gradle.kotlin.iml" filepath="$PROJECT_DIR$/plugins/gradle/kotlin/intellij.gradle.kotlin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/kotlin/tests/intellij.gradle.kotlin.tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/kotlin/tests/intellij.gradle.kotlin.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/native/intellij.gradle.native.iml" filepath="$PROJECT_DIR$/plugins/gradle/native/intellij.gradle.native.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/native/tooling/intellij.gradle.native.tooling.iml" filepath="$PROJECT_DIR$/plugins/gradle/native/tooling/intellij.gradle.native.tooling.iml" />

@@ -1009,6 +1009,7 @@ plugins/gradle/java/plugin
 plugins/gradle/java/properties
 plugins/gradle/java/toml
 plugins/gradle/jps-plugin
+plugins/gradle/kotlin
 plugins/gradle/kotlin/tests
 plugins/gradle/native
 plugins/gradle/native/tooling

@@ -16,7 +16,6 @@ jvm_library(
     "@lib//:kotlin-test",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/gradle/gradle-java",
-    "//plugins/repository-search/common",
   ]
 )
 
@@ -109,11 +108,6 @@ jvm_library(
     "//java/java-runtime:rt",
     "//platform/execution",
     "//plugins/junit",
-    "//plugins/repository-search/common",
-    "//plugins/repository-search/common:common_test_lib",
-    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
-    "//platform/util/text-matching",
-    "//platform/util/text-matching:text-matching_test_lib",
   ],
   exports = ["@lib//:kotlin-gradle-plugin-idea"],
   runtime_deps = [":tests.shared"]

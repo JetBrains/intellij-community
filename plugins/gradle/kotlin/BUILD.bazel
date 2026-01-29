@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.gradle.kotlin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "kotlin_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin",
+  module_name = "intellij.gradle.kotlin",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/analysis-api:analysis",
+    "//plugins/repository-search/common",
+    "//plugins/gradle/completion",
+    "//plugins/gradle",
+    "//platform/analysis-impl",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/workspace/jps",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "//java/java-psi-api:psi",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+  ]
+)
+### auto-generated section `build intellij.gradle.kotlin` end

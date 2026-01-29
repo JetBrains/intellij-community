@@ -15,10 +15,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <internalFileTemplate name="Kotlin Script Gradle"/>
-    <completion.contributor language="kotlin"
-                            id="KotlinGradleScriptCompletionContributor"
-                            order="first, before KotlinCompletionContributor, before liveTemplates"
-                            implementationClass="org.jetbrains.kotlin.gradle.scripting.shared.completion.KotlinGradleScriptCompletionContributor"/>
   </extensions>
 
   <actions resource-bundle="messages.KotlinGradleScriptingBundle">

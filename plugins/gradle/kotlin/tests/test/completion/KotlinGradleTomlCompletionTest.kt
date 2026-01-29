@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.kotlin.tests
+package com.intellij.gradle.kotlin.tests.completion
 
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.testFramework.replaceService
@@ -14,7 +14,6 @@ import org.jetbrains.idea.completion.api.DependencyCompletionResult
 import org.jetbrains.idea.completion.api.DependencyCompletionService
 import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
 import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
-import org.jetbrains.kotlin.idea.codeInsight.gradle.completion.AbstractKotlinGradleCompletionTest
 import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication

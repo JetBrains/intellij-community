@@ -1,7 +1,0 @@
-<idea-plugin>
-  <dependencies>
-    <module name="intellij.gradle.completion"/>
-    <module name="intellij.toml.core"/>
-    <module name="intellij.gradle.toml"/>
-  </dependencies>
-</idea-plugin>
