@@ -9158,6 +9158,51 @@ jvm_import(
 )
 
 copy_file(
+  name = "org.jetbrains.kotlin/kotlin-build-tools-api-2.4.0-dev-4766.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-build-tools-api-2_4_0-dev-4766_http//file",
+  out = "org.jetbrains.kotlin/kotlin-build-tools-api-2.4.0-dev-4766.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlinc-kotlin-build-tools-api",
+  jar = "@org_jetbrains_kotlin-kotlin-build-tools-api-2_4_0-dev-4766_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-build-tools-api-2_4_0-dev-4766-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.kotlin/kotlin-build-tools-cri-impl-2.4.0-dev-4766.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-build-tools-cri-impl-2_4_0-dev-4766_http//file",
+  out = "org.jetbrains.kotlin/kotlin-build-tools-cri-impl-2.4.0-dev-4766.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlinc-kotlin-build-tools-cri-impl",
+  jar = "@org_jetbrains_kotlin-kotlin-build-tools-cri-impl-2_4_0-dev-4766_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-build-tools-cri-impl-2_4_0-dev-4766-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.kotlin/kotlin-build-tools-impl-2.4.0-dev-4766.jar_copy",
+  src = "@org_jetbrains_kotlin-kotlin-build-tools-impl-2_4_0-dev-4766_http//file",
+  out = "org.jetbrains.kotlin/kotlin-build-tools-impl-2.4.0-dev-4766.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlinc-kotlin-build-tools-impl",
+  jar = "@org_jetbrains_kotlin-kotlin-build-tools-impl-2_4_0-dev-4766_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-build-tools-impl-2_4_0-dev-4766-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
   name = "org.jetbrains.kotlin/kotlin-compiler-cli-for-ide-2.4.0-dev-4766.jar_copy",
   src = "@org_jetbrains_kotlin-kotlin-compiler-cli-for-ide-2_4_0-dev-4766_http//file",
   out = "org.jetbrains.kotlin/kotlin-compiler-cli-for-ide-2.4.0-dev-4766.jar",

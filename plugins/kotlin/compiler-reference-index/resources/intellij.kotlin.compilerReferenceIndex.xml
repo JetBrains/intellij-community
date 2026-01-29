@@ -31,6 +31,9 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <kotlinCompilerReferenceIndexStorageProvider
+            implementation="org.jetbrains.kotlin.idea.search.refIndex.bta.BtaKotlinCompilerReferenceIndexStorageProvider"
+            order="first"/>
+    <kotlinCompilerReferenceIndexStorageProvider
             implementation="org.jetbrains.kotlin.idea.search.refIndex.jps.JpsKotlinCompilerReferenceIndexStorageProvider"
             id="JpsKotlinCompilerReferenceIndexStorageProvider"
             order="last"/>

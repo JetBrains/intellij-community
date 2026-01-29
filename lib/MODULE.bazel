@@ -7371,6 +7371,48 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_kotlin-kotlin-build-tools-api-2_4_0-dev-4766_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-build-tools-api/2.4.0-dev-4766/kotlin-build-tools-api-2.4.0-dev-4766.jar",
+  sha256 = "a42d849b2c30bbfd3d1a7ea8eb44e91217bc34f201708a19b6283c3f8d2077aa",
+  downloaded_file_path = "kotlin-build-tools-api-2.4.0-dev-4766.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlin-kotlin-build-tools-api-2_4_0-dev-4766-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-build-tools-api/2.4.0-dev-4766/kotlin-build-tools-api-2.4.0-dev-4766-sources.jar",
+  sha256 = "9afc6340fd4d1a46ca65b97624f8f545a40c643c59d61c2c66be4c82284319a3",
+  downloaded_file_path = "kotlin-build-tools-api-2.4.0-dev-4766-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlin-kotlin-build-tools-cri-impl-2_4_0-dev-4766_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.4.0-dev-4766/kotlin-build-tools-cri-impl-2.4.0-dev-4766.jar",
+  sha256 = "e3da26d72ab12c54e57dd1dc7f11398ba93f1d52091b1e3810f5354d8dbb758f",
+  downloaded_file_path = "kotlin-build-tools-cri-impl-2.4.0-dev-4766.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlin-kotlin-build-tools-cri-impl-2_4_0-dev-4766-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/2.4.0-dev-4766/kotlin-build-tools-cri-impl-2.4.0-dev-4766-sources.jar",
+  sha256 = "e37ee4d03e1afac684f9dba6f159a00e3da5e52251b754f0a78421152e35f4f1",
+  downloaded_file_path = "kotlin-build-tools-cri-impl-2.4.0-dev-4766-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlin-kotlin-build-tools-impl-2_4_0-dev-4766_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-build-tools-impl/2.4.0-dev-4766/kotlin-build-tools-impl-2.4.0-dev-4766.jar",
+  sha256 = "2371c5b4849f6f02dbc3341f12576b07d8018ecff86e092cb0ce8ed50fd792c5",
+  downloaded_file_path = "kotlin-build-tools-impl-2.4.0-dev-4766.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlin-kotlin-build-tools-impl-2_4_0-dev-4766-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-build-tools-impl/2.4.0-dev-4766/kotlin-build-tools-impl-2.4.0-dev-4766-sources.jar",
+  sha256 = "2b2cdc454437948eed48f57705ee4bb98cd9ba0085a25e6c5afc1e0557207cd4",
+  downloaded_file_path = "kotlin-build-tools-impl-2.4.0-dev-4766-sources.jar"
+)
+
+http_file(
   name = "org_jetbrains_kotlin-kotlin-compiler-cli-for-ide-2_4_0-dev-4766_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.4.0-dev-4766/kotlin-compiler-cli-for-ide-2.4.0-dev-4766.jar",
   sha256 = "a35be301205d8aa43551241112520ff538cb71c88ce57dcc1eacae81d0117cb7",

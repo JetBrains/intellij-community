@@ -18,6 +18,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-kotlin-build-tools-api",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -34,6 +35,12 @@ jvm_library(
     "//jps/jps-builders:build",
     "//java/java-indexing-impl:indexing-impl",
     "//java/compiler/impl",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//plugins/gradle",
+  ],
+  runtime_deps = [
+    "@lib//:kotlinc-kotlin-build-tools-impl",
+    "@lib//:kotlinc-kotlin-build-tools-cri-impl",
   ]
 )
 
@@ -60,6 +67,8 @@ jvm_library(
     "//jps/jps-builders:build_test_lib",
     "//java/java-indexing-impl:indexing-impl_test_lib",
     "//java/compiler/impl:impl_test_lib",
+    "//platform/external-system-impl:externalSystem-impl_test_lib",
+    "//plugins/gradle:gradle_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.compilerReferenceIndex` end
