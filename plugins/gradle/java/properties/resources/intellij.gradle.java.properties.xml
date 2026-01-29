@@ -15,7 +15,7 @@
 
     <localInspection language="Properties" groupPath="Gradle" shortName="LatestMinorVersion"
                      bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.latest.minor.version" groupKey="inspection.best.practises"
+                     key="inspection.display.name.latest.minor.version" groupKey="inspection.best.practices"
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleLatestMinorVersionInspection"
@@ -23,7 +23,7 @@
 
     <localInspection language="UAST" groupPath="Gradle" shortName="RedundantKotlinStdLibDependency"
                      bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.redundant.kotlin.std.lib.dependency" groupKey="inspection.best.practises"
+                     key="inspection.display.name.redundant.kotlin.std.lib.dependency" groupKey="inspection.best.practices"
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.gradle.java.properties.codeInspection.GradleRedundantKotlinStdLibInspection"
