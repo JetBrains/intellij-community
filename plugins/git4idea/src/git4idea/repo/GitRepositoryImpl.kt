@@ -73,7 +73,7 @@ class GitRepositoryImpl private constructor(
     tagHolder = GitTagHolder(this)
     tagsHolder = GitRepositoryTagsHolderImpl(this)
 
-    workingTreeHolder = GitWorkingTreeHolder(this)
+    workingTreeHolder = GitWorkingTreeHolderImpl(this)
     repoInfo = readRepoInfo()
   }
 

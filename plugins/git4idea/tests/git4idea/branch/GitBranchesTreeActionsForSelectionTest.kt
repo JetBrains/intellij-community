@@ -318,6 +318,7 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
                                                        false))
 
     repo1.remoteBranchesWithHashes = listOf(remoteOriginMain, remoteNotOriginMain, remoteAnother).associateWith { HashImpl.build("0".repeat(40)) }
+    repo1.updateWorkingTrees()
   }
 }
 
