@@ -79,6 +79,8 @@ suspend fun <T> readActionUndispatched(action: () -> T): T {
  * except it runs the given [action] in the original [CoroutineDispatcher]
  * without dispatching it to [Dispatchers.Default].
  *
+ * It's forbidden to call it on `EDT`.
+ *
  * Use with care. This method should not be used to compute CPU-heavy stuff.
  */
 @IntellijInternalApi
