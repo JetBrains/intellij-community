@@ -36,7 +36,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.serialization.ObjectSerializer;
 import com.intellij.ui.PlaceHolder;
@@ -116,7 +115,6 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
         ContainerUtil.addIfNotNull(classPath, getJarPathForClass(Project.class)); //intellij.platform.core
         ContainerUtil.addIfNotNull(classPath, getJarPathForClass(PlaceHolder.class)); //intellij.platform.editor
         ContainerUtil.addIfNotNull(classPath, getJarPathForClass(DependencyScope.class)); //intellij.platform.projectModel
-        ContainerUtil.addIfNotNull(classPath, getJarPathForClass(ProjectExtension.class)); //intellij.platform.projectModel.impl
         ContainerUtil.addIfNotNull(classPath, getJarPathForClass(Alarm.class)); //intellij.platform.ide
         ContainerUtil.addIfNotNull(classPath, getJarPathForClass(ExtensionPointName.class)); //intellij.platform.extensions
         ContainerUtil.addIfNotNull(classPath, getJarPathForClass(StorageUtilKt.class)); //intellij.platform.ide.impl

@@ -9,9 +9,12 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
+import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity;
+import com.intellij.platform.workspace.storage.VersionedStorageChange;
 import com.intellij.pom.java.JavaRelease;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
@@ -39,6 +42,15 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
 
   public LanguageLevelProjectExtensionImpl(final Project project) {
     myProject = project;
+
+    myProject.getMessageBus().simpleConnect().subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceModelChangeListener() {
+      @Override
+      public void changed(@NotNull VersionedStorageChange event) {
+        if (!event.getChanges(ProjectSettingsEntity.class).isEmpty()) {
+          projectSdkChanged(ProjectRootManager.getInstance(myProject).getProjectSdk());
+        }
+      }
+    });
   }
 
   public static LanguageLevelProjectExtensionImpl getInstanceImpl(Project project) {
@@ -166,16 +178,4 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
     setLanguageLevelInternal(null, null);
   }
 
-  static final class MyProjectExtension extends ProjectExtension {
-    private final LanguageLevelProjectExtensionImpl myInstance;
-
-    MyProjectExtension(@NotNull Project project) {
-      myInstance = ((LanguageLevelProjectExtensionImpl)getInstance(project));
-    }
-
-    @Override
-    public void projectSdkChanged(@Nullable Sdk sdk) {
-      myInstance.projectSdkChanged(sdk);
-    }
-  }
 }

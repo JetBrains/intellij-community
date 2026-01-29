@@ -1,10 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener
@@ -35,8 +34,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.ConcurrentHashMap
 
 private val LOG = logger<ProjectRootManagerImpl>()
-
-private val EP_NAME = ProjectExtensionPointName<ProjectExtension>("com.intellij.projectExtension")
 
 @State(name = "ProjectRootManager")
 @ApiStatus.Internal
@@ -314,14 +311,6 @@ open class ProjectRootManagerImpl(
     // There is no mergeRootsChangesDuring because currently it has a bug: "after" event will never fire if mergeRootsChangesDuring
     // is invoked while another rootsChange event (caused by the WSM change) is in progress (see RootsChangedTest).
     actionToRunWhenProjectJdkChanges.run()
-    fireJdkChanged()
-  }
-
-  private fun fireJdkChanged() {
-    val sdk = getProjectSdk()
-    for (extension in EP_NAME.getExtensions(project)) {
-      extension.projectSdkChanged(sdk)
-    }
   }
 
   @get:ApiStatus.Internal
