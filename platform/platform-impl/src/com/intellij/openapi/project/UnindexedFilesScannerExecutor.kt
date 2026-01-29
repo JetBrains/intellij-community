@@ -4,7 +4,6 @@ package com.intellij.openapi.project
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.NlsContexts.ProgressText
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -33,7 +32,6 @@ interface UnindexedFilesScannerExecutor {
 
   companion object {
     @JvmStatic
-    @RequiresBlockingContext
     fun getInstance(project: Project): UnindexedFilesScannerExecutor = project.service<UnindexedFilesScannerExecutor>()
 
     fun <T: MergeableQueueTask<T>> unwrapTask(task: MergingTaskQueue.QueuedTask<T>): T {

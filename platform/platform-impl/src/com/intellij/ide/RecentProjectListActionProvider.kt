@@ -23,7 +23,6 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProviderRecentP
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem
 import com.intellij.ui.UIBundle
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.forEachLoggingErrors
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.Icon
@@ -34,7 +33,6 @@ private val EP = ExtensionPointName<RecentProjectProvider>("com.intellij.recentP
 open class RecentProjectListActionProvider {
   companion object {
     @JvmStatic
-    @RequiresBlockingContext
     fun getInstance(): RecentProjectListActionProvider = service<RecentProjectListActionProvider>()
   }
 

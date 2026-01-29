@@ -3,7 +3,6 @@ package com.intellij.openapi.startup;
 
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +17,6 @@ public abstract class StartupManager {
   /**
    * @return Startup manager instance for the specified project.
    */
-  @RequiresBlockingContext
   public static StartupManager getInstance(@NotNull Project project) {
     return project.getService(StartupManager.class);
   }

@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.PathUtil
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
@@ -22,7 +21,6 @@ interface RecentProjectsManager {
     val LAST_PROJECTS_TOPIC: Topic<LastProjectsListener> = Topic(LastProjectsListener::class.java, Topic.BroadcastDirection.NONE)
 
     @JvmStatic
-    @RequiresBlockingContext
     fun getInstance(): RecentProjectsManager = ApplicationManager.getApplication().service<RecentProjectsManager>()
   }
 

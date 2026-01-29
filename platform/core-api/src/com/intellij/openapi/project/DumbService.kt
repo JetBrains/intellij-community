@@ -561,7 +561,6 @@ abstract class DumbService {
     }
 
     @JvmStatic
-    @RequiresBlockingContext
     fun getInstance(project: Project): DumbService = project.service()
 
     @JvmStatic

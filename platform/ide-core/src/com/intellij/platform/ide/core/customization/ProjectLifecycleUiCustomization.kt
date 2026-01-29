@@ -2,7 +2,6 @@
 package com.intellij.platform.ide.core.customization
 
 import com.intellij.openapi.components.service
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -30,7 +29,6 @@ open class ProjectLifecycleUiCustomization {
   
   companion object {
     @JvmStatic
-    @RequiresBlockingContext
     fun getInstance(): ProjectLifecycleUiCustomization = service()
   }
 }
