@@ -218,8 +218,8 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
     return regularColors
   }
 
-  companion object {
-    fun getHOffsetUnscaled(compactMode: Boolean, position: JBTabsPosition): Int {
+  internal companion object {
+    internal fun getHOffsetUnscaled(compactMode: Boolean, position: JBTabsPosition): Int {
       return when (position.isSide) {
         true -> 6
         false -> if (compactMode) 2 else 4
