@@ -7,5 +7,3 @@ fun bar() {
 }
 
 //ELEMENT: object
-
-// IGNORE_K2
