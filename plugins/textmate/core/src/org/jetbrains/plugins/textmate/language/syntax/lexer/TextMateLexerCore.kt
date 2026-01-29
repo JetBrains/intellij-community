@@ -279,8 +279,12 @@ class TextMateLexerCore(
         closeScopeSelector(output, startLineOffset + activeCaptureRanges.removeLast().end)
       }
 
-      if (capture is TextMateCapture.Name) {
-        val captureName = capture.name
+      val captureName = when (capture) {
+        is TextMateCapture.Name -> capture.name
+        is TextMateCapture.Rule -> capture.node.getStringAttribute(Constants.StringKey.NAME)
+      }
+
+      if (captureName != null) {
         val scopeName = if (rule.hasBackReference(captureKey, group)) {
           replaceGroupsWithMatchDataInCaptures(captureName, string, matchData)
         }
@@ -304,7 +308,7 @@ class TextMateLexerCore(
           activeCaptureRanges.addLast(captureRange)
         }
       }
-      else if (capture is TextMateCapture.Rule) {
+      if (capture is TextMateCapture.Rule) {
         val capturedString = line.subSequence(0.charOffset(), captureRange.end)
         mySyntaxMatcher.matchingString(capturedString) { capturedTextMateString ->
           val captureState = TextMateLexerState(syntaxRule = capture.node,
@@ -321,9 +325,6 @@ class TextMateLexerCore(
                     injections = emptyList(),
                     checkCancelledCallback = checkCancelledCallback)
         }
-      }
-      else {
-        error("unknown capture type: $capture")
       }
     }
     while (!activeCaptureRanges.isEmpty()) {
@@ -351,7 +352,7 @@ class TextMateLexerCore(
 
   private fun closeScopeSelector(output: MutableList<TextmateToken>, position: TextMateCharOffset) {
     val lastOpenedName = myCurrentScope.scopeName
-    if (lastOpenedName != null && !lastOpenedName.isEmpty()) {
+    if (!lastOpenedName.isNullOrEmpty()) {
       addToken(output, position)
     }
     myNestedScope.removeLastOrNull()?.let { nestingLevel ->
