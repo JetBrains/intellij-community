@@ -22,6 +22,8 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -40,6 +42,7 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Files
@@ -351,6 +354,17 @@ fun <T : Any> extensionPointFixture(epName: ExtensionPointName<in T>, createExte
   epName.point.registerExtension(extension, disposable)
   initialized(extension) {
     Disposer.dispose(disposable)
+  }
+}
+
+@TestOnly
+fun registryKeyFixture(@NonNls key: String, setValue: RegistryValue.() -> Unit): TestFixture<RegistryValue> = testFixture {
+  val registryValue = Registry.get(key)
+  val previousValue = registryValue.asString()
+  setValue(registryValue)
+
+  initialized(registryValue) {
+    registryValue.setValue(previousValue)
   }
 }
 
