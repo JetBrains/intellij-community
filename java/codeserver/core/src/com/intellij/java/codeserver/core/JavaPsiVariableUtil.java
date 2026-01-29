@@ -45,7 +45,12 @@ public final class JavaPsiVariableUtil {
     };
     PsiElement lastParent = pattern;
     for (PsiElement parent = lastParent.getParent(); parent != null; lastParent = parent, parent = parent.getParent()) {
-      if (parent instanceof PsiInstanceOfExpression || parent instanceof PsiParenthesizedExpression) continue;
+      if (parent instanceof PsiInstanceOfExpression ||
+          parent instanceof PsiParenthesizedExpression ||
+          parent instanceof PsiDeconstructionList ||
+          parent instanceof PsiDeconstructionPattern) {
+        continue;
+      }
       if (parent instanceof PsiPrefixExpression && ((PsiPrefixExpression)parent).getOperationTokenType().equals(JavaTokenType.EXCL)) {
         hint = hint.invert();
         continue;
