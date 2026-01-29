@@ -24,15 +24,14 @@ import com.intellij.grazie.spellcheck.ranker.DiacriticSuggestionRanker
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.spellchecker.SpellCheckerManager
 import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.spellchecker.dictionary.EditableDictionary
 import com.intellij.spellchecker.dictionary.Loader
+import com.intellij.spellchecker.engine.DictionaryModificationTracker
 import com.intellij.spellchecker.engine.SpellCheckerEngine
 import com.intellij.spellchecker.engine.SpellCheckerEngineListener
 import com.intellij.spellchecker.engine.Transformation
@@ -48,10 +47,7 @@ import java.util.concurrent.ConcurrentMap
 
 internal const val MAX_WORD_LENGTH: Int = 32
 
-class GrazieSpellCheckerEngine(
-  project: Project,
-  private val coroutineScope: CoroutineScope,
-) : SpellCheckerEngine, Disposable {
+class GrazieSpellCheckerEngine(private val project: Project, private val coroutineScope: CoroutineScope) : SpellCheckerEngine, Disposable {
 
   companion object {
     @JvmStatic
@@ -66,7 +62,6 @@ class GrazieSpellCheckerEngine(
         dic, aff, trigrams, "/dictionary/en.dic", LanguageISO.EN, Resources.text("/rule/en.dat")
       )
     }
-
   }
 
   override fun getTransformation(): Transformation = Transformation()
@@ -74,6 +69,8 @@ class GrazieSpellCheckerEngine(
   private val loader = WordListLoader(project, coroutineScope)
   private val adapter = WordListAdapter()
   private val replacingRules: Set<RuleDictionary> = getReplacingRules()
+  private val modificationTracker: DictionaryModificationTracker
+    get() = DictionaryModificationTracker.getInstance(project)
 
   internal class SpellerLoadActivity : ProjectActivity {
     init {
@@ -86,7 +83,6 @@ class GrazieSpellCheckerEngine(
 
     override suspend fun execute(project: Project) {
       getInstance(project).initializeSpeller(project)
-      project.serviceAsync<SpellCheckerManager>()
       knownPhrases.computeIfAbsent(Language.ENGLISH) { KnownPhrases.forLanguage(Language.ENGLISH) }
         .validPhrases("Bugfix")
     }
@@ -156,10 +152,14 @@ class GrazieSpellCheckerEngine(
 
   override fun loadDictionary(loader: Loader) {
     this.loader.loadWordList(loader, adapter::addList)
+    modificationTracker.incModificationCount()
   }
 
   override fun addDictionary(dictionary: Dictionary) {
-    if (!isDictionaryLoad(dictionary.name)) adapter.addDictionary(dictionary)
+    if (!isDictionaryLoad(dictionary.name)) {
+      adapter.addDictionary(dictionary)
+      modificationTracker.incModificationCount()
+    }
   }
 
   override fun addModifiableDictionary(dictionary: EditableDictionary) {
@@ -190,10 +190,12 @@ class GrazieSpellCheckerEngine(
 
   override fun reset() {
     adapter.reset()
+    modificationTracker.incModificationCount()
   }
 
   override fun removeDictionary(name: String) {
     adapter.removeSource(name)
+    modificationTracker.incModificationCount()
   }
 
   override fun getVariants(prefix: String): List<String> = emptyList()
@@ -206,11 +208,14 @@ class GrazieSpellCheckerEngine(
     for (name in toRemove) {
       adapter.removeSource(name)
     }
+
+    modificationTracker.incModificationCount()
   }
 
   @TestOnly
   fun dropSuggestionCache() {
     suggestionCache.invalidateAll()
+    modificationTracker.incModificationCount()
   }
 
   private fun getReplacingRules(): Set<RuleDictionary> {

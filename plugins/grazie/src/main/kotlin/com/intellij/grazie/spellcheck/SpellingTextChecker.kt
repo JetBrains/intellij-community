@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
 import com.intellij.spellchecker.SpellCheckerManager
+import com.intellij.spellchecker.engine.DictionaryModificationTracker
 import com.intellij.spellchecker.inspections.IdentifierSplitter.MINIMAL_TYPO_LENGTH
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -41,7 +42,7 @@ private val spellingKey = Key.create<CachedResults>("grazie.text.spell.problems"
 internal class SpellingTextChecker: ExternalTextChecker() {
   override fun getRules(locale: Locale): Collection<Rule> = emptyList()
   override suspend fun checkExternally(context: ProofreadingContext): Collection<TypoProblem> {
-    val configStamp = service<GrazieConfig>().modificationCount + SpellCheckerManager.dictionaryModificationTracker.modificationCount
+    val configStamp = getConfigStamp(context.text.containingFile.project)
     var cache = getCachedTypos(context.text, configStamp)
     if (cache == null) {
       cache = findTypos(context)
@@ -51,6 +52,10 @@ internal class SpellingTextChecker: ExternalTextChecker() {
     }
     return cache
   }
+
+  private fun getConfigStamp(project: Project): Long =
+    service<GrazieConfig>().modificationCount +
+    DictionaryModificationTracker.getInstance(project).modificationCount
 
   private fun getCachedTypos(text: TextContent, configStamp: Long): List<TypoProblem>? {
     val cache = text.getUserData(spellingKey)
