@@ -18,29 +18,37 @@ internal class AsyncRendering(
   private val coroutineScope: CoroutineScope,
   private val renderingCallback: () -> Unit,
 ) {
-  companion object {
-    private val LAST_COMPUTED_PRESENTATION = Key.create<LookupElementPresentation>("LAST_COMPUTED_PRESENTATION")
-    private val LAST_COMPUTATION = Key.create<Job>("LAST_COMPUTATION")
-
-    fun rememberPresentation(element: LookupElement, presentation: LookupElementPresentation) {
-      element.putUserData(LAST_COMPUTED_PRESENTATION, presentation)
-    }
-
-    fun cancelRendering(item: LookupElement) {
-      synchronized(LAST_COMPUTATION) {
-        val job = item.getUserData(LAST_COMPUTATION) ?: return
-        job.cancel()
-        item.putUserData(LAST_COMPUTATION, null)
-      }
-    }
-  }
-
   // Use a maximum of three concurrent rendering jobs to not overload the CPU unnecessarily.
   private val renderersSemaphore = Semaphore(3)
 
+  /**
+   * Set the presentation for the lookup element. Overwrites previous presentation.
+   */
+  fun rememberPresentation(element: LookupElement, presentation: LookupElementPresentation) {
+    element.putUserData(LAST_COMPUTED_PRESENTATION, presentation)
+  }
+
+  /**
+   * @return cached presentation of the lookup element
+   */
   fun getLastComputed(element: LookupElement): LookupElementPresentation =
     element.getUserData(LAST_COMPUTED_PRESENTATION)!!
 
+  /**
+   * Cancels the rendering job for the given lookup element if it exists.
+   */
+  fun cancelRendering(item: LookupElement) {
+    synchronized(LAST_COMPUTATION) {
+      val job = item.getUserData(LAST_COMPUTATION) ?: return
+      job.cancel()
+      item.putUserData(LAST_COMPUTATION, null)
+    }
+  }
+
+  /**
+   * Schedule rendering for the lookup element.
+   * The new value will overwrite the previously cached presentation.
+   */
   fun scheduleRendering(element: LookupElement, renderer: LookupElementRenderer<LookupElement>) {
     synchronized(LAST_COMPUTATION) {
       cancelRendering(element)
@@ -97,6 +105,7 @@ internal class AsyncRendering(
     rememberPresentation(element, presentation)
     renderingCallback()
   }
-
-
 }
+
+private val LAST_COMPUTED_PRESENTATION = Key.create<LookupElementPresentation>("LAST_COMPUTED_PRESENTATION")
+private val LAST_COMPUTATION = Key.create<Job>("LAST_COMPUTATION")

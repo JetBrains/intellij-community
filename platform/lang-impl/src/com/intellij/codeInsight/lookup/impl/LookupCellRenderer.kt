@@ -599,7 +599,7 @@ class LookupCellRenderer(
   fun itemAdded(element: LookupElement, fastPresentation: LookupElementPresentation) {
     updateIconWidth(fastPresentation.icon)
     scheduleUpdateLookupWidthFromVisibleItems()
-    AsyncRendering.rememberPresentation(element, fastPresentation)
+    asyncRendering.rememberPresentation(element, fastPresentation)
   }
 
   @ApiStatus.Internal
@@ -645,6 +645,11 @@ class LookupCellRenderer(
     updateIconWidth(p.icon)
     return calculateWidth(p, getRealFontMetrics(item, false, CUSTOM_NAME_FONT), getRealFontMetrics(item, true, CUSTOM_NAME_FONT)) +
            calcSpacing(tailComponent, null) + calcSpacing(typeLabel, null)
+  }
+
+  @ApiStatus.Internal
+  fun cancelRendering(element: LookupElement) {
+    asyncRendering.cancelRendering(element)
   }
 
   val textIndent: Int

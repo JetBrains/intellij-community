@@ -366,6 +366,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myShowIfMeaningless = true;
   }
 
+  @ApiStatus.Internal
+  public void cancelRendering(@NotNull LookupElement element) {
+    cellRenderer.cancelRendering(element);
+  }
+
   private static boolean containsDummyIdentifier(@Nullable String s) {
     return s != null && s.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
   }
