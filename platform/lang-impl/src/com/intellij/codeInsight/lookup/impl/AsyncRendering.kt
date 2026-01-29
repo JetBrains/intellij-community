@@ -10,14 +10,14 @@ import com.intellij.codeInsight.lookup.SuspendingLookupElementRenderer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.Key
 import com.intellij.util.indexing.DumbModeAccessType
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 
-internal class AsyncRendering(private val lookup: LookupImpl) {
+internal class AsyncRendering(
+  private val coroutineScope: CoroutineScope,
+  private val renderingCallback: () -> Unit,
+) {
   companion object {
     private val LAST_COMPUTED_PRESENTATION = Key.create<LookupElementPresentation>("LAST_COMPUTED_PRESENTATION")
     private val LAST_COMPUTATION = Key.create<Job>("LAST_COMPUTATION")
@@ -38,17 +38,18 @@ internal class AsyncRendering(private val lookup: LookupImpl) {
   // Use a maximum of three concurrent rendering jobs to not overload the CPU unnecessarily.
   private val renderersSemaphore = Semaphore(3)
 
-  fun getLastComputed(element: LookupElement): LookupElementPresentation = element.getUserData(LAST_COMPUTED_PRESENTATION)!!
+  fun getLastComputed(element: LookupElement): LookupElementPresentation =
+    element.getUserData(LAST_COMPUTED_PRESENTATION)!!
 
   fun scheduleRendering(element: LookupElement, renderer: LookupElementRenderer<LookupElement>) {
     synchronized(LAST_COMPUTATION) {
       cancelRendering(element)
 
-      if (lookup.isLookupDisposed) {
+      if (!coroutineScope.isActive) {
         return
       }
 
-      val job = lookup.coroutineScope.launch {
+      val job = coroutineScope.launch {
         // If we use a limited dispatcher, `readAction` (and other calls) would redirect the coroutine to the `Dispatcher.default`
         // (or other dispatchers), leaving the limited dispatcher free. The next coroutine would then be processed on the limited dispatcher
         // and so on. Ultimately, this could spin a new dispatcher worker thread for almost each item on the list overloading the coroutine
@@ -85,7 +86,7 @@ internal class AsyncRendering(private val lookup: LookupImpl) {
 
     presentation.freeze()
     rememberPresentation(element, presentation)
-    lookup.cellRenderer.scheduleUpdateLookupAfterElementPresentationChange()
+    renderingCallback()
   }
 
   private suspend fun renderInBackgroundSuspending(element: LookupElement, renderer: SuspendingLookupElementRenderer<LookupElement>) {
@@ -94,7 +95,7 @@ internal class AsyncRendering(private val lookup: LookupImpl) {
 
     presentation.freeze()
     rememberPresentation(element, presentation)
-    lookup.cellRenderer.scheduleUpdateLookupAfterElementPresentationChange()
+    renderingCallback()
   }
 
 
