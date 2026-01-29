@@ -100,10 +100,6 @@
                  description="Search files in non-indexable filesets with NonIndexableFileNavigationContributor"/>
     <registryKey defaultValue="true" key="se.enable.non.indexable.files.contributor" restartRequired="false"
                  description="Search files in non-indexable filesets with NonIndexableFilesSEContributor"/>
-    <registryKey defaultValue="false" key="se.enable.non.indexable.files.use.bfs" restartRequired="false"
-                 description="NonIndexableFilesSEContributor iterates files using BFS instead of DFS"/>"/>
-    <registryKey defaultValue="false" key="se.enable.non.indexable.files.use.bfs.blocking.read.actions" restartRequired="false"
-                 description="NonIndexableFilesSEContributor iterates files using BFS with multiple blocking read actions instead of one big cancellable RA"/>"/>
     <registryKey defaultValue="false"
                  description="Enable reformat action execution on frontend in remote development"
                  key="reformat.action.execute.on.frontend"

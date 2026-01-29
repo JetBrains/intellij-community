@@ -102,10 +102,6 @@ open class NonIndexableFilesSEContributorTest {
     assertThat(names).containsExactlyInAnyOrder("f1", "f2")
   }
 
-  private fun processNames(): List<String> {
-    TODO("not implemented")
-  }
-
   @Test
   fun `unindexed under content`(): Unit = runBlocking {
     val unindexed = baseDir.newVirtualDirectory("u1").toVirtualFileUrl(urlManager)
@@ -276,15 +272,6 @@ open class NonIndexableFilesSEContributorTest {
     assertThat(names).containsExactlyInAnyOrder("file1")
   }
 }
-
-@RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
-@RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "false")
-class NonIndexableFilesSEContributorBfsOneReadActionTest : NonIndexableFilesSEContributorTest()
-
-@RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
-@RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "true")
-class NonIndexableFilesSEContributorBfsManyReadActionsTest : NonIndexableFilesSEContributorTest()
-
 
 
 private fun createEvent(project: Project): AnActionEvent {
