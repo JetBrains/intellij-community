@@ -38,5 +38,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.highlighting.minimal" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.repository.search" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
   </component>
 </module>
