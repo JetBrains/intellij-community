@@ -917,15 +917,15 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return staticWithCustomContext(context, useFqn, customContext -> getType(expression, customContext));
   }
 
-  public static @Nullable Ref<PyType> getType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+  public static @Nullable Ref<@Nullable PyType> getType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
     return staticWithCustomContext(context, customContext -> getType(expression, customContext));
   }
 
-  public static @Nullable Ref<PyType> getTypeForTypeHint(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+  public static @Nullable Ref<@Nullable PyType> getTypeForTypeHint(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
     return staticWithCustomContext(context, true, customContext -> getTypeForResolvedElement(expression, null, expression, customContext));
   }
 
-  private static @Nullable Ref<PyType> getType(@NotNull PyExpression expression, @NotNull Context context) {
+  private static @Nullable Ref<@Nullable PyType> getType(@NotNull PyExpression expression, @NotNull Context context) {
     PyType type = context.getKnownType(expression);
     if (type != null) {
       return Ref.create(type);
