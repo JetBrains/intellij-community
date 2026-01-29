@@ -12,6 +12,7 @@ import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresenta
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
+import com.intellij.ui.dsl.listCellRenderer.impl.LcrRowImpl
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
@@ -38,15 +39,20 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
     presentation.icon?.let { icon(it) }
 
     // Calculate widths
-    val defaultGapWidth = JBUI.scale(6)
+    val defaultGapWidth = JBUI.scale(LcrRowImpl.DEFAULT_GAP)
     val bordersWidth = 2 * JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() +
                        JBUI.CurrentTheme.Popup.Selection.innerInsets().left + JBUI.CurrentTheme.Popup.Selection.innerInsets().right
-    val iconsWidth = (presentation.icon?.iconWidth ?: 0) + (presentation.locationIcon?.iconWidth ?: 0)
+    var accumulatedContentWidth = defaultGapWidth + bordersWidth
+
+    presentation.icon?.let {
+      accumulatedContentWidth += (JBUI.scale(it.iconWidth) + defaultGapWidth)
+    }
 
     val fontMetrics = resultList.getFontMetrics(resultList.font)
+    val presentableTextWidth = fontMetrics.stringWidth(presentation.presentableText)
     // Calculate the combined width without locationText.
     // If it is larger than the available space, we need to hide the locationIcon to avoid text overlap (IJPL-188565).
-    var nonLocationContentWidth = 2 * defaultGapWidth + bordersWidth + fontMetrics.stringWidth(presentation.presentableText) + iconsWidth
+    accumulatedContentWidth += (presentableTextWidth + defaultGapWidth)
 
     text(presentation.presentableText) {
       accessibleName = presentation.presentableText + (presentation.containerText?.let { " $it" } ?: "")
@@ -71,13 +77,15 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
     }
 
     weightTextIfEnabled(value)
+    val locationTextWidth = presentation.locationText?.let { fontMetrics.stringWidth(it) + defaultGapWidth } ?: 0
 
-    presentation.containerText?.let { containerText ->
-      val presentableTextWidth = fontMetrics.stringWidth(presentation.presentableText)
-      val locationTextWidth = presentation.locationText?.let { fontMetrics.stringWidth(it) } ?: 0
+    presentation.containerText?.takeIf {
+      accumulatedContentWidth + locationTextWidth < resultList.width
+    }?.let { containerText ->
       val width = resultList.width
-      val shortenContainerText = SETextShortener.getShortenContainerText(containerText, width - presentableTextWidth - JBUI.scale(16) - locationTextWidth - JBUI.scale(20), { fontMetrics.stringWidth(it) })
-      nonLocationContentWidth += fontMetrics.stringWidth(shortenContainerText)
+      val maxContainerTextWidth = width - accumulatedContentWidth - locationTextWidth
+      val shortenContainerText = SETextShortener.getShortenContainerText(containerText, maxContainerTextWidth, { fontMetrics.stringWidth(it) })
+      accumulatedContentWidth += fontMetrics.stringWidth(shortenContainerText)
 
       text(shortenContainerText) {
         accessibleName = null
@@ -114,8 +122,10 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
           else NamedColorUtil.getInactiveTextColor()
       }
 
-      if (nonLocationContentWidth < resultList.width) {
-        presentation.locationIcon?.let { locationIcon ->
+      accumulatedContentWidth += locationTextWidth
+
+      presentation.locationIcon?.let { locationIcon ->
+        if ((accumulatedContentWidth + JBUI.scale(locationIcon.iconWidth) + defaultGapWidth) < resultList.width) {
           icon(locationIcon)
         }
       }
