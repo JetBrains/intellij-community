@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapEngine;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
@@ -229,7 +230,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     try {
       myEventBeingProcessed = event;
       notifyListenersOnCacheUpdateStart(event);
-      int endOffsetUpperEstimate = getEndOffsetUpperEstimate(event);
+      int endOffsetUpperEstimate = SoftWrapHelper.getEndOffsetUpperEstimate(myEditor, myEditor.getDocument(), event);
       if (myVisibleAreaWidth == QUICK_DUMMY_WRAPPING) {
         doRecalculateSoftWrapsRoughly(event);
       }
@@ -294,15 +295,6 @@ public final class SoftWrapApplianceManager implements Dumpable {
       }
     }
     event.setActualEndOffset(offset);
-  }
-
-  private int getEndOffsetUpperEstimate(IncrementalCacheUpdateEvent event) {
-    int endOffsetUpperEstimate = EditorUtil.getNotFoldedLineEndOffset(myEditor, event.getMandatoryEndOffset());
-    int line = myEditor.getDocument().getLineNumber(endOffsetUpperEstimate);
-    if (line < myEditor.getDocument().getLineCount() - 1) {
-      endOffsetUpperEstimate = myEditor.getDocument().getLineStartOffset(line + 1);
-    }
-    return endOffsetUpperEstimate;
   }
 
   /**
