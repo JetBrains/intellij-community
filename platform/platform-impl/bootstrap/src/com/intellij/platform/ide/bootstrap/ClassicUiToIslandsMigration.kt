@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * * com.intellij.platform.ide.bootstrap.ConfigKt.enableNewUi
  * * [ExperimentalUI.forcedSwitchedUi]
  * * [ExperimentalUI.showNewUiOnboarding]
+ * * [ExperimentalUI.switchedFromClassicToIslandsInSession]
  * * [ExperimentalUI.cleanUpClassicUIFromDisabled]
  */
 internal object ClassicUiToIslandsMigration {
@@ -30,26 +31,24 @@ internal object ClassicUiToIslandsMigration {
    */
   private val cleanUpClassicUIFromDisabledPlugins = AtomicBoolean(false)
 
-  private const val MOVED_TO_NEW_UI_WITH_ISLANDS = "moved.to.new.ui.with.islands"
-  private val movedToNewUiWithIslands: Boolean?
-    get() = EarlyAccessRegistryManager.getString(MOVED_TO_NEW_UI_WITH_ISLANDS)?.toBoolean()
   private val classicUiPluginId: PluginId
     get() = PluginId.getId("com.intellij.classic.ui")
 
 
   suspend fun enableNewUiWithIslands(logDeferred: Deferred<Logger>) {
     try {
-      val movedToNewUiWithIslands = movedToNewUiWithIslands
-      if (movedToNewUiWithIslands != null) {
+      val switchedFromClassicToIslands = ExperimentalUI.switchedFromClassicToIslands
+      if (switchedFromClassicToIslands != null) {
         // Processed once
         return
       }
 
       if (InitialConfigImportState.isNewUser() || EarlyAccessRegistryManager.getBoolean("ide.experimental.ui")) {
-        EarlyAccessRegistryManager.setAndFlush(mapOf(MOVED_TO_NEW_UI_WITH_ISLANDS to "false"))
+        EarlyAccessRegistryManager.setAndFlush(mapOf(ExperimentalUI.SWITCHED_FROM_CLASSIC_TO_ISLANDS to "false"))
       }
       else {
-        EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true", MOVED_TO_NEW_UI_WITH_ISLANDS to "true"))
+        ExperimentalUI.switchedFromClassicToIslandsInSession = true
+        EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true", ExperimentalUI.SWITCHED_FROM_CLASSIC_TO_ISLANDS to "true"))
 
         // We don't know yet if the classic UI is installed, therefore, always disable the plugin
         addClassicUiToDisabledPlugins()

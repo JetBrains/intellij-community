@@ -238,6 +238,19 @@ object NewUiOnboardingUtil {
     return result
   }
 
+  suspend fun findActionItem(list: JBList<*>, actionId: String): ActionItem? {
+    val actionManager = serviceAsync<ActionManager>()
+
+    for (i in 0 until list.model.size) {
+      val element = list.model.getElementAt(i) as? ActionItem
+      if (element != null && actionManager.getId(element.action) == actionId) {
+        return element
+      }
+    }
+
+    return null
+  }
+
   suspend fun findActionItemBounds(list: JBList<*>, actionId: String): Rectangle? {
     val actionManager = serviceAsync<ActionManager>()
     val pluginsActionIndex = (0 until list.model.size).find { index ->

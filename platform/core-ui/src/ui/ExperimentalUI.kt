@@ -32,16 +32,23 @@ abstract class ExperimentalUI {
     // Should be unset by the client, or it will be unset on the IDE close.
     const val NEW_UI_SWITCH: String = "experimental.ui.switch"
     var forcedSwitchedUi: Boolean = false
+
+    const val SWITCHED_FROM_CLASSIC_TO_ISLANDS: String = "switched.from.classic.to.islands"
+    val switchedFromClassicToIslands: Boolean?
+      get() = EarlyAccessRegistryManager.getString(SWITCHED_FROM_CLASSIC_TO_ISLANDS)?.toBoolean()
+
+    @Volatile
+    var switchedFromClassicToIslandsInSession: Boolean = false
     @Volatile
     var showNewUiOnboarding: Boolean = false
+    @Volatile
+    var cleanUpClassicUIFromDisabled: Runnable? = null
+
     var wasThemeReset = false
 
     @Internal
     @JvmField
     val EP_LISTENER: ExtensionPointName<Listener> = ExtensionPointName("com.intellij.uiChangeListener")
-
-    @Volatile
-    var cleanUpClassicUIFromDisabled: Runnable? = null
 
     init {
       NewUiValue.initialize {

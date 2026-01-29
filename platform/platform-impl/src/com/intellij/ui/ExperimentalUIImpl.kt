@@ -160,6 +160,17 @@ internal class ExperimentalUIImpl : ExperimentalUI() {
  * because it would create another instance of ExperimentalUiImpl
  */
 private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
+
+  override fun appFrameCreated(commandLineArgs: List<String?>) {
+    if (ExperimentalUI.switchedFromClassicToIslandsInSession) {
+      ExperimentalUI.switchedFromClassicToIslandsInSession = false
+
+      val settings = UISettings.getInstance()
+      settings.mainMenuDisplayMode = MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR
+      settings.compactMode = true
+    }
+  }
+
   override fun appStarted() {
     (ExperimentalUI.getInstance() as? ExperimentalUIImpl)?.appStarted()
   }
