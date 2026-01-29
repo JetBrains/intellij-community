@@ -436,11 +436,11 @@ public class ConsoleHistoryController implements Disposable {
         }
 
         @Override
-        protected void doOKAction() {
-          if (myConsole.getCurrentEditor().getComponent().isShowing()) {
+        public void dispose() {
+          if (getExitCode() == OK_EXIT_CODE && myConsole.getCurrentEditor().getComponent().isShowing()) {
             setConsoleText(new Entry(getSelectedText(), -1), false, true);
           }
-          super.doOKAction();
+          super.dispose();
         }
       };
       chooser.setContentIcon(null);
