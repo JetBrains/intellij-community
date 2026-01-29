@@ -17,18 +17,14 @@
  */
 package com.intellij.compose.ide.plugin.k2.intentions
 
-import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
-import java.io.File
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.compose.ide.plugin.shared.intentions.ComposableAnnotationQuickFixTest
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 
-private val composeCompilerPluginPath: File
-  get() = File(PlatformTestUtil.getCommunityPath(), "android/compose-ide-plugin/lib/compiler-hosted-1.5.8.jar")
-
-internal fun setUpCompilerArgumentsForComposeCompilerPlugin(project: Project) {
-  val pluginPath = composeCompilerPluginPath
-
-  KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
-    this.pluginClasspaths = arrayOf(pluginPath.absolutePath)
-  }
+/**
+ * Tests for adding `@Composable` annotation quick fix
+ *
+ * Based on: [com.android.tools.compose.intentions.AddComposableAnnotationQuickFixTest]
+ */
+class K2AddComposableAnnotationQuickFixTest : ComposableAnnotationQuickFixTest() {
+  override val pluginMode: KotlinPluginMode get() = KotlinPluginMode.K2
 }

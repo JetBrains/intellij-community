@@ -17,8 +17,8 @@
  */
 package com.intellij.compose.ide.plugin.k2.intentions
 
-import com.android.tools.compose.expectedComposableAnnotationHolder
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
+import com.intellij.compose.ide.plugin.shared.expectedComposableAnnotationHolder
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaCompilerPluginDiagnostic0
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -111,7 +111,7 @@ internal class K2CreateComposableQuickFixesRegistrar : KotlinQuickFixRegistrar()
     val functionName = (param.parent?.parent as? KtNamedFunction)?.name
 
     return functionName?.let {
-      ComposeIdeBundle.message("compose.add.composable.to.lambda.parameter.name", functionName, paramName, )
+      ComposeIdeBundle.message("compose.add.composable.to.lambda.parameter.name", functionName, paramName)
     } ?: ComposeIdeBundle.message("compose.add.composable.to.lambda.parameter.of.anonymous.function.name", paramName)
   }
 

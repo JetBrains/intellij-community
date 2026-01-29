@@ -17,17 +17,22 @@
  */
 package com.intellij.compose.ide.plugin.shared.util
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.compose.ide.plugin.shared.isComposeEnabledInModule
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.psi.KtFile
+import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 /**
  * Enables Compose in the tests by adding Composable annotation to the test classpath.
@@ -110,4 +115,51 @@ fun CodeInsightTestFixture.moveCaret(window: String): PsiElement {
   editor.caretModel.moveToOffset(offset)
   // myFixture.elementAtCaret seems to do something else
   return file.findElementAt(offset)!!
+}
+
+/**
+ * Sets up the Compose compiler plugin for tests that need compiler diagnostics.
+ */
+fun setUpCompilerArgumentsForComposeCompilerPlugin(project: Project) {
+  val pluginPath = File(PlatformTestUtil.getCommunityPath(), "android/compose-ide-plugin/lib/compiler-hosted-1.5.8.jar")
+  KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
+    this.pluginClasspaths = arrayOf(pluginPath.absolutePath)
+  }
+}
+
+/**
+ * Invokes a quick fix matching the given filter at the specified caret position.
+ */
+fun CodeInsightTestFixture.invokeQuickFix(
+  caretAnchor: String = "",
+  fixFilter: (IntentionAction) -> Boolean,
+) {
+  if (caretAnchor.isNotEmpty()) moveCaret(caretAnchor)
+
+  doHighlighting()
+
+  val action = availableIntentions.singleOrNull(fixFilter)
+  if (action == null) {
+    val intentionTexts = availableIntentions.joinToString(transform = IntentionAction::getText)
+    fail("Could not find expected quick fix. Available intentions: $intentionTexts")
+  }
+  else {
+    launchAction(action)
+  }
+}
+
+/**
+ * Asserts that no quick fix matching the given filter is available at the specified caret position.
+ */
+fun CodeInsightTestFixture.assertQuickFixNotAvailable(
+  caretAnchor: String = "",
+  fixFilter: (IntentionAction) -> Boolean,
+) {
+  if (caretAnchor.isNotEmpty()) moveCaret(caretAnchor)
+
+  doHighlighting()
+  val actions = availableIntentions.filter(fixFilter)
+  if (actions.isNotEmpty()) {
+    fail("Found quick fix(es), but none expected: ${actions.joinToString { it.text }}")
+  }
 }

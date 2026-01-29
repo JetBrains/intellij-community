@@ -40,7 +40,6 @@ jvm_library(
     "//plugins/kotlin/code-insight/api",
     "//plugins/kotlin/base/code-insight",
     "@lib//:kotlinc-analysis-api-k2-provided",
-    "//android/intellij.android.compose-common:compose-common",
     "@lib//:kotlinc-compose-compiler-plugin-provided",
   ]
 )
