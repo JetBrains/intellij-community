@@ -87,7 +87,8 @@ internal class FramePrinter(private val suspendContext: SuspendContextImpl) {
                 return ValueInfo(name, kind, type, value, sourcePosition)
             }
             is XStackFrame -> {
-                val sourcePosition = DebuggerUtilsEx.toSourcePosition(container.sourcePosition, suspendContext.debugProcess.project)
+                val sourcePosition =
+                    runReadAction { DebuggerUtilsEx.toSourcePosition(container.sourcePosition, suspendContext.debugProcess.project) }
                 return ValueInfo(name, kind = null, type = null, value = null, sourcePosition)
             }
             else -> {
