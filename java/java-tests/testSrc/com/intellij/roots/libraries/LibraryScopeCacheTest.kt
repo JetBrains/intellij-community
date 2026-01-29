@@ -5,12 +5,14 @@ import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.LibraryScopeCache
+import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.testFramework.rules.TempDirectoryExtension
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
@@ -24,6 +26,10 @@ class LibraryScopeCacheTest {
   @JvmField
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()
+
+  @JvmField
+  @RegisterExtension
+  val sdkDir: TempDirectoryExtension = TempDirectoryExtension()
 
 
   @Test
@@ -208,35 +214,8 @@ class LibraryScopeCacheTest {
   }
 
   @ParameterizedTest
-  @MethodSource("scopeAndExportedCombinations")
-  fun `library use scope with transitive dependency for different scopes`(scope: DependencyScope, exported: Boolean) {
-    val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
-    val moduleA = projectModel.createModule("moduleA")
-    val moduleB = projectModel.createModule("moduleB")
-    val moduleC = projectModel.createModule("moduleC")
-
-    val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("lib")
-    val library = projectModel.addProjectLevelLibrary("transitiveLib") {
-      it.addRoot(libraryRoot, OrderRootType.CLASSES)
-    }
-
-    ModuleRootModificationUtil.addDependency(moduleB, library, scope, exported)
-    ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, exported)
-
-    val sourceRootA = projectModel.addSourceRoot(moduleA, "src", JavaSourceRootType.SOURCE)
-    val sourceRootB = projectModel.addSourceRoot(moduleB, "src", JavaSourceRootType.SOURCE)
-    val sourceRootC = projectModel.addSourceRoot(moduleC, "src", JavaSourceRootType.SOURCE)
-
-    val useScope = libraryScopeCache.getLibraryUseScope(libraryRoot)
-
-    assertTrue(useScope.contains(sourceRootB), "Library use scope should contain moduleB sources (direct dependency with scope=$scope)")
-    assertTrue(useScope.contains(sourceRootA), "Library use scope should contain moduleA sources (moduleA depends on moduleB which uses the library)")
-    assertFalse(useScope.contains(sourceRootC), "Library use scope should NOT contain moduleC (not in dependency chain)")
-  }
-
-  @ParameterizedTest
-  @MethodSource("scopeAndExportedCombinations")
-  fun `library use scope with three modules transitive dependency chain`(scope: DependencyScope, exported: Boolean) {
+  @MethodSource("dependencyScopes")
+  fun `library use scope with exported library and exported module dependency`(scope: DependencyScope) {
     val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
     val moduleA = projectModel.createModule("moduleA")
     val moduleB = projectModel.createModule("moduleB")
@@ -248,10 +227,9 @@ class LibraryScopeCacheTest {
       it.addRoot(libraryRoot, OrderRootType.CLASSES)
     }
 
-    ModuleRootModificationUtil.addDependency(moduleC, library, scope, exported)
-    // we should always export this dep
+    ModuleRootModificationUtil.addDependency(moduleC, library, scope, true)
     ModuleRootModificationUtil.addDependency(moduleB, moduleC, scope, true)
-    ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, exported)
+    ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, false)
 
     val sourceRootA = projectModel.addSourceRoot(moduleA, "src", JavaSourceRootType.SOURCE)
     val sourceRootB = projectModel.addSourceRoot(moduleB, "src", JavaSourceRootType.SOURCE)
@@ -260,16 +238,15 @@ class LibraryScopeCacheTest {
 
     val useScope = libraryScopeCache.getLibraryUseScope(libraryRoot)
 
-    assertTrue(useScope.contains(sourceRootC), "Library use scope should contain moduleC (direct dependency with scope=$scope, exported=$exported)")
-    assertTrue(useScope.contains(sourceRootB), "Library use scope should contain moduleB (via exported from moduleC)")
-    assertTrue(useScope.contains(sourceRootA), "Library use scope should contain moduleA (via exported chain)")
+    assertTrue(useScope.contains(sourceRootC), "Library use scope should contain moduleC (direct dependency)")
+    assertTrue(useScope.contains(sourceRootB), "Library use scope should contain moduleB (depends on moduleC)")
+    assertTrue(useScope.contains(sourceRootA), "Library use scope should contain moduleA (depends on moduleB)")
     assertFalse(useScope.contains(sourceRootD), "Library use scope should NOT contain moduleD (not in dependency chain)")
   }
 
   @ParameterizedTest
-  @MethodSource("scopeAndExportedCombinations")
-  @Disabled("Does not work for original implementation")
-  fun `library scope with three modules transitive dependency chain`(scope: DependencyScope, exported: Boolean) {
+  @MethodSource("dependencyScopes")
+  fun `library use scope with exported library and non-exported module dependency`(scope: DependencyScope) {
     val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
     val moduleA = projectModel.createModule("moduleA")
     val moduleB = projectModel.createModule("moduleB")
@@ -281,10 +258,102 @@ class LibraryScopeCacheTest {
       it.addRoot(libraryRoot, OrderRootType.CLASSES)
     }
 
-    ModuleRootModificationUtil.addDependency(moduleC, library, scope, exported)
-    // we should always export this dep
+    ModuleRootModificationUtil.addDependency(moduleC, library, scope, true)
+    ModuleRootModificationUtil.addDependency(moduleB, moduleC, scope, false)
+    ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, false)
+
+    val sourceRootA = projectModel.addSourceRoot(moduleA, "src", JavaSourceRootType.SOURCE)
+    val sourceRootB = projectModel.addSourceRoot(moduleB, "src", JavaSourceRootType.SOURCE)
+    val sourceRootC = projectModel.addSourceRoot(moduleC, "src", JavaSourceRootType.SOURCE)
+    val sourceRootD = projectModel.addSourceRoot(moduleD, "src", JavaSourceRootType.SOURCE)
+
+    val useScope = libraryScopeCache.getLibraryUseScope(libraryRoot)
+
+    assertTrue(useScope.contains(sourceRootC), "Library use scope should contain moduleC (direct dependency)")
+    assertTrue(useScope.contains(sourceRootB), "Library use scope should contain moduleB (depends on moduleC)")
+    assertTrue(useScope.contains(sourceRootA), "Library use scope should contain moduleA (depends on moduleB)")
+    assertFalse(useScope.contains(sourceRootD), "Library use scope should NOT contain moduleD (not in dependency chain)")
+  }
+
+  @ParameterizedTest
+  @MethodSource("dependencyScopes")
+  fun `library use scope with non-exported library and exported module dependency`(scope: DependencyScope) {
+    val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
+    val moduleA = projectModel.createModule("moduleA")
+    val moduleB = projectModel.createModule("moduleB")
+    val moduleC = projectModel.createModule("moduleC")
+    val moduleD = projectModel.createModule("moduleD")
+
+    val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("lib")
+    val library = projectModel.addProjectLevelLibrary("chainLib") {
+      it.addRoot(libraryRoot, OrderRootType.CLASSES)
+    }
+
+    ModuleRootModificationUtil.addDependency(moduleC, library, scope, false)
     ModuleRootModificationUtil.addDependency(moduleB, moduleC, scope, true)
-    ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, exported)
+    ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, false)
+
+    val sourceRootA = projectModel.addSourceRoot(moduleA, "src", JavaSourceRootType.SOURCE)
+    val sourceRootB = projectModel.addSourceRoot(moduleB, "src", JavaSourceRootType.SOURCE)
+    val sourceRootC = projectModel.addSourceRoot(moduleC, "src", JavaSourceRootType.SOURCE)
+    val sourceRootD = projectModel.addSourceRoot(moduleD, "src", JavaSourceRootType.SOURCE)
+
+    val useScope = libraryScopeCache.getLibraryUseScope(libraryRoot)
+
+    assertTrue(useScope.contains(sourceRootC), "Library use scope should contain moduleC (direct dependency)")
+    assertTrue(useScope.contains(sourceRootB), "Library use scope should contain moduleB (depends on moduleC)")
+    assertTrue(useScope.contains(sourceRootA), "Library use scope should contain moduleA (depends on moduleB)")
+    assertFalse(useScope.contains(sourceRootD), "Library use scope should NOT contain moduleD (not in dependency chain)")
+  }
+
+  @ParameterizedTest
+  @MethodSource("dependencyScopes")
+  fun `library use scope with non-exported library and non-exported module dependency`(scope: DependencyScope) {
+    val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
+    val moduleA = projectModel.createModule("moduleA")
+    val moduleB = projectModel.createModule("moduleB")
+    val moduleC = projectModel.createModule("moduleC")
+    val moduleD = projectModel.createModule("moduleD")
+
+    val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("lib")
+    val library = projectModel.addProjectLevelLibrary("chainLib") {
+      it.addRoot(libraryRoot, OrderRootType.CLASSES)
+    }
+
+    ModuleRootModificationUtil.addDependency(moduleC, library, scope, false)
+    ModuleRootModificationUtil.addDependency(moduleB, moduleC, scope, false)
+    ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, false)
+
+    val sourceRootA = projectModel.addSourceRoot(moduleA, "src", JavaSourceRootType.SOURCE)
+    val sourceRootB = projectModel.addSourceRoot(moduleB, "src", JavaSourceRootType.SOURCE)
+    val sourceRootC = projectModel.addSourceRoot(moduleC, "src", JavaSourceRootType.SOURCE)
+    val sourceRootD = projectModel.addSourceRoot(moduleD, "src", JavaSourceRootType.SOURCE)
+
+    val useScope = libraryScopeCache.getLibraryUseScope(libraryRoot)
+
+    assertTrue(useScope.contains(sourceRootC), "Library use scope should contain moduleC (direct dependency)")
+    assertTrue(useScope.contains(sourceRootB), "Library use scope should contain moduleB (depends on moduleC)")
+    assertFalse(useScope.contains(sourceRootA), "Library use scope should not contain moduleA")
+    assertFalse(useScope.contains(sourceRootD), "Library use scope should NOT contain moduleD (not in dependency chain)")
+  }
+
+  @ParameterizedTest
+  @MethodSource("dependencyScopes")
+  fun `library scope with exported library and exported module dependency`(scope: DependencyScope) {
+    val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
+    val moduleA = projectModel.createModule("moduleA")
+    val moduleB = projectModel.createModule("moduleB")
+    val moduleC = projectModel.createModule("moduleC")
+    val moduleD = projectModel.createModule("moduleD")
+
+    val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("lib")
+    val library = projectModel.addProjectLevelLibrary("chainLib") {
+      it.addRoot(libraryRoot, OrderRootType.CLASSES)
+    }
+
+    ModuleRootModificationUtil.addDependency(moduleC, library, scope, true)
+    ModuleRootModificationUtil.addDependency(moduleB, moduleC, scope, true)
+    ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, false)
 
     val sourceRootA = projectModel.addSourceRoot(moduleA, "src", JavaSourceRootType.SOURCE)
     val sourceRootB = projectModel.addSourceRoot(moduleB, "src", JavaSourceRootType.SOURCE)
@@ -293,19 +362,134 @@ class LibraryScopeCacheTest {
 
     val libraryScope = libraryScopeCache.getLibraryScope(libraryRoot)
 
-    assertTrue(libraryScope.contains(sourceRootC), "Library use scope should contain moduleC (direct dependency with scope=$scope, exported=$exported)")
-    assertTrue(libraryScope.contains(sourceRootB), "Library use scope should contain moduleB (via exported from moduleC)")
-    assertTrue(libraryScope.contains(sourceRootA), "Library use scope should contain moduleA (via exported chain)")
+    assertTrue(libraryScope.contains(sourceRootC), "Library scope should contain moduleC (direct dependency)")
+    assertTrue(libraryScope.contains(sourceRootB), "Library scope should contain moduleB (library exported from C)")
+    assertTrue(libraryScope.contains(sourceRootA), "Library scope should contain moduleA (module exported from B)")
     assertFalse(libraryScope.contains(sourceRootD), "Library scope should NOT contain moduleD (not in dependency chain)")
+  }
+
+  @ParameterizedTest
+  @MethodSource("dependencyScopes")
+  fun `library scope with exported library and non-exported module dependency`(scope: DependencyScope) {
+    val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
+    val moduleA = projectModel.createModule("moduleA")
+    val moduleB = projectModel.createModule("moduleB")
+    val moduleC = projectModel.createModule("moduleC")
+    val moduleD = projectModel.createModule("moduleD")
+
+    val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("lib")
+    val library = projectModel.addProjectLevelLibrary("chainLib") {
+      it.addRoot(libraryRoot, OrderRootType.CLASSES)
+    }
+
+    ModuleRootModificationUtil.addDependency(moduleC, library, scope, true)
+    ModuleRootModificationUtil.addDependency(moduleB, moduleC, scope, false)
+    ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, false)
+
+    val sourceRootA = projectModel.addSourceRoot(moduleA, "src", JavaSourceRootType.SOURCE)
+    val sourceRootB = projectModel.addSourceRoot(moduleB, "src", JavaSourceRootType.SOURCE)
+    val sourceRootC = projectModel.addSourceRoot(moduleC, "src", JavaSourceRootType.SOURCE)
+    val sourceRootD = projectModel.addSourceRoot(moduleD, "src", JavaSourceRootType.SOURCE)
+
+    val libraryScope = libraryScopeCache.getLibraryScope(libraryRoot)
+
+    assertTrue(libraryScope.contains(sourceRootC), "Library scope should contain moduleC (direct dependency)")
+    assertTrue(libraryScope.contains(sourceRootB), "Library scope should contain moduleB (library exported from C)")
+    assertFalse(libraryScope.contains(sourceRootA), "Library scope should NOT contain moduleA (module B→C not exported)")
+    assertFalse(libraryScope.contains(sourceRootD), "Library scope should NOT contain moduleD (not in dependency chain)")
+  }
+
+  @ParameterizedTest
+  @MethodSource("dependencyScopes")
+  fun `library scope with non-exported library and exported module dependency`(scope: DependencyScope) {
+    val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
+    val moduleA = projectModel.createModule("moduleA")
+    val moduleB = projectModel.createModule("moduleB")
+    val moduleC = projectModel.createModule("moduleC")
+    val moduleD = projectModel.createModule("moduleD")
+
+    val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("lib")
+    val library = projectModel.addProjectLevelLibrary("chainLib") {
+      it.addRoot(libraryRoot, OrderRootType.CLASSES)
+    }
+
+    ModuleRootModificationUtil.addDependency(moduleC, library, scope, false)
+    ModuleRootModificationUtil.addDependency(moduleB, moduleC, scope, true)
+    ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, false)
+
+    val sourceRootA = projectModel.addSourceRoot(moduleA, "src", JavaSourceRootType.SOURCE)
+    val sourceRootB = projectModel.addSourceRoot(moduleB, "src", JavaSourceRootType.SOURCE)
+    val sourceRootC = projectModel.addSourceRoot(moduleC, "src", JavaSourceRootType.SOURCE)
+    val sourceRootD = projectModel.addSourceRoot(moduleD, "src", JavaSourceRootType.SOURCE)
+
+    val libraryScope = libraryScopeCache.getLibraryScope(libraryRoot)
+
+    assertTrue(libraryScope.contains(sourceRootC), "Library scope should contain moduleC (direct dependency)")
+    assertFalse(libraryScope.contains(sourceRootB), "Library scope should NOT contain moduleB (library not exported)")
+    assertFalse(libraryScope.contains(sourceRootA), "Library scope should NOT contain moduleA")
+    assertFalse(libraryScope.contains(sourceRootD), "Library scope should NOT contain moduleD (not in dependency chain)")
+  }
+
+  @ParameterizedTest
+  @MethodSource("dependencyScopes")
+  fun `library scope with non-exported library and non-exported module dependency`(scope: DependencyScope) {
+    val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
+    val moduleA = projectModel.createModule("moduleA")
+    val moduleB = projectModel.createModule("moduleB")
+    val moduleC = projectModel.createModule("moduleC")
+    val moduleD = projectModel.createModule("moduleD")
+
+    val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("lib")
+    val library = projectModel.addProjectLevelLibrary("chainLib") {
+      it.addRoot(libraryRoot, OrderRootType.CLASSES)
+    }
+
+    ModuleRootModificationUtil.addDependency(moduleC, library, scope, false)
+    ModuleRootModificationUtil.addDependency(moduleB, moduleC, scope, false)
+    ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, false)
+
+    val sourceRootA = projectModel.addSourceRoot(moduleA, "src", JavaSourceRootType.SOURCE)
+    val sourceRootB = projectModel.addSourceRoot(moduleB, "src", JavaSourceRootType.SOURCE)
+    val sourceRootC = projectModel.addSourceRoot(moduleC, "src", JavaSourceRootType.SOURCE)
+    val sourceRootD = projectModel.addSourceRoot(moduleD, "src", JavaSourceRootType.SOURCE)
+
+    val libraryScope = libraryScopeCache.getLibraryScope(libraryRoot)
+
+    assertTrue(libraryScope.contains(sourceRootC), "Library scope should contain moduleC (direct dependency)")
+    assertFalse(libraryScope.contains(sourceRootB), "Library scope should NOT contain moduleB (library not exported)")
+    assertFalse(libraryScope.contains(sourceRootA), "Library scope should NOT contain moduleA")
+    assertFalse(libraryScope.contains(sourceRootD), "Library scope should NOT contain moduleD (not in dependency chain)")
+  }
+
+  @Test
+  fun testSdkUseScopeContainsModuleSourcesWithInheritedSdk() {
+    val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
+    libraryScopeCache.clear()
+
+    val module = projectModel.createModule("moduleWithSdk")
+    val sdkRoot = sdkDir.newVirtualDirectory("sdk")
+    val sdkFile = sdkDir.newVirtualFile("sdk/SomeClass.class")
+
+    val sdk = projectModel.addSdk("testSdk") {
+      it.addRoot(sdkRoot, OrderRootType.CLASSES)
+    }
+
+    runWriteActionAndWait {
+      ProjectRootManager.getInstance(projectModel.project).projectSdk = sdk
+    }
+    ModuleRootModificationUtil.setSdkInherited(module)
+
+    val sourceRoot = projectModel.addSourceRoot(module, "src", JavaSourceRootType.SOURCE)
+
+    val useScope = libraryScopeCache.getLibraryUseScope(sdkFile)
+
+    assertTrue(useScope.contains(sourceRoot),
+      "SDK use scope should contain source root of module that inherits the SDK")
   }
 
   companion object {
     @JvmStatic
-    fun scopeAndExportedCombinations(): Stream<Arguments> =
-      DependencyScope.entries.flatMap { scope ->
-        listOf(true, false).map { exported ->
-          Arguments.of(scope, exported)
-        }
-      }.stream()
+    fun dependencyScopes(): Stream<Arguments> =
+      DependencyScope.entries.map { Arguments.of(it) }.stream()
   }
 }
