@@ -26,6 +26,7 @@ import com.intellij.repository.search.completion.api.DependencyCompletionResult
 import com.intellij.repository.search.completion.api.DependencyCompletionService
 import com.intellij.repository.search.completion.api.DependencyGroupCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
+import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
@@ -49,31 +50,60 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
             // server-side completion only
             // dependencies { juni<caret> }
             //positionElement.isOnTheTopLevelOfScriptBlock(DEPENDENCIES) ->
-            //    suggestDependencyCompletions(result, parameters, DependencyConfigurationInsertHandler, TopLevelLookupStringProvider)
+            //    suggestDependencyCompletions(result, parameters, DependencyConfigurationInsertHandler, TopLevelLookupStringProvider, DependenciesCompletionInvokePosition.TOP_LEVEL)
 
             // dependencies { implementation(...) { exclude("<caret>") } }
-            positionElement.isDependencyArgument(exclude) ->
+            positionElement.isDependencyArgument(exclude) -> {
+                val invokePosition = if (positionElement.argumentName == "group") {
+                    DependenciesCompletionInvokePosition.EXCLUDE_GROUP
+                } else {
+                    DependenciesCompletionInvokePosition.EXCLUDE_MODULE
+                }
                 suggestCoordinateCompletions(
-                  result,
-                  parameters,
-                  positionElement.getGroupPrefix(),
-                  positionElement.getExcludeArtifactPrefix(),
-                  ""
+                    result,
+                    parameters,
+                    positionElement.getGroupPrefix(),
+                    positionElement.getExcludeArtifactPrefix(),
+                    "",
+                    invokePosition
                 )
+            }
 
             // dependencies { implementation("juni<caret>", "juni", "") }
-            positionElement.isPositionalOrNamedDependencyArgument() ->
+            positionElement.isPositionalOrNamedDependencyArgument() -> {
+                val invokePosition = determineInvokePosition(positionElement)
                 suggestCoordinateCompletions(
-                  result,
-                  parameters,
-                  positionElement.getGroupPrefix(),
-                  positionElement.getArtifactPrefix(),
-                  positionElement.getVersionPrefix()
+                    result,
+                    parameters,
+                    positionElement.getGroupPrefix(),
+                    positionElement.getArtifactPrefix(),
+                    positionElement.getVersionPrefix(),
+                    invokePosition
                 )
+            }
 
             // dependencies { implementation("juni<caret>") }
             positionElement.isSingleDependencyArgument() ->
                 suggestDependencyCompletions(result, parameters, FullStringInsertHandler, SimpleLookupStringProvider)
+        }
+    }
+
+    private fun determineInvokePosition(positionElement: PsiElement): DependenciesCompletionInvokePosition {
+        val argumentName = positionElement.argumentName
+        return when {
+            argumentName == "group" -> DependenciesCompletionInvokePosition.NAMED_GROUP
+            argumentName == "name" -> DependenciesCompletionInvokePosition.NAMED_ARTIFACT
+            argumentName == "version" -> DependenciesCompletionInvokePosition.NAMED_VERSION
+            else -> {
+                // Determine positional argument type
+                val argumentIndex = positionElement.argumentIndex
+                when (argumentIndex) {
+                    0 -> DependenciesCompletionInvokePosition.POSITIONAL_GROUP
+                    1 -> DependenciesCompletionInvokePosition.POSITIONAL_ARTIFACT
+                    2 -> DependenciesCompletionInvokePosition.POSITIONAL_VERSION
+                    else -> DependenciesCompletionInvokePosition.OTHER
+                }
+            }
         }
     }
 
@@ -113,6 +143,11 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
                     lookupElement.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
                     lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
 
+                    // Store FUS metadata
+                    lookupElement.putUserData(GRADLE_COMPLETION_IS_AUTO_POPUP, parameters.isAutoPopup)
+                    // TODO lookupElement.putUserData(GRADLE_COMPLETION_PROVIDER_TYPE, DependenciesCompletionProviderType.SERVER)
+                    lookupElement.putUserData(GRADLE_COMPLETION_INVOKE_POSITION, DependenciesCompletionInvokePosition.GAV)
+
                     resultSet.addElement(lookupElement)
                 }
         }
@@ -124,7 +159,8 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         parameters: CompletionParameters,
         group: String,
         artifact: String,
-        version: String
+        version: String,
+        invokePosition: DependenciesCompletionInvokePosition
     ) {
         filterResultsFromOtherContributors(result, parameters)
 
@@ -168,6 +204,12 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
                     .withInsertHandler(FullStringInsertHandler)
                 lookupElement.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
                 lookupElement.putUserData(GRADLE_DEPENDENCY_COMPLETION, true)
+
+                // Store FUS metadata
+                lookupElement.putUserData(GRADLE_COMPLETION_IS_AUTO_POPUP, parameters.isAutoPopup)
+                // TODO lookupElement.putUserData(GRADLE_COMPLETION_PROVIDER_TYPE, DependenciesCompletionProviderType.SERVER)
+                lookupElement.putUserData(GRADLE_COMPLETION_INVOKE_POSITION, invokePosition)
+
                 result.addElement(lookupElement)
             }
         }

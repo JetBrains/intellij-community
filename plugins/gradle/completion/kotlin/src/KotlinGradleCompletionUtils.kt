@@ -154,11 +154,18 @@ internal fun PsiElement.isDependencyArgument(): Boolean {
 
 private val PsiElement.argumentsSize get(): Int = (this.parent?.parent?.parent?.parent as? KtValueArgumentList)?.arguments?.size ?: 0
 
-private val PsiElement.argumentName: String
+internal val PsiElement.argumentName: String
     get() {
         val valueArgument = this.parent?.parent?.parent as? KtValueArgument ?: return ""
         val valueArgumentName = valueArgument.children[0] as? KtValueArgumentName ?: return ""
         return valueArgumentName.text
+    }
+
+internal val PsiElement.argumentIndex: Int
+    get() {
+        val valueArgument = this.parent?.parent?.parent as? KtValueArgument ?: return -1
+        val argumentList = valueArgument.parent as? KtValueArgumentList ?: return -1
+        return argumentList.arguments.indexOf(valueArgument)
     }
 
 internal fun PsiElement.getGroupPrefix(): String = getCoordinatePrefix("group", 0)
