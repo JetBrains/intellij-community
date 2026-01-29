@@ -28,6 +28,8 @@ jvm_library(
     "//plugins/repository-search/completion",
     "//plugins/gradle/completion",
     "//plugins/gradle",
+    "//platform/statistics",
+    "//platform/lang-impl",
   ]
 )
 
