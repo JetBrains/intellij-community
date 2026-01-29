@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.EditorSettings
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.MathUtil.clamp
@@ -19,8 +20,15 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import java.awt.geom.Point2D
 import kotlin.math.*
 
-private data class CaretUpdate(val finalPos: Point2D, val width: Float, val caret: Caret, val isRtl: Boolean)
-private data class AnimationState(val startPos: Point2D, val update: CaretUpdate)
+private data class CaretUpdate(
+  val finalPos: Point2D,
+  val finalLogicalPosition: LogicalPosition,
+  val width: Float,
+  val caret: Caret,
+  val isRtl: Boolean,
+)
+
+private data class AnimationState(val startPos: Point2D, val startLogicalPosition: LogicalPosition?, val update: CaretUpdate)
 
 @Service(Service.Level.APP)
 internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
@@ -34,14 +42,15 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
       val isRtl = caret.isAtRtlLocation()
       val caretPosition = caret.visualPosition
       val pos1: Point2D = editor.visualPositionToPoint2D(caretPosition.leanRight(!isRtl))
-      val pos2: Point2D = editor.visualPositionToPoint2D(VisualPosition(caretPosition.line, max(0, caretPosition.column + (if (isRtl) -1 else 1)), isRtl))
+      val pos2: Point2D =
+        editor.visualPositionToPoint2D(VisualPosition(caretPosition.line, max(0, caretPosition.column + (if (isRtl) -1 else 1)), isRtl))
 
       var width = abs(pos2.x - pos1.x).toFloat()
       if (!isRtl && editor.inlayModel.hasInlineElementAt(caretPosition)) {
         width = min(width, ceil(editor.view.plainSpaceWidth.toDouble()).toFloat())
       }
 
-      CaretUpdate(pos1, width, caret, isRtl)
+      CaretUpdate(pos1, caret.logicalPosition, width, caret, isRtl)
     }
   }
 
@@ -53,12 +62,11 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
   fun setCursorPositionImmediately(editor: EditorImpl) {
     val animationStates = calculateUpdates(editor)
     for (state in animationStates) {
-      editor.lastPosMap[state.caret] = state.finalPos
+      editor.lastPosMap[state.caret] = state.finalPos to state.finalLogicalPosition
     }
     editor.myCaretCursor.setPositions(animationStates.map { state ->
       EditorImpl.CaretRectangle(state.finalPos, state.width, state.caret, state.isRtl)
     }.toTypedArray())
-    editor.caretAnimationElapsed = 0.0
   }
 
   // Replaying 128 requests is probably way too much, actually 2 should be enough. It shouldn't break
@@ -101,34 +109,41 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
     val step = MILLIS_SECOND / (2 * refreshRate)
 
     val animationStates = calculateUpdates(editor).map {
-      val lastPos = editor.lastPosMap.getOrPut(it.caret) { it.finalPos }
-      AnimationState(lastPos, it)
+      val (lastPos, lastVisualPosition) = editor.lastPosMap.getOrPut(it.caret) {
+        it.finalPos to it.finalLogicalPosition
+      }
+
+      AnimationState(lastPos, lastVisualPosition, it)
     }
 
-    val startingAnimationElapsed = editor.caretAnimationElapsed
-    val easing = CaretEasing.fromSettings(editor.settings, startingAnimationElapsed)
+    val easing = CaretEasing.fromSettings(editor.settings)
     val startTime = System.currentTimeMillis()
     while (true) {
       val now = System.currentTimeMillis()
       val elapsed = now - startTime
 
       val t = min(1.0 * elapsed / animationDuration, 1.0)
-      editor.caretAnimationElapsed += t * (1.0 - startingAnimationElapsed)
 
       var allDone = true
 
       val interpolatedRects = animationStates.map { state ->
+        val sameLogicalPosition = state.startLogicalPosition == state.update.finalLogicalPosition
+        val isInAnimation = !sameLogicalPosition && t < 1
+
         val update = state.update
         val (startPos, finalPos) = Pair(state.startPos, update.finalPos)
 
-        if (t < 1) allDone = false
+        if (isInAnimation) allDone = false
 
         val ease = easing.apply(t)
         val x = startPos.x + (finalPos.x - startPos.x) * ease
         val y = startPos.y + (finalPos.y - startPos.y) * ease
 
-        val interpolated = Point2D.Double(if (t >= 1) finalPos.x else x, if (t >= 1) finalPos.y else y)
-        editor.lastPosMap[update.caret] = interpolated
+        val interpolated = if (isInAnimation) Point2D.Double(x, y) else finalPos
+        editor.lastPosMap[update.caret] = Pair(
+          interpolated,
+          state.update.finalLogicalPosition.takeUnless { isInAnimation }
+        )
         EditorImpl.CaretRectangle(interpolated, update.width, update.caret, update.isRtl)
       }.toTypedArray()
 
@@ -142,8 +157,6 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
 
       delay(step.toLong())
     }
-
-    editor.caretAnimationElapsed = 0.0
   }
 }
 
@@ -155,7 +168,7 @@ private enum class CaretEasingType {
   Ease;
 }
 
-private class CaretEasing(val type: CaretEasingType, val adjustP: Double) {
+private class CaretEasing(val type: CaretEasingType) {
   fun apply(t: Double): Double {
     return when (this.type) {
       CaretEasingType.Ninja -> {
@@ -173,20 +186,18 @@ private class CaretEasing(val type: CaretEasingType, val adjustP: Double) {
       }
       CaretEasingType.Ease -> {
         // Horner form of rounded Hermite + α, β approx of cubic-bezier(0.25,0.1,0.25,1.0); monotone on [0,1], max dev ≈ 0.0176.
-        val f = { t: Double -> t * ((((-5.4 * t + 17.6) * t - 20.6) * t + 9.0) * t + 0.4) }
-
-        ((f(adjustP + (1 - adjustP) * t) - f(adjustP)) / (f(1.0) - f(adjustP)))
+        t * ((((-5.4 * t + 17.6) * t - 20.6) * t + 9.0) * t + 0.4)
       }
     }
   }
 
   companion object {
-    fun fromSettings(settings: EditorSettings, elapsed: Double): CaretEasing {
+    fun fromSettings(settings: EditorSettings): CaretEasing {
       val type = when (settings.caretEasing) {
         EditorSettings.CaretEasing.NINJA -> CaretEasingType.Ninja
         EditorSettings.CaretEasing.EASE -> CaretEasingType.Ease
       }
-      return CaretEasing(type, elapsed)
+      return CaretEasing(type)
     }
   }
 }

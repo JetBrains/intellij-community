@@ -3193,14 +3193,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @ApiStatus.Internal
-  final ConcurrentHashMap<Caret, Point2D> lastPosMap = new ConcurrentHashMap<>();
+  final ConcurrentHashMap<Caret, kotlin.Pair<Point2D, @Nullable LogicalPosition>> lastPosMap = new ConcurrentHashMap<>();
 
   @ApiStatus.Internal
   @Nullable
   Job caretAnimationJob = null;
-
-  @ApiStatus.Internal
-  double caretAnimationElapsed;
 
   private final @NotNull EditorCaretMoveService caretMoveService = EditorCaretMoveService.getInstance();
 
