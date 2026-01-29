@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -38,10 +39,16 @@ import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
+import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.BazelEnvironmentUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.frame.XStackFrameWithSeparatorAbove;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.ApiStatus;
@@ -189,8 +196,13 @@ public final class AsyncStacksUtils {
           String className = dis.readUTF();
           String methodName = dis.readUTF();
           int line = dis.readInt();
-          Location location = DebuggerUtilsEx.findOrCreateLocation(vm.getVirtualMachine(), className, methodName, line);
-          item = new StackFrameItem(location, null);
+          if ("< Unknown".equals(className) && "Stack > ".equals(methodName)) {
+            item = new ThrottledStackFrameItem(vm.getVirtualMachine());
+          }
+          else {
+            Location location = DebuggerUtilsEx.findOrCreateLocation(vm.getVirtualMachine(), className, methodName, line);
+            item = new StackFrameItem(location, null);
+          }
         }
         res.add(item);
       }
@@ -497,6 +509,8 @@ public final class AsyncStacksUtils {
     if (isSuspendHelperEnabled()) {
       properties.setProperty("suspendHelper", "true");
     }
+    boolean throttling = DebuggerSettings.getInstance().AGENT_THROTTLING;
+    properties.setProperty("throttling", Boolean.toString(throttling));
     double overhead = Registry.doubleValue("debugger.async.stack.trace.overhead.percent");
     properties.setProperty("overheadPercent", Double.toString(overhead));
     if (JavaCollectionBreakpointType.isEnabled()) {
@@ -531,5 +545,61 @@ public final class AsyncStacksUtils {
     };
     breakpoint.setSuspendPolicy(DebuggerSettings.SUSPEND_THREAD);
     breakpoint.createRequest(process);
+  }
+
+  private static class ThrottledStackFrameItem extends StackFrameItem {
+    ThrottledStackFrameItem(VirtualMachine vm) {
+      super(createSyntheticLocation(vm), Collections.emptyList());
+    }
+
+    private static Location createSyntheticLocation(VirtualMachine vm) {
+      return DebuggerUtilsEx.findOrCreateLocation(vm, "", "", -1);
+    }
+
+    @Override
+    public XStackFrame createFrame(@NotNull DebugProcessImpl debugProcess, @Nullable SourcePosition sourcePosition) {
+      return new ThrottledFrame();
+    }
+  }
+
+  private static class ThrottledFrame extends XStackFrame implements XStackFrameWithSeparatorAbove, JVMStackFrameInfoProvider {
+    private boolean myWithSeparator;
+
+    @Override
+    public void customizePresentation(@NotNull ColoredTextContainer component) {
+      component.append(JavaDebuggerBundle.message("async.stack.throttled.frame.label"), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+    }
+
+    @Override
+    public void computeChildren(@NotNull XCompositeNode node) {
+      node.setMessage(JavaDebuggerBundle.message("async.stack.throttled.frame.info"), null,
+                      SimpleTextAttributes.REGULAR_ATTRIBUTES, StackFrameItem.CAPTURE_SETTINGS_OPENER);
+      node.addChildren(XValueChildrenList.EMPTY, true);
+    }
+
+    @Override
+    public String getCaptionAboveOf() {
+      return StackFrameItem.getAsyncStacktraceMessage();
+    }
+
+    @Override
+    public boolean hasSeparatorAbove() {
+      return myWithSeparator;
+    }
+
+    @Override
+    public void setWithSeparator(boolean withSeparator) {
+      myWithSeparator = withSeparator;
+    }
+
+    @Override
+    public boolean isSynthetic() {
+      return true;
+    }
+
+    @Override
+    public boolean isInLibraryContent() {
+      return false;
+    }
   }
 }

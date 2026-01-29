@@ -107,6 +107,7 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
   private ClassFilter[] mySteppingFilters = DEFAULT_STEPPING_FILTERS;
 
   public boolean INSTRUMENTING_AGENT = true;
+  public boolean AGENT_THROTTLING = true;
   private List<CapturePoint> myCapturePoints = new ArrayList<>();
   public boolean CAPTURE_VARIABLES;
   private final EventDispatcher<CapturePointsSettingsListener> myDispatcher = EventDispatcher.create(CapturePointsSettingsListener.class);

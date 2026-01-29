@@ -66,6 +66,7 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
   private final Project myProject;
 
   private JCheckBox myDebuggerAgent;
+  private JCheckBox myThrottling;
   private JButton myConfigureAnnotationsButton;
   private JPanel myCapturePanel;
   private MyTableModel myTableModel;
@@ -444,6 +445,7 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
   public boolean isModified() {
     return DebuggerSettings.getInstance().CAPTURE_VARIABLES != myCaptureVariables.isSelected() ||
            DebuggerSettings.getInstance().INSTRUMENTING_AGENT != myDebuggerAgent.isSelected() ||
+           DebuggerSettings.getInstance().AGENT_THROTTLING != myThrottling.isSelected() ||
            !DebuggerSettings.getInstance().getCapturePoints().equals(myTableModel.myCapturePoints);
   }
 
@@ -452,12 +454,14 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
     DebuggerSettings.getInstance().setCapturePoints(myTableModel.myCapturePoints);
     DebuggerSettings.getInstance().CAPTURE_VARIABLES = myCaptureVariables.isSelected();
     DebuggerSettings.getInstance().INSTRUMENTING_AGENT = myDebuggerAgent.isSelected();
+    DebuggerSettings.getInstance().AGENT_THROTTLING = myThrottling.isSelected();
   }
 
   @Override
   public void reset() {
     myCaptureVariables.setSelected(DebuggerSettings.getInstance().CAPTURE_VARIABLES);
     myDebuggerAgent.setSelected(DebuggerSettings.getInstance().INSTRUMENTING_AGENT);
+    myThrottling.setSelected(DebuggerSettings.getInstance().AGENT_THROTTLING);
     myTableModel.myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
     myTableModel.fireTableDataChanged();
   }
