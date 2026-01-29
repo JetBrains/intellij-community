@@ -91,7 +91,7 @@ private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project,
   val totalWidth = alignIntToInt(leftWidth + rightWidth, ctx, PaintUtil.RoundingMode.CEIL, null)
 
   val fullBounds = Rectangle(totalWidth, height)
-  val bounds = g.clipBounds?.intersection(fullBounds) ?: fullBounds
+  val bounds = if (SystemInfo.isLinux) fullBounds else g.clipBounds?.intersection(fullBounds) ?: fullBounds
   if (bounds.isEmpty) {
     return
   }
