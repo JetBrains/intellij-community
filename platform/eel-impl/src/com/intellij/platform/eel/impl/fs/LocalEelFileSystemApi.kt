@@ -15,8 +15,6 @@ import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
-import com.intellij.util.io.ByteBufferUtil
-import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -25,7 +23,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.ByteBuffer
-import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.*
 import java.nio.file.attribute.*
@@ -641,14 +638,7 @@ abstract class PosixNioBasedEelFileSystemApi(
           null
         }
         else if (sourceAttrs.size() > 0) {
-          FileChannel.open(currentItem, StandardOpenOption.READ).use { fileChannel ->
-            val buffer = fileChannel.map(
-              FileChannel.MapMode.READ_ONLY,
-              0,
-              sourceAttrs.size(),
-            )
-            Hashing.xxh3_64().hashBytesToLong(buffer.toByteArray())
-          }
+          getFileContentsHash(currentItem)
         }
         else {
           emptyFileHash
@@ -873,17 +863,7 @@ abstract class WindowsNioBasedEelFileSystemApi(
           null
         }
         else if (sourceAttrs.size() > 0) {
-          FileChannel.open(currentItem, StandardOpenOption.READ).use { fileChannel ->
-            val buffer = fileChannel.map(
-              FileChannel.MapMode.READ_ONLY,
-              0,
-              sourceAttrs.size(),
-            )
-            val hash = Hashing.xxh3_64().hashBytesToLong(buffer.toByteArray())
-            // NOTE: Windows requires explicit buffer cleaning
-            ByteBufferUtil.cleanBuffer(buffer)
-            hash
-          }
+          getFileContentsHash(currentItem)
         }
         else {
           emptyFileHash
@@ -1092,4 +1072,20 @@ private fun writeOptionsToNioOptions(options: EelFileSystemApi.WriteOptions): Mu
     nioOptions += StandardOpenOption.TRUNCATE_EXISTING
   }
   return nioOptions
+}
+
+private fun getFileContentsHash(path: Path): Long {
+  val hasher = Hashing.xxh3_64().hashStream()
+  // buffer size of 64KiB shows the best performance in benchmarks
+  val buffer = ByteArray(64 * 1024)
+
+  Files.newInputStream(path, StandardOpenOption.READ).use { inputStream ->
+    while (true) {
+      val bytesRead = inputStream.read(buffer)
+      if (bytesRead == -1) break
+      hasher.putBytes(buffer, 0, bytesRead)
+    }
+  }
+
+  return hasher.asLong
 }
