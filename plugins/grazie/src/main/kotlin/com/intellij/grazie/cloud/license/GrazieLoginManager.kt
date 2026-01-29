@@ -69,7 +69,7 @@ class GrazieLoginManager(coroutineScope: CoroutineScope) {
   private val initialized = AtomicBoolean(false)
 
   init {
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
       coroutineScope.launch {
         val aiService = service<ProvisionedServiceRegistry>().getServiceById("ai")
         if (aiService == null) {
