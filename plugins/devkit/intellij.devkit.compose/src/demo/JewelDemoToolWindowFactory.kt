@@ -18,6 +18,8 @@ internal class JewelDemoToolWindowFactory : ToolWindowFactory, DumbAware {
 
     toolWindow.addComposeTab(DevkitComposeBundle.message("jewel.tw.tab.title.components")) { ComponentShowcaseTab(project) }
 
+    toolWindow.addComposeTab(DevkitComposeBundle.message("jewel.tw.tab.title.markdown")) { MarkdownShowcaseTab(project) }
+
     toolWindow.addComposeTab(DevkitComposeBundle.message("jewel.tw.tab.title.releases.demo")) { ReleasesSampleCompose(project) }
 
     toolWindow.addSwingTab(SwingComparisonTabPanel(), DevkitComposeBundle.message("jewel.tw.tab.title.swing.comparison"))

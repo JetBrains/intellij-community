@@ -54,7 +54,11 @@ public sealed interface MarkdownBlock {
         @ApiStatus.Experimental
         @ExperimentalJewelApi
         @GenerateDataFunctions
-        public class FencedCodeBlock(override val content: String, public val mimeType: MimeType?) : CodeBlock {
+        public class FencedCodeBlock internal constructor(override val content: String, public val language: String?) :
+            CodeBlock {
+            @Deprecated("mimeType has been discontinued in favor of `language`.")
+            public val mimeType: MimeType? = MimeType.Known.fromMarkdownLanguageName(language.orEmpty())
+
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
                 if (javaClass != other?.javaClass) return false
@@ -62,18 +66,18 @@ public sealed interface MarkdownBlock {
                 other as FencedCodeBlock
 
                 if (content != other.content) return false
-                if (mimeType != other.mimeType) return false
+                if (language != other.language) return false
 
                 return true
             }
 
             override fun hashCode(): Int {
                 var result = content.hashCode()
-                result = 31 * result + (mimeType?.hashCode() ?: 0)
+                result = 31 * result + (language?.hashCode() ?: 0)
                 return result
             }
 
-            override fun toString(): String = "FencedCodeBlock(content='$content', mimeType=$mimeType)"
+            override fun toString(): String = "FencedCodeBlock(content='$content', language=$language)"
         }
     }
 
