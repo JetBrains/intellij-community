@@ -164,7 +164,7 @@
 
     <localInspection language="UAST" groupPath="Gradle" shortName="AvoidApplyPluginMethod"
                      bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.avoid.apply.plugin.method" groupKey="inspection.best.practises"
+                     key="inspection.display.name.avoid.apply.plugin.method" groupKey="inspection.best.practices"
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidApplyPluginMethodInspection"
@@ -172,7 +172,7 @@
 
     <localInspection language="UAST" groupPath="Gradle" shortName="AvoidRepositoriesInBuildGradle"
                      bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.avoid.repositories.in.build.gradle" groupKey="inspection.best.practises"
+                     key="inspection.display.name.avoid.repositories.in.build.gradle" groupKey="inspection.best.practices"
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.AvoidRepositoriesInBuildGradleInspection"
@@ -180,7 +180,7 @@
 
     <localInspection language="UAST" groupPath="Gradle" shortName="AvoidDuplicateDependencies"
                      bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.avoid.duplicate.dependencies" groupKey="inspection.best.practises"
+                     key="inspection.display.name.avoid.duplicate.dependencies" groupKey="inspection.best.practices"
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDuplicateDependenciesInspection"
@@ -188,7 +188,7 @@
 
     <localInspection language="UAST" groupPath="Gradle" shortName="TaskMissingDescription"
                      bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.task.missing.description" groupKey="inspection.best.practises"
+                     key="inspection.display.name.task.missing.description" groupKey="inspection.best.practices"
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleTaskMissingDescriptionInspection"
