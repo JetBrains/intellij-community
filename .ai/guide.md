@@ -110,6 +110,10 @@ Available via ijproxy or JetBrains MCP. Use these for semantic operations; avoid
 
 {{PARTIAL:knowledge-mcps}}
 
+## Individual Preferences
+
+**Local Preferences:** @./.ai/local.md
+
 <!-- IF_TOOL:CLAUDE -->
-{{PARTIAL:claude-only}}
+{{PARTIAL:claude-only-individual-preferences}}
 <!-- /IF_TOOL:CLAUDE -->

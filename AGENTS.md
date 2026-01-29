@@ -106,3 +106,7 @@ Available via ijproxy or JetBrains MCP. Use these for semantic operations; avoid
 
 - Shell OK for: git, build/test.
 - Outside repo: native shell permitted.
+
+## Individual Preferences
+
+**Local Preferences:** @./.ai/local.md
