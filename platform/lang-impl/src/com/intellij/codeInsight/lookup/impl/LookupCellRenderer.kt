@@ -61,20 +61,44 @@ import javax.swing.*
 import javax.swing.border.EmptyBorder
 import kotlin.math.max
 
-class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : ListCellRenderer<LookupElement> {
-  private var emptyIcon: Icon = EmptyIcon.ICON_0
-  private val normalFont: Font
-  private val boldFont: Font
-  private val normalMetrics: FontMetrics
-  private val boldMetrics: FontMetrics
+class LookupCellRenderer(
+  private val lookup: LookupImpl,
+  editorComponent: JComponent
+) : ListCellRenderer<LookupElement> {
 
-  private val lookup: LookupImpl
+  private var emptyIcon: Icon = EmptyIcon.ICON_0
+  private val normalFont: Font = lookup.topLevelEditor.colorsScheme.getFont(EditorFontType.PLAIN)
+  private val boldFont: Font = lookup.topLevelEditor.colorsScheme.getFont(EditorFontType.BOLD)
+  private val normalMetrics: FontMetrics = lookup.topLevelEditor.component.getFontMetrics(normalFont)
+  private val boldMetrics: FontMetrics = lookup.topLevelEditor.component.getFontMetrics(boldFont)
+
   private val editor: Editor = lookup.editor
 
-  private val nameComponent: SimpleColoredComponent
-  private val tailComponent: SimpleColoredComponent
-  private val typeLabel: SimpleColoredComponent
-  private val panel: LookupPanel
+  private val nameComponent: SimpleColoredComponent = MySimpleColoredComponent().apply {
+    setOpaque(false)
+    setIconTextGap(scale(4))
+    setIpad(JBUI.insetsLeft(1))
+    setMyBorder(null)
+  }
+
+  private val tailComponent: SimpleColoredComponent = MySimpleColoredComponent().apply {
+    setOpaque(false)
+    setIpad(JBInsets.emptyInsets())
+    setBorder(JBUI.Borders.emptyRight(10))
+  }
+
+  private val typeLabel: SimpleColoredComponent = MySimpleColoredComponent().apply {
+    setOpaque(false)
+    setIpad(JBInsets.emptyInsets())
+    setBorder(JBUI.Borders.emptyRight(10))
+  }
+
+  private val panel: LookupPanel = LookupPanel().apply {
+    add(nameComponent, BorderLayout.WEST)
+    add(tailComponent, BorderLayout.CENTER)
+    add(typeLabel, BorderLayout.EAST)
+  }
+
   private val indexToIsSelected = Int2BooleanOpenHashMap()
 
   private var maxWidth = -1
@@ -83,10 +107,11 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
   @Volatile
   var lookupTextWidth: Int = 50
     private set
-  private val widthLock = ObjectUtils.sentinel("lookup width lock")
-  private val shrinkLookup: Boolean
 
-  private val asyncRendering: AsyncRendering
+  private val widthLock = ObjectUtils.sentinel("lookup width lock")
+  private val shrinkLookup: Boolean = Registry.`is`("ide.lookup.shrink")
+
+  private val asyncRendering: AsyncRendering = AsyncRendering(lookup)
 
   private val customizers: MutableList<ItemPresentationCustomizer> = ContainerUtil.createLockFreeCopyOnWriteList()
 
@@ -99,36 +124,6 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
   private val itemAddedCount = AtomicInteger()
 
   init {
-    val scheme = lookup.topLevelEditor.colorsScheme
-    normalFont = scheme.getFont(EditorFontType.PLAIN)
-    boldFont = scheme.getFont(EditorFontType.BOLD)
-
-    this.lookup = lookup
-    nameComponent = MySimpleColoredComponent()
-    nameComponent.setOpaque(false)
-    nameComponent.setIconTextGap(scale(4))
-    nameComponent.setIpad(JBUI.insetsLeft(1))
-    nameComponent.setMyBorder(null)
-
-    tailComponent = MySimpleColoredComponent()
-    tailComponent.setOpaque(false)
-    tailComponent.setIpad(JBInsets.emptyInsets())
-    tailComponent.setBorder(JBUI.Borders.emptyRight(10))
-
-    typeLabel = MySimpleColoredComponent()
-    typeLabel.setOpaque(false)
-    typeLabel.setIpad(JBInsets.emptyInsets())
-    typeLabel.setBorder(JBUI.Borders.emptyRight(10))
-
-    panel = LookupPanel()
-    panel.add(nameComponent, BorderLayout.WEST)
-    panel.add(tailComponent, BorderLayout.CENTER)
-    panel.add(typeLabel, BorderLayout.EAST)
-
-    normalMetrics = lookup.topLevelEditor.component.getFontMetrics(normalFont)
-    boldMetrics = lookup.topLevelEditor.component.getFontMetrics(boldFont)
-    asyncRendering = AsyncRendering(lookup)
-
     val coroutineContext = Dispatchers.EDT + ModalityState.stateForComponent(editorComponent).asContextElement()
     lookup.coroutineScope.launch {
       lookupWidthUpdateRequests
@@ -153,8 +148,6 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
           check(lookupWidthUpdateRequests.tryEmit(Unit))
         }
     }
-
-    shrinkLookup = Registry.`is`("ide.lookup.shrink")
   }
 
   companion object {
