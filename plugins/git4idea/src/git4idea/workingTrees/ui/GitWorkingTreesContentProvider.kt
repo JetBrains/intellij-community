@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
@@ -47,6 +48,7 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
     internal const val GIT_WORKING_TREE_TOOLWINDOW_TAB_TOOLBAR: String = "GitWorkingTreeToolWindowTabToolbar"
     internal const val GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST: String = "GitWorkingTreeToolWindowTabEmptyList"
 
+    private const val EMPTY_TAB_WORKING_TREE_CONCEPT_HELP_ID = "worktree-concept"
     private const val TOOLWINDOW_CONTENT_HELP_ID = "worktree-help"
   }
 
@@ -106,6 +108,7 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
 
     private fun initEmptyText(emptyText: StatusText) {
       emptyText.text = GitBundle.message("toolwindow.working.trees.tab.empty.text")
+      emptyText.withUnscaledGapAfter(20)
       emptyText.appendLine(GitBundle.message("toolwindow.working.trees.tab.empty.text.create.working.tree"),
                            SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) { _ ->
         val repository = model.repository
@@ -114,6 +117,11 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
                                                                                     null,
                                                                                     GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST)
         }
+      }
+      emptyText.appendLine(AllIcons.General.ContextHelp,
+                           GitBundle.message("toolwindow.working.trees.tab.empty.what.git.worktree"),
+                           SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) { _ ->
+        HelpManager.getInstance().invokeHelp(EMPTY_TAB_WORKING_TREE_CONCEPT_HELP_ID)
       }
     }
 
