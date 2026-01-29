@@ -47,9 +47,8 @@ internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWith
 
     val workspaceModel = project.workspaceModel
     workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { currentStorage -> // Fake module entity is added by default if nothing was discovered
-      removeFakeModuleAndConflictingEntities(currentStorage, newStorage.entities(ModuleEntity::class.java))
-      // TODO: Store old module->SDK, so we can restoe it even when modules are destroyed
       relocateUserDefinedModuleSdk(currentStorage) {
+        removeFakeModuleAndConflictingEntities(currentStorage, newStorage.entities(ModuleEntity::class.java))
         currentStorage.replaceBySource({ it is PyProjectTomlEntitySource }, newStorage)
 
         // Exclude dirs
@@ -85,8 +84,10 @@ private fun MutableEntityStorage.excludeRoot(rootToExclude: VirtualFileUrl, modu
 internal fun relocateUserDefinedModuleSdk(storage: MutableEntityStorage, transfer: () -> Unit) {
 
   // Store SDK
-  val moduleIdToSdkId = storage.entities(ModuleEntity::class.java)
-    .filter { it.entitySource is PyProjectTomlEntitySource && it.type == PYTHON_MODULE_ID }
+  val pyModules = storage.entities(ModuleEntity::class.java).filter { it.isPythonModule }.toList()
+  // Module might be renamed, so we store its path as a last resort
+  val tomlDirToSdkId = mutableMapOf<VirtualFileUrl, SdkId>()
+  val moduleIdToSdkId = pyModules
     .mapNotNull { moduleEntity ->
       val sdkId = moduleEntity.sdkId
                   // Module has no SDK, but might have a facet
@@ -101,6 +102,10 @@ internal fun relocateUserDefinedModuleSdk(storage: MutableEntityStorage, transfe
       if (sdkId == null) {
         return@mapNotNull null
       }
+      val tomlDir = moduleEntity.pyProjectTomlEntity?.dirWithToml
+      if (tomlDir != null) {
+        tomlDirToSdkId[tomlDir] = sdkId
+      }
       Pair(moduleEntity.symbolicId, sdkId)
     }.toMap()
 
@@ -108,7 +113,17 @@ internal fun relocateUserDefinedModuleSdk(storage: MutableEntityStorage, transfe
 
   // Restore SDKs
   for ((moduleId, sdkId) in moduleIdToSdkId.entries) {
-    val moduleEntity = storage.resolve(moduleId) ?: continue
+    val moduleEntity = storage.resolve(moduleId)
+    if (moduleEntity != null) {
+      storage.modifyModuleEntity(moduleEntity) {
+        this.sdkId = sdkId
+      }
+    }
+  }
+  val pyModulesNoSdk = storage.entities(ModuleEntity::class.java).filter { it.isPythonModule && it.sdkId == null }
+  for (moduleEntity in pyModulesNoSdk) {
+    val tomlDir = moduleEntity.pyProjectTomlEntity?.dirWithToml ?: continue
+    val sdkId = tomlDirToSdkId[tomlDir] ?: continue
     storage.modifyModuleEntity(moduleEntity) {
       this.sdkId = sdkId
     }
@@ -337,3 +352,5 @@ private val ModuleEntity.sdkId: SdkId?
       is SdkDependency -> it.sdk
     }
   }
+
+private val ModuleEntity.isPythonModule: Boolean get() = entitySource is PyProjectTomlEntitySource && type == PYTHON_MODULE_ID
