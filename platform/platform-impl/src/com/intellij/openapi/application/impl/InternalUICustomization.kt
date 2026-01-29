@@ -91,6 +91,8 @@ open class InternalUICustomization {
 
   open val isTabOccupiesWholeHeight: Boolean = true
 
+  open val isRoundedTabDuringDrag: Boolean = false
+
   internal open fun configureToolWindowPane(toolWindowPaneParent: JComponent, buttonManager: ToolWindowButtonManager) {}
 
   /**

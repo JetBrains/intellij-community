@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -17,6 +18,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.PopupCornerType
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BusyObject
 import com.intellij.openapi.util.Disposer
@@ -30,6 +32,7 @@ import com.intellij.openapi.wm.impl.executeOnCancelInEdt
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ScreenUtil
+import com.intellij.ui.WindowRoundedCornersManager
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.docking.*
@@ -330,6 +333,10 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
       })
       contentPane = imageContainer
       pack()
+
+      if (WindowRoundedCornersManager.isAvailable() && InternalUICustomization.getInstance()?.isRoundedTabDuringDrag == true) {
+        WindowRoundedCornersManager.setRoundedCorners(this, PopupCornerType.RoundedWindow)
+      }
     }
 
     override fun setVisible(isVisible: Boolean) {

@@ -151,6 +151,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
   override val isTabOccupiesWholeHeight: Boolean
     get() = !isManyIslandEnabled
 
+  override val isRoundedTabDuringDrag: Boolean
+    get() = isManyIslandEnabled
+
   override val toolWindowUIDecorator: ToolWindowUIDecorator = object : ToolWindowUIDecorator() {
     override fun decorateAndReturnHolder(
       divider: JComponent,
