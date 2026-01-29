@@ -198,6 +198,7 @@ class LookupCellRenderer(
     @Deprecated("use getMatchingFragmentList(prefix, name)", ReplaceWith("getMatchingFragmentList(prefix, name)"))
     @JvmStatic
     fun getMatchingFragments(prefix: String, name: String): FList<TextRange>? {
+      @Suppress("DEPRECATION")
       return NameUtil.buildMatcher("*$prefix").build().matchingFragments(name)
     }
 
