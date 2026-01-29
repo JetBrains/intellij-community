@@ -92,6 +92,7 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
+import org.jetbrains.plugins.terminal.starter.ShellCustomizer
 import java.awt.Color
 import java.awt.Component
 import java.awt.event.ActionListener
@@ -430,6 +431,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
                          .and(ComponentPredicate.fromValue(RunCommandUsingIdeUtil.isVisible)))
         }
         panel {
+          configurables(ShellCustomizer.EP_NAME.extensionList.mapNotNull { it.getConfigurable(project) })
           configurables(LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getConfigurable(project) })
         }
         row(message("settings.cursor.shape.label")) {

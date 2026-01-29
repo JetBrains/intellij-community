@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.wsl.WslPath
 import com.intellij.ide.trustedProjects.TrustedProjects
@@ -10,6 +11,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -33,6 +35,7 @@ import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
+import org.jetbrains.plugins.terminal.starter.ShellCustomizer
 import java.nio.file.Files
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
@@ -72,6 +75,22 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
   val defaultStartingDirectory: String?
     get() {
+      for (customizer in ShellCustomizer.EP_NAME.extensionList) {
+        val dir = try {
+          customizer.getStartDirectory(project)
+        }
+        catch (e: Throwable) {
+          rethrowControlFlowException(e)
+          LOG.error(PluginException.createByClass(
+            "Exception during getting start directory by ${customizer::class.java}",
+            e,
+            customizer::class.java
+          ))
+        }
+        if (dir != null) {
+          return dir.toString()
+        }
+      }
       var directory: String? = null
       for (customizer in LocalTerminalCustomizer.EP_NAME.extensions) {
         try {
