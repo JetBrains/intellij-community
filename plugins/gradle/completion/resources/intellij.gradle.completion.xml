@@ -15,10 +15,8 @@
     <externalSystemTaskNotificationListener
       implementation="com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexUpdater"/>
     <lookup.charFilter id="GradleCompletionCharFilter" order="first" implementation="com.intellij.gradle.completion.GradleCompletionCharFilter" />
-    <statistics.collectorExtension
-      implementation="com.intellij.gradle.completion.GradleDependencyCompletionUsageCollectorExtension"/>
-    <lookup.usageDetails
-      implementation="com.intellij.gradle.completion.GradleDependencyCompletionUsageDescriptor"/>
+    <statistics.collectorExtension implementation="com.intellij.gradle.completion.GradleScriptDependencyCompletionUsageCollectorExtension"/>
+    <lookup.usageDetails implementation="com.intellij.gradle.completion.GradleScriptDependencyCompletionUsageDescriptor"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
     <contributor implementation="com.intellij.gradle.completion.GradleDependencyCompletionContributor"/>

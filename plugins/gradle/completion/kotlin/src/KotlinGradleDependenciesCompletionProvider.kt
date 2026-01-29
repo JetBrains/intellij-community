@@ -12,7 +12,9 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.gradle.completion.FullStringInsertHandler
 import com.intellij.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
+import com.intellij.gradle.completion.GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION_KEY
 import com.intellij.gradle.completion.GradleDependencyCompletionMatcher
+import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition
 import com.intellij.gradle.completion.getCompletionContext
 import com.intellij.gradle.completion.removeDummySuffix
 import com.intellij.openapi.components.service
@@ -62,9 +64,9 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
             // dependencies { implementation(...) { exclude("<caret>") } }
             positionElement.isDependencyArgument(exclude) -> {
                 val invokePosition = if (positionElement.argumentName == "group") {
-                    DependenciesCompletionInvokePosition.EXCLUDE_GROUP
+                    GradleScriptDependencyCompletionPosition.EXCLUDE_GROUP
                 } else {
-                    DependenciesCompletionInvokePosition.EXCLUDE_MODULE
+                    GradleScriptDependencyCompletionPosition.EXCLUDE_MODULE
                 }
                 suggestCoordinateCompletions(
                     result,
@@ -95,20 +97,20 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         }
     }
 
-    private fun determineInvokePosition(positionElement: PsiElement): DependenciesCompletionInvokePosition {
+    private fun determineInvokePosition(positionElement: PsiElement): GradleScriptDependencyCompletionPosition {
         val argumentName = positionElement.argumentName
-        return when {
-            argumentName == "group" -> DependenciesCompletionInvokePosition.NAMED_GROUP
-            argumentName == "name" -> DependenciesCompletionInvokePosition.NAMED_ARTIFACT
-            argumentName == "version" -> DependenciesCompletionInvokePosition.NAMED_VERSION
+        return when (argumentName) {
+            "group" -> GradleScriptDependencyCompletionPosition.GROUP
+            "name" -> GradleScriptDependencyCompletionPosition.ARTIFACT
+            "version" -> GradleScriptDependencyCompletionPosition.VERSION
             else -> {
                 // Determine positional argument type
                 val argumentIndex = positionElement.argumentIndex
                 when (argumentIndex) {
-                    0 -> DependenciesCompletionInvokePosition.POSITIONAL_GROUP
-                    1 -> DependenciesCompletionInvokePosition.POSITIONAL_ARTIFACT
-                    2 -> DependenciesCompletionInvokePosition.POSITIONAL_VERSION
-                    else -> DependenciesCompletionInvokePosition.OTHER
+                    0 -> GradleScriptDependencyCompletionPosition.GROUP
+                    1 -> GradleScriptDependencyCompletionPosition.ARTIFACT
+                    2 -> GradleScriptDependencyCompletionPosition.VERSION
+                    else -> GradleScriptDependencyCompletionPosition.OTHER
                 }
             }
         }
@@ -152,7 +154,10 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
 
                     // Store FUS metadata
                     lookupElement.putUserData(BT_COMPLETION_IS_AUTO_POPUP, parameters.isAutoPopup)
-                    lookupElement.putUserData(GRADLE_COMPLETION_INVOKE_POSITION, DependenciesCompletionInvokePosition.GAV)
+                    lookupElement.putUserData(
+                        GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION_KEY,
+                        GradleScriptDependencyCompletionPosition.GAV
+                    )
 
                     resultSet.addElement(lookupElement)
                 }
@@ -166,7 +171,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         group: String,
         artifact: String,
         version: String,
-        invokePosition: DependenciesCompletionInvokePosition
+        invokePosition: GradleScriptDependencyCompletionPosition
     ) {
         filterResultsFromOtherContributors(result, parameters)
 
@@ -213,7 +218,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
 
                 // Store FUS metadata
                 lookupElement.putUserData(BT_COMPLETION_IS_AUTO_POPUP, parameters.isAutoPopup)
-                lookupElement.putUserData(GRADLE_COMPLETION_INVOKE_POSITION, invokePosition)
+                lookupElement.putUserData(GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION_KEY, invokePosition)
 
                 result.addElement(lookupElement)
             }

@@ -15,33 +15,34 @@ import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
-private val INVOKE_POSITION = EventFields.Enum<DependenciesCompletionInvokePosition>(
-  "gradle_deps_invoke_position",
+private val POSITION = EventFields.Enum<GradleScriptDependencyCompletionPosition>(
+  "gradle_script_deps_position",
   "Position where the completion was invoked in the dependencies block"
 )
 
-val GRADLE_COMPLETION_INVOKE_POSITION: Key<DependenciesCompletionInvokePosition> = Key.create("GRADLE_COMPLETION_INVOKE_POSITION")
+val GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION_KEY: Key<GradleScriptDependencyCompletionPosition> =
+  Key.create("GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION")
 
 /**
  * Declares additional fields that can be reported with the "finished" event of "completion" FUS group.
  * Version of [LookupUsageTracker.GROUP] should be incremented every time any field is changed there.
  */
-internal class GradleDependencyCompletionUsageCollectorExtension : FeatureUsageCollectorExtension {
+internal class GradleScriptDependencyCompletionUsageCollectorExtension : FeatureUsageCollectorExtension {
   override fun getGroupId(): @NonNls String = LookupUsageTracker.GROUP_ID
 
   override fun getEventId(): String = LookupUsageTracker.FINISHED_EVENT_ID
 
   override fun getExtensionFields(): List<EventField<*>> {
-    return listOf(INVOKE_POSITION)
+    return listOf(POSITION)
   }
 }
 
 /**
  * Provides additional data for the "finished" event of "completion" FUS group.
- * Any fields reported there should be declared in [GradleDependencyCompletionUsageCollectorExtension].
+ * Any fields reported there should be declared in [GradleScriptDependencyCompletionUsageCollectorExtension].
  */
-internal class GradleDependencyCompletionUsageDescriptor : LookupUsageDescriptor {
-  override fun getExtensionKey(): String = "gradle_deps"
+internal class GradleScriptDependencyCompletionUsageDescriptor : LookupUsageDescriptor {
+  override fun getExtensionKey(): String = "gradle_script_deps"
 
   override fun getAdditionalUsageData(lookupResultDescriptor: LookupResultDescriptor): List<EventPair<*>> {
     val selectedItem = lookupResultDescriptor.selectedItem ?: return emptyList()
@@ -50,15 +51,15 @@ internal class GradleDependencyCompletionUsageDescriptor : LookupUsageDescriptor
 
     val result = mutableListOf<EventPair<*>>()
 
-    selectedItem.getUserData(GRADLE_COMPLETION_INVOKE_POSITION)?.let { invokePosition ->
-      result.add(INVOKE_POSITION with invokePosition)
+    selectedItem.getUserData(GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION_KEY)?.let { invokePosition ->
+      result.add(POSITION with invokePosition)
     }
 
     return result
   }
 }
 
-enum class DependenciesCompletionInvokePosition {
+enum class GradleScriptDependencyCompletionPosition {
   /**
    * Top-level in dependencies block: `dependencies { juni<caret> }`
    */
@@ -70,34 +71,19 @@ enum class DependenciesCompletionInvokePosition {
   GAV,
 
   /**
-   * Named group parameter: `implementation(group = "juni<caret>")`
+   * Named or positional group parameter: `implementation(group = "juni<caret>")`
    */
-  NAMED_GROUP,
+  GROUP,
 
   /**
-   * Named artifact parameter: `implementation(name = "juni<caret>")`
+   * Named or positional artifact parameter: `implementation(name = "juni<caret>")`
    */
-  NAMED_ARTIFACT,
+  ARTIFACT,
 
   /**
-   * Named version parameter: `implementation(version = "5<caret>")`
+   * Named or positional version parameter: `implementation(version = "5<caret>")`
    */
-  NAMED_VERSION,
-
-  /**
-   * Positional group parameter: `implementation("juni<caret>", "junit")`
-   */
-  POSITIONAL_GROUP,
-
-  /**
-   * Positional artifact parameter: `implementation("junit", "juni<caret>")`
-   */
-  POSITIONAL_ARTIFACT,
-
-  /**
-   * Positional version parameter: `implementation("junit", "junit", "5<caret>")`
-   */
-  POSITIONAL_VERSION,
+  VERSION,
 
   /**
    * Exclude group: `implementation(...) { exclude(group = "juni<caret>") }`
