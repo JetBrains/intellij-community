@@ -504,46 +504,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                                         mustWaitForSmartMode, callbackWhileWaiting);
   }
 
-  @TestOnly
-  public void prepareForTest() throws InterruptedException, ExecutionException {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    setUpdateByTimerEnabled(false);
-    waitForTermination();
-    clearReferences();
-  }
-
-  @TestOnly
-  public void cleanupAfterTest() throws InterruptedException, ExecutionException {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    if (myProject.isOpen()) {
-      prepareForTest();
-    }
-  }
-
-  @TestOnly
-  @RequiresEdt
-  public void waitForTermination() throws InterruptedException, ExecutionException {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    ThreadingAssertions.assertEventDispatchThread();
-    Future<?> future = AppExecutorUtil.getAppExecutorService().submit(() -> {
-      // wait outside EDT to avoid stealing work from FJP
-      myPassExecutorService.cancelAll(true, "DaemonCodeAnalyzerImpl.waitForTermination");
-    });
-    waitWhilePumping(future);
-  }
-
-  private static void waitWhilePumping(@NotNull Future<?> future) {
-    do {
-      try {
-        future.get(10, TimeUnit.MILLISECONDS);
-        return;
-      }
-      catch (Exception ignored) {
-      }
-      UIUtil.dispatchAllInvocationEvents();
-    } while (!future.isDone());
-  }
-
   @Override
   public void settingsChanged() {
     //noinspection SpellCheckingInspection

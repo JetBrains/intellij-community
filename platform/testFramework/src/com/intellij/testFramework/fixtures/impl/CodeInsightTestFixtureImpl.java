@@ -1406,8 +1406,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       myPsiManager = PsiManagerEx.getInstanceEx(getProject());
       InspectionsKt.configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), myProjectFixture.getTestRootDisposable());
 
-      DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-      daemonCodeAnalyzer.prepareForTest();
+      new TestDaemonCodeAnalyzerImpl(getProject()).prepareForTest();
 
       DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
       ensureIndexesUpToDate(getProject());
@@ -1473,7 +1472,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
         if (project != null) {
           closeOpenFiles();
-          ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
+          new TestDaemonCodeAnalyzerImpl(getProject()).cleanupAfterTest();
           // needed for myVirtualFilePointerTracker check below
           ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
           projectRootManagerComponentRef.set(

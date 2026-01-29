@@ -325,7 +325,7 @@ public class DaemonRespondToChangesPerfTest extends DaemonAnalyzerTestCase {
         codeAnalyzer.runPasses(psiFile, editor.getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, true, callbackWhileWaiting);
       }
       catch (ProcessCanceledException ignored) {
-        codeAnalyzer.waitForTermination();
+        new TestDaemonCodeAnalyzerImpl(myProject).waitForTermination();
         continue;
       }
       fail("PCE must have been thrown");

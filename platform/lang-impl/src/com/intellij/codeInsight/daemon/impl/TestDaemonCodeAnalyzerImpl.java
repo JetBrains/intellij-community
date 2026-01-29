@@ -38,26 +38,35 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.Reference;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @TestOnly
 @ApiStatus.Internal
-final class TestDaemonCodeAnalyzerImpl {
+public final class TestDaemonCodeAnalyzerImpl {
   @NotNull private final Project myProject;
+  private final @NotNull DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
 
   public TestDaemonCodeAnalyzerImpl(@NotNull Project project) {
     myProject = project;
+    myDaemonCodeAnalyzer = getDaemonCodeAnalyzer(myProject);
   }
 
   /**
@@ -74,8 +83,7 @@ final class TestDaemonCodeAnalyzerImpl {
                         @Nullable Runnable callbackWhileWaiting) throws Exception {
     ThreadingAssertions.assertEventDispatchThread();
     PsiUtilCore.ensureValid(psiFile);
-    DaemonCodeAnalyzerImpl daemonCodeAnalyzer = getDaemonCodeAnalyzer(myProject);
-    daemonCodeAnalyzer.assertFileFromMyProject(myProject, psiFile);
+    myDaemonCodeAnalyzer.assertFileFromMyProject(myProject, psiFile);
     Editor editor = textEditor.getEditor();
     assert editor.getDocument() == document : "Expected document " + document +
                                               " but the passed TextEditor points to a different document: " + editor.getDocument();
@@ -111,22 +119,22 @@ final class TestDaemonCodeAnalyzerImpl {
     });
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion(); // wait for async editor loading
 
-    daemonCodeAnalyzer.clearReferences();
+    myDaemonCodeAnalyzer.clearReferences();
 
     // previous passes can be canceled but still in flight. wait for them to avoid interference
-    daemonCodeAnalyzer.myPassExecutorService.cancelAll(false, "DaemonCodeAnalyzerImpl.runPasses");
+    myDaemonCodeAnalyzer.myPassExecutorService.cancelAll(false, "DaemonCodeAnalyzerImpl.runPasses");
 
     CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     PsiConsistencyAssertions.assertNoFileTextMismatch(psiFile, editor.getDocument(), null);
-    daemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests(); // update the file status map before prohibiting its modifications
-    FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
+    myDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests(); // update the file status map before prohibiting its modifications
+    FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
     fileStatusMap.runAllowingDirt(canChangeDocument, () -> {
       for (int ignoreId : passesToIgnore) {
         fileStatusMap.markFileUpToDate(document, context, ignoreId, null);
       }
-      ThrowableRunnable<Exception> doRunPasses = () -> doRunPasses(daemonCodeAnalyzer, textEditor, passesToIgnore, canChangeDocument, callbackWhileWaiting);
+      ThrowableRunnable<Exception> doRunPasses = () -> doRunPasses(myDaemonCodeAnalyzer, textEditor, passesToIgnore, canChangeDocument, callbackWhileWaiting);
       if (isDebugMode) {
         DaemonProgressIndicator.runInDebugMode(doRunPasses);
       }
@@ -232,7 +240,7 @@ final class TestDaemonCodeAnalyzerImpl {
         if (!progress.isCanceled()) {
           ((DaemonProgressIndicator)progress).cancel("Cancel after highlighting. threads:\n"+ThreadDumper.dumpThreadsToString());
         }
-        daemonCodeAnalyzer.waitForTermination();
+        waitForTermination();
       }
       Reference.reachabilityFence(psiFile); // PsiFile must be cached to start the highlighting
       Reference.reachabilityFence(fileNode); // perf: keep AST from gc
@@ -241,7 +249,8 @@ final class TestDaemonCodeAnalyzerImpl {
   }
   @TestOnly
   private void waitInOtherThread(@NotNull DaemonCodeAnalyzerImpl daemonCodeAnalyzer,
-                                 int millis, boolean canChangeDocument,
+                                 int millis,
+                                 boolean canChangeDocument,
                                  @NotNull ThrowableComputable<Boolean, Throwable> runWhile) throws Throwable {
     ThreadingAssertions.assertEventDispatchThread();
     Disposable disposable = Disposer.newDisposable();
@@ -291,6 +300,48 @@ final class TestDaemonCodeAnalyzerImpl {
     finally {
       Disposer.dispose(disposable);
     }
+  }
+
+  @TestOnly
+  public void prepareForTest() throws InterruptedException, ExecutionException {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myDaemonCodeAnalyzer.setUpdateByTimerEnabled(false);
+    waitForTermination();
+    myDaemonCodeAnalyzer.clearReferences();
+  }
+
+  @TestOnly
+  public void cleanupAfterTest() throws InterruptedException, ExecutionException {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    if (myProject.isOpen()) {
+      prepareForTest();
+    }
+  }
+  @TestOnly
+  public void waitForTermination() throws InterruptedException, ExecutionException {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    Future<?> future = AppExecutorUtil.getAppExecutorService().submit(() -> {
+      // wait outside EDT to avoid stealing work from FJP
+      myDaemonCodeAnalyzer.myPassExecutorService.cancelAll(true, "DaemonCodeAnalyzerImpl.waitForTermination");
+    });
+    waitWhilePumping(future);
+  }
+
+  private static void waitWhilePumping(@NotNull Future<?> future) throws InterruptedException, ExecutionException {
+    do {
+      try {
+        future.get(10, TimeUnit.MILLISECONDS);
+        return;
+      }
+      catch (TimeoutException ignored) {
+      }
+      if (EDT.isCurrentThreadEdt()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      else {
+        UIUtil.pump();
+      }
+    } while (!future.isDone());
   }
 
 }

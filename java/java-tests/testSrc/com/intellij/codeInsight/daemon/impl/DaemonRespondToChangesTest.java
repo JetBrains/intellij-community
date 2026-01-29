@@ -166,12 +166,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   public static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/typing/";
 
   private DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
+  private TestDaemonCodeAnalyzerImpl myTestDaemonCodeAnalyzer;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     enableInspectionTool(new UnusedDeclarationInspection());
     myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
+    myTestDaemonCodeAnalyzer = new TestDaemonCodeAnalyzerImpl(getProject());
     UndoManager.getInstance(myProject);
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
   }
@@ -432,7 +434,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   private void checkDaemonReaction(boolean mustCancelItself, @NotNull Runnable action) throws Exception {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     highlightErrors();
-    myDaemonCodeAnalyzer.waitForTermination();
+    myTestDaemonCodeAnalyzer.waitForTermination();
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
 
     AtomicBoolean run = new AtomicBoolean();
