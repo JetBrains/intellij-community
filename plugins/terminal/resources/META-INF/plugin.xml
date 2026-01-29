@@ -64,9 +64,7 @@
     <action id="Terminal.CloseTab" class="org.jetbrains.plugins.terminal.action.TerminalCloseTabAction" use-shortcut-of="CloseContent"/>
     <action id="Terminal.MoveToolWindowTabLeft" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction"/>
     <action id="Terminal.MoveToolWindowTabRight" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction"/>
-    <action id="Terminal.SwitchFocusToEditor" class="com.intellij.openapi.actionSystem.EmptyAction">
-      <keyboard-shortcut first-keystroke="ESCAPE" keymap="$default"/>
-    </action>
+    <action id="Terminal.SwitchFocusToEditor" class="com.intellij.openapi.actionSystem.EmptyAction"/>
     <action id="Terminal.CopySelectedText" class="org.jetbrains.plugins.terminal.action.TerminalCopyTextAction"
             icon="AllIcons.Actions.Copy">
       <!-- use keyboard-shortcuts of $Copy with Ctrl+Shift+C on Linux  -->
