@@ -631,7 +631,7 @@ public final class ListPluginComponent extends JPanel {
                        ? background
                        : (type == EventHandler.SelectionType.HOVER ? HOVER_COLOR : SELECTION_COLOR);
 
-    updateColors(GRAY_COLOR, ColorUtil.alphaBlending(foreground, background));
+    updateColors(GRAY_COLOR, JBColor.lazy(() -> ColorUtil.alphaBlending(foreground, background)));
   }
 
   private void updateColors(@NotNull Color grayedFg, @NotNull Color background) {
