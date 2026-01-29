@@ -35,7 +35,7 @@ class ProductInfoData private constructor(
   val productVendor: String? = null,
   @Serializable(with = LocalDateSerializer::class)
   val majorVersionReleaseDate: LocalDate? = null,
-  val minRequiredJavaVersion: String? = null,
+  val minRequiredJavaVersion: Int? = null,
   val launch: List<ProductInfoLaunchData>,
   val customProperties: List<CustomProperty> = emptyList(),
   val bundledPlugins: List<String> = emptyList(),
@@ -65,7 +65,7 @@ class ProductInfoData private constructor(
       svgIconPath: String?,
       productVendor: String,
       majorVersionReleaseDate: LocalDate?,
-      minRequiredJavaVersion: String?,
+      minRequiredJavaVersion: Int?,
       launch: List<ProductInfoLaunchData>,
       customProperties: List<CustomProperty>,
       bundledPlugins: List<String>,

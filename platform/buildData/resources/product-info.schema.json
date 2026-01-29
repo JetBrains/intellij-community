@@ -50,8 +50,8 @@
       "type": "string"
     },
     "minRequiredJavaVersion": {
-      "description": "Minimum Java version required to run this IDE (e.g., '21')",
-      "type": "string"
+      "description": "Minimum Java version required to run this IDE (e.g., 21)",
+      "type": "number"
     },
     "launch": {
       "description": "Specifies how the IDE can be launched",

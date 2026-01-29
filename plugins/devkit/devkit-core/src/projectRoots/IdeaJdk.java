@@ -305,10 +305,10 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   private static @Nullable JavaSdkVersion getRequiredVersionFromProductInfo(String homePath) {
     ProductInfoData productInfo = IdeProductInfo.getInstance().loadProductInfo(Path.of(homePath));
     if (productInfo == null) return null;
-    String minRequiredJavaVersion = productInfo.getMinRequiredJavaVersion();
+    Integer minRequiredJavaVersion = productInfo.getMinRequiredJavaVersion();
     if (minRequiredJavaVersion == null) return null;
     try {
-      LanguageLevel languageLevel = LanguageLevel.forFeature(Integer.parseInt(minRequiredJavaVersion));
+      LanguageLevel languageLevel = LanguageLevel.forFeature(minRequiredJavaVersion);
       if (languageLevel != null) {
         return JavaSdkVersion.fromLanguageLevel(languageLevel);
       }

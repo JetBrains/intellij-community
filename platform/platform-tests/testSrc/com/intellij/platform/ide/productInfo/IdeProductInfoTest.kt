@@ -72,7 +72,7 @@ class IdeProductInfoTest {
   fun `idea 2025_1 with minRequiredJavaVersion`() {
     assumeTrue(SystemInfo.isLinux || SystemInfo.isWindows)
     val productInfo = loadProductInfo("idea-2025.1-minRequiredJavaVersion")
-    assertEquals("21", productInfo.minRequiredJavaVersion)
+    assertEquals(21, productInfo.minRequiredJavaVersion!!)
   }
 
   private fun loadProductInfo(dirName: String): ProductInfoData {

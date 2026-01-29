@@ -80,8 +80,8 @@ internal fun generateProductInfoJson(
   return jsonEncoder.encodeToString<ProductInfoData>(json)
 }
 
-private fun getProjectLanguageLevel(context: BuildContext): String? {
-  val projectLanguageLevel = JpsJavaExtensionService.getInstance().getProjectExtension(context.project)?.languageLevel?.feature()?.toString()
+private fun getProjectLanguageLevel(context: BuildContext): Int? {
+  val projectLanguageLevel = JpsJavaExtensionService.getInstance().getProjectExtension(context.project)?.languageLevel?.feature()
   if (projectLanguageLevel == null) {
     context.messages.logErrorAndThrow("Cannot find project language level for '${context.paths.projectHome}'")
   }

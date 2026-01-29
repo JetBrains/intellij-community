@@ -4,7 +4,7 @@
   "buildNumber": "251.11111.22",
   "productCode": "IU",
   "dataDirectoryName": "IntelliJIdea2025.1",
-  "minRequiredJavaVersion": "21",
+  "minRequiredJavaVersion": 21,
   "svgIconPath": "bin/idea.svg",
   "launch": [
     {
