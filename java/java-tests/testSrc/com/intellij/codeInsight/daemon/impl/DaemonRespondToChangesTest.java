@@ -2346,7 +2346,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  public void _testDaemonRestartsEventWhenCanceledDuringRunUpdateMethodCallIsRunning() {
+  public void testDaemonRestartsEventWhenCanceledDuringRunUpdateMethodCallIsRunning() {
     configureByText(JavaFileType.INSTANCE, """
       class AClass<caret> {
     

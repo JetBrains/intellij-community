@@ -379,8 +379,6 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     @Language("JAVA")
     String text = "class X { void f() { i<caret>f (this == null) {} else return; } }";
     configureByText(JavaFileType.INSTANCE, text);
-    //WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().setText(text));
-    //getEditor().getCaretModel().moveToOffset(getFile().getText().indexOf("if (") + 1);
     assertEmpty(DaemonRespondToChangesTest.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.ERROR));
     List<IntentionAction> fixes = findStupidFixes();
     IntentionAction fix = assertOneElement(fixes);
@@ -1069,7 +1067,6 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
       DaemonRespondToChangesTest.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.WARNING);
     assertTrue(infos.toString(), ContainerUtil.exists(infos, info-> new RawUseOfParameterizedTypeInspection().getShortName()
       .equals(info.getInspectionToolId())));
-    //getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("Class<?"));
     type("@SuppressWarnings(\"rawtypes\")    ") ;
     assertEmpty(DaemonRespondToChangesTest.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.WARNING));
     type("\n");
@@ -1115,7 +1112,6 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     List<HighlightInfo> infos =
       DaemonRespondToChangesTest.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.WARNING);
     assertOneElement(ContainerUtil.filter(infos, info-> myTool.getShortName().equals(info.getInspectionToolId())));
-    //getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("int xxx;"));
     type("// ") ;
     assertEmpty(DaemonRespondToChangesTest.waitHighlighting(getProject(), getEditor().getDocument(), HighlightSeverity.WARNING));
   }
