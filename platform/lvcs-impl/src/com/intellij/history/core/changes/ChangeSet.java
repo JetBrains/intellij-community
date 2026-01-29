@@ -21,6 +21,7 @@ import com.intellij.history.core.Content;
 import com.intellij.history.core.DataStreamUtil;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -36,6 +37,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public final class ChangeSet {
   private static final int VERSION = 1;
@@ -75,6 +77,13 @@ public final class ChangeSet {
 
   public void write(DataOutput out) throws IOException {
     LocalHistoryLog.LOG.assertTrue(isLocked, "Changeset should be locked");
+    if (LocalHistoryLog.LOG.isTraceEnabled()) {
+      int maximumChanges = Registry.intValue("lvcs.trace.changes.persistence.limit", 100);
+      String lastChanges = myChanges.reversed().stream().limit(maximumChanges)
+        .map(Object::toString)
+        .collect(Collectors.joining("\n"));
+      LocalHistoryLog.LOG.trace("Writing changeset. Changes count: " + myChanges.size() + ". 100 latest changes: \n" + lastChanges);
+    }
     DataInputOutputUtil.writeINT(out, VERSION);
     DataInputOutputUtil.writeLONG(out, myId);
     DataStreamUtil.writeStringOrNull(out, myName);

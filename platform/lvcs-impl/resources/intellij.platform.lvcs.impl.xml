@@ -102,6 +102,9 @@
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter"/>
     <statistics.notificationIdsHolder implementation="com.intellij.history.core.LocalHistoryNotificationIdsHolder"/>
+
+    <registryKey key="lvcs.trace.changes.persistence.limit" defaultValue="100"
+                 description="The maximum number of change entries to log when tracing the local history persistence"/>
   </extensions>
 
   <applicationListeners>
