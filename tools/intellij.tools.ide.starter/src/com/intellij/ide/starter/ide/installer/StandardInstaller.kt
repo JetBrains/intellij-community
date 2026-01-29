@@ -24,7 +24,7 @@ class StandardInstaller(
 
     //Download
     val ideInstaller = downloader.downloadIdeInstaller(ideInfo, installersDownloadDirectory)
-    val installDir = GlobalPaths.instance.getCacheDirectoryFor("builds") / "${ideInfo.productCode}-${ideInstaller.buildNumber}"
+    val installDir = GlobalPaths.instance.getLocalCacheDirectoryFor("builds") / "${ideInfo.productCode}-${ideInstaller.buildNumber}"
 
     if (ideInstaller.buildNumber == "SNAPSHOT") {
       logOutput("Cleaning up SNAPSHOT IDE installation $installDir")
