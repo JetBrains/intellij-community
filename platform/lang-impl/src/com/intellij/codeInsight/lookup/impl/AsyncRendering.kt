@@ -24,14 +24,14 @@ internal class AsyncRendering(
   /**
    * Set the presentation for the lookup element. Overwrites previous presentation.
    */
-  fun rememberPresentation(element: LookupElement, presentation: LookupElementPresentation) {
+  fun cachePresentation(element: LookupElement, presentation: LookupElementPresentation) {
     element.putUserData(LAST_COMPUTED_PRESENTATION, presentation)
   }
 
   /**
    * @return cached presentation of the lookup element
    */
-  fun getLastComputed(element: LookupElement): LookupElementPresentation =
+  fun getCachedPresentation(element: LookupElement): LookupElementPresentation =
     element.getUserData(LAST_COMPUTED_PRESENTATION)!!
 
   /**
@@ -93,7 +93,7 @@ internal class AsyncRendering(
     }
 
     presentation.freeze()
-    rememberPresentation(element, presentation)
+    cachePresentation(element, presentation)
     renderingCallback()
   }
 
@@ -102,7 +102,7 @@ internal class AsyncRendering(
     renderer.renderElementSuspending(element, presentation)
 
     presentation.freeze()
-    rememberPresentation(element, presentation)
+    cachePresentation(element, presentation)
     renderingCallback()
   }
 }

@@ -252,7 +252,7 @@ class LookupCellRenderer(
 
     var allowedWidth = list.width - calcSpacing(nameComponent, emptyIcon) - calcSpacing(tailComponent, null) - calcSpacing(typeLabel, null)
 
-    var presentation = asyncRendering.getLastComputed(item)
+    var presentation = asyncRendering.getCachedPresentation(item)
     for (customizer in customizers) {
       presentation = customizer.customizePresentation(item, presentation)
     }
@@ -542,7 +542,7 @@ class LookupCellRenderer(
     var maxWidth = if (shrinkLookup) 0 else lookupTextWidth
     for (item in visibleItems) {
       if(item.isSeparator()) continue
-      val presentation = asyncRendering.getLastComputed(item)
+      val presentation = asyncRendering.getCachedPresentation(item)
       item.putUserData(CUSTOM_NAME_FONT, getFontAbleToDisplay(presentation.itemText))
       item.putUserData(CUSTOM_TAIL_FONT, getFontAbleToDisplay(presentation.tailText))
       item.putUserData(CUSTOM_TYPE_FONT, getFontAbleToDisplay(presentation.typeText))
@@ -599,7 +599,7 @@ class LookupCellRenderer(
   fun itemAdded(element: LookupElement, fastPresentation: LookupElementPresentation) {
     updateIconWidth(fastPresentation.icon)
     scheduleUpdateLookupWidthFromVisibleItems()
-    asyncRendering.rememberPresentation(element, fastPresentation)
+    asyncRendering.cachePresentation(element, fastPresentation)
   }
 
   @ApiStatus.Internal
