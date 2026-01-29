@@ -82,19 +82,9 @@ open class NonIndexableFileSearchPerformanceTest {
   }
 
   @Test
-  @RegistryKey("intellij.platform.iterate.non.indexable.files.use.cancellable.read.actions", "true")
-  fun `iterate over all files - cancellable read actions`() = `iterate over all files - base`("dfs - cancellable read actions")
-
-  @Test
   @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
   @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "true")
   fun `iterate over all files - bfs many read actions`() = `iterate over all files - base`("bfs - blocking read actions")
-
-  @Test
-  @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
-  @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "true")
-  @RegistryKey("intellij.platform.iterate.non.indexable.files.use.cancellable.read.actions", "true")
-  fun `iterate over all files - bfs many read actions - cancellable read actions`() = `iterate over all files - base`("bfs - cancellable read actions")
 
   @Test
   @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
@@ -119,19 +109,9 @@ open class NonIndexableFileSearchPerformanceTest {
   }
 
   @Test
-  @RegistryKey("intellij.platform.iterate.non.indexable.files.use.cancellable.read.actions", "true")
-  fun `search for one file deep inside - cancellable read actions`() = `search for one file deep inside - base`("dfs - cancellable read actions")
-
-  @Test
   @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
   @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "true")
   fun `search for one file deep inside - bfs many read actions`() = `search for one file deep inside - base`("bfs - blocking read actions")
-
-  @Test
-  @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
-  @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "true")
-  @RegistryKey("intellij.platform.iterate.non.indexable.files.use.cancellable.read.actions", "true")
-  fun `search for one file deep inside - bfs many read actions - cancellable read actions`() = `search for one file deep inside - base`("bfs - cancellable read actions")
 
   @Test
   @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
@@ -156,19 +136,9 @@ open class NonIndexableFileSearchPerformanceTest {
   }
 
   @Test
-  @RegistryKey("intellij.platform.iterate.non.indexable.files.use.cancellable.read.actions", "true")
-  fun `search for one last root child - cancellable read actions`() = `search for one last root child - base`("dfs - cancellable read actions")
-
-  @Test
   @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
   @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "true")
   fun `search for one last root child - bfs many read actions`() = `search for one last root child - base`("bfs - blocking read actions")
-
-  @Test
-  @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
-  @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "true")
-  @RegistryKey("intellij.platform.iterate.non.indexable.files.use.cancellable.read.actions", "true")
-  fun `search for one last root child - bfs many read actions - cancellable read actions`() = `search for one last root child - base`("bfs - cancellable read actions")
 
   @Test
   @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
@@ -192,19 +162,9 @@ open class NonIndexableFileSearchPerformanceTest {
   }
 
   @Test
-  @RegistryKey("intellij.platform.iterate.non.indexable.files.use.cancellable.read.actions", "true")
-  fun `search for the first root child - cancellable read actions`() = `search for the first root child - base`("dfs - cancellable read actions")
-
-  @Test
   @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
   @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "true")
   fun `search for the first root child - bfs many read actions`() = `search for the first root child - base`("bfs - blocking read actions")
-
-  @Test
-  @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
-  @RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "true")
-  @RegistryKey("intellij.platform.iterate.non.indexable.files.use.cancellable.read.actions", "true")
-  fun `search for the first root child - bfs many read actions - cancellable read actions`() = `search for the first root child - base`("bfs - cancellable read actions")
 
   @Test
   @RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
