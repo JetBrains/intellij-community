@@ -23,6 +23,8 @@ import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.UnnamedConfigurable
@@ -190,14 +192,14 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             }
 
             row {
-              shortcutCombobox(
+              actionShortcutCombobox(
                 labelText = message("terminal.command.completion.shortcut.trigger"),
                 presets = listOf(getCtrlSpacePreset(project), TAB_SHORTCUT_PRESET),
                 actionId = "Terminal.CommandCompletion.Invoke"
               )
             }
             row {
-              shortcutCombobox(
+              actionShortcutCombobox(
                 labelText = message("terminal.command.completion.shortcut.insert"),
                 presets = listOf(ENTER_SHORTCUT_PRESET, TAB_SHORTCUT_PRESET),
                 actionId = "Terminal.CommandCompletion.InsertSuggestion"
@@ -614,7 +616,16 @@ private fun getClientSystemInfo(project: Project): ClientSystemInfo? {
 
 private val LOG = logger<TerminalOptionsConfigurable>()
 
-private fun Row.shortcutCombobox(
+/**
+ * Shows action shortcut configuration UI:
+ * <label> <combobox> <change link (if custom shortcut selected)>
+ *
+ * The combobox is responsible for choosing the shortcut from the provided presets.
+ *
+ * @param actionId action ID to configure shortcut for.
+ * @param presets list of shortcut presets to choose from the combobox.
+ */
+private fun Row.actionShortcutCombobox(
   @NlsContexts.Label labelText: String,
   presets: List<ShortcutPreset>,
   actionId: String,
@@ -631,8 +642,8 @@ private fun Row.shortcutCombobox(
   ).label(labelText)
     .bindItem(
       getter = {
-        val currentShortcut = getActionShortcut(actionId)
-        presets.find { it.shortcut == currentShortcut }?.let { ShortcutItem.Preset(it) } ?: ShortcutItem.Custom
+        val currentShortcuts = getActionShortcuts(actionId)
+        presets.find { currentShortcuts.contains(it.shortcut) }?.let { ShortcutItem.Preset(it) } ?: ShortcutItem.Custom
       },
       setter = { item ->
         if (item is ShortcutItem.Preset) {
@@ -641,7 +652,76 @@ private fun Row.shortcutCombobox(
       }
     ).component
 
-  link(message("terminal.command.completion.shortcut.change")) {
+  changeActionShortcutLink(actionId)
+    .visibleIf(comboBox.selectedValueIs(ShortcutItem.Custom))
+}
+
+/**
+ * Shows action shortcut configuration UI:
+ * <checkbox> <label> <combobox> <change link (if custom shortcut selected)>
+ *
+ * The combobox is responsible for choosing the shortcut from the provided presets.
+ * While checkbox is responsible for enabling/disabling the combobox and removing the shortcut binding from the action.
+ *
+ * @param actionId action ID to configure shortcut for.
+ * @param presets list of shortcut presets to choose from the combobox.
+ */
+private fun Row.actionShortcutComboboxWithEnabledCheckbox(
+  @NlsContexts.Label labelText: String,
+  presets: List<ShortcutPreset>,
+  actionId: String,
+) {
+  val curShortcuts = getActionShortcuts(actionId)
+  val initialPreset = if (curShortcuts.isNotEmpty()) {
+    presets.find { curShortcuts.contains(it.shortcut) }?.let { ShortcutItem.Preset(it) }
+  }
+  else ShortcutItem.Preset(presets.first())
+
+  val comboboxProperty = AtomicProperty(initialPreset ?: ShortcutItem.Custom)
+  val checkboxProperty = AtomicBooleanProperty(curShortcuts.isNotEmpty())
+
+  fun updateActionShortcut(checkboxChecked: Boolean, shortcutItem: ShortcutItem) {
+    if (checkboxChecked) {
+      if (shortcutItem is ShortcutItem.Preset) {
+        setActionShortcut(actionId, shortcutItem.preset.shortcut)
+      }
+    }
+    else {
+      setActionShortcut(actionId, null)
+    }
+  }
+
+  checkboxProperty.afterChange {
+    updateActionShortcut(it, comboboxProperty.get())
+  }
+  comboboxProperty.afterChange {
+    updateActionShortcut(checkboxProperty.get(), it)
+  }
+
+  val checkbox = checkBox(labelText)
+    .gap(RightGap.SMALL)
+    .bindSelected(checkboxProperty)
+    .component
+
+  val combobox = comboBox(
+    items = presets.map { ShortcutItem.Preset(it) } + ShortcutItem.Custom,
+    renderer = textListCellRenderer { item ->
+      when (item) {
+        is ShortcutItem.Preset -> item.preset.text
+        is ShortcutItem.Custom -> message("terminal.command.completion.shortcut.custom")
+        null -> ""
+      }
+    }
+  ).bindItem(comboboxProperty)
+    .enabledIf(checkbox.selected)
+    .component
+
+  changeActionShortcutLink(actionId)
+    .visibleIf(combobox.selectedValueIs(ShortcutItem.Custom))
+}
+
+private fun Row.changeActionShortcutLink(actionId: String): Cell<ActionLink> {
+  return link(message("terminal.command.completion.shortcut.change")) {
     val allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as Component))
     val keymapPanel = allSettings?.find(KeymapPanel::class.java)
 
@@ -649,18 +729,19 @@ private fun Row.shortcutCombobox(
       allSettings.select(keymapPanel).doWhenDone {
         keymapPanel.selectAction(actionId)
       }
-    } else {
+    }
+    else {
       val newKeymapPanel = KeymapPanel()
       ShowSettingsUtil.getInstance().editConfigurable(it.source as Component, newKeymapPanel) {
         newKeymapPanel.selectAction(actionId)
       }
     }
-  }.visibleIf(comboBox.selectedValueIs(ShortcutItem.Custom))
+  }
 }
 
-private fun getActionShortcut(actionId: String): Shortcut? {
-  val keymapManager = KeymapManager.getInstance() ?: return null
-  return keymapManager.activeKeymap.getShortcuts(actionId).firstOrNull()
+private fun getActionShortcuts(actionId: String): List<Shortcut> {
+  val keymapManager = KeymapManager.getInstance() ?: return emptyList()
+  return keymapManager.activeKeymap.getShortcuts(actionId).toList()
 }
 
 private fun setActionShortcut(actionId: String, value: Shortcut?) {
@@ -701,7 +782,7 @@ private fun getCtrlSpacePreset(project: Project): ShortcutPreset {
   )
 }
 
-private class ShortcutPreset(val shortcut: Shortcut, val text: String)
+private data class ShortcutPreset(val shortcut: Shortcut, val text: String)
 
 private sealed class ShortcutItem {
   data class Preset(val preset: ShortcutPreset) : ShortcutItem()
