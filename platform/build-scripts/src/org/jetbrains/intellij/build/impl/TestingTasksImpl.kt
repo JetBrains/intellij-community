@@ -1042,7 +1042,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
             }
           }
 
-          if (hasFailures) {
+          // On TeamCity test failures themselves control the build status, no need to report them as additional errors
+          if (hasFailures && !TeamCityHelper.isUnderTeamCity) {
             throw RuntimeException("Tests failed in dedicated runtime (class mode)")
           }
         }
@@ -1097,7 +1098,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
             }
           }
 
-          if (hasFailures) {
+          // On TeamCity test failures themselves control the build status, no need to report them as additional errors
+          if (hasFailures && !TeamCityHelper.isUnderTeamCity) {
             throw RuntimeException("Tests failed in dedicated runtime (package mode)")
           }
         }
