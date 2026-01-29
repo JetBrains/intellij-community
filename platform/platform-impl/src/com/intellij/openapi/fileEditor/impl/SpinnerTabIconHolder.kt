@@ -26,6 +26,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class SpinnerTabIconHolder(composite: EditorComposite, private val owner: TabInfo) : TabInfoIconHolder {
   private val delayFromRegistry = Registry.intValue("editor.loading.spinner.delay.ms", 0).milliseconds
+  private val isStaticSpinner = Registry.`is`("editor.loading.spinner.static")
 
   private var icon: Icon?
 
@@ -39,7 +40,11 @@ internal class SpinnerTabIconHolder(composite: EditorComposite, private val owne
   init {
     composite.coroutineScope.launch(CoroutineName("EditorComposite(file=${composite.file.name}.iconLoading") + ModalityState.any()
       .asContextElement()) out@{
-      val loadingSpinnerWaiting = launch { delay(delayFromRegistry) }
+      val loadingSpinnerWaiting = launch {
+        if (!isStaticSpinner) {
+          delay(delayFromRegistry)
+        }
+      }
       val iconProcessingWaiting = launch { composite.waitForAvailable() }
       select {
         loadingSpinnerWaiting.onJoin {
@@ -65,10 +70,9 @@ internal class SpinnerTabIconHolder(composite: EditorComposite, private val owne
   }
 
   private suspend fun setLoadingSpinner() {
-    if (Registry.`is`("editor.loading.spinner.static")) {
+    if (isStaticSpinner) {
       setIconImmediately(AllIcons.Ide.GrayDot)
     } else {
-      delay(delayFromRegistry)
       setIconImmediately(AnimatedIcon.Default.INSTANCE)
     }
   }
