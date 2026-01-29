@@ -1,6 +1,6 @@
 @file:ApiStatus.Experimental
 
-package org.jetbrains.idea.completion.statistics
+package com.intellij.repository.search.completion.statistics
 
 import com.intellij.codeInsight.lookup.impl.LookupResultDescriptor
 import com.intellij.codeInsight.lookup.impl.LookupUsageDescriptor
@@ -10,11 +10,11 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
 import com.intellij.openapi.util.Key
+import com.intellij.repository.search.completion.api.BaseDependencyCompletionResult
+import com.intellij.repository.search.completion.api.DependencyCompletionContributionSource
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.idea.completion.api.BaseDependencyCompletionResult
-import org.jetbrains.idea.completion.api.DependencyCompletionContributionSource
 
 private val IS_AUTO_POPUP = EventFields.Boolean(
   "bt_dep_is_auto_popup",
@@ -30,7 +30,7 @@ val BT_COMPLETION_IS_AUTO_POPUP: Key<Boolean> = Key.create("BT_COMPLETION_IS_AUT
 
 /**
  * Declares additional fields that can be reported with the "finished" event of "completion" FUS group.
- * Version of [LookupUsageTracker.GROUP] should be incremented every time any field is changed there.
+ * Version of [com.intellij.codeInsight.lookup.impl.LookupUsageTracker.GROUP] should be incremented every time any field is changed there.
  */
 internal class DependencyCompletionUsageCollectorExtension : FeatureUsageCollectorExtension {
   override fun getGroupId(): @NonNls String = LookupUsageTracker.GROUP_ID
@@ -51,17 +51,20 @@ internal class DependencyCompletionUsageDescriptor : LookupUsageDescriptor {
   override fun getExtensionKey(): String = "bt_dep"
 
   override fun getAdditionalUsageData(lookupResultDescriptor: LookupResultDescriptor): List<EventPair<*>> {
-    val selectedItem = lookupResultDescriptor.selectedItem ?: return emptyList()
-    val result = mutableListOf<EventPair<*>>()
+    val selectedItem = lookupResultDescriptor.selectedItem
 
-    selectedItem.getUserData(BT_COMPLETION_IS_AUTO_POPUP)?.let { isAutoPopup ->
-      result.add(IS_AUTO_POPUP with isAutoPopup)
+    // look at all items in case the completion was canceled
+    val anyItem = selectedItem ?: lookupResultDescriptor.lookup.items.firstOrNull {
+      it.getUserData(BT_COMPLETION_IS_AUTO_POPUP) != null
+    }
+    val autoPopup = anyItem?.getUserData(BT_COMPLETION_IS_AUTO_POPUP)?.let { isAutoPopup ->
+      IS_AUTO_POPUP with isAutoPopup
     }
 
-    selectedItem.`object`.asSafely<BaseDependencyCompletionResult>()?.let { completionResult ->
-      result.add(CONTRIBUTION_SOURCE with completionResult.source)
+    val contributionSource = selectedItem?.`object`.asSafely<BaseDependencyCompletionResult>()?.let { completionResult ->
+      CONTRIBUTION_SOURCE with completionResult.source
     }
 
-    return result
+    return listOfNotNull(autoPopup, contributionSource)
   }
 }

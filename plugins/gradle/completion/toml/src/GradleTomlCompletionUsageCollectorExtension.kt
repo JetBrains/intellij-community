@@ -14,6 +14,7 @@ import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollec
 import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.toml.lang.TomlLanguage
 
 private const val DESCRIPTOR_NAME = "gradle_toml_lib_position"
 
@@ -45,7 +46,14 @@ internal class GradleTomlCompletionUsageDescriptor : LookupUsageDescriptor {
   override fun getExtensionKey(): String = DESCRIPTOR_NAME
 
   override fun getAdditionalUsageData(lookupResultDescriptor: LookupResultDescriptor): List<EventPair<*>> {
-    lookupResultDescriptor.selectedItem?.getUserData(GRADLE_TOML_LIBRARY_COMPLETION_POSITION_KEY)?.let { invokePosition ->
+    if (lookupResultDescriptor.language != TomlLanguage) return emptyList()
+
+    val item = lookupResultDescriptor.selectedItem
+               ?: lookupResultDescriptor.lookup.items.firstOrNull { // if completion was canceled
+                 it.getUserData(GRADLE_TOML_LIBRARY_COMPLETION_POSITION_KEY) != null
+               } ?: return emptyList()
+
+    item.getUserData(GRADLE_TOML_LIBRARY_COMPLETION_POSITION_KEY)?.let { invokePosition ->
       return listOf(POSITION with invokePosition)
     }
 

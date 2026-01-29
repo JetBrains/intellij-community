@@ -12,6 +12,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.io.FileUtilRt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
@@ -45,7 +46,15 @@ internal class GradleScriptDependencyCompletionUsageDescriptor : LookupUsageDesc
   override fun getExtensionKey(): String = DESCRIPTOR_NAME
 
   override fun getAdditionalUsageData(lookupResultDescriptor: LookupResultDescriptor): List<EventPair<*>> {
-    lookupResultDescriptor.selectedItem?.getUserData(GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION_KEY)?.let { invokePosition ->
+    val fileName = lookupResultDescriptor.lookup.psiFile?.name ?: return emptyList()
+    if (!FileUtilRt.extensionEquals(fileName, "gradle.kts")) return emptyList()
+
+    val item = lookupResultDescriptor.selectedItem
+               ?: lookupResultDescriptor.lookup.items.firstOrNull { // if completion was canceled
+                 it.getUserData(GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION_KEY) != null
+               } ?: return emptyList()
+
+    item.getUserData(GRADLE_SCRIPT_DEPENDENCY_COMPLETION_POSITION_KEY)?.let { invokePosition ->
       return listOf(POSITION with invokePosition)
     }
 
