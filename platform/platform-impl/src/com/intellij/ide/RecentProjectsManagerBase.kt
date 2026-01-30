@@ -1053,7 +1053,7 @@ private suspend fun fireLastProjectsReopenedEvent(activeProject: Project) {
   }
 }
 
-private fun isUseProjectFrameAsSplash() = Registry.`is`("ide.project.frame.as.splash")
+private fun isUseProjectFrameAsSplash() = Registry.`is`("ide.project.frame.as.splash", false)
 
 private const val IDEA_PROJECT_FILE_EXTENSION = ".ipr"
 

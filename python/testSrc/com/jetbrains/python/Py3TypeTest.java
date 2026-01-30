@@ -4482,6 +4482,24 @@ public class Py3TypeTest extends PyTestCase {
     });
   }
 
+  @TestFor(issues = "PY-86315")
+  public void testImportAliasType() {
+    myFixture.addFileToProject("imported.py", """
+      if _:
+          x: int
+      else:
+          x: str
+      """);
+
+    doTest("imported", """
+      import imported as expr
+      """);
+
+    doTest("str | int", """
+      from imported import x as expr
+      """);
+  }
+
   @TestFor(issues = "PY-82717")
   public void testParameterWithDefaultWidening() {
     doTest("(param: int) -> None", """

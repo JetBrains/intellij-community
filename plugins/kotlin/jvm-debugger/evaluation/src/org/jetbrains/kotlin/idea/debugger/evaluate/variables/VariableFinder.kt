@@ -6,7 +6,7 @@ import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.evaluation.AdditionalContextProvider
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
-import com.intellij.debugger.engine.isSubtype
+import com.intellij.debugger.impl.instanceOf
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.sun.jdi.*
@@ -476,7 +476,7 @@ internal class VariableFinder(val context: ExecutionContext) {
         val continuation = frameProxy.continuation ?: return null
         val continuationType = continuation.referenceType()
 
-        if (SUSPEND_LAMBDA_CLASSES.none { continuationType.isSubtype(it) }) {
+        if (SUSPEND_LAMBDA_CLASSES.none { continuationType.instanceOf(it) }) {
             return null
         }
 

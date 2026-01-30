@@ -2,12 +2,15 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter;
+import com.intellij.platform.eel.provider.LocalEelMachine;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -78,5 +81,13 @@ public final class PlatformNioHelper {
         }
       }
     }
+  }
+
+  public static boolean isLocal(@NotNull Path path) {
+    return path.getFileSystem() == FileSystems.getDefault() && LocalEelMachine.INSTANCE.ownsPath(path);
+  }
+
+  public static boolean isLocal(@NotNull VirtualFile file) {
+    return file.isInLocalFileSystem() && isLocal(file.toNioPath());
   }
 }

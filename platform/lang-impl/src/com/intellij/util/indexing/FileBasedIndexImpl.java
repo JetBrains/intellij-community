@@ -723,7 +723,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         }
 
         IntSet orphanDirtyFilesFromThisSession = getAllDirtyFiles(null);
-        int maxSize = Registry.intValue("maximum.size.of.orphan.dirty.files.queue");
+        int maxSize = Registry.intValue("maximum.size.of.orphan.dirty.files.queue", 1000000);
         orphanDirtyFileIds.plus(orphanDirtyFilesFromThisSession).takeLast(maxSize).store(vfsCreationStamp);
         // remove events from event merger, so they don't show up after FileBasedIndex is restarted using tumbler
         getChangedFilesCollector().clear();

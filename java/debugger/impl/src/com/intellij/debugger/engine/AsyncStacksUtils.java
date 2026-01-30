@@ -19,6 +19,7 @@ import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerCoreKt;
 import com.intellij.idea.AppMode;
@@ -562,11 +563,12 @@ public final class AsyncStacksUtils {
     }
   }
 
-  private static class ThrottledFrame extends XStackFrame implements XStackFrameWithSeparatorAbove, JVMStackFrameInfoProvider {
+  private static class ThrottledFrame extends XStackFrame implements XStackFrameWithSeparatorAbove {
     private boolean myWithSeparator;
 
     @Override
     public void customizePresentation(@NotNull ColoredTextContainer component) {
+      component.setIcon(AllIcons.Empty);
       component.append(JavaDebuggerBundle.message("async.stack.throttled.frame.label"), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
     }
 
@@ -590,16 +592,6 @@ public final class AsyncStacksUtils {
     @Override
     public void setWithSeparator(boolean withSeparator) {
       myWithSeparator = withSeparator;
-    }
-
-    @Override
-    public boolean isSynthetic() {
-      return true;
-    }
-
-    @Override
-    public boolean isInLibraryContent() {
-      return false;
     }
   }
 }

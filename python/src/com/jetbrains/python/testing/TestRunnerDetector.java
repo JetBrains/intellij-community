@@ -92,8 +92,8 @@ final class TestRunnerDetector implements Function<Pair<Module, Collection<Virtu
 
   private static @Nullable @NonNls String findSdkByPackage(@NotNull String packageToFind) {
     for (var factory : PythonTestConfigurationType.getInstance().getTypedFactories()) {
-      var packageRequired = factory.getPackageRequired();
-      if (packageRequired != null && packageRequired.equals(packageToFind)) {
+      var marker = factory.getPackageSpec();
+      if (marker != null && marker.getPackageName().equals(packageToFind)) {
         return factory.getId();
       }
     }

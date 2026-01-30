@@ -19263,6 +19263,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             public void testSetOfToMutableSet() throws Exception {
                 runTest("testData/quickfix/typeMismatch/convertCollection/setOfToMutableSet.kt");
             }
+
+            @TestMetadata("typeArgumentMismatchWithExplicitType.kt")
+            public void testTypeArgumentMismatchWithExplicitType() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertCollection/typeArgumentMismatchWithExplicitType.kt");
+            }
+
+            @TestMetadata("typeArgumentMismatchWithInferredType.kt")
+            public void testTypeArgumentMismatchWithInferredType() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertCollection/typeArgumentMismatchWithInferredType.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

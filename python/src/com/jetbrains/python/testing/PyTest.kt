@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.execution.ParametersListUtil
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
@@ -134,6 +135,7 @@ class PyTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFactory<P
 
   companion object {
     const val id = "py.test"  //Do not rename: used as ID for run configurations
+    private val PACKAGE_SPEC = PackageAvailabilitySpec("pytest", "pytest.fixture")
   }
 
   override fun createTemplateConfiguration(project: Project): PyTestConfiguration = PyTestConfiguration(project, this)
@@ -144,7 +146,7 @@ class PyTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFactory<P
 
   override fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean = false
 
-  override val packageRequired: String = "pytest"
+  override val packageSpec: PackageAvailabilitySpec = PACKAGE_SPEC
 }
 
 private const val PYTEST_RUN_CONFIG: String = "PYTEST_RUN_CONFIG"

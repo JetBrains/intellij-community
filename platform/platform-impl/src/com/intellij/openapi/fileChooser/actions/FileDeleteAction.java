@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -17,6 +18,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PlatformNioHelper;
+import com.intellij.util.io.TrashBin;
 import com.intellij.util.ui.IoErrorText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,23 +31,19 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public final class FileDeleteAction extends FileChooserAction {
-  /** @deprecated please use {@link FileDeleteAction#FileDeleteAction(String, String, Icon)} instead */
-  @Deprecated(forRemoval = true)
+  @SuppressWarnings("unused")
   public FileDeleteAction() { }
 
-  @SuppressWarnings("unused")
+  @SuppressWarnings({"unused", "ActionPresentationInstantiatedInCtor"})
   public FileDeleteAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
     super(text, description, icon);
   }
 
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
-    var visible = isEnabled(e);
+    var visible = isVisible(e);
     e.getPresentation().setVisible(visible);
-    e.getPresentation().setEnabled(
-      visible &&
-      !(e.getInputEvent() instanceof KeyEvent && e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) instanceof JTextField) &&  // do not override text deletion
-      !panel.selectedPaths().isEmpty());
+    e.getPresentation().setEnabled(visible && isEnabled(e) && !panel.selectedPaths().isEmpty());
   }
 
   @Override
@@ -52,24 +52,37 @@ public final class FileDeleteAction extends FileChooserAction {
     if (paths.isEmpty()) return;
 
     var project = e.getProject();
-    var ok = MessageDialogBuilder.yesNo(UIBundle.message("file.chooser.delete.title"), UIBundle.message("file.chooser.delete.confirm"))
-      .yesText(ApplicationBundle.message("button.delete")).noText(CommonBundle.getCancelButtonText())
-      .icon(UIUtil.getWarningIcon())
-      .ask(project);
-    if (!ok) return;
+    var toBin = TrashBin.isSupported() && GeneralSettings.getInstance().isDeletingToBin();
+
+    if (!(toBin && ContainerUtil.all(paths, PlatformNioHelper::isLocal))) {
+      var ok = MessageDialogBuilder.yesNo(UIBundle.message("file.chooser.delete.title"), UIBundle.message("file.chooser.delete.confirm"))
+        .yesText(ApplicationBundle.message("button.delete"))
+        .noText(CommonBundle.getCancelButtonText())
+        .icon(UIUtil.getWarningIcon())
+        .ask(project);
+      if (!ok) return;
+    }
 
     try {
       var progress = IdeBundle.message("progress.deleting");
-      panel.reloadAfter(() -> ProgressManager.getInstance().run(new Task.WithResult<Path, IOException>(e.getProject(), panel.getComponent(), progress, true) {
+      panel.reloadAfter(() -> ProgressManager.getInstance().run(new Task.WithResult<Path, IOException>(project, panel.getComponent(), progress, true) {
         @Override
         protected Path compute(@NotNull ProgressIndicator indicator) throws IOException {
+          indicator.setIndeterminate(false);
+          var i = 0;
           for (var path : paths) {
             if (indicator.isCanceled()) break;
             indicator.setText(path.toString());
-            NioFiles.deleteRecursively(path, p -> {
-              indicator.checkCanceled();
-              indicator.setText2(path.relativize(p).toString());
-            });
+            indicator.setFraction((double)i++ / paths.size());
+            if (toBin && PlatformNioHelper.isLocal(path)) {
+              TrashBin.moveToTrash(path);
+            }
+            else {
+              NioFiles.deleteRecursively(path, p -> {
+                indicator.checkCanceled();
+                indicator.setText2(path.relativize(p).toString());
+              });
+            }
           }
           return null;
         }
@@ -80,18 +93,19 @@ public final class FileDeleteAction extends FileChooserAction {
     }
   }
 
-  private static boolean isEnabled(AnActionEvent e) {
+  private static boolean isVisible(AnActionEvent e) {
     return e.getData(FileChooserKeys.DELETE_ACTION_AVAILABLE) != Boolean.FALSE;
+  }
+
+  private static boolean isEnabled(@NotNull AnActionEvent e) {
+    return !(e.getInputEvent() instanceof KeyEvent && e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) instanceof JTextField);  // do not override text deletion
   }
 
   @Override
   protected void update(@NotNull FileSystemTree fileChooser, @NotNull AnActionEvent e) {
-    boolean visible = isEnabled(e);
+    var visible = isVisible(e);
     e.getPresentation().setVisible(visible);
-    e.getPresentation().setEnabled(
-      visible &&
-      !(e.getInputEvent() instanceof KeyEvent && e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) instanceof JTextField) &&  // do not override text deletion
-      new VirtualFileDeleteProvider().canDeleteElement(e.getDataContext()));
+    e.getPresentation().setEnabled(visible && isEnabled(e) && new VirtualFileDeleteProvider().canDeleteElement(e.getDataContext()));
   }
 
   @Override

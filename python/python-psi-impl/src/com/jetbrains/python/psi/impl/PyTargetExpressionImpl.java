@@ -179,6 +179,10 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       final PyExpression assignedValue = ((PyAssignmentExpression)parent).getAssignedValue();
       return assignedValue == null ? null : context.getType(assignedValue);
     }
+    if (parent instanceof PyImportElement importElement) {
+      final PyReferenceExpression importedRef = importElement.getImportReferenceExpression();
+      return importedRef == null ? null : context.getType(importedRef);
+    }
     if (parent instanceof PyGlobalStatement || parent instanceof PyNonlocalStatement) {
       PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
       List<PyType> collect = StreamEx.of(getReference(resolveContext).multiResolve(false))

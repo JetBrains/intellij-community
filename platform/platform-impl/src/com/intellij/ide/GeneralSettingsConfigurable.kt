@@ -17,6 +17,7 @@ import com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomizat
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.PlatformUtils
+import com.intellij.util.io.TrashBin
 
 private val model: GeneralSettings
   get() = GeneralSettings.getInstance()
@@ -25,6 +26,8 @@ private val myChkReopenLastProject: CheckboxDescriptor
   get() = CheckboxDescriptor(IdeUICustomization.getInstance().projectMessage("checkbox.reopen.last.project.on.startup"), model::isReopenLastProject)
 private val myConfirmExit: CheckboxDescriptor
   get() = CheckboxDescriptor(IdeBundle.message("checkbox.confirm.application.exit"), model::isConfirmExit)
+private val myDeleteToBin
+  get() = CheckboxDescriptor(IdeBundle.message("checkbox.delete.to.trash.bin"), model::isDeletingToBin)
 private val myChkSyncOnFrameActivation
   get() = CheckboxDescriptor(IdeBundle.message("checkbox.synchronize.files.on.frame.activation"), model::isSyncOnFrameActivation)
 private val myChkSyncInBackground
@@ -41,6 +44,7 @@ internal val allOptionDescriptors: List<BooleanOptionDescription>
     listOfNotNull(
       myChkReopenLastProject.takeIf { ProjectLifecycleUiCustomization.getInstance().canReopenProjectOnStartup },
       myConfirmExit.takeIf { IdeLifecycleUiCustomization.getInstance().canShowExitConfirmation },
+      myDeleteToBin,
       myChkSyncOnFrameActivation,
       myChkSyncInBackground,
       myChkSaveOnFrameDeactivation,
@@ -113,7 +117,12 @@ internal class GeneralSettingsConfigurable :
         }
       }
 
-      group(IdeBundle.message("settings.general.autosave")) {
+      group(IdeBundle.message("settings.general.files")) {
+        if (TrashBin.isSupported()) {
+          row {
+            checkBox(myDeleteToBin)
+          }.bottomGap(BottomGap.SMALL)
+        }
         row {
           val autoSaveCheckbox = checkBox(myChkAutoSaveIfInactive).gap(RightGap.SMALL)
           intTextField(GeneralSettings.SAVE_FILES_AFTER_IDLE_SEC.asRange())

@@ -138,3 +138,5 @@ internal fun <T> runBlockingAssertNotInReadAction(block: suspend CoroutineScope.
   }
   return runBlockingMaybeCancellable(block)
 }
+
+fun Type.instanceOf(className: String): Boolean = DebuggerUtils.instanceOf(this, className)

@@ -4,6 +4,7 @@ package com.intellij.openapi.application.impl.islands
 import com.intellij.ide.ProjectWidgetGradientLocationService
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.ui.GradientTextureCache
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.AbstractPainter
@@ -36,9 +37,23 @@ private val islandsGradientColors = setOf(
   "StatusBar.background",
 )
 
+private val islandsToolWindowGradientColors = setOf(
+  "ToolWindow.background",
+  "ToolWindow.header.background",
+  "ToolWindow.Header.inactiveBackground",
+)
+
 internal fun isIslandsGradientColor(paint: Paint?): Boolean {
   val colorName = (paint as? JBColor)?.name ?: return false
+  if (isColorIslandGradient() && colorName in islandsToolWindowGradientColors) {
+    return true
+  }
   return colorName in islandsGradientColors
+}
+
+private fun isIslandsToolWindowGradientColor(paint: Paint?): Boolean {
+  val colorName = (paint as? JBColor)?.name ?: return false
+  return colorName in islandsToolWindowGradientColors
 }
 
 internal class IslandsGradientPainter(private val frame: IdeFrame, private val mainColor: Color, private val enabled: () -> Boolean) : AbstractPainter() {
@@ -75,13 +90,18 @@ internal fun islandsGradientPaint(frame: IdeFrame, mainColor: Color, projectWind
 
   val project = frame.project ?: return
 
-  if (Registry.`is`("idea.islands.color.gradient.enabled", false)) {
+  if (isColorIslandGradient()) {
     doColorGradientPaint(project, projectWindowCustomizer, component, g)
   }
   else {
     doGradientPaint(frame, mainColor, project, projectWindowCustomizer, component, g)
   }
 }
+
+internal fun isColorIslandGradient(): Boolean = Registry.`is`("idea.islands.color.gradient.enabled", false)
+
+// TODO: replace isRoundedTabDuringDrag to publuc API to check islands theme
+internal fun isColorIslandGradientAvailable(): Boolean = isColorIslandGradient() && InternalUICustomization.getInstance()?.isRoundedTabDuringDrag == true
 
 private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project, projectWindowCustomizer: ProjectWindowCustomizerService,
                             component: Component, g: Graphics2D) {
@@ -185,22 +205,30 @@ private fun doColorGradientPaint(project: Project, projectWindowCustomizer: Proj
   val initialComposite = g.composite
   val info = projectWindowCustomizer.getProjectGradients(project)
 
-  if (SwingUtilities.getWindowAncestor(component)?.isActive == false) {
+  if (isIslandsToolWindowGradientColor(g.paint)) {
+    g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, JBUI.getFloat("Island.toolWindowAlpha", 0.2f))
+  }
+  else if (SwingUtilities.getWindowAncestor(component)?.isActive == false) {
     islandsInactiveFrameGraphics2D?.preserveComposite = true
 
     g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, islandsInactiveAlpha)
   }
 
-  g.paint = LinearGradientPaint(0f, 0f, component.width.toFloat(), component.height.toFloat(),
+  val width = component.width
+  val height = component.height
+  val widthF = width.toFloat()
+  val heightF = height.toFloat()
+
+  g.paint = LinearGradientPaint(0f, 0f, widthF, heightF,
                                 floatArrayOf(info.getDiagonalFraction1(0f), info.getDiagonalFraction2(0.13f),
                                              info.getDiagonalFraction3(0.3f), info.getDiagonalFraction4(1f)),
                                 arrayOf(info.diagonalColor1, info.diagonalColor2, info.diagonalColor3, info.diagonalColor4))
 
-  g.fillRect(0, 0, component.width, component.height)
+  g.fillRect(0, 0, width, height)
 
-  val ovalRadius = component.width / 4f
-  val ovalWidth = component.width / 2
-  val ovalCenterX = component.width * 0.2f
+  val ovalRadius = width / 4f
+  val ovalWidth = width / 2
+  val ovalCenterX = width * 0.2f
   val ovalCenterY = 36f
 
   g.paint = RadialGradientPaint(ovalCenterX, ovalCenterY, ovalRadius,
@@ -209,13 +237,13 @@ private fun doColorGradientPaint(project: Project, projectWindowCustomizer: Proj
 
   g.fillOval((ovalCenterX - ovalRadius).toInt(), (ovalCenterY - ovalRadius).toInt(), ovalWidth, ovalWidth)
 
-  g.paint = GradientPaint(0f, 0f, info.horizontalColor1, component.width.toFloat(), 0f, info.horizontalColor2)
+  g.paint = GradientPaint(0f, 0f, info.horizontalColor1, widthF, 0f, info.horizontalColor2)
 
-  g.fillRect(0, 0, component.width, component.height)
+  g.fillRect(0, 0, width, height)
 
-  g.paint = GradientPaint(0f, 0f, info.verticalColor1, 0f, component.height.toFloat(), info.verticalColor2)
+  g.paint = GradientPaint(0f, 0f, info.verticalColor1, 0f, heightF, info.verticalColor2)
 
-  g.fillRect(0, 0, component.width, component.height)
+  g.fillRect(0, 0, width, height)
 
   g.composite = initialComposite
   islandsInactiveFrameGraphics2D?.preserveComposite = false

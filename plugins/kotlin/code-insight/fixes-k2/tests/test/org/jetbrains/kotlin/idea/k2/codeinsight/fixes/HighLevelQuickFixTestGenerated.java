@@ -15194,6 +15194,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             public void testSetOfToMutableSet() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/setOfToMutableSet.kt");
             }
+
+            @TestMetadata("typeArgumentMismatchWithExplicitType.kt")
+            public void testTypeArgumentMismatchWithExplicitType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/typeArgumentMismatchWithExplicitType.kt");
+            }
+
+            @TestMetadata("typeArgumentMismatchWithInferredType.kt")
+            public void testTypeArgumentMismatchWithInferredType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/convertCollection/typeArgumentMismatchWithInferredType.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

@@ -347,7 +347,8 @@
       "borderWidth": 6,
       "borderWidth.compact": 4,
       "borderColor": "container-tool-window-bg",
-      "inactiveAlpha": 0.56
+      "inactiveAlpha": 0.56,
+      "toolWindowAlpha": 0.2
     },
 
     "alt": {

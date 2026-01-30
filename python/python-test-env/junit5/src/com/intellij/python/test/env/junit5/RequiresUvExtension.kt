@@ -15,6 +15,8 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.opentest4j.TestAbortedException
 import kotlin.io.path.pathString
 
+const val LATEST_UV_VERSION = "0.9.26"
+
 /**
  * Extension that ensures Uv tool is available and configured.
  * 
@@ -50,7 +52,7 @@ class RequiresUvExtension : BeforeAllCallback, BeforeEachCallback {
   
   private fun createUvEnvironment(context: ExtensionContext): PyEnvironment {
     val factory = getOrCreatePyEnvironmentFactory(context)
-    val envSpec = uvEnvironment("0.9.21") {
+    val envSpec = uvEnvironment(LATEST_UV_VERSION) {
       pythonVersion = LATEST_PYTHON_VERSION
     }
     

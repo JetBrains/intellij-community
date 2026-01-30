@@ -5,7 +5,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.util.io.Decompressor
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonBinary
 import kotlinx.coroutines.Dispatchers
@@ -105,29 +104,7 @@ abstract class PyEnvironmentProvider<S : PyEnvironmentSpec<S>>(
    * @throws IllegalArgumentException if archive format is not supported
    */
   protected fun unpackArchive(archiveFile: Path, targetDir: Path, prefixToStrip: String? = null) {
-    val fileName = archiveFile.fileName.toString()
-    when {
-      fileName.endsWith(".tar.gz", ignoreCase = true) || fileName.endsWith(".tgz", ignoreCase = true) -> {
-        val decompressor = Decompressor.Tar(archiveFile)
-          .removePrefixPath("python")
-        if (prefixToStrip != null) {
-          decompressor.removePrefixPath(prefixToStrip)
-        }
-        decompressor.extract(targetDir)
-      }
-      fileName.endsWith(".zip", ignoreCase = true) -> {
-        // Use withZipExtensions() for proper handling of ZIP metadata (directory flags, symlinks, etc.)
-        val decompressor = Decompressor.Zip(archiveFile).withZipExtensions()
-          .removePrefixPath("python")
-        if (prefixToStrip != null) {
-          decompressor.removePrefixPath(prefixToStrip)
-        }
-        decompressor.extract(targetDir)
-      }
-      else -> {
-        error("Unsupported archive format: $fileName. Expected .tar.gz, .tgz, or .zip")
-      }
-    }
+    com.intellij.python.test.env.core.unpackArchive(archiveFile, targetDir, prefixToStrip)
   }
 
   /**

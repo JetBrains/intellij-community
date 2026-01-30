@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
-import com.intellij.debugger.engine.isSubTypeOrSame
+import com.intellij.debugger.impl.instanceOf
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.ReferenceType
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
@@ -15,7 +15,7 @@ abstract class BaseMirror<T: ObjectReference, F>(val name: String, context: Defa
     override fun getCls(): ReferenceType = cls
 
     override fun isCompatible(value: T?) =
-        value?.referenceType()?.isSubTypeOrSame(name) ?: false
+        value?.referenceType()?.instanceOf(name) ?: false
 
     override fun mirror(value: T?, context: DefaultExecutionContext): F? {
         if (value == null) return null
