@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -262,14 +263,14 @@ public class NioFilesTest {
     assertEquals(42, runAndGetExitValue(script.toString()));
   }
 
-  private static int runAndGetExitValue(String command) throws IOException, InterruptedException {
+  private static int runAndGetExitValue(String... command) throws IOException, InterruptedException {
     var process = Runtime.getRuntime().exec(command);
     if (process.waitFor(30, TimeUnit.SECONDS)) {
       return process.exitValue();
     }
     else {
       process.destroy();
-      throw new AssertionError("Timed out and killed: " + command);
+      throw new AssertionError("Timed out and killed: " + List.of(command));
     }
   }
 

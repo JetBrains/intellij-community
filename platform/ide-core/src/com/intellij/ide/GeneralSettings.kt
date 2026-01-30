@@ -147,7 +147,6 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
     const val OPEN_PROJECT_NEW_WINDOW: Int = 0
     const val OPEN_PROJECT_SAME_WINDOW: Int = 1
     const val OPEN_PROJECT_SAME_WINDOW_ATTACH: Int = 2
-    @Suppress("SpellCheckingInspection")
     const val SUPPORT_SCREEN_READERS: String = "ide.support.screenreaders.enabled"
 
     val SAVE_FILES_AFTER_IDLE_SEC: UINumericRange = UINumericRange(15, 1, 300)
