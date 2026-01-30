@@ -167,7 +167,6 @@ internal class TerminalEscapeAction : TerminalPromotedDumbAwareAction() {
              && LookupManager.getActiveLookup(e.terminalEditor) == null
              // the terminal can be located in the Editor tab, so in this case we also should do nothing
              && e.getData(PlatformDataKeys.TOOL_WINDOW) != null
-             && AdvancedSettings.getBoolean("terminal.escape.moves.focus.to.editor")
              && (e.terminalEditor?.isPromptEditor == true
                  // Or enable it in output, but only when command is running
                  // In alternate mode, escape action should be sent to the terminal process, so disable the action in this case.
