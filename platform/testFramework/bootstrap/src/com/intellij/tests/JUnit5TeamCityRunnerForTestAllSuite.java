@@ -248,7 +248,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
           testFailure(testIdentifier, ServiceMessageTypes.TEST_IGNORED, throwableOptional, duration, reason);
         }
 
-        TestLocationStorage.recordTestLocation(testIdentifier, status, getName(testIdentifier));
+        TestLocationStorage.recordTestLocation(testIdentifier, status, getFullTestPath(testIdentifier));
 
         testFinished(testIdentifier, duration);
         myFinishCount++;
@@ -426,6 +426,41 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
              "' name='" + escapeName(name) +
              "' nodeId='" + escapeName(id) +
              "' parentNodeId='" + escapeName(parentId) + "'";
+    }
+
+    /**
+     * Required for TC to match parametrized and factory tests when we attach metadata after the run
+     */
+    private String getFullTestPath(TestIdentifier testIdentifier) {
+      List<String> names = new ArrayList<>();
+      Optional<TestIdentifier> parent = myTestPlan.getParent(testIdentifier);
+      boolean isImmediateParent = true;
+
+      while (parent.isPresent()) {
+        TestIdentifier p = parent.get();
+        if (hasNonTrivialParent(p)) {
+          // Skip class-level parent only if it's the immediate parent of a method test
+          // (getName already includes the class name)
+          boolean skipClassParent = isImmediateParent
+                                    && p.getSource().orElse(null) instanceof ClassSource cs
+                                    && testIdentifier.getSource().orElse(null) instanceof MethodSource ms
+                                    && cs.getClassName().equals(ms.getClassName());
+
+          if (!skipClassParent) {
+            names.add(p.getSource().map(s -> switch (s) {
+              case ClassSource source -> source.getClassName();
+              case MethodSource ms -> ms.getClassName() + "." + p.getDisplayName();
+              default -> p.getDisplayName();
+            }).orElse(p.getDisplayName()));
+          }
+        }
+        parent = myTestPlan.getParent(p);
+        isImmediateParent = false;
+      }
+
+      Collections.reverse(names);
+      names.add(getName(testIdentifier));
+      return String.join(": ", names);
     }
 
     private String getParentId(TestIdentifier testIdentifier) {
