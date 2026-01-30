@@ -74,9 +74,6 @@ private const val WITH_CONTEXT = "kotlinx.coroutines.withContext"
 private const val DISPATCHERS = "kotlinx.coroutines.Dispatchers"
 private const val COROUTINE_SCOPE = "kotlinx.coroutines.CoroutineScope"
 
-private const val REPLACE_WITH_ANNOTATION = "com.intellij.util.concurrency.annotations.ReplaceWith"
-private val replaceWithAnnotationId = ClassId.topLevel(FqName(REPLACE_WITH_ANNOTATION))
-
 internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return if (isInspectionForBlockingContextAvailable(holder)) {
@@ -337,39 +334,6 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
       override fun startInWriteAction(): Boolean = false
 
       override fun getName(): String = familyName
-    }
-
-    private class ReplaceWithSuspendAlternativeQuickFix(
-      element: PsiElement,
-      private val expression: String,
-      private val imports: List<String>,
-    ) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
-      override fun getFamilyName(): String = DevKitKotlinBundle.message(
-        "inspections.forbidden.method.in.suspend.context.replace.with.suspend.alternative.fix.text")
-
-      override fun getText(): String = familyName
-
-      override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean =
-        getCallExpression(startElement) != null
-
-      override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-        val callExpression = getCallExpression(startElement) ?: return
-        val factory = KtPsiFactory(project)
-        val newExpression = factory.createExpression(expression)
-        val qualifiedExpression = callExpression.getQualifiedExpressionForSelector()
-        val expressionToReplace = qualifiedExpression ?: callExpression
-
-        val ktFile = callExpression.containingKtFile
-        for (import in imports) {
-          val fqName = FqName(import)
-          if (!isImported(fqName, ktFile)) {
-            ktFile.addImport(fqName)
-          }
-        }
-
-        val resultExpression = expressionToReplace.replace(newExpression)
-        ShortenReferencesFacility.getInstance().shorten(resultExpression as KtElement)
-      }
     }
   }
 }

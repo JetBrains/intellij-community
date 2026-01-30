@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.concurrency.annotations.ReplaceWith
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
@@ -19,6 +20,10 @@ import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 @Internal
 @IntellijInternalApi
 val REQUIRES_BLOCKING_CONTEXT_ANNOTATION: String = RequiresBlockingContext::class.java.canonicalName
+
+@Internal
+@IntellijInternalApi
+val REPLACE_WITH_ANNOTATION: String = ReplaceWith::class.java.canonicalName
 
 @Internal
 @IntellijInternalApi
