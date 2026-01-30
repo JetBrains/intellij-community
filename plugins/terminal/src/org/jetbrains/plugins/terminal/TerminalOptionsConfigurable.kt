@@ -25,7 +25,6 @@ import com.intellij.openapi.keymap.impl.ui.KeymapPanel
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.options.BoundSearchableConfigurable
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage
 import com.intellij.openapi.options.ex.Settings
@@ -722,16 +721,9 @@ private fun Row.changeActionShortcutLink(actionId: String): Cell<ActionLink> {
   return link(message("terminal.command.completion.shortcut.change")) {
     val allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as Component))
     val keymapPanel = allSettings?.find(KeymapPanel::class.java)
-
     if (keymapPanel != null) {
       allSettings.select(keymapPanel).doWhenDone {
         keymapPanel.selectAction(actionId)
-      }
-    }
-    else {
-      val newKeymapPanel = KeymapPanel()
-      ShowSettingsUtil.getInstance().editConfigurable(it.source as Component, newKeymapPanel) {
-        newKeymapPanel.selectAction(actionId)
       }
     }
   }
