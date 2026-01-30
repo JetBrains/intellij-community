@@ -79,14 +79,22 @@ class XmlTagNameSynchronizer(private val project: Project, val cs: CoroutineScop
   @RequiresEdt
   fun waitForSynchronizersCreation() {
     if (writeLock.availablePermits > 0) return
-    // Cannot use dispatchAllInvocationEvents() is write access is allowed.
-    if (ApplicationManager.getApplication().isWriteAccessAllowed) return
+    // Cannot use dispatchAllInvocationEvents() if write access is allowed.
+    val application = ApplicationManager.getApplication()
+    if (application.isWriteAccessAllowed)
+      return
     val start = System.currentTimeMillis()
     val job = cs.coroutineContext.job
     while (job.children.toList().isNotEmpty() && cs.coroutineContext.isActive) {
+      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {  }
       // do not release the WI lock here! Causes accidental dumb mode appearance
       UIUtil.dispatchAllInvocationEvents()
       Thread.sleep(1)
+      // The read action in `ensureSynchronizerCreated` will not be executed
+      // if write intent lock is acquired, so no point waiting.
+      if (application.isWriteIntentLockAcquired) {
+        return
+      }
       if (System.currentTimeMillis() - start > 2000) {
         thisLogger().warn("Timed out waiting for synchronizers to be created.", TimeoutException())
         return
