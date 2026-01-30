@@ -53,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.connection.GradleConnectorService;
 import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
-import org.jetbrains.plugins.gradle.issue.OutdatedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
@@ -572,8 +571,10 @@ public final class GradleExecutionHelper {
 
       checkThatGradleBuildEnvironmentIsSupportedByIdea(buildEnvironment);
       checkThatGradleBuildEnvironmentIsDeprecatedByIdea(context, buildEnvironment);
-      checkThatLatestGradleMinorVersionIsUsed(context, buildEnvironment);
-
+      var checkers = GradleExecutionChecker.EP_NAME.getExtensionList();
+      for (var checker : checkers) {
+        checker.checkExecution(context, buildEnvironment);
+      }
       return buildEnvironment;
     }
     catch (CancellationException ce) {
@@ -587,39 +588,6 @@ public final class GradleExecutionHelper {
     finally {
       span.end();
     }
-  }
-
-  private static void checkThatLatestGradleMinorVersionIsUsed(
-    @NotNull GradleExecutionContext context,
-    @NotNull BuildEnvironment buildEnvironment
-  ) {
-    GradleVersion currentVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
-    if (GradleJvmSupportMatrix.isGradleDeprecatedByIdea(currentVersion)) return;
-    if (isLatestMinorVersionInspectionDisabled(context)) return;
-    if (isMinorGradleVersionOutdated(currentVersion)) return;
-
-    final var issue = new OutdatedGradleVersionIssue(context, currentVersion);
-    issue.addOpenInspectionSettingsQuickFix(context, "LatestMinorVersion");
-
-    context.getListener().onStatusChange(
-      new ExternalSystemBuildEvent(
-        context.getTaskId(),
-        new BuildIssueEventImpl(context.getTaskId(), issue, MessageEvent.Kind.INFO)
-      )
-    );
-  }
-
-  private static boolean isLatestMinorVersionInspectionDisabled(@NotNull GradleExecutionContext context) {
-    HighlightDisplayKey inspectionKey = HighlightDisplayKey.find("LatestMinorVersion");
-    if (inspectionKey == null) return true;
-    InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(context.getProject());
-    InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
-    return !inspectionProfile.isToolEnabled(inspectionKey);
-  }
-
-  private static boolean isMinorGradleVersionOutdated(@NotNull GradleVersion currentVersion) {
-    GradleVersion latestVersion = GradleJvmSupportMatrix.getLatestMinorGradleVersion(currentVersion.getMajorVersion());
-    return currentVersion.compareTo(latestVersion) >= 0;
   }
 
   private static void checkThatGradleBuildEnvironmentIsDeprecatedByIdea(

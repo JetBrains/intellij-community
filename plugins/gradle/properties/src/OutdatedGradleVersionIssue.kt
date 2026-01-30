@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.issue
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.properties
 
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction
@@ -14,6 +14,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiManager
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.issue.ConfigurableGradleBuildIssue
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -23,18 +24,20 @@ import java.util.concurrent.CompletableFuture
 
 @ApiStatus.Internal
 class OutdatedGradleVersionIssue(
-  context: GradleExecutionContext,
-  private val currentVersion: GradleVersion,
+    context: GradleExecutionContext,
+    private val currentVersion: GradleVersion,
 ) : ConfigurableGradleBuildIssue() {
 
   init {
-    val latestVersion = GradleJvmSupportMatrix.getLatestMinorGradleVersion(currentVersion.majorVersion)
+    val latestVersion = GradleJvmSupportMatrix.Companion.getLatestMinorGradleVersion(currentVersion.majorVersion)
     setTitle(GradleBundle.message("gradle.build.issue.gradle.outdated.minor.version.title"))
-    addDescription(GradleBundle.message(
+    addDescription(
+        GradleBundle.message(
       "gradle.build.issue.gradle.outdated.minor.version.description",
       currentVersion.version
     ))
-    addDescription(GradleBundle.message(
+    addDescription(
+        GradleBundle.message(
       "gradle.build.issue.gradle.recommended.description",
       latestVersion.version
     ))
@@ -64,24 +67,25 @@ class OutdatedGradleVersionIssue(
       if (indexInProperty < 0) return@compute null
 
       val indexInFile = psiElement.startOffsetInParent + indexInProperty + versionText.length
-      OpenFileDescriptor(project, virtualFile, indexInFile)
+        OpenFileDescriptor(project, virtualFile, indexInFile)
     }
   }
 
   fun addOpenInspectionSettingsQuickFix(
-    context: GradleExecutionContext,
-    inspectionShortName: String,
+      context: GradleExecutionContext,
+      inspectionShortName: String,
   ) {
     val hyperlinkReference = addQuickFix(OpenInspectionSettingsFix(context, inspectionShortName))
-    addQuickFixPrompt(GradleBundle.message(
+    addQuickFixPrompt(
+        GradleBundle.message(
       "gradle.build.quick.fix.edit.inspection.settings",
       hyperlinkReference
     ))
   }
 
   private class OpenInspectionSettingsFix(
-    private val context: GradleExecutionContext,
-    private val inspectionShortName: String,
+      private val context: GradleExecutionContext,
+      private val inspectionShortName: String,
   ) : BuildIssueQuickFix {
     override val id = "open_inspection_settings"
 
