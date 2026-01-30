@@ -1625,7 +1625,7 @@ public final class JBUI {
         public static final JBValue ARC = new JBValue.UIInteger("Popup.Selection.arc", 8);
         public static final JBValue LEFT_RIGHT_INSET = new JBValue.UIInteger("Popup.Selection.leftRightInset", 8);
 
-        public static @NotNull Insets innerInsets() {
+        public static @NotNull JBInsets innerInsets() {
           JBInsets result = insets("Popup.Selection.innerInsets", insets(0, 8));
           // Top and bottom values are ignored now
           result.top = 0;

@@ -4536,7 +4536,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Popup$Selection
 - sf:ARC:com.intellij.util.ui.JBValue
 - sf:LEFT_RIGHT_INSET:com.intellij.util.ui.JBValue
 - <init>():V
-- s:innerInsets():java.awt.Insets
+- s:innerInsets():com.intellij.util.ui.JBInsets
 f:com.intellij.util.ui.JBUI$CurrentTheme$PopupMenu
 - <init>():V
 f:com.intellij.util.ui.JBUI$CurrentTheme$PopupMenu$Selection
