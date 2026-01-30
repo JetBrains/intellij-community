@@ -53,7 +53,7 @@ class ServerRequestDispatcher(private val connectionListener: ConnectionListener
             val existing = connections.put(route, send)
             if (existing != null) {
               log.warn { "Replaced existing ${route}, will close previous socket" }
-              existing.close(RuntimeException("Replaced by other connection with same uid ${route}"))
+              existing.close(RuntimeException("Replaced by other connection with same uid $route"))
             }
             log.info { "Notify $route is connected" }
             broadcastSafely(TransportMessage.RouteOpened(route))
@@ -82,7 +82,7 @@ class ServerRequestDispatcher(private val connectionListener: ConnectionListener
                       }
                     }
                     else -> {
-                      log.warn { "Good endpoints should send only TransportMessage.Envelope, but ${route} sends ${message}" }
+                      log.warn { "Good endpoints should send only TransportMessage.Envelope, but $route sends $message" }
                     }
                   }
                 }
@@ -112,11 +112,11 @@ class ServerRequestDispatcher(private val connectionListener: ConnectionListener
   }
 
   private suspend fun broadcastSafely(message: TransportMessage) {
-    connections.forEach { (k, v) ->
-      log.trace { "Broadcasting $message to ${k}" }
+    connections.entries.forEach { (k, v) ->
+      log.trace { "Broadcasting $message to $k" }
       //      coroutineContext.job.ensureActive()
       runCatching { v.send(message) }.onFailure { ex ->
-        log.trace(ex) { "failed to broadcast $message to ${k}" }
+        log.trace(ex) { "failed to broadcast $message to $k" }
       }
     }
   }
