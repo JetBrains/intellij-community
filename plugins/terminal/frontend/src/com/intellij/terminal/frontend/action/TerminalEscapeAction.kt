@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.wm.ToolWindowManager
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.action.TerminalMoveFocusToEditorAction
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.history.CommandHistoryPresenter.Companion.isTerminalCommandHistory
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.blockTerminalController
@@ -46,7 +47,6 @@ interface TerminalEscapeHandler {
    * - 150 - cancel the AI prompt (implemented only in gen1 terminal);
    * - 200 - cancel selection and focus the prompt;
    * - 300 - cancel the active search;
-   * - 500 - leave the terminal tool window and focus the code editor.
    *
    * As a rule of thumb, values divisible by 100 are reserved for the main terminal plugin,
    * values divisible by 10 are reserved for JetBrains plugins,
@@ -110,13 +110,11 @@ internal class TerminalEscapeAction : TerminalPromotedDumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-  /**
-   * Promote only if this action is in the list.
-   * It allows external actions to suppress this action and execute their own instead.
-   * For example, [com.intellij.ml.llm.terminal.TerminalTextToCommandAction].
-   */
   override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
-    return actions.filterIsInstance<TerminalEscapeAction>()
+    val escapeAction = actions.find { it is TerminalEscapeAction }
+    val moveFocusToEditorAction = actions.find { it is TerminalMoveFocusToEditorAction }
+    // Escape action has priority over move focus to editor action
+    return listOfNotNull(escapeAction, moveFocusToEditorAction)
   }
 
   private interface Handler {

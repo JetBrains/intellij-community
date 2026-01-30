@@ -228,6 +228,7 @@ private class TerminalEventDispatcher(
       "Terminal.MoveToEditor",
       // essential terminal actions
       "Terminal.Escape",
+      "Terminal.SwitchFocusToEditor",
       "Terminal.CopySelectedText",
       "Terminal.Paste",
       "Terminal.LineUp",

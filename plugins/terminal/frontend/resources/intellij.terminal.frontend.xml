@@ -58,7 +58,6 @@
 
     <escapeHandler implementation="com.intellij.terminal.frontend.action.CancelSelection"/>
     <escapeHandler implementation="com.intellij.terminal.frontend.action.CloseSearch"/>
-    <escapeHandler implementation="com.intellij.terminal.frontend.action.SelectEditor"/>
     <escapeHandler implementation="com.intellij.terminal.frontend.action.ClosePopupCompletion"/>
   </extensions>
 
