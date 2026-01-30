@@ -188,7 +188,6 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
 
                 createClassifierLookupElement(
                     classifierSymbol = classifierSymbol,
-                    expectedType = context.expectedType,
                     importingStrategy = getImportingStrategy(
                         context = sectionContext.completionContext,
                         importStrategyDetector = sectionContext.importStrategyDetector,
@@ -197,7 +196,6 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                     ),
                     aliasName = aliasName,
                     positionContext = positionContext,
-                    visibilityChecker = sectionContext.visibilityChecker,
                 ).map {
                     it.applyWeighs(symbolWithOrigin)
                 }
@@ -208,7 +206,6 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
 
     context(_: KaSession, sectionContext: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
     private fun completeWithoutReceiverFromIndex() {
-        val weighingContext = sectionContext.weighingContext
         val indexClassifiers = if (sectionContext.prefixMatcher.prefix.isNotEmpty()) {
             getAvailableClassifiersFromIndex(
                 positionContext = sectionContext.positionContext,
@@ -221,7 +218,6 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                 .flatMap { classifierSymbol ->
                     createClassifierLookupElement(
                         classifierSymbol = classifierSymbol,
-                        expectedType = weighingContext.expectedType,
                         importingStrategy = getImportingStrategy(
                             context = sectionContext.completionContext,
                             importStrategyDetector = sectionContext.importStrategyDetector,
@@ -229,7 +225,6 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                             aliasName = null,
                         ),
                         positionContext = sectionContext.positionContext,
-                        visibilityChecker = sectionContext.visibilityChecker,
                     ).map {
                         it.applyWeighs(
                             symbolWithOrigin = KtSymbolWithOrigin(classifierSymbol),
@@ -261,9 +256,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                 }.flatMap { symbolWithOrigin ->
                     createClassifierLookupElement(
                         classifierSymbol = symbolWithOrigin.symbol,
-                        expectedType = sectionContext.weighingContext.expectedType,
                         positionContext = sectionContext.positionContext,
-                        visibilityChecker = sectionContext.visibilityChecker,
                     ).map { it.applyWeighs(symbolWithOrigin) }
                 }.forEach { addElement(it) }
         } else {
@@ -287,10 +280,8 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
             .flatMap {
                 createClassifierLookupElement(
                     classifierSymbol = it,
-                    expectedType = context.weighingContext.expectedType,
                     importingStrategy = ImportStrategy.AddImport(nameToImport),
                     positionContext = context.positionContext,
-                    visibilityChecker = context.visibilityChecker
                 )
             }.map { it.withPresentableText(selectorExpression.text + "." + it.lookupString) }
     }
@@ -299,33 +290,9 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
     private fun createClassifierLookupElement(
         classifierSymbol: KaClassifierSymbol,
         positionContext: KotlinNameReferencePositionContext,
-        visibilityChecker: CompletionVisibilityChecker,
-        expectedType: KaType? = null,
         aliasName: Name? = null,
         importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
     ): Sequence<LookupElementBuilder> = sequence {
-        if (classifierSymbol is KaNamedClassSymbol &&
-            classifierSymbol.classKind != KaClassKind.OBJECT &&
-            classifierSymbol.classKind != KaClassKind.ENUM_CLASS &&
-            classifierSymbol.modality != KaSymbolModality.SEALED &&
-            classifierSymbol.modality != KaSymbolModality.ABSTRACT &&
-            expectedType != null &&
-            classifierSymbol.defaultType.isSubtypeOf(expectedType)
-        ) {
-            val constructorSymbols = classifierSymbol.memberScope.constructors
-                .filter { visibilityChecker.isVisible(it, positionContext) }
-                .toList()
-
-            yieldIfNotNull(
-                KotlinFirLookupElementFactory.createConstructorCallLookupElement(
-                    containingSymbol = classifierSymbol,
-                    visibleConstructorSymbols = constructorSymbols,
-                    importingStrategy = importingStrategy,
-                    aliasName = aliasName
-                )
-            )
-        }
-
         yieldIfNotNull(KotlinFirLookupElementFactory.createClassifierLookupElement(classifierSymbol, importingStrategy, aliasName))
     }.map { builder ->
         when (importingStrategy) {

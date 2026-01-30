@@ -13,12 +13,14 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.codeinsight.utils.isOpen
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2TypeInstantiationContributor.InheritanceSubstitutionResult.*
+import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory.createAnonymousObjectLookupElement
 import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher
 import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.matchesExpectedType
@@ -26,8 +28,25 @@ import org.jetbrains.kotlin.idea.searching.inheritors.findAllInheritors
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isAbstract
+import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
 
+/**
+ * This contributor is responsible for completing type instantiation items for Kotlin classes and objects.
+ * Type instantiation items are:
+ *   - Constructor invocations
+ *   - Usages of objects matching the expected type (even though it technically is not a type instantiation)
+ *   - Creating anonymous subclasses
+ * It is split into two parts:
+ *   1. Contributing type instantiation items that match exactly the expected type
+ *   2. Completing type instantiation items for matching types that are proper subtypes of the expected type.
+ * Note that 2. is only done in smart completion.
+ *
+ * This contributor overlaps in parts with the [K2ClassifierCompletionContributor], so it should be ensured
+ * that no duplicate results are emitted because of it.
+ */
 internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNameReferencePositionContext>(
     KotlinNameReferencePositionContext::class
 ) {
@@ -56,6 +75,54 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
         addElement(element)
     }
 
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
+    private fun addObjectLookupElement(symbol: KaClassSymbol) {
+        val importStrategy = context.importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol)
+        KotlinFirLookupElementFactory.createClassifierLookupElement(
+            symbol = symbol,
+            importingStrategy = importStrategy,
+            aliasName = null,
+        )?.let { element ->
+            element.matchesExpectedType = ExpectedTypeWeigher.MatchesExpectedType.MATCHES
+            addElement(element)
+        }
+    }
+
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
+    private fun addConstructorCallLookupElements(symbol: KaNamedClassSymbol, inputTypeArgumentsAreRequired: Boolean) {
+        val constructorSymbols = symbol.memberScope.constructors
+            .filter { context.visibilityChecker.isVisible(it, context.positionContext) }
+            .toList()
+
+        if (symbol.isInner) {
+            // TODO: we do not return inner classes from this contributor, but they are returned by other contributors
+            return
+        }
+
+        val importStrategy = context.importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol)
+
+        KotlinFirLookupElementFactory.createConstructorCallLookupElement(
+            containingSymbol = symbol,
+            visibleConstructorSymbols = constructorSymbols,
+            importingStrategy = importStrategy,
+            inputTypeArgumentsAreRequired = inputTypeArgumentsAreRequired,
+        )?.let { element ->
+            element.matchesExpectedType = ExpectedTypeWeigher.MatchesExpectedType.MATCHES
+            addElement(element)
+        }
+    }
+
+    /**
+     * Returns if the given [PsiElement] can potentially be instantiated at the position of the completion context, taking
+     * into account visibility rules and whether the element allows instantiation at all.
+     */
+    context(context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
+    private fun PsiElement.canBeInstantiated(): Boolean = when (this) {
+        is KtClass -> context.visibilityChecker.canBeVisible(this) && !isAbstract()
+        is PsiClass -> context.visibilityChecker.canBeVisible(this) && !hasModifier(JvmModifier.ABSTRACT) && !isInterface
+        else -> false
+    }
+
     /**
      * Returns if the given [PsiElement] can be inherted at the position of the completion context, taking
      * into account visibility rules and whether the element allows inheritance at all.
@@ -82,29 +149,34 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
         val expectedType = context.weighingContext.expectedType ?: return
         val expectedSymbol = expectedType.symbol
 
-        if (expectedSymbol !is KaClassSymbol || expectedType !is KaClassType) return
-        if (expectedSymbol.psi?.canBeInherited() == false) return
+        if (expectedSymbol !is KaNamedClassSymbol || expectedType !is KaClassType) return
 
-        val typeArguments = expectedType.typeArguments
+        if (expectedSymbol.psi?.canBeInstantiated() == true) {
+            addConstructorCallLookupElements(expectedSymbol, inputTypeArgumentsAreRequired = false)
+        }
 
-        // If the expected type contains some type parameters, then we have to let the user fill them in,
-        // unless the type parameters are also available in the same scope.
-        val potentiallyUnresolvedTypeParameters = typeArguments.mapNotNull { it.type }.filterIsInstance<KaTypeParameterType>()
-        val hasUnresolvedArguments = if (potentiallyUnresolvedTypeParameters.isNotEmpty()) {
-            val typeParametersScope = context.weighingContext.scopeContext.compositeScope { it is KaScopeKind.TypeParameterScope }
-            val availableTypeParameters = typeParametersScope.classifiers.filterIsInstance<KaTypeParameterSymbol>()
-            potentiallyUnresolvedTypeParameters.any { it.symbol !in availableTypeParameters }
-        } else false
+        if (expectedSymbol.psi?.canBeInherited() == true) {
+            val typeArguments = expectedType.typeArguments
 
-        // If the expected type is _exactly_ the type we want to inherit, then the type arguments
-        // required are exactly the ones of the expected type.
-        addAnonymousObjectLookupElement(expectedSymbol, typeArguments.takeIf { !hasUnresolvedArguments })
+            // If the expected type contains some type parameters, then we have to let the user fill them in,
+            // unless the type parameters are also available in the same scope.
+            val potentiallyUnresolvedTypeParameters = typeArguments.mapNotNull { it.type }.filterIsInstance<KaTypeParameterType>()
+            val hasUnresolvedArguments = if (potentiallyUnresolvedTypeParameters.isNotEmpty()) {
+                val typeParametersScope = context.weighingContext.scopeContext.compositeScope { it is KaScopeKind.TypeParameterScope }
+                val availableTypeParameters = typeParametersScope.classifiers.filterIsInstance<KaTypeParameterSymbol>()
+                potentiallyUnresolvedTypeParameters.any { it.symbol !in availableTypeParameters }
+            } else false
+
+            // If the expected type is _exactly_ the type we want to inherit, then the type arguments
+            // required are exactly the ones of the expected type.
+            addAnonymousObjectLookupElement(expectedSymbol, typeArguments.takeIf { !hasUnresolvedArguments })
+        }
     }
 
     private sealed interface InheritanceSubstitutionResult {
         object SubstitutionNotPossible : InheritanceSubstitutionResult
         object UnresolvedParameter : InheritanceSubstitutionResult
-        class SuccessfulSubstitution(val typeArguments: List<KaTypeProjection>?) : InheritanceSubstitutionResult
+        class SuccessfulSubstitution(val typeArguments: List<KaTypeProjection>) : InheritanceSubstitutionResult
     }
 
     /**
@@ -175,7 +247,10 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
         // We apply the substitution. It's possible that the resulting type is not a subtype of the expected type,
         // in which case the element does not match and we return [SubstitutionNotPossible].
         val substituted = substitutor.substitute(inheritorSymbol.defaultType)
-        if (!substituted.isSubtypeOf(expectedSuperType)) {
+        // The analysis API's `isSubtypeOf` method does not work properly if free type parameters are involved.
+        // To still show results in that case, we use `isPossiblySubTypeOf`, which can lead to elements
+        // being allowed to be shown even if they do not actually work in the cotext.
+        if (!substituted.isPossiblySubTypeOf(expectedSuperType)) {
             return SubstitutionNotPossible
         }
 
@@ -201,16 +276,18 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
         val inheritingClasses = expectedType.symbol.psi?.findAllInheritors() ?: return
         for (inheritor in inheritingClasses) {
             val canBeInherited = inheritor.canBeInherited()
-            if (!canBeInherited) continue
+            val canBeInstantiated = inheritor.canBeInstantiated()
+            val isObject = inheritor is KtObjectDeclaration
+            if (!canBeInherited && !canBeInstantiated && !isObject) continue
 
             val inheritorSymbol = when (inheritor) {
-                is KtClass -> inheritor.symbol as? KaNamedClassSymbol ?: continue
+                is KtClassOrObject -> inheritor.symbol as? KaNamedClassSymbol ?: continue
                 is PsiClass -> inheritor.namedClassSymbol ?: continue
                 else -> continue
             }
 
             if (inheritorSymbol.classKind == KaClassKind.ENUM_CLASS) {
-                // Enum is not allowed to be extended by anonymous objects
+                // Enum is not allowed to be instantiated
                 continue
             }
 
@@ -220,13 +297,28 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
                 expectedSuperType = expectedType,
             )
 
-            val typeArgs = when (substitutionResult) {
-                is SuccessfulSubstitution -> substitutionResult.typeArguments
-                SubstitutionNotPossible -> continue // do not show the result
-                UnresolvedParameter -> null // show the result, but let user complete type arguments
+            if (canBeInherited) {
+                val typeArgs = when (substitutionResult) {
+                    is SuccessfulSubstitution -> substitutionResult.typeArguments
+                    SubstitutionNotPossible -> continue // do not show the result
+                    UnresolvedParameter -> null // show the result, but let user complete type arguments
+                }
+
+                addAnonymousObjectLookupElement(inheritorSymbol, typeArgs)
             }
 
-            addAnonymousObjectLookupElement(inheritorSymbol, typeArgs)
+            if (canBeInstantiated) {
+                val typeArgsRequired = when (substitutionResult) {
+                    is SuccessfulSubstitution -> substitutionResult.typeArguments.isNotEmpty()
+                    SubstitutionNotPossible -> continue // do not show the result
+                    UnresolvedParameter -> true
+                }
+                addConstructorCallLookupElements(inheritorSymbol, inputTypeArgumentsAreRequired = typeArgsRequired)
+            }
+
+            if (isObject) {
+                addObjectLookupElement(inheritorSymbol)
+            }
         }
     }
 }

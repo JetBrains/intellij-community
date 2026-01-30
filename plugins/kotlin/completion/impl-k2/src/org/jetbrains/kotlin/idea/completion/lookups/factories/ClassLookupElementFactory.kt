@@ -99,6 +99,7 @@ internal object ClassLookupElementFactory {
     fun createConstructorLookup(
         containingSymbol: KaNamedClassSymbol,
         constructorSymbols: List<KaConstructorSymbol>,
+        inputTypeArgumentsAreRequired: Boolean,
         importingStrategy: ImportStrategy,
         aliasName: Name? = null,
     ): LookupElementBuilder {
@@ -117,7 +118,7 @@ internal object ClassLookupElementFactory {
             renderedDeclaration = valueParameters?.let { CompletionShortNamesRenderer.renderFunctionParameters(it) } ?: "(...)",
             hasReceiver = false,
             inputValueArgumentsAreRequired = constructorSymbols.size > 1 || valueParameters?.isNotEmpty() == true,
-            inputTypeArgumentsAreRequired = false,
+            inputTypeArgumentsAreRequired = inputTypeArgumentsAreRequired,
         )
         return LookupElementBuilder.create(lookupObject, name.asString())
             .withInsertHandler(FunctionInsertionHandler)

@@ -39,11 +39,18 @@ object KotlinFirLookupElementFactory {
     fun createConstructorCallLookupElement(
         containingSymbol: KaNamedClassSymbol,
         visibleConstructorSymbols: List<KaConstructorSymbol>,
+        inputTypeArgumentsAreRequired: Boolean,
         importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
         aliasName: Name? = null,
     ): LookupElementBuilder? {
         if (visibleConstructorSymbols.isEmpty()) return null
-        return ClassLookupElementFactory.createConstructorLookup(containingSymbol, visibleConstructorSymbols, importingStrategy, aliasName)
+        return ClassLookupElementFactory.createConstructorLookup(
+            containingSymbol = containingSymbol,
+            constructorSymbols = visibleConstructorSymbols,
+            inputTypeArgumentsAreRequired = inputTypeArgumentsAreRequired,
+            importingStrategy = importingStrategy,
+            aliasName = aliasName
+        )
     }
 
     context(_: KaSession)
