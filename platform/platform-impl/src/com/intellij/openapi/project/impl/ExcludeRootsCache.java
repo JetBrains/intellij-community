@@ -3,16 +3,22 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal;
 import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
@@ -81,6 +87,12 @@ final class ExcludeRootsCache {
             collectExcludedRootsFromContributor(contributor, storage, collector);
           }
           excludedUrls.addAll(collector.getExcludedUrls());
+          for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project)) {
+            for (Module module : ModuleManager.getInstance(project).getModules()) {
+              VirtualFilePointer[] additionalModuleExcludedRoots = policy.getExcludeRootsForModule(ModuleRootManager.getInstance(module));
+              excludedUrls.addAll(ContainerUtil.map(additionalModuleExcludedRoots, VirtualFilePointer::getUrl));
+            }
+          }
         }
         urls = ArrayUtilRt.toStringArray(excludedUrls);
         Arrays.sort(urls);
