@@ -4,6 +4,7 @@ package com.intellij.debugger.engine
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
+import com.intellij.debugger.impl.instanceOf
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor
 import com.intellij.openapi.diagnostic.logger
@@ -14,9 +15,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.impl.breakpoints.BreakpointState
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
-import com.sun.jdi.ClassType
 import com.sun.jdi.ObjectReference
-import com.sun.jdi.Type
 import com.sun.jdi.event.LocatableEvent
 import com.sun.jdi.request.EventRequest
 import kotlinx.coroutines.CompletableDeferred
@@ -26,7 +25,6 @@ import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
 import kotlin.time.Duration
-import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 /**
  * Find some suspend context in which evaluation is possible.
@@ -167,40 +165,6 @@ fun <Self : XBreakpoint<P>, P : XBreakpointProperties<*>, S : BreakpointState> s
 }
 
 @ApiStatus.Internal
-fun Type.isSubtype(className: String): Boolean = isSubtype(AsmType.getObjectType(className))
-
-@ApiStatus.Internal
-fun Type.isSubTypeOrSame(className: String): Boolean =
-  name() == className || isSubtype(className)
-
-@ApiStatus.Internal
-fun Type.isSubtype(type: AsmType): Boolean {
-  if (this.signature() == type.descriptor) {
-    return true
-  }
-
-  if (type.sort != AsmType.OBJECT || this !is ClassType) {
-    return false
-  }
-
-  val superTypeName = type.className
-
-  if (allInterfaces().any { it.name() == superTypeName }) {
-    return true
-  }
-
-  var superClass = superclass()
-  while (superClass != null) {
-    if (superClass.name() == superTypeName) {
-      return true
-    }
-    superClass = superClass.superclass()
-  }
-
-  return false
-}
-
-@ApiStatus.Internal
 enum class ClientEvaluationExceptionType {
   USER_EXCEPTION,
   MISCOMPILED,
@@ -217,12 +181,12 @@ fun extractTypeFromClientException(exceptionFromCodeFragment: ObjectReference, h
       }
     }
     if (type.signature().startsWith("Ljava/lang/invoke/")
-        || type.isSubTypeOrSame("java.lang.ReflectiveOperationException")
-        || type.isSubTypeOrSame("java.lang.LinkageError")
+        || type.instanceOf("java.lang.ReflectiveOperationException")
+        || type.instanceOf("java.lang.LinkageError")
     ) {
       return ClientEvaluationExceptionType.MISCOMPILED
     }
-    if (type.isSubTypeOrSame("java.lang.ClassCastException")) {
+    if (type.instanceOf("java.lang.ClassCastException")) {
       return if (hasCast) ClientEvaluationExceptionType.USER_EXCEPTION else ClientEvaluationExceptionType.MISCOMPILED
     }
     return ClientEvaluationExceptionType.USER_EXCEPTION
