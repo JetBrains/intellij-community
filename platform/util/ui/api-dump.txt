@@ -5552,6 +5552,7 @@ e:com.intellij.util.ui.UnixDesktopEnv
 - sf:SWAY:com.intellij.util.ui.UnixDesktopEnv
 - sf:UNITY:com.intellij.util.ui.UnixDesktopEnv
 - sf:XFCE:com.intellij.util.ui.UnixDesktopEnv
+- getPresentableName():java.lang.String
 - s:valueOf(java.lang.String):com.intellij.util.ui.UnixDesktopEnv
 - s:values():com.intellij.util.ui.UnixDesktopEnv[]
 f:com.intellij.util.ui.WatermarkIcon

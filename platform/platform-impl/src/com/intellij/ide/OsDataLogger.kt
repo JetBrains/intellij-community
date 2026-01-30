@@ -37,7 +37,7 @@ private class OsDataLogger(val coroutineScope: CoroutineScope) {
         if (osInfo.glibcVersion != null) info += "; glibc: " + osInfo.glibcVersion
       }
       UnixDesktopEnv.CURRENT?.let { currentEnv ->
-        info += "; desktop: " + currentEnv.name
+        info += "; desktop: " + currentEnv.presentableName
         withContext(Dispatchers.IO) {
           ExecUtil.execAndReadLine(GeneralCommandLine(currentEnv.versionCommand))?.let { line ->
             info += " ($line)"
