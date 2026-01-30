@@ -45,7 +45,7 @@ interface IjentDeploymentListener {
   fun shellInitialized(initializationTime: Duration)
 }
 
-abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope, currentDispatcher: CoroutineDispatcher) : IjentControlledEnvironmentDeployingStrategy(), IjentDeployingStrategy.Posix {
+abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope, currentDispatcher: CoroutineDispatcher) : IjentControlledEnvironmentDeployingStrategy() {
   protected abstract val ijentLabel: String
 
   /**
@@ -66,7 +66,12 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope, cur
   private val myContext: Deferred<DeployingContextAndShell> = run {
     var createdShellProcess: ShellProcessWrapper? = null
     val context = scope.async(currentDispatcher, start = CoroutineStart.LAZY) {
-      val shellProcess = ShellProcessWrapper(IjentSessionProcessMediator.create(scope, createShellProcess(), ijentLabel, ::isExpectedProcessExit))
+      val shellProcess = ShellProcessWrapper(IjentSessionProcessMediator.create(
+        parentScope = scope,
+        process = createShellProcess(),
+        ijentLabel = ijentLabel,
+        isExpectedProcessExit = ::isExpectedProcessExit,
+      ))
       createdShellProcess = shellProcess
       createDeployingContext(shellProcess.apply {
         val initializationTime = measureTime {

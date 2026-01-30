@@ -74,7 +74,12 @@ abstract class IjentSessionProcessMediator private constructor(
      * Nothing happens with [parentScope] if IJent exits expectedly, f.i., after [com.intellij.platform.ijent.IjentApi.close].
      */
     @OptIn(DelicateCoroutinesApi::class)
-    fun create(parentScope: CoroutineScope, process: Process, ijentLabel: String, isExpectedProcessExit: suspend (exitCode: Int) -> Boolean = { it == 0 }): IjentSessionProcessMediator {
+    fun create(
+      parentScope: CoroutineScope,
+      process: Process,
+      ijentLabel: String,
+      isExpectedProcessExit: suspend (exitCode: Int) -> Boolean = { it == 0 },
+    ): IjentSessionProcessMediator {
       require(parentScope.coroutineContext[Job] != null) {
         "Scope $parentScope has no Job"
       }

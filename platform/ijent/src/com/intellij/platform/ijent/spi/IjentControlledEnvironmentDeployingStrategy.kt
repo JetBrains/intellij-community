@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentExecFileProvider
 import com.intellij.platform.ijent.IjentSession
@@ -46,6 +47,15 @@ abstract class IjentControlledEnvironmentDeployingStrategy : IjentDeployingStrat
    */
   protected abstract fun close()
 
+  /**
+   * Returns the target platform where IJent will be deployed.
+   */
+  protected abstract suspend fun getTargetPlatform(): EelPlatform
+
+  /**
+   * Returns the connection strategy for communicating with IJent.
+   */
+  protected abstract suspend fun getConnectionStrategy(): IjentConnectionStrategy
 
   /**
    * Validates if a process exit code indicates normal termination.
@@ -67,10 +77,16 @@ abstract class IjentControlledEnvironmentDeployingStrategy : IjentDeployingStrat
   final override suspend fun <T : IjentApi> createIjentSession(): IjentSession<T> =
     try {
       val targetPlatform = getTargetPlatform()
+      val connectionStrategy = getConnectionStrategy()
       val remotePathToBinary = copyFile(IjentExecFileProvider.getInstance().getIjentBinary(targetPlatform))
       val mediator = createProcess(remotePathToBinary)
 
-      createIjentSession(getConnectionStrategy(), remotePathToBinary, targetPlatform, mediator)
+      createIjentSession(IjentConnectionContext(
+        mediator = mediator,
+        targetPlatform = targetPlatform,
+        remoteBinaryPath = remotePathToBinary,
+        connectionStrategy = connectionStrategy,
+      ))
     }
     finally {
       close()
