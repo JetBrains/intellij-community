@@ -91,6 +91,9 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
   public @Nullable JComponent createComponent() {
     myConfigureAnnotationsButton.addActionListener(e -> new AsyncAnnotationsDialog(myProject).show());
 
+    myDebuggerAgent.addChangeListener(e -> setThrottlingCheckboxEnabled());
+    setThrottlingCheckboxEnabled();
+
     myTableModel = new MyTableModel();
 
     boolean breakpointsEnabled = Registry.is("debugger.async.stacks.via.breakpoints", false);
@@ -312,6 +315,10 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
     myCapturePanel.add(decorator.createPanel(), BorderLayout.CENTER);
 
     return myPanel;
+  }
+
+  private void setThrottlingCheckboxEnabled() {
+    myThrottling.setEnabled(myDebuggerAgent.isSelected());
   }
 
   private StreamEx<CapturePoint> selectedCapturePoints(JBTable table) {
