@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.util.function.Function
 
 /**
@@ -38,13 +39,12 @@ internal class DefaultPluginSuggestion(
   private val project: Project,
   override val pluginIds: List<String>,
   private val pluginName: String,
-  private val fileLabel: String,
-  private val suggestionDismissKey: String
+  private val suggestionText: @Nls String,
+  private val suggestionDismissKey: String,
 ) : PluginSuggestion {
   override fun apply(fileEditor: FileEditor): EditorNotificationPanel {
     val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info)
-
-    panel.text = IdeBundle.message("plugins.advertiser.plugins.found", pluginIds.size, fileLabel)
+    panel.text = suggestionText
 
     panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugin.name", pluginName)) {
       FUSEventSource.EDITOR.logInstallPlugins(pluginIds, project)
@@ -64,11 +64,13 @@ internal class DefaultPluginSuggestion(
 }
 
 @ApiStatus.Internal
-fun buildSuggestionIfNeeded(project: Project,
-                            pluginIds: List<String>,
-                            pluginName: String,
-                            fileLabel: String,
-                            suggestionDismissKey: String): PluginSuggestion? {
+fun buildSuggestionIfNeeded(
+  project: Project,
+  pluginIds: List<String>,
+  pluginName: String,
+  suggestionText: @Nls String,
+  suggestionDismissKey: String,
+): PluginSuggestion? {
   if (PropertiesComponent.getInstance().isTrueValue(suggestionDismissKey)) return null
 
   val enabledPlugins = PluginManager.getLoadedPlugins()
@@ -83,15 +85,27 @@ fun buildSuggestionIfNeeded(project: Project,
   return DefaultPluginSuggestion(project,
                                  pluginIds = requiredPluginIds,
                                  pluginName = pluginName,
-                                 fileLabel = fileLabel,
+                                 suggestionText = suggestionText,
                                  suggestionDismissKey = suggestionDismissKey)
 }
 
 @ApiStatus.Internal
-fun buildSuggestionIfNeeded(project: Project,
-                            pluginId: String,
-                            pluginName: String,
-                            fileLabel: String,
-                            suggestionDismissKey: String): PluginSuggestion? {
-  return buildSuggestionIfNeeded(project, listOf(pluginId), pluginName, fileLabel, suggestionDismissKey)
+fun buildSuggestionForFileIfNeeded(
+  project: Project,
+  pluginId: String,
+  pluginName: String,
+  fileLabel: String,
+  suggestionDismissKey: String,
+): PluginSuggestion? = buildSuggestionForFileIfNeeded(project, listOf(pluginId), pluginName, fileLabel, suggestionDismissKey)
+
+@ApiStatus.Internal
+fun buildSuggestionForFileIfNeeded(
+  project: Project,
+  pluginIds: List<String>,
+  pluginName: String,
+  fileLabel: String,
+  suggestionDismissKey: String,
+): PluginSuggestion? {
+  val suggestionText = IdeBundle.message("plugins.advertiser.plugins.found", pluginIds.size, fileLabel)
+  return buildSuggestionIfNeeded(project, pluginIds, pluginName, suggestionText, suggestionDismissKey)
 }
