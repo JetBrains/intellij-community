@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
 
@@ -214,7 +215,7 @@ class LibraryScopeCacheTest {
   }
 
   @ParameterizedTest
-  @MethodSource("dependencyScopes")
+  @EnumSource(DependencyScope::class)
   fun `library use scope with exported library and exported module dependency`(scope: DependencyScope) {
     val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
     val moduleA = projectModel.createModule("moduleA")
@@ -245,7 +246,7 @@ class LibraryScopeCacheTest {
   }
 
   @ParameterizedTest
-  @MethodSource("dependencyScopes")
+  @EnumSource(DependencyScope::class)
   fun `library use scope with exported library and non-exported module dependency`(scope: DependencyScope) {
     val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
     val moduleA = projectModel.createModule("moduleA")
@@ -276,7 +277,7 @@ class LibraryScopeCacheTest {
   }
 
   @ParameterizedTest
-  @MethodSource("dependencyScopes")
+  @EnumSource(DependencyScope::class)
   fun `library use scope with non-exported library and exported module dependency`(scope: DependencyScope) {
     val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
     val moduleA = projectModel.createModule("moduleA")
@@ -307,7 +308,7 @@ class LibraryScopeCacheTest {
   }
 
   @ParameterizedTest
-  @MethodSource("dependencyScopes")
+  @EnumSource(DependencyScope::class)
   fun `library use scope with non-exported library and non-exported module dependency`(scope: DependencyScope) {
     val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
     val moduleA = projectModel.createModule("moduleA")
@@ -338,7 +339,7 @@ class LibraryScopeCacheTest {
   }
 
   @ParameterizedTest
-  @MethodSource("dependencyScopes")
+  @EnumSource(DependencyScope::class)
   fun `library scope with exported library and exported module dependency`(scope: DependencyScope) {
     val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
     val moduleA = projectModel.createModule("moduleA")
@@ -369,7 +370,7 @@ class LibraryScopeCacheTest {
   }
 
   @ParameterizedTest
-  @MethodSource("dependencyScopes")
+  @EnumSource(DependencyScope::class)
   fun `library scope with exported library and non-exported module dependency`(scope: DependencyScope) {
     val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
     val moduleA = projectModel.createModule("moduleA")
@@ -400,7 +401,7 @@ class LibraryScopeCacheTest {
   }
 
   @ParameterizedTest
-  @MethodSource("dependencyScopes")
+  @EnumSource(DependencyScope::class)
   fun `library scope with non-exported library and exported module dependency`(scope: DependencyScope) {
     val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
     val moduleA = projectModel.createModule("moduleA")
@@ -431,7 +432,7 @@ class LibraryScopeCacheTest {
   }
 
   @ParameterizedTest
-  @MethodSource("dependencyScopes")
+  @EnumSource(DependencyScope::class)
   fun `library scope with non-exported library and non-exported module dependency`(scope: DependencyScope) {
     val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
     val moduleA = projectModel.createModule("moduleA")
@@ -485,11 +486,5 @@ class LibraryScopeCacheTest {
 
     assertTrue(useScope.contains(sourceRoot),
       "SDK use scope should contain source root of module that inherits the SDK")
-  }
-
-  companion object {
-    @JvmStatic
-    fun dependencyScopes(): Stream<Arguments> =
-      DependencyScope.entries.map { Arguments.of(it) }.stream()
   }
 }
