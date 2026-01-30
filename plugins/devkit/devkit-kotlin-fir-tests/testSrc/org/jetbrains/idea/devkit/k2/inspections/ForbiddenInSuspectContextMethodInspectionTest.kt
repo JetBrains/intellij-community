@@ -279,11 +279,11 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
 
     myFixture.configureByText("file.kt", """
       import com.intellij.util.concurrency.annotations.*
-      
+
       @RequiresBlockingContext
       fun iVeryNeedBlockingContext() {
       }
-      
+
       suspend fun suspendContext() {
         <warning descr="Method 'iVeryNeedBlockingContext' annotated with @RequiresBlockingContext. It is not designed to be called in suspend functions">iVeryN<caret>eedBlockingContext</warning>()
       }
@@ -292,6 +292,117 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
     myFixture.testHighlighting()
 
     val intention = myFixture.getAvailableIntention(progressManagerFix)
+    assertNullK(intention)
+  }
+
+  private val replaceWithSuspendAlternativeFix = "Replace with suspend alternative"
+
+  @Test
+  fun `custom marked function with ReplaceWith`() {
+    RegistryManager.getInstance().get("devkit.inspections.forbidden.method.in.suspend.context")
+      .setValue(true, testRootDisposable)
+
+    myFixture.configureByText("suspendAlternative.kt", """
+      package com.example
+
+      suspend fun suspendAlternative() {
+      }
+    """.trimIndent())
+
+    myFixture.configureByText("file.kt", """
+      import com.intellij.util.concurrency.annotations.*
+
+      @RequiresBlockingContext(ReplaceWith("suspendAlternative()", "com.example.suspendAlternative"))
+      fun blockingFunction() {
+      }
+
+      suspend fun suspendContext() {
+        <warning descr="Method 'blockingFunction' annotated with @RequiresBlockingContext. It is not designed to be called in suspend functions">blocking<caret>Function</warning>()
+      }
+    """.trimIndent())
+
+    myFixture.testHighlighting()
+
+    val intention = myFixture.getAvailableIntention(replaceWithSuspendAlternativeFix)
+    assertNotNullK(intention)
+    myFixture.checkPreviewAndLaunchAction(intention)
+
+    myFixture.checkResult("""
+      import com.example.suspendAlternative
+      import com.intellij.util.concurrency.annotations.*
+
+      @RequiresBlockingContext(ReplaceWith("suspendAlternative()", "com.example.suspendAlternative"))
+      fun blockingFunction() {
+      }
+
+      suspend fun suspendContext() {
+        suspendAlternative()
+      }
+    """.trimIndent())
+  }
+
+  @Test
+  fun `custom marked function with ReplaceWith without imports`() {
+    RegistryManager.getInstance().get("devkit.inspections.forbidden.method.in.suspend.context")
+      .setValue(true, testRootDisposable)
+
+    myFixture.configureByText("file.kt", """
+      import com.intellij.util.concurrency.annotations.*
+
+      @RequiresBlockingContext(ReplaceWith("suspendAlternative()"))
+      fun blockingFunction() {
+      }
+
+      suspend fun suspendAlternative() {
+      }
+
+      suspend fun suspendContext() {
+        <warning descr="Method 'blockingFunction' annotated with @RequiresBlockingContext. It is not designed to be called in suspend functions">blocking<caret>Function</warning>()
+      }
+    """.trimIndent())
+
+    myFixture.testHighlighting()
+
+    val intention = myFixture.getAvailableIntention(replaceWithSuspendAlternativeFix)
+    assertNotNullK(intention)
+    myFixture.checkPreviewAndLaunchAction(intention)
+
+    myFixture.checkResult("""
+      import com.intellij.util.concurrency.annotations.*
+
+      @RequiresBlockingContext(ReplaceWith("suspendAlternative()"))
+      fun blockingFunction() {
+      }
+
+      suspend fun suspendAlternative() {
+      }
+
+      suspend fun suspendContext() {
+        suspendAlternative()
+      }
+    """.trimIndent())
+  }
+
+  @Test
+  fun `custom marked function with empty ReplaceWith has no quickfix`() {
+    RegistryManager.getInstance().get("devkit.inspections.forbidden.method.in.suspend.context")
+      .setValue(true, testRootDisposable)
+
+    myFixture.configureByText("file.kt", """
+      import com.intellij.util.concurrency.annotations.*
+
+      @RequiresBlockingContext(ReplaceWith(""))
+      fun blockingFunction() {
+      }
+
+      suspend fun suspendContext() {
+        <warning descr="Method 'blockingFunction' annotated with @RequiresBlockingContext. It is not designed to be called in suspend functions">blocking<caret>Function</warning>()
+      }
+    """.trimIndent())
+
+    myFixture.testHighlighting()
+
+    val intention = myFixture.getAvailableIntention(replaceWithSuspendAlternativeFix)
     assertNullK(intention)
   }
 
@@ -771,9 +882,19 @@ abstract class KtBlockingContextInspectionTestCase : LightJavaCodeInsightFixture
   fun addAnnotation() {
     myFixture.addClass("""
       package com.intellij.util.concurrency.annotations;
-      
-      
-      public @interface RequiresBlockingContext {}
+
+      public @interface ReplaceWith {
+        String expression();
+        String[] imports() default {};
+      }
+    """.trimIndent())
+
+    myFixture.addClass("""
+      package com.intellij.util.concurrency.annotations;
+
+      public @interface RequiresBlockingContext {
+        ReplaceWith replaceWith() default @ReplaceWith(expression = "");
+      }
     """.trimIndent())
   }
 
