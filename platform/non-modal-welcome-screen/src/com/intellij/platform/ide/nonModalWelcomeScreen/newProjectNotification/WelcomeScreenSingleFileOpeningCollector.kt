@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.events.EnumEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
-object WelcomeScreenSingleFileOpeningCollector : CounterUsagesCollector() {
+internal object WelcomeScreenSingleFileOpeningCollector : CounterUsagesCollector() {
 
   enum class OpeningStrategy {
      FOLDER,

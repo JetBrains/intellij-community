@@ -63,7 +63,7 @@ private class WelcomeScreenProjectCloseHandler {
   }
 }
 
-enum class ProjectRootResult(val openingStrategy: WelcomeScreenSingleFileOpeningCollector.OpeningStrategy?) {
+internal enum class ProjectRootResult(val openingStrategy: WelcomeScreenSingleFileOpeningCollector.OpeningStrategy?) {
   EXISTING_PROJECT(WelcomeScreenSingleFileOpeningCollector.OpeningStrategy.PROJECT),
   NEW_PROJECT(WelcomeScreenSingleFileOpeningCollector.OpeningStrategy.FOLDER),
   SUPPRESS_NOTIFICATION(null);
@@ -71,7 +71,7 @@ enum class ProjectRootResult(val openingStrategy: WelcomeScreenSingleFileOpening
   fun asOpeningStrategy(fn: (WelcomeScreenSingleFileOpeningCollector.OpeningStrategy) -> Unit = {}): Unit? = openingStrategy?.let(fn)
 }
 
-data class ProjectRootInfo(
+internal data class ProjectRootInfo(
   val result: ProjectRootResult,
   val directory: VirtualFile?
 )
