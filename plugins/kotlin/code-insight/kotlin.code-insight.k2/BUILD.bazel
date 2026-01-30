@@ -89,6 +89,7 @@ jvm_library(
     "//plugins/kotlin/kotlin.searching",
     "//plugins/kotlin/base/statistics",
     "//platform/editor-ui-ex:editor-ex",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ":plugins_kotlin_code-insight_descriptions_provided",
   ]
 )
@@ -177,6 +178,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
     "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ":plugins_kotlin_code-insight_descriptions_provided",
   ]
 )

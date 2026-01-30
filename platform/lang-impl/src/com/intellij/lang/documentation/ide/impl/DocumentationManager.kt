@@ -153,6 +153,26 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
   ): DocumentationOnHoverSession? {
     EDT.assertIsEdt()
     val requests = targets.map { it.documentationRequest() }
+    return showDocumentationOnHoverAroundByRequests(requests, project, component, areaWithinComponent, minHeight, delay, onDocumentationSessionDone)
+  }
+
+
+  /**
+   * Allows showing documentation on hover in a non-editor context.
+   *
+   * @see showDocumentationOnHoverAround
+   */
+  @ApiStatus.Experimental
+  fun showDocumentationOnHoverAroundByRequests(
+    requests: List<DocumentationRequest>,
+    project: Project,
+    component: Component,
+    areaWithinComponent: Rectangle,
+    minHeight: Int,
+    delay: Int,
+    onDocumentationSessionDone: Runnable?,
+  ): DocumentationOnHoverSession? {
+    EDT.assertIsEdt()
     if (requests.isEmpty()) return null
 
     val popupContext = ComponentAreaPopupContext(project, component, areaWithinComponent, onDocumentationSessionDone, minHeight, delay)
