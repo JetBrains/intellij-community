@@ -259,15 +259,13 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
     @RequiresBackgroundThread
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
       val pythonPackageManagerService = project.service<PythonPackageManagerService>()
-      return runBlockingMaybeCancellable {
-        val manager = pythonPackageManagerService.forSdk(project, sdk)
-
-        if (manager.shouldBeInitInstantly()) {
+      val manager = pythonPackageManagerService.forSdk(project, sdk)
+      if (manager.shouldBeInitInstantly()) {
+        runBlockingMaybeCancellable {
           manager.initInstalledPackages()
         }
-
-        manager
       }
+      return manager
     }
 
     @Topic.AppLevel
