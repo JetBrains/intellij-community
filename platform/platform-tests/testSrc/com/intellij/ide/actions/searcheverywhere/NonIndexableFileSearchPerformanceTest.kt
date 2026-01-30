@@ -24,7 +24,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.io.path.Path
-import kotlin.reflect.jvm.javaMethod
 
 /**
  * Performance test for [NonIndexableFilesSEContributor].
@@ -75,7 +74,7 @@ open class NonIndexableFileSearchPerformanceTest {
     newBenchmarkWithVariableInputSize("search \"$searchPattern\"", nonIndexableFilesCount) {
       contributor.search(searchPattern, MockProgressIndicator())
       nonIndexableFilesCount
-    }.start(NonIndexableFileSearchPerformanceTest::`iterate over all files`.javaMethod!!, "dfs - blocking read actions")
+    }.start()
   }
 
   @Test
@@ -88,7 +87,7 @@ open class NonIndexableFileSearchPerformanceTest {
       val elementsLimit = 0
       contributor.search(searchPattern, MockProgressIndicator(), elementsLimit)
       nonIndexableFilesCount
-    }.start(NonIndexableFileSearchPerformanceTest::`search for one file deep inside`.javaMethod!!, "dfs - blocking read actions")
+    }.start()
   }
 
   @Test
@@ -101,7 +100,7 @@ open class NonIndexableFileSearchPerformanceTest {
       val elementsLimit = 0
       contributor.search(filename, MockProgressIndicator(), elementsLimit)
       nonIndexableFilesCount
-    }.start(NonIndexableFileSearchPerformanceTest::`search for one last root child`.javaMethod!!, "dfs - blocking read actions")
+    }.start()
   }
 
   @Test
@@ -113,7 +112,7 @@ open class NonIndexableFileSearchPerformanceTest {
       // Because it actually searches for `elementsLimit + 1` files
       val elementsLimit = 0
       contributor.search(filename, MockProgressIndicator(), elementsLimit)
-    }.start(NonIndexableFileSearchPerformanceTest::`search for the first root child`.javaMethod!!, "dfs - blocking read actions")
+    }.start()
   }
 
 
