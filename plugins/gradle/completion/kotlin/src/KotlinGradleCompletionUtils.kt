@@ -37,6 +37,10 @@ internal fun readLinesFromFile(path: String): List<String> {
     }
 }
 
+internal val exclude = setOf(
+    "exclude",
+)
+
 internal const val PLUGINS = "plugins"
 internal const val DEPENDENCIES = "dependencies"
 

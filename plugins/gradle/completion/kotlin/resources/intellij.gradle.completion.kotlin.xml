@@ -15,5 +15,7 @@
                             id="KotlinGradleScriptCompletionContributor"
                             order="first, before KotlinCompletionContributor, before liveTemplates"
                             implementationClass="com.intellij.gradle.completion.kotlin.KotlinGradleScriptCompletionContributor"/>
+    <typedHandler implementation="com.intellij.gradle.completion.kotlin.KotlinGradleDependenciesAutoPopupHandler"
+                  id="KotlinGradleDependenciesAutoPopupHandler"/>
   </extensions>
 </idea-plugin>

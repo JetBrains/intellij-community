@@ -52,10 +52,6 @@ import com.intellij.util.ProcessingContext
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 
-private val exclude = setOf(
-  "exclude",
-)
-
 internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<CompletionParameters>() {
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
     if (!useDependencyCompletionService()) {
