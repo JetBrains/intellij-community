@@ -5,5 +5,3 @@ fun f(foo1 : Foo, foo2 : Foo) {
 }
 
 // EXIST: prop
-
-// IGNORE_K2
