@@ -15,21 +15,6 @@ public final class ClassPresentationUtil {
   private ClassPresentationUtil() {
   }
 
-  /**
-   * Returns a human-readable name for the class, including its containing context for local and anonymous classes.
-   * <p>
-   * Examples:
-   * <ul>
-   *   <li>Top-level class: {@code "MyClass"} (or {@code "com.example.MyClass"} if qualified)</li>
-   *   <li>Local class in method: {@code "LocalClass in method() in ContainerClass"}</li>
-   *   <li>Anonymous class: {@code "Anonymous in method() in ContainerClass"}</li>
-   *   <li>Enum constant initializer: {@code "CONSTANT in MyEnum"}</li>
-   * </ul>
-   *
-   * @param aClass    the class to get the name for
-   * @param qualified if {@code true}, uses fully qualified names where applicable
-   * @return a presentable name suitable for UI display
-   */
   public static @Nls String getNameForClass(@NotNull PsiClass aClass, boolean qualified) {
     if (aClass instanceof PsiImplicitClass) {
       String name = aClass.getQualifiedName();
