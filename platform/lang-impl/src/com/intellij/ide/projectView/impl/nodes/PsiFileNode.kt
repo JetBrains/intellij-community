@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.util.Comparing
@@ -81,8 +82,8 @@ open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSett
       val jarRoot = jarRoot
       val project = project
       if (jarRoot != null && project != null && ProjectRootsUtil.isLibraryRoot(jarRoot, project)) {
-        val orderEntry = LibraryUtil.findLibraryEntry(jarRoot, project)
-        return orderEntry != null && ProjectSettingsService.getInstance(project).canOpenLibraryOrSdkSettings(orderEntry)
+        val libraryEntity = ProjectFileIndex.getInstance(project).findContainingLibraries(jarRoot).firstOrNull()
+        return libraryEntity != null && ProjectSettingsService.getInstance(project).canOpenLibrarySettings(libraryEntity)
       }
       return false
     }
