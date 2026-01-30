@@ -332,9 +332,12 @@ object PluginManagerCore {
     descriptorLoadingErrors: List<PluginDescriptorLoadingError>,
     duplicateModuleMap: Map<PluginId, List<PluginMainDescriptor>>,
     cycleErrors: List<PluginLoadingError>,
+    initContext: PluginInitializationContext,
   ): List<PluginLoadingError> {
     // name shadowing is intended
-    val pluginNonLoadReasons = pluginNonLoadReasons.filterValues { it !is PluginIsMarkedDisabled }
+    val pluginNonLoadReasons = pluginNonLoadReasons.filterValues {
+      it !is PluginIsMarkedDisabled && !initContext.isPluginDisabled(it.plugin.pluginId)
+    }
     val globalErrors = ArrayList<PluginLoadingError>().apply {
       for (descriptorLoadingError in descriptorLoadingErrors) {
         add(PluginLoadingError(
@@ -689,7 +692,8 @@ object PluginManagerCore {
       pluginNonLoadReasons = pluginNonLoadReasons,
       descriptorLoadingErrors = descriptorLoadingErrors,
       duplicateModuleMap = duplicateModuleMap ?: emptyMap(),
-      cycleErrors = cycleErrors
+      cycleErrors = cycleErrors,
+      initContext = initContext,
     ))
 
     if (initContext.checkEssentialPlugins) {
