@@ -7,7 +7,7 @@ import com.intellij.featureStatistics.ProductivityFeaturesProvider
 import com.intellij.featureStatistics.ProductivityFeaturesTest
 import com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.jetbrains.fus.reporting.api.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.openapi.application.ApplicationManager

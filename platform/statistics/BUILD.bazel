@@ -40,11 +40,11 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
-    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-fus-api",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ],
   exports = [
-    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-fus-api",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ]
 )
@@ -84,11 +84,11 @@ jvm_library(
     "@lib//:assert_j",
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
-    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-fus-api",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ],
   exports = [
-    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-fus-api",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ]
 )

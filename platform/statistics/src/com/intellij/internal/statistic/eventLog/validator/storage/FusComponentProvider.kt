@@ -21,10 +21,10 @@ import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMeta
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUpdateError
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUpdateStage
-import com.intellij.internal.statistic.eventLog.validator.IEventGroupRules
-import com.intellij.internal.statistic.eventLog.validator.IEventGroupsFilterRules
-import com.intellij.internal.statistic.eventLog.validator.IGroupValidators
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.RecorderDataValidationRule
+import com.jetbrains.fus.reporting.api.IEventGroupRules
+import com.jetbrains.fus.reporting.api.IEventGroupsFilterRules
+import com.jetbrains.fus.reporting.api.IGroupValidators
+import com.jetbrains.fus.reporting.api.RecorderDataValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.CustomRuleProducer
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant

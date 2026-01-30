@@ -1410,7 +1410,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("ai.grazie.spell.hunspell.en"),
     jetbrainsLibrary("cloud-config-client"),
     jetbrainsLibrary("com.jetbrains.fus.reporting.ap.validation.all"),
-    jetbrainsLibrary("com.jetbrains.fus.reporting.api"),
+    jetbrainsLibrary("com.jetbrains.fus.reporting.fus-api"),
     jetbrainsLibrary("completion-log-events"),
     jetbrainsLibrary("completion-performance-kotlin"),
     jetbrainsLibrary("completion-ranking-cpp-exp"),

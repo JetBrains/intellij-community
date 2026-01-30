@@ -137,7 +137,7 @@ public final class EventLogMetadataUtils {
     }
 
     Map<String, Long> lastModifiedMap = new HashMap<>();
-    for(String dictionary : dictionaryList.dictionaries) {
+    for(String dictionary : dictionaryList.getDictionaries()) {
       try {
         StatsRequestResult<Long> result = StatsHttpRequests.head(baseUrl + dictionary, settings).send(r -> r.lastModified());
         lastModifiedMap.put(dictionary, result.getResult());

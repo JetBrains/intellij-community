@@ -200,7 +200,7 @@ jvm_library(
     "//platform/pluginSystem/parser/impl",
     "//platform/pluginSystem/parser/impl:impl_test_lib",
     "//platform/platform-impl/update-checker",
-    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-fus-api",
     "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
     "//platform/platform-impl/eel:ide-impl-wsl",
     "//platform/syntax/syntax-psi-tests:psi-tests_test_lib",

@@ -278,7 +278,7 @@ internal class TerminalFocusRule : CustomValidationRule() {
       return ValidationResultType.ACCEPTED
     }
     else {
-      return toolWindowRule.validate(data, context)
+      return ValidationResultType.fromFusApiResultType(toolWindowRule.validate(data, context))
     }
   }
 }

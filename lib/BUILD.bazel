@@ -842,32 +842,32 @@ jvm_import(
 )
 
 copy_file(
-  name = "com.jetbrains.fus.reporting/ap-validation-all-1.0.205.jar_copy",
-  src = "@com_jetbrains_fus_reporting-ap-validation-all-1_0_205_http//file",
-  out = "com.jetbrains.fus.reporting/ap-validation-all-1.0.205.jar",
+  name = "com.jetbrains.fus.reporting/ap-validation-all-1.0.226.jar_copy",
+  src = "@com_jetbrains_fus_reporting-ap-validation-all-1_0_226_http//file",
+  out = "com.jetbrains.fus.reporting/ap-validation-all-1.0.226.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "com-jetbrains-fus-reporting-ap-validation-all",
-  jar = "@com_jetbrains_fus_reporting-ap-validation-all-1_0_205_http//file",
-  source_jar = "@com_jetbrains_fus_reporting-ap-validation-all-1_0_205-sources_http//file",
+  jar = "@com_jetbrains_fus_reporting-ap-validation-all-1_0_226_http//file",
+  source_jar = "@com_jetbrains_fus_reporting-ap-validation-all-1_0_226-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 copy_file(
-  name = "com.jetbrains.fus.reporting/api-1.0.205.jar_copy",
-  src = "@com_jetbrains_fus_reporting-api-1_0_205_http//file",
-  out = "com.jetbrains.fus.reporting/api-1.0.205.jar",
+  name = "com.jetbrains.fus.reporting/fus-api-1.0.226.jar_copy",
+  src = "@com_jetbrains_fus_reporting-fus-api-1_0_226_http//file",
+  out = "com.jetbrains.fus.reporting/fus-api-1.0.226.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "com-jetbrains-fus-reporting-api",
-  jar = "@com_jetbrains_fus_reporting-api-1_0_205_http//file",
-  source_jar = "@com_jetbrains_fus_reporting-api-1_0_205-sources_http//file",
+  name = "com-jetbrains-fus-reporting-fus-api",
+  jar = "@com_jetbrains_fus_reporting-fus-api-1_0_226_http//file",
+  source_jar = "@com_jetbrains_fus_reporting-fus-api-1_0_226-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

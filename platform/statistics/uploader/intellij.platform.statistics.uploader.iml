@@ -14,7 +14,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
-    <orderEntry type="library" name="com.jetbrains.fus.reporting.api" level="project" />
+    <orderEntry type="library" name="com.jetbrains.fus.reporting.fus-api" level="project" />
     <orderEntry type="library" name="com.jetbrains.fus.reporting.ap.validation.all" level="project" />
   </component>
 </module>

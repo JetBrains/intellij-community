@@ -227,7 +227,7 @@
     <orderEntry type="library" name="netty-tcnative-boringssl" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
-    <orderEntry type="library" name="com.jetbrains.fus.reporting.api" level="project" />
+    <orderEntry type="library" name="com.jetbrains.fus.reporting.fus-api" level="project" />
     <orderEntry type="library" name="com.jetbrains.fus.reporting.ap.validation.all" level="project" />
     <orderEntry type="module-library">
       <library name="netty" type="repository">

@@ -21,6 +21,10 @@ sealed class EventField<T> {
   open val shouldBeAnonymized: Boolean
     get() = false
 
+  open val required: Boolean? = null
+
+  open val defaultValue: String? = null
+
   abstract fun addData(fuData: FeatureUsageData, value: T)
 
   @Contract(pure = true)
@@ -50,11 +54,17 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
 
   data class ValidatedByAllowedValues(@NonNls @EventFieldName override val name: String,
                                       val allowedValues: List<String>,
-                                      @NonNls override val description: String? = null) : StringEventField(name) {
+                                      @NonNls override val description: String? = null,
+                                      override val required: Boolean? = null,
+                                      override val defaultValue: String? = null) : StringEventField(name) {
     constructor(name: String, allowedValues: List<String>) : this(name, allowedValues, null)
 
     override val validationRule: List<String>
-      get() = listOf("{enum:${allowedValues.joinToString("|")}}")
+      get() = buildList {
+        add("{enum:${allowedValues.joinToString("|")}}")
+        required?.let { value -> add("{required:$value}") }
+        defaultValue?.let { value -> add("{default_value:$value}") }
+      }
   }
 
   data class ValidatedByEnum(@NonNls @EventFieldName override val name: String,

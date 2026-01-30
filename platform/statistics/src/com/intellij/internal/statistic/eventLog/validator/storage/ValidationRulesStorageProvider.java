@@ -14,7 +14,7 @@ public final class ValidationRulesStorageProvider {
   public static @NotNull IntellijValidationRulesStorage newStorage(@NotNull String recorderId) {
     return new IntellijValidationRulesStorage() {
       @Override
-      public @Nullable EventGroupRules getGroupRules(@NotNull String groupId) { return EventGroupRules.EMPTY; }
+      public @Nullable EventGroupRules getGroupRules(@NotNull String groupId) { return EventGroupRules.Companion.getEMPTY(); }
 
       @Override
       public boolean update() { return false; }

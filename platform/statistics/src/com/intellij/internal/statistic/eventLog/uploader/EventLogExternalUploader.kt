@@ -154,7 +154,7 @@ object EventLogExternalUploader {
       findLibraryByClass(IllegalCallableAccessException::class.java), // add kotlin-reflect
       findLibraryByClass(EventGroupsFilterRules::class.java), // validation library
       findLibraryByClass(StatsConnectionSettings::class.java), // com.jetbrains.fus.reporting.model
-      findLibraryByClass(MetadataStorage::class.java), // com.jetbrains.fus.reporting.api
+      findLibraryByClass(MetadataStorage::class.java), // com.jetbrains.fus.reporting.fus-api
       findLibraryByClass(Json::class.java), // kotlinx.serialization.json
       findLibraryByClass(StringFormat::class.java) // kotlinx.serialization
     )

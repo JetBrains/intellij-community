@@ -5,11 +5,12 @@ import com.intellij.execution.process.ProcessOutputType
 import com.intellij.internal.statistic.devkit.toolwindow.StatisticsEventLogMessageBuilder
 import com.intellij.internal.statistic.devkit.toolwindow.StatisticsEventLogToolWindow
 import com.intellij.internal.statistic.devkit.toolwindow.StatisticsLogFilterModel
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.ACCEPTED
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.INCORRECT_RULE
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.THIRD_PARTY
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.UNDEFINED_RULE
+import com.jetbrains.fus.reporting.api.ValidationResultType
+import com.jetbrains.fus.reporting.api.ValidationResultType.ACCEPTED
+import com.jetbrains.fus.reporting.api.ValidationResultType.INCORRECT_RULE
+import com.jetbrains.fus.reporting.api.ValidationResultType.THIRD_PARTY
+import com.jetbrains.fus.reporting.api.ValidationResultType.DEFAULT_VALUE_APPLIED
+import com.jetbrains.fus.reporting.api.ValidationResultType.UNDEFINED_RULE
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.text.DateFormatUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
@@ -123,7 +124,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
   }
 
   fun testAllValidationTypesUsed() {
-    val correctValidationTypes = setOf(ACCEPTED, THIRD_PARTY)
+    val correctValidationTypes = setOf(ACCEPTED, THIRD_PARTY, DEFAULT_VALUE_APPLIED)
     for (resultType in ValidationResultType.entries) {
       assertTrue("Don't forget to change toolWindow logic in case of a new value ${resultType.name} in ValidationResult",
                  StatisticsEventLogToolWindow.rejectedValidationTypes.contains(resultType) || correctValidationTypes.contains(resultType))
