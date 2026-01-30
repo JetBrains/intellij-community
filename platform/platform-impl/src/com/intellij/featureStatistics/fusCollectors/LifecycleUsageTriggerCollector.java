@@ -99,9 +99,11 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
 
   private static final EventField<Integer> numberOfExceptionsField = EventFields.Int("number_of_exceptions");
   private static final EventId1<Integer> IDE_HUNDRED_EXCEPTIONS_HAPPENED =
-    LIFECYCLE.registerEvent("ide.hundred.exceptions.happened", numberOfExceptionsField);
+    LIFECYCLE.registerEvent("ide.hundred.exceptions.happened", numberOfExceptionsField,
+                            "The number of exceptions happened while IDE was opened is a multiple of 100");
   private static final EventId2<Integer, PluginInfo> IDE_HUNDRED_EXCEPTIONS_HAPPENED_IN_PLUGIN =
-    LIFECYCLE.registerEvent("ide.hundred.exceptions.happened.in.plugin", numberOfExceptionsField, EventFields.PluginInfo);
+    LIFECYCLE.registerEvent("ide.hundred.exceptions.happened.in.plugin", numberOfExceptionsField, EventFields.PluginInfo,
+                            "The number of exceptions happened in the plugin while IDE was opened is a multiple of 100");
 
 
   private enum ProjectOpenMode {New, Same, Attach}
