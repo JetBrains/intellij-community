@@ -22,9 +22,11 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -71,6 +73,9 @@ private const val COROUTINE_CHECK_CANCELED_FIX = "com.intellij.openapi.progress.
 private const val WITH_CONTEXT = "kotlinx.coroutines.withContext"
 private const val DISPATCHERS = "kotlinx.coroutines.Dispatchers"
 private const val COROUTINE_SCOPE = "kotlinx.coroutines.CoroutineScope"
+
+private const val REPLACE_WITH_ANNOTATION = "com.intellij.util.concurrency.annotations.ReplaceWith"
+private val replaceWithAnnotationId = ClassId.topLevel(FqName(REPLACE_WITH_ANNOTATION))
 
 internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -148,11 +153,18 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
           }
           else -> {
             if (Registry.`is`("devkit.inspections.forbidden.method.in.suspend.context")) {
+              val replaceWithFix = getReplaceWithQuickFix(expression, calledSymbol)
+              val fixes = if (replaceWithFix != null) {
+                arrayOf(ifInSuspend { replaceWithFix })
+              }
+              else {
+                generalFixes()
+              }
               holder.registerProblem(
                 extractElementToHighlight(expression),
                 DevKitKotlinBundle.message("inspections.forbidden.method.in.suspend.context.text", calledSymbol.name.asString()),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                *generalFixes()
+                *fixes
               )
             }
           }
@@ -185,6 +197,36 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
 
     private fun generalFixes(): Array<LocalQuickFix> {
       return callingElement?.let { arrayOf(NavigateToCallInSuspendFunction(it)) } ?: LocalQuickFix.EMPTY_ARRAY
+    }
+
+    private fun KaSession.getReplaceWithQuickFix(expression: KtCallExpression, calledSymbol: KaAnnotatedSymbol): LocalQuickFix? {
+      val requiresBlockingContextAnnotation = calledSymbol.annotations[RequiresBlockingContextAnnotationId].firstOrNull()
+        ?: return null
+
+      val replaceWithArg = requiresBlockingContextAnnotation.arguments.find { it.name.asString() == "replaceWith" }
+        ?: return null
+
+      val replaceWithAnnotation = replaceWithArg.expression as? KaAnnotation
+        ?: return null
+
+      val expressionArg = replaceWithAnnotation.arguments.find { it.name.asString() == "expression" }
+      val replacementExpression = (expressionArg?.expression as? org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue.ConstantValue)
+        ?.value?.value as? String
+        ?: return null
+
+      if (replacementExpression.isEmpty()) return null
+
+      val importsArg = replaceWithAnnotation.arguments.find { it.name.asString() == "imports" }
+      val imports = when (val importsValue = importsArg?.expression) {
+        is org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue.ArrayValue -> {
+          importsValue.values.mapNotNull {
+            (it as? org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue.ConstantValue)?.value?.value as? String
+          }
+        }
+        else -> emptyList()
+      }
+
+      return ReplaceWithSuspendAlternativeQuickFix(expression, replacementExpression, imports)
     }
 
     private fun KaSession.provideFixesForInvokeLater(callExpression: KtCallExpression): Array<LocalQuickFix> {
@@ -295,6 +337,39 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
       override fun startInWriteAction(): Boolean = false
 
       override fun getName(): String = familyName
+    }
+
+    private class ReplaceWithSuspendAlternativeQuickFix(
+      element: PsiElement,
+      private val expression: String,
+      private val imports: List<String>,
+    ) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
+      override fun getFamilyName(): String = DevKitKotlinBundle.message(
+        "inspections.forbidden.method.in.suspend.context.replace.with.suspend.alternative.fix.text")
+
+      override fun getText(): String = familyName
+
+      override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean =
+        getCallExpression(startElement) != null
+
+      override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
+        val callExpression = getCallExpression(startElement) ?: return
+        val factory = KtPsiFactory(project)
+        val newExpression = factory.createExpression(expression)
+        val qualifiedExpression = callExpression.getQualifiedExpressionForSelector()
+        val expressionToReplace = qualifiedExpression ?: callExpression
+
+        val ktFile = callExpression.containingKtFile
+        for (import in imports) {
+          val fqName = FqName(import)
+          if (!isImported(fqName, ktFile)) {
+            ktFile.addImport(fqName)
+          }
+        }
+
+        val resultExpression = expressionToReplace.replace(newExpression)
+        ShortenReferencesFacility.getInstance().shorten(resultExpression as KtElement)
+      }
     }
   }
 }
