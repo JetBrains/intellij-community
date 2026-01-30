@@ -1033,6 +1033,13 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged
 - a:adjustRange(java.lang.Integer,java.lang.Integer):V
 - bs:adjustRange$default(com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged$Adjustable,java.lang.Integer,java.lang.Integer,I,java.lang.Object):V
+- a:getAdjustmentDisabledReason():kotlinx.coroutines.flow.StateFlow
+*e:com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged$Adjustable$AdjustmentDisabledReason
+- java.lang.Enum
+- sf:SUGGESTED_CHANGE:com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged$Adjustable$AdjustmentDisabledReason
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged$Adjustable$AdjustmentDisabledReason
+- s:values():com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged$Adjustable$AdjustmentDisabledReason[]
 *f:com.intellij.collaboration.ui.codereview.editor.EditorComponentInlaysUtilKt
 - sf:controlInlaysIn(com.intellij.openapi.editor.ex.EditorEx,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
 - sf:insertComponentAfter(com.intellij.openapi.editor.ex.EditorEx,I,javax.swing.JComponent,I,kotlin.jvm.functions.Function1):com.intellij.openapi.editor.Inlay
