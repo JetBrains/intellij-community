@@ -58,10 +58,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -71,6 +68,7 @@ import java.util.stream.Collectors;
 import static com.intellij.refactoring.IntroduceVariableUtil.*;
 import static com.intellij.refactoring.introduceVariable.IntroduceVariableBase.IntroduceVariableResult.Context;
 
+@ApiStatus.Internal
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   public static class JavaReplaceChoice implements OccurrencesChooser.BaseReplaceChoice {
     public static final JavaReplaceChoice NO = new JavaReplaceChoice(ReplaceChoice.NO, null, false);

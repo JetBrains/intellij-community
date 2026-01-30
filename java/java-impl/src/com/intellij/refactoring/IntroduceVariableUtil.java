@@ -590,7 +590,9 @@ public final class IntroduceVariableUtil {
 
   /**
    * Stores information about expressions that can be extracted into the variable near the cursor position.
-   * @param bestRangeToExtractFrom {@link TextRange} that includes the most appropriate expression to be extracted.
+   * @param bestRangeToExtractFrom {@link TextRange} in which the most appropriate expression for extraction should be searched.
+   *                               It is null when there are multiple expressions to extract within the given selection.
+   *                               Also, it can be used as a range in the editor to highlight in case an error has been found.
    * @param expressions list of expressions that can be extracted into variable.
    */
   public record IntroduceVariableCandidates(@Nullable TextRange bestRangeToExtractFrom, @NotNull List<@NotNull PsiExpression> expressions) {}
