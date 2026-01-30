@@ -232,6 +232,8 @@ com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - registerErrorQuickFix(com.intellij.psi.PsiErrorElement,com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder):V
+Fa:com.intellij.codeInsight.lookup.Classifier
+- s:empty():com.intellij.codeInsight.lookup.Classifier
 c:com.intellij.codeInsight.lookup.EqTailType
 - com.intellij.codeInsight.ModNavigatorTailType
 - p:isSpaceAroundAssignmentOperators(com.intellij.psi.PsiFile,I):Z

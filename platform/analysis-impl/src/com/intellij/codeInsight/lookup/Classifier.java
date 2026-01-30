@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.*;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -78,5 +79,30 @@ public abstract class Classifier<T> {
 
   public final @NotNull String getPresentableName() {
     return myName;
+  }
+
+  /**
+   * @return an empty classifier, which doesn't change the order of items at all
+   * @param <T> type of the completion item
+   */
+  public static <T> Classifier<T> empty() {
+    return new EmptyClassifier<>();
+  }
+  
+  private static final class EmptyClassifier<T> extends Classifier<T> {
+    private EmptyClassifier() {
+      super(null, "empty");
+    }
+
+    @Override
+    public @NotNull List<Pair<T, Object>> getSortingWeights(@NotNull Iterable<? extends T> items, @NotNull ProcessingContext context) {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public @NotNull Iterable<T> classify(@NotNull Iterable<? extends T> source, @NotNull ProcessingContext context) {
+      //noinspection unchecked
+      return (Iterable<T>)source;
+    }
   }
 }

@@ -173,7 +173,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     element.putUserData(DEFAULT_PRESENTATION, presentation);
     CompletionSorterImpl sorter = obtainSorter(element);
     ProcessingContext context = createContext();
-    Classifier<LookupElement> classifier = myClassifiers.computeIfAbsent(sorter, s -> s.buildClassifier(new EmptyClassifier()));
+    Classifier<LookupElement> classifier = myClassifiers.computeIfAbsent(sorter, s -> s.buildClassifier(Classifier.empty()));
     classifier.addElement(element, context);
 
     boolean batchUpdate = Boolean.TRUE.equals(isInBatchUpdate.get());
@@ -695,24 +695,5 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   @Override
   public boolean isCompletion() {
     return true;
-  }
-
-  private static final class EmptyClassifier extends Classifier<LookupElement> {
-
-    private EmptyClassifier() {
-      super(null, "empty");
-    }
-
-    @Override
-    public @NotNull List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items, @NotNull ProcessingContext context) {
-      return Collections.emptyList();
-    }
-
-    @Override
-    public @NotNull Iterable<LookupElement> classify(@NotNull Iterable<? extends LookupElement> source, @NotNull ProcessingContext context) {
-      //noinspection unchecked
-      return (Iterable<LookupElement>)source;
-    }
-
   }
 }
