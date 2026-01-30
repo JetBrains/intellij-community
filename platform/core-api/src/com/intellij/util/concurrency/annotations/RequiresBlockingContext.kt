@@ -49,7 +49,26 @@ import org.jetbrains.annotations.ApiStatus
  * }
  * ```
  *
+ * ## Specifying a replacement
+ *
+ * Use the [replaceWith] parameter to specify the suspend function that should be used instead:
+ * ```
+ * @RequiresBlockingContext(ReplaceWith("awaitFileOpenedByLspServer(project, file)",
+ *                                       "com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer"))
+ * fun waitUntilFileOpenedByLspServer(project: Project, file: VirtualFile) {
+ *   ...
+ * }
+ * ```
+ *
+ * This enables IDE inspections to provide quick-fixes that replace the blocking call
+ * with the suspend alternative, and generates documentation hints via `@see`.
+ *
  * Note: the inspection is currently disabled due to generating too many false positives.
+ *
+ * @param replaceWith specifies the code fragment that should be used as a replacement
+ *                    for the blocking call, along with any necessary imports.
+ *                    See [ReplaceWith] for the format.
+ * @see ReplaceWith
  */
 @MustBeDocumented
 @Retention(AnnotationRetention.SOURCE)
@@ -59,4 +78,29 @@ import org.jetbrains.annotations.ApiStatus
   AnnotationTarget.PROPERTY_SETTER,
 )
 @ApiStatus.Experimental
-annotation class RequiresBlockingContext
+annotation class RequiresBlockingContext(
+  val replaceWith: ReplaceWith = ReplaceWith(""),
+)
+
+/**
+ * Specifies a code fragment that can be used to replace a blocking function call
+ * with its suspend equivalent.
+ *
+ * This is modeled after [kotlin.ReplaceWith] and follows the same semantics.
+ *
+ * @property expression the replacement expression. Must be a valid Kotlin expression.
+ *                      The replacement expression is interpreted in the context of the symbol being used
+ *                      and can reference members of the enclosing classes, etc.
+ *                      An empty string means no replacement is specified.
+ * @property imports the fully qualified names that should be imported to make the replacement
+ *                   expression resolve correctly. These are not inserted automatically and are
+ *                   used by inspection tooling to determine what imports may be needed.
+ * @see kotlin.ReplaceWith
+ */
+@MustBeDocumented
+@Retention(AnnotationRetention.SOURCE)
+@Target()
+annotation class ReplaceWith(
+  val expression: String,
+  vararg val imports: String,
+)
