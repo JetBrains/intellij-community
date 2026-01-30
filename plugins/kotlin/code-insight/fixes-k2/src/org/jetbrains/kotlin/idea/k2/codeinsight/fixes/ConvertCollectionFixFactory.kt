@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -29,15 +30,10 @@ internal object ConvertCollectionFixFactory {
         val expressionCollectionType = getCollectionType(expressionType) ?: return null
         val expectedCollectionType = getCollectionType(expectedType) ?: return null
         if (expressionCollectionType == expectedCollectionType) return null
-
-        val expressionTypeArg = (expressionType as? KaClassType)?.typeArguments?.singleOrNull()?.type ?: return null
-        val expectedTypeArg = (expectedType as? KaClassType)?.typeArguments?.singleOrNull()?.type ?: return null
-
-        if (!expressionTypeArg.isSubtypeOf(expectedTypeArg)) return null
+        if (!areTypeArgumentsCompatible(expectedType, expressionType)) return null
 
         return expectedCollectionType.specializeFor(expressionCollectionType)
     }
-
 
     private fun KaSession.createFixIfAvailable(
         element: PsiElement,
@@ -50,7 +46,7 @@ internal object ConvertCollectionFixFactory {
         // with their mutable equivalents (e.g., mutableListOf, mutableSetOf). If that's not applicable,
         // fall back to creating a fix that adds a conversion function (e.g., toList, toMutableSet) to
         // convert between incompatible collection types.
-        val fix = createReplaceWithMutableCollectionFactoryFix(expression, expectedType)
+        val fix = createReplaceWithMutableCollectionFactoryFix(expression, expectedType, actualType)
             ?: createConvertCollectionFix(expression, expectedType, actualType)
         return listOfNotNull(fix)
     }
@@ -58,6 +54,7 @@ internal object ConvertCollectionFixFactory {
     private fun KaSession.createReplaceWithMutableCollectionFactoryFix(
         expression: KtExpression,
         expectedType: KaType,
+        actualType: KaType,
     ): ModCommandAction? {
         if (expression !is KtCallExpression) return null
 
@@ -74,6 +71,7 @@ internal object ConvertCollectionFixFactory {
 
         val literalFunctionName = expectedCollectionType.literalFunctionName ?: return null
         if (getCollectionType(expectedType) != expectedCollectionType) return null
+        if (!areTypeArgumentsCompatible(expectedType, actualType)) return null
 
         return ReplaceWithMutableCollectionFactoryFix(expression, literalFunctionName)
     }
@@ -110,5 +108,25 @@ internal object ConvertCollectionFixFactory {
 
     val assignmentTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
         createFixIfAvailable(diagnostic.expression, diagnostic.expectedType, diagnostic.actualType)
+    }
+}
+
+private fun KaSession.areTypeArgumentsCompatible(expectedType: KaType, actualType: KaType): Boolean {
+    val actualClassType = actualType as? KaClassType ?: return false
+    val expectedClassType = expectedType as? KaClassType ?: return false
+
+    val actualTypeArgs = actualClassType.typeArguments.mapNotNull { it.type }
+    val expectedTypeArgs = expectedClassType.typeArguments.mapNotNull { it.type }
+
+    // If we lost type arguments due to null values, return false
+    if (actualTypeArgs.size != actualClassType.typeArguments.size) return false
+    if (expectedTypeArgs.size != expectedClassType.typeArguments.size) return false
+
+    if (actualTypeArgs.size != expectedTypeArgs.size) return false
+
+    return actualTypeArgs.zip(expectedTypeArgs).all { (actualArg, expectedArg) ->
+        // Allow KaErrorType when type inference is impossible due to the mismatch itself,
+        // e.g., `listOf()` in `fun baz(): MutableList<Int> = listOf()` has an error type
+        actualArg is KaErrorType || actualArg.isSubtypeOf(expectedArg)
     }
 }
