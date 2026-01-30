@@ -9,37 +9,37 @@ enum class Enum {
 
     },
     Y
-/*<# block [val   descriptor :   SerialDescriptor ]
+/*<# block [[val   descriptor :   SerialDescriptor ]
 [ override   fun   serialize ( encoder :   Encoder ,   value :   MyClass ) ]
-[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass] #>*/
+[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass] <settings-icon>] #>*/
 }
 
 @Serializer(MyClass::class)
 annotation class Annotation/*<# { #>*/
-/*<# block [val   descriptor :   SerialDescriptor ]
+/*<# block [[val   descriptor :   SerialDescriptor ]
 [ override   fun   serialize ( encoder :   Encoder ,   value :   MyClass ) ]
-[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass]
+[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass] <settings-icon>]
 } #>*/
 
 @Serializer(MyClass::class)
 object Object/*<# { #>*/
-/*<# block [val   descriptor :   SerialDescriptor ]
+/*<# block [[val   descriptor :   SerialDescriptor ]
 [ override   fun   serialize ( encoder :   Encoder ,   value :   MyClass ) ]
-[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass]
+[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass] <settings-icon>]
 } #>*/
 
 @Serializer(MyClass::class)
 class Class/*<# { #>*/
-/*<# block [val   descriptor :   SerialDescriptor ]
+/*<# block [[val   descriptor :   SerialDescriptor ]
 [ override   fun   serialize ( encoder :   Encoder ,   value :   MyClass ) ]
-[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass]
+[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass] <settings-icon>]
 } #>*/
 
 @Serializer(MyClass::class)
 interface Inteface/*<# { #>*/
-/*<# block [val   descriptor :   SerialDescriptor ]
+/*<# block [[val   descriptor :   SerialDescriptor ]
 [ override   fun   serialize ( encoder :   Encoder ,   value :   MyClass ) ]
-[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass]
+[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass] <settings-icon>]
 } #>*/
 
 @Serializer(MyClass::class)
@@ -51,18 +51,18 @@ class Outer {
     @Serializer(MyClass::class)
     companion object {
 
-/*<# block [val   descriptor :   SerialDescriptor ]
+/*<# block [[val   descriptor :   SerialDescriptor ]
 [ override   fun   serialize ( encoder :   Encoder ,   value :   MyClass ) ]
-[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass] #>*/
+[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass] <settings-icon>] #>*/
     }
 
     @Serializer(MyClass::class)
     class Inner {
-/*<# block [val   descriptor :   SerialDescriptor ]
+/*<# block [[val   descriptor :   SerialDescriptor ]
 [ override   fun   serialize ( encoder :   Encoder ,   value :   MyClass ) ]
-[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass] #>*/
+[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass] <settings-icon>] #>*/
     }
-/*<# block [val   descriptor :   SerialDescriptor ]
+/*<# block [[val   descriptor :   SerialDescriptor ]
 [ override   fun   serialize ( encoder :   Encoder ,   value :   MyClass ) ]
-[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass] #>*/
+[ override   fun   deserialize ( decoder :   Decoder ) :   MyClass] <settings-icon>] #>*/
 }
