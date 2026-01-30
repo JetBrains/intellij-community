@@ -146,7 +146,7 @@ private class ResizableOutlineHandler private constructor(
   catch (_: IllegalArgumentException) {
     Cursor.getDefaultCursor()
   }
-  private var currentTooltip: IdeTooltip? = null
+  private val tooltipManager = OutlineTooltipManager(editor)
   private val dragState = MutableStateFlow<DragState?>(null)
 
   companion object {
@@ -323,24 +323,24 @@ private class ResizableOutlineHandler private constructor(
 
   private fun updateCursorAndTooltip(component: Component? = null, point: Point? = null) {
     if (component == null || point == null) {
-      hideTooltip()
+      tooltipManager.hideTooltip()
       setEditorCursor(null)
       return
     }
 
     if (dragState.value != null) {
-      hideTooltip()
+      tooltipManager.hideTooltip()
       setEditorCursor(resizeCursor)
       return
     }
 
     val onEdge = getEdgeAt(point) != null
     if (onEdge) {
-      showTooltip(component, point)
+      tooltipManager.showTooltip(component, point)
       setEditorCursor(resizeCursor)
     }
     else {
-      hideTooltip()
+      tooltipManager.hideTooltip()
       setEditorCursor(null)
     }
   }
@@ -367,7 +367,13 @@ private class ResizableOutlineHandler private constructor(
     }
   }
 
-  private fun showTooltip(component: Component, point: Point) {
+  private data class DragState(val edge: LineRangeEdge, val line: Int)
+}
+
+private class OutlineTooltipManager(private val editor: Editor) {
+  private var currentTooltip: IdeTooltip? = null
+
+  fun showTooltip(component: Component, point: Point, ) {
     val offsetPoint = Point(point.x, point.y + editor.lineHeight) // offset for tooltip placement
     currentTooltip?.let {
       it.component = component
@@ -383,14 +389,12 @@ private class ResizableOutlineHandler private constructor(
     IdeTooltipManager.getInstance().show(currentTooltip!!, false)
   }
 
-  private fun hideTooltip() {
+  fun hideTooltip() {
     currentTooltip?.let {
       IdeTooltipManager.getInstance().hide(it)
     }
     currentTooltip = null
   }
-
-  private data class DragState(val edge: LineRangeEdge, val line: Int)
 }
 
 private fun JComponent.isFocusedOrHovered(): Flow<Boolean> {
