@@ -118,7 +118,8 @@ object PluginManagerCore {
     var initFuture: Deferred<PluginSet>? = null
 
     @Synchronized
-    fun addPluginLoadingErrors(errors: List<PluginLoadingError>) {
+    fun setErrorsForNotificationReporterAndLogger(errors: List<PluginLoadingError>) {
+      pluginErrors.clear()
       pluginErrors.addAll(errors)
     }
 
@@ -684,7 +685,7 @@ object PluginManagerCore {
     }
 
     pluginsState.addPluginNonLoadReasons(pluginNonLoadReasons.filter { it.value !is PluginIsMarkedDisabled })
-    pluginsState.addPluginLoadingErrors(preparePluginErrors(
+    pluginsState.setErrorsForNotificationReporterAndLogger(preparePluginErrors(
       pluginNonLoadReasons = pluginNonLoadReasons,
       descriptorLoadingErrors = descriptorLoadingErrors,
       duplicateModuleMap = duplicateModuleMap ?: emptyMap(),
