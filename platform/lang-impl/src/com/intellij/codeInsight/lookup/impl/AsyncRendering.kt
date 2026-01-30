@@ -100,20 +100,25 @@ internal class AsyncRendering(
   }
 
   private fun renderInBackground(element: LookupElement, renderer: LookupElementRenderer<LookupElement>) {
-    val presentation = LookupElementPresentation()
-    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode {
-      renderer.renderElement(element, presentation)
+    doRender(element) { presentation ->
+      DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode {
+        renderer.renderElement(element, presentation)
+      }
     }
-
-    presentation.freeze()
-    cachePresentation(element, presentation)
-    renderingCallback()
   }
 
   private suspend fun renderInBackgroundSuspending(element: LookupElement, renderer: SuspendingLookupElementRenderer<LookupElement>) {
-    val presentation = LookupElementPresentation()
-    renderer.renderElementSuspending(element, presentation)
+    doRender(element) { presentation ->
+      renderer.renderElementSuspending(element, presentation)
+    }
+  }
 
+  private inline fun doRender(
+    element: LookupElement,
+    computation: (presentation: LookupElementPresentation) -> Unit
+  ) {
+    val presentation = LookupElementPresentation()
+    computation(presentation)
     presentation.freeze()
     cachePresentation(element, presentation)
     renderingCallback()
