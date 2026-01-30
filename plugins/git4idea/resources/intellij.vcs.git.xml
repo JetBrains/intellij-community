@@ -691,7 +691,7 @@
                  description="Enables the 'Drop Selected Changes' action in Git log changes tree context menu."/>
     <registryKey key="git.in.memory.commit.editing.operations.enabled" defaultValue="true"
                  description="Starts in-memory variants of interactive rebase operations in suitable scenarios, leading to better performance"/>
-    <registryKey key="git.in.memory.interactive.rebase.notify.errors" defaultValue="false"
+    <registryKey key="git.in.memory.interactive.rebase.debug.notify.errors" defaultValue="false"
                  description="Show notification when in-memory interactive rebase fails and fallbacks to the regular one"/>
     <registryKey key="git.cherry.pick.use.git.sequencer" defaultValue="false"
                  description="If enabled, Git will use a sequencer to cherry-pick multiple commits as a range (e.g., 'git cherry-pick A^..C') instead of applying each commit individually."/>
