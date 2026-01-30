@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.performanceTesting
+package com.intellij.gradle.java.performance
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction

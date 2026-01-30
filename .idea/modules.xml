@@ -454,6 +454,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/gradle-dependency-updater/intellij.gradle.dependencyUpdater.iml" filepath="$PROJECT_DIR$/plugins/gradle/gradle-dependency-updater/intellij.gradle.dependencyUpdater.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/intellij.gradle.java.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/intellij.gradle.java.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle-maven/intellij.gradle.java.maven.iml" filepath="$PROJECT_DIR$/plugins/gradle-maven/intellij.gradle.java.maven.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/performance/intellij.gradle.java.performance.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/performance/intellij.gradle.java.performance.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/intellij.gradle.java.tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/intellij.gradle.java.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/jps-plugin/intellij.gradle.jps.iml" filepath="$PROJECT_DIR$/plugins/gradle/jps-plugin/intellij.gradle.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/kotlin/tests/intellij.gradle.kotlin.tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/kotlin/tests/intellij.gradle.kotlin.tests.iml" />

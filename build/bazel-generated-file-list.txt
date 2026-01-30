@@ -982,6 +982,7 @@ plugins/gradle/gradle-declarative-sync
 plugins/gradle/gradle-dependency-updater
 plugins/gradle/intellij.gradle.analysis
 plugins/gradle/java
+plugins/gradle/java/performance
 plugins/gradle/jps-plugin
 plugins/gradle/kotlin/tests
 plugins/gradle/native

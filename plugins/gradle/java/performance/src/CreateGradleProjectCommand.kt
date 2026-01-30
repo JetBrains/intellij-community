@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.performanceTesting
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.java.performance
 
+import com.intellij.gradle.java.performance.dto.NewGradleProjectDto
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
 import com.intellij.ide.util.newProjectWizard.TemplatesGroup
 import com.intellij.ide.util.projectWizard.WizardContext
@@ -26,7 +27,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.performancePlugin.CreateMavenProjectCommand.Companion.getNewProject
 import org.jetbrains.idea.maven.performancePlugin.CreateMavenProjectCommand.Companion.runNewProject
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.performanceTesting.dto.NewGradleProjectDto
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
@@ -34,7 +34,7 @@ import java.nio.file.Path
 /**
  * The command creates a new Gradle groovy/kotlin project.
  * The project also could be added as module (linked to the current project)
- * Argument is serialized [NewGradleProjectDto] as json
+ * Argument is serialized [com.intellij.gradle.java.performance.dto.NewGradleProjectDto] as json
  * You should have a focus (on file, for example) if you are creating a new project.
  */
 class CreateGradleProjectCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {

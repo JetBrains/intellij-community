@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.performanceTesting;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.java.performance;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings;
@@ -34,18 +34,13 @@ import org.jetbrains.plugins.gradle.service.project.open.GradleProjectImportUtil
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleJvmResolutionUtil;
-import org.jetbrains.plugins.gradle.util.GradleJvmValidationUtil;
-import org.jetbrains.plugins.gradle.util.SuggestGradleVersionOptions;
+import org.jetbrains.plugins.gradle.util.*;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.jetbrains.plugins.gradle.util.GradleJvmSupportMatrices.suggestGradleVersion;
 
 public final class ImportGradleProjectCommand extends AbstractCommand {
   public static final String PREFIX = "%importGradleProject";
@@ -195,7 +190,7 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
       else {
         GradleProjectSettings projectSettings = GradleDefaultProjectSettings.createProjectSettings(projectDir.getPath());
         GradleProjectImportUtil.setupGradleSettings(gradleSettings);
-        GradleVersion gradleVersion = suggestGradleVersion(
+        GradleVersion gradleVersion = GradleJvmSupportMatrices.suggestGradleVersion(
           new SuggestGradleVersionOptions()
             .withProject(project)
             .withProjectJdkVersionFilter(project)

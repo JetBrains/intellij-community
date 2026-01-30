@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.performanceTesting;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.java.performance
 
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.gradle.java.performance.dto.GradleTaskInfoDto
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil
@@ -18,12 +19,11 @@ import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.await
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import org.jetbrains.plugins.gradle.execution.GradleRunAnythingProvider
-import org.jetbrains.plugins.gradle.performanceTesting.dto.GradleTaskInfoDto
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 /**
  * The command executes a Gradle task by name
- * Argument is serialized [GradleTaskInfoDto] as json
+ * Argument is serialized [com.intellij.gradle.java.performance.dto.GradleTaskInfoDto] as json
  * runAnything false - executes like double click form lifecycle
  * runAnything true - executes like double control and execute gradle [task]
  */

@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.performanceTesting
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.java.performance
 
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
@@ -7,7 +7,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.settings.TestRunner
 
 /**
- * The command sets delegatedBuild(Gradle if true and Idea if not) and testRunner[TestRunner] for all gradle projects
+ * The command sets delegatedBuild(Gradle if true and Idea if not) and testRunner[org.jetbrains.plugins.gradle.settings.TestRunner] for all gradle projects
  * Syntax: %setGradleDelegatedBuildCommand [delegatedBuild] [testRunner]
  * Example: %setGradleDelegatedBuildCommand true PLATFORM
  */

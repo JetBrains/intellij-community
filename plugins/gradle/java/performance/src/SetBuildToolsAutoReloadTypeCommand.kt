@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.performanceTesting
+package com.intellij.gradle.java.performance
 
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings
 import com.intellij.openapi.ui.playback.PlaybackContext
