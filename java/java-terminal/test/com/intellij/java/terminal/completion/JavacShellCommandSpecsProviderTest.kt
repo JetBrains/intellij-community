@@ -45,6 +45,12 @@ internal class JavacShellCommandSpecsProviderTest(engine: TerminalEngine) : JdkC
   }
 
   @Test
+  fun `extra options are present`() = runBlocking {
+    val fixture = createFixture()
+    UsefulTestCase.assertContainsElements(fixture.getCompletionNames("javac "), listOf("-Xlint", "-Xbootclasspath:"))
+  }
+
+  @Test
   fun `classpath suggestion generator`() = runBlocking {
     val separator = JavaShellCommandUtils.getClassPathSeparator()
     val fixture = createFixture()

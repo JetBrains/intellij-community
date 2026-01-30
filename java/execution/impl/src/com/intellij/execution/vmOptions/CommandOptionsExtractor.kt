@@ -92,8 +92,8 @@ internal abstract class CommandOptionsExtractor {
     private fun getOptionsForJava(javaHome: String): List<VMOption> {
       val output = getProcessOutput(javaHome) ?: return STANDARD_OPTION_LIST
 
-      val xxOptions = VMOptionsParser.parseXXOptions(output.stdout)
-      val xOptions = VMOptionsParser.parseXOptions(output.stderr)
+      val xxOptions = VMOptionsParser.parseJavaXXOptions(output.stdout)
+      val xOptions = VMOptionsParser.parseJavaXOptions(output.stderr)
       if (xOptions != null) {
         return xOptions + xxOptions + STANDARD_OPTION_LIST
       }
@@ -135,8 +135,11 @@ internal abstract class CommandOptionsExtractor {
 
     private fun getOptionsForJavac(javaHome: String): List<VMOption> {
       val processOutput = getProcessOutput(javaHome) ?: return emptyList()
-      val parsedStandardOptions = VMOptionsParser.parseJavacDoubleDashedOptions(processOutput.stdout)
-      return if (parsedStandardOptions != null) parsedStandardOptions + STANDARD_OPTIONS_LIST else STANDARD_OPTIONS_LIST
+      val result = mutableListOf<VMOption>()
+      result.addAll(STANDARD_OPTIONS_LIST)
+      VMOptionsParser.parseJavacDoubleDashedOptions(processOutput.stdout)?.let { result.addAll(it) }
+      VMOptionsParser.parseJavacXOptions(processOutput.stdout)?.let { result.addAll(it) }
+      return result
     }
   }
 

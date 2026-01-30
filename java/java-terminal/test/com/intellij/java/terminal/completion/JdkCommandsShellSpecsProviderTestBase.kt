@@ -88,6 +88,8 @@ internal abstract class JdkCommandsShellSpecsProviderTestBase(private val engine
             VMOption("source", null, null, VMOptionKind.Standard, null, VMOptionVariant.DASH_DASH),
             VMOption("target", null, null, VMOptionKind.Standard, null, VMOptionVariant.DASH_DASH),
             VMOption("experimental", null, null, VMOptionKind.Experimental, null, VMOptionVariant.DASH_DASH),
+            VMOption("lint", null, null, VMOptionKind.Product, null, VMOptionVariant.X),
+            VMOption("bootclasspath:", null, null, VMOptionKind.Product, null, VMOptionVariant.X),
           )
         )
       )

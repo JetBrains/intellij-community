@@ -7,7 +7,7 @@ import org.jetbrains.annotations.PropertyKey
 internal object VMOptionsParser {
   private val LOG = Logger.getInstance(VMOptionsParser::class.java)
 
-  internal fun parseXXOptions(text: String) : List<VMOption> {
+  internal fun parseJavaXXOptions(text: String) : List<VMOption> {
     val lines = text.lineSequence().drop(1)
     val options = lines.mapNotNull {
       val lbraceIndex = it.indexOf("{")
@@ -42,7 +42,7 @@ internal object VMOptionsParser {
     return options
   }
 
-  internal fun parseXOptions(stderr: String): List<VMOption>? {
+  internal fun parseJavaXOptions(stderr: String): List<VMOption>? {
     var tailIndex = stderr.indexOf("These extra options are subject to change without notice.")
     if (tailIndex == -1) {
       tailIndex = stderr.indexOf("The -X options are non-standard and subject to change without notice.")
@@ -52,6 +52,17 @@ internal object VMOptionsParser {
 
     return parseLines(ParsingType.JavaExtraOptions, stderr.substring(0, tailIndex).trimStart().lines(), mapOf("-X" to VMOptionVariant.X, "--" to VMOptionVariant.DASH_DASH), separators)
   }
+
+  internal fun parseJavacXOptions(input: String): List<VMOption>? {
+    val lines = input.lines()
+    val beforeStartLine = lines.indexOf("")
+    if (beforeStartLine == -1) return null
+    val afterEndLine = lines.indexOf("These extra options are subject to change without notice.")
+    if (afterEndLine == -1) return null
+    if (beforeStartLine + 1 >= afterEndLine - 1) return null
+    return parseLines(ParsingType.JavacExtraOptions, lines.subList(beforeStartLine + 1, afterEndLine - 1), mapOf("-X" to VMOptionVariant.X, "--" to VMOptionVariant.DASH_DASH), charArrayOf(' '))
+  }
+
 
   internal fun parseJavacDoubleDashedOptions(input: String): List<VMOption>? {
     val lines = input.lines()
@@ -185,7 +196,24 @@ internal object VMOptionsParser {
       }
     }
 
-    object JavacStandardOptions : ParsingType {
+    interface JavacOptionsBase : ParsingType {
+      override fun parseName(input: String): String {
+        // parsing names "-opt:{arguments}"
+        input.extractPrefix(Regex(":[\"\\[{(]"), ":")?.let { return it }
+
+        // parsing names "-opt[=value]"
+        input.extractPrefix(Regex("\\["), "")?.let { return it }
+
+        return input.extractPrefix(Regex("<"), shouldHaveTwoParts = false) ?: throw IllegalArgumentException("Cannot parse option name: $input")
+      }
+
+      private fun String.extractPrefix(delimiter: Regex, suffix: String = "", shouldHaveTwoParts: Boolean = true): String? {
+        val parts = split(delimiter)
+        return if (parts.size == 2 || !shouldHaveTwoParts) parts.first().trimEnd(',') + suffix else null
+      }
+    }
+
+    object JavacStandardOptions : JavacOptionsBase {
       override val optionDescriptionPropertyKey: Map<String, @PropertyKey(resourceBundle = "messages.VMOptionsBundle") String> = mapOf(
         Pair("--add-modules", "vm.option.add.modules.description"),
         Pair("--boot-class-path", "vm.option.boot.classpath.description"),
@@ -211,21 +239,37 @@ internal object VMOptionsParser {
       )
 
       override val kind: VMOptionKind = VMOptionKind.Standard
-
-      override fun parseName(input: String): String {
-        // parsing names "-opt:{arguments}"
-        input.extractPrefix(":{", ":")?.let { return it }
-
-        // parsing names "-opt[=value]"
-        input.extractPrefix("[", "")?.let { return it }
-
-        return input.extractPrefix("<", shouldHaveTwoParts = false) ?: throw IllegalArgumentException("Cannot parse option name: $input")
-      }
-
-      private fun String.extractPrefix(delimiter: String, suffix: String = "", shouldHaveTwoParts: Boolean = true): String? {
-        val parts = split(delimiter)
-        return if (parts.size == 2 || !shouldHaveTwoParts) parts.first().trimEnd(',') else null
-      }
+    }
+    
+    object JavacExtraOptions : JavacOptionsBase {
+      override val optionDescriptionPropertyKey: Map<String, @PropertyKey(resourceBundle = "messages.VMOptionsBundle") String> = mapOf(
+        Pair("--add-exports", "vm.option.add.exports.description"),
+        Pair("--add-reads",  "vm.option.add.reads.description"),
+        Pair("--default-module-for-created-files", "vm.option.default.module.for.created.files.description"),
+        Pair("--disable-line-doc-comments", "vm.option.disable.line.doc.comments.description"),
+        Pair("--help-lint", "vm.option.help.lint.description"),
+        Pair("--patch-module", "vm.option.patch.module.javac.description"),
+        Pair("-Xbootclasspath:", "vm.option.bootclasspath.javac.description"),
+        Pair("-Xbootclasspath/a:", "vm.option.bootclasspath.a.javac.description"),
+        Pair("-Xbootclasspath/p:", "vm.option.bootclasspath.p.javac.description"),
+        Pair("-Xdiags:", "vm.option.diags.description"),
+        Pair("-Xdoclint", "vm.option.doclint.description"),
+        Pair("-Xdoclint:", "vm.option.doclint.groups.description"),
+        Pair("-Xdoclint/package:", "vm.option.doclint.package.description"),
+        Pair("-Xlint", "vm.option.xlint.description"),
+        Pair("-Xlint:", "vm.option.xlint.keys.description"),
+        Pair("-Xmaxerrs", "vm.option.maxerrs.description"),
+        Pair("-Xmaxwarns", "vm.option.maxwarns.description"),
+        Pair("-Xpkginfo:", "vm.option.pkginfo.description"),
+        Pair("-Xplugin:", "vm.option.plugin.description"),
+        Pair("-Xprefer:", "vm.option.prefer.description"),
+        Pair("-Xprint", "vm.option.print.description"),
+        Pair("-XprintProcessorInfo", "vm.option.print.processor.info.description"),
+        Pair("-XprintRounds", "vm.option.print.rounds.description"),
+        Pair("-Xstdout", "vm.option.stdout.description"),
+      )
+      override val kind: VMOptionKind
+        get() = VMOptionKind.Product
     }
   }
 }
