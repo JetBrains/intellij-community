@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
@@ -400,6 +400,8 @@ private class BranchesFilteringSpeedSearch(
   private val filterPattern = MutableStateFlow<String?>(null)
 
   private var bestMatch: BestMatch? = null
+  private var lastFilteredPattern: String? = null
+  private var patternChanged = false
 
   init {
     tree.tree.launchOnShow("Branches Tree Filterer") {
@@ -436,6 +438,8 @@ private class BranchesFilteringSpeedSearch(
   }
 
   override fun refilter(pattern: String?) {
+    patternChanged = pattern != lastFilteredPattern
+    lastFilteredPattern = pattern
     bestMatch = null
     super.refilter(pattern)
     updateSpeedSearchBackground()
@@ -459,7 +463,9 @@ private class BranchesFilteringSpeedSearch(
     if (matcher == null || bestMatch == null) {
       super.updateSelection()
     }
-    else {
+    else if (patternChanged) {
+      // Only update selection when pattern changed (user is actively searching).
+      // When pattern is the same (tree refresh, tab switch), preserve user's selection.
       val selectionText = tree.getText(selection?.getNodeDescriptor())
       val selectionMatchingDegree = if (selectionText != null) matcher.matchingDegree(selectionText) else Int.MIN_VALUE
       if (selectionMatchingDegree < bestMatch.matchingDegree) {
