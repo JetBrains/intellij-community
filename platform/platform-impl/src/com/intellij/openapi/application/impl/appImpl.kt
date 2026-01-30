@@ -185,20 +185,6 @@ object InternalThreading {
     backgroundWriteActionCounter.decrementAndGet()
   }
 
-  object RunInBackgroundWriteActionMarker
-    : CoroutineContext.Element,
-      CoroutineContext.Key<RunInBackgroundWriteActionMarker> {
-    override val key: CoroutineContext.Key<*> get() = this
-  }
-
-  @Internal
-  @JvmStatic
-  fun isBackgroundWriteActionAllowed(): Boolean =
-    application.isWriteAccessAllowed ||
-    currentThreadContext()[RunInBackgroundWriteActionMarker] != null
-
-
-
   @RequiresBackgroundThread(generateAssertion = false)
   @RequiresWriteLock(generateAssertion = false)
   @Throws(Throwable::class)
