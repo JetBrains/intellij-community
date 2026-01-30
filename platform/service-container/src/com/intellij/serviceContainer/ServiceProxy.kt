@@ -1,10 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.util.io.toByteArray
 import com.intellij.util.lang.ClassPath.ClassDataConsumer
 import org.jetbrains.org.objectweb.asm.*
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import java.nio.ByteBuffer
 import java.util.*
 
 internal interface ServiceProxyInstrumentation {
@@ -28,17 +31,39 @@ private const val FIELD_NAME_ORIGINAL_DELEGATE = "originalDelegate"
  * - can be switched to forward to another delegate via [ServiceProxyInstrumentation.setForwarding]
  */
 internal object ServiceProxy {
-  @Suppress("UNCHECKED_CAST")
   fun <T> createInstance(
     superClass: Class<T>,
     delegate: Any,
   ): T {
     val loader = superClass.classLoader
-    if (loader !is ClassDataConsumer) {
+    if (loader is ClassDataConsumer) {
+      return createInstance(superClass, loader, delegate)
+    }
+    else if (ApplicationManager.getApplication()?.isUnitTestMode != false) {
+      // for TeamCity which uses jdk.internal.loader.ClassLoaders$AppClassLoader at the moment
+      class ClassLoaderWithClassDataConsumer(parent: ClassLoader) : ClassLoader(parent), ClassDataConsumer {
+        override fun isByteBufferSupported(name: String?): Boolean = false
+
+        override fun consumeClassData(name: String, data: ByteArray): Class<*>? {
+          return defineClass(name, data, 0, data.size, null)
+        }
+
+        override fun consumeClassData(name: String, data: ByteBuffer): Class<*>? = consumeClassData(name, data.toByteArray())
+      }
+
+      return createInstance(superClass, ClassLoaderWithClassDataConsumer(loader), delegate)
+    }
+    else {
       LOG.error("Cannot use ${loader.javaClass} (the classloader of $superClass) to define a new class")
       return delegate as T
     }
+  }
 
+  private fun <T, CL> createInstance(
+    superClass: Class<T>,
+    loader: CL,
+    delegate: Any,
+  ): T where CL : ClassDataConsumer, CL : ClassLoader {
     val proxyClassName = buildProxyClassName(superClass)
     val proxyClass = try {
       loader.loadClass(proxyClassName)
