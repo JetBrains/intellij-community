@@ -4,6 +4,9 @@ package org.jetbrains.kotlin.idea.internal
 import com.intellij.openapi.application.readAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.cli.extensionsStorage
+import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.languageVersionSettings
@@ -40,6 +43,8 @@ abstract class AbstractBytecodeToolWindowTest : KotlinLightCodeInsightFixtureTes
             }
 
             languageVersionSettings = file.languageVersionSettings
+            @OptIn(ExperimentalCompilerApi::class)
+            extensionsStorage = CompilerPluginRegistrar.ExtensionStorage()
         }
 
         val bytecode = runBlocking(Dispatchers.Default) {

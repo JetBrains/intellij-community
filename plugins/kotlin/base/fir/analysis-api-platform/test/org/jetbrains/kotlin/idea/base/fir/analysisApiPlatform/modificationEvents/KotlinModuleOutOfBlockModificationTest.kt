@@ -7,7 +7,6 @@ import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.impl.ModuleRootEventImpl
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -21,7 +20,6 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.junit.Assert
 
 class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationEventTest() {
     override val expectedEventKind: KotlinModificationEventKind
@@ -118,7 +116,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             publisher.rootsChanged(rootChangedEvent)
         }
 
-        //on finish writeAction `FirIdeOutOfBlockPsiTreeChangePreprocessor.treeChanged` will collect data
+        //on finish writeAction `FirIdeOutOfBlockModificationService.OutOfBlockTreeChangePreprocessor.treeChanged` will collect data
         project.executeWriteCommand("doc change", null) {
             contentElement.replace(factory.createExpression("42"))
         }
@@ -495,7 +493,14 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         val moduleC = createModuleInTmpDir("c")
         val fileD = createNotUnderContentRootFile("d", "fun baz() = 10")
 
-        val allowedEventKinds = setOf(KotlinModificationEventKind.GLOBAL_MODULE_STATE_MODIFICATION)
+        val allowedEventKinds = setOf(
+            // `FirIdeDumbModeInvalidationListener` may publish a `GLOBAL_MODULE_STATE_MODIFICATION` after exiting dumb mode.
+            KotlinModificationEventKind.GLOBAL_MODULE_STATE_MODIFICATION,
+
+            // `KotlinScriptEditorListener` may run during editor configuration and publish a `GLOBAL_SCRIPT_MODULE_STATE_MODIFICATION`.
+            KotlinModificationEventKind.GLOBAL_SCRIPT_MODULE_STATE_MODIFICATION,
+        )
+
         val trackerA = createTracker(scriptA, "script A after an out-of-block modification", allowedEventKinds)
         val trackerB = createTracker(scriptB, "script B", allowedEventKinds)
         val trackerC = createTracker(moduleC, "module C", allowedEventKinds)
@@ -521,7 +526,9 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         val moduleC = createModuleInTmpDir("c")
         val scriptD = createScript("d", "fun baz() = 10")
 
+        // `FirIdeDumbModeInvalidationListener` may publish a `GLOBAL_MODULE_STATE_MODIFICATION` after exiting dumb mode.
         val allowedEventKinds = setOf(KotlinModificationEventKind.GLOBAL_MODULE_STATE_MODIFICATION)
+
         val trackerA = createTracker(fileA, "not-under-content-root file A after an out-of-block modification", allowedEventKinds)
         val trackerB = createTracker(fileB, "not-under-content-root file B", allowedEventKinds)
         val trackerC = createTracker(moduleC, "module C", allowedEventKinds)
@@ -651,13 +658,6 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
     }
 
     private fun Module.configureEditorForFile(fileName: String): KtFile = findSourceKtFile(fileName).apply { configureEditor() }
-
-    private fun KtFile.modify(textAfterModification: String, targetOffset: Int? = null, edit: () -> Unit) {
-        targetOffset?.let(editor.caretModel::moveToOffset)
-        edit()
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments()
-        Assert.assertEquals(textAfterModification, text)
-    }
 
     private fun KtFile.getSingleFunctionBodyOffset(): Int {
         val singleFunction = declarations.single() as KtNamedFunction

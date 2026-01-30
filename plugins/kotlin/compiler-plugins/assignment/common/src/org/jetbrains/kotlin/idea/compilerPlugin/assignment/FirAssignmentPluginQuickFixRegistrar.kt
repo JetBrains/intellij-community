@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.assignment
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider.CompilerPluginType
@@ -36,6 +37,7 @@ private val FACTORY = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDi
     }
 }
 
+@OptIn(KaPlatformInterface::class)
 private fun isAssignmentPluginEnabled(project: Project, element: PsiElement): Boolean {
     val module = element.getKaModuleOfTypeSafe<KaSourceModule>(project, useSiteModule = null) ?: return false
     val compilerPluginsProvider = KotlinCompilerPluginsProvider.getInstance(project) ?: return false

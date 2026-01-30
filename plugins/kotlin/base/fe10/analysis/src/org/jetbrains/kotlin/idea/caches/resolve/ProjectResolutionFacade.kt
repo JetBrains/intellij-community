@@ -11,6 +11,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.SLRUCache
 import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.analyzer.EmptyResolverForProject
@@ -147,17 +148,20 @@ internal class ProjectResolutionFacade(
         val resolvedModulesWithDependencies = resolvedModules +
                 listOfNotNull(ScriptDependenciesInfo.ForProject.createIfRequired(project, resolvedModules))
 
+        @OptIn(KaPlatformInterface::class)
+        val fallbackModificationTracker = with(KotlinModificationTrackerFactory.getInstance(project)) {
+            if (invalidateOnOOCB) createProjectWideSourceModificationTracker()
+            else createProjectWideLibraryModificationTracker()
+        }
+
         return IdeaResolverForProject(
-          resolverDebugName,
-          globalContext.withProject(project),
-          resolvedModulesWithDependencies,
-          syntheticFilesByModule,
-          delegateResolverForProject,
-          with(KotlinModificationTrackerFactory.getInstance(project)) {
-              if (invalidateOnOOCB) createProjectWideSourceModificationTracker()
-              else createProjectWideLibraryModificationTracker()
-          },
-          settings
+            resolverDebugName,
+            globalContext.withProject(project),
+            resolvedModulesWithDependencies,
+            syntheticFilesByModule,
+            delegateResolverForProject,
+            fallbackModificationTracker,
+            settings
         )
     }
 
