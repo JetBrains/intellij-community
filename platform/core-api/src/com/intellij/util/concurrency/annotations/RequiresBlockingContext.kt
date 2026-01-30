@@ -48,6 +48,8 @@ import org.jetbrains.annotations.ApiStatus
  *   addSdk(sdk) // a warning here would be misleading
  * }
  * ```
+ *
+ * Note: the inspection is currently disabled due to generating too many false positives.
  */
 @MustBeDocumented
 @Retention(AnnotationRetention.SOURCE)
