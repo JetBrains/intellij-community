@@ -131,12 +131,18 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
 
   @ApiStatus.Internal
   open suspend fun reloadPackages(): PyResult<List<PythonPackage>> {
+    return loadPackagesImpl(isInit = false)
+  }
+
+  private suspend fun loadPackagesImpl(isInit: Boolean): PyResult<List<PythonPackage>> {
     val packages = loadPackagesCommand().getOr {
       return it
     }
 
     if (packages != installedPackages) {
-      refreshPaths(project, sdk, "Reloading packages")
+      if (!isInit) {
+        refreshPaths(project, sdk, "Reloading packages")
+      }
       installedPackages = packages
       PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
         reloadOutdatedPackages()
@@ -150,6 +156,8 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
 
     return PyResult.success(packages)
   }
+
+
 
   @ApiStatus.Internal
   suspend fun listInstalledPackages(): List<PythonPackage> {
@@ -243,7 +251,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
       if (isInited.getAndSet(true))
         return
       if (installedPackages.isEmpty() && !PythonSdkType.isMock(sdk)) {
-        reloadPackages()
+        loadPackagesImpl(isInit = true)
       }
     }
     catch (t: CancellationException) {
