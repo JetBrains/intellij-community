@@ -8,12 +8,39 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.NeedsIndex
 
 @NeedsIndex.SmartMode(reason = "it requires highlighting")
-class JavaCommandsCompletionGenerateConstructorsTest : LightFixtureCompletionTestCase() {
+class JavaCommandsCompletionGenerateTest : LightFixtureCompletionTestCase() {
 
   override fun setUp() {
     super.setUp()
     Registry.get("ide.completion.command.enabled").setValue(false, getTestRootDisposable())
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+  }
+
+  fun testGenerateWithTabs() {
+    //don't move, there are tabs instead of spaces
+    val text = """
+package org.test;
+
+public class Test {
+	private Integer num;
+
+
+	ge<caret>
+}""".trimIndent()
+    myFixture.configureByText(JavaFileType.INSTANCE, text)
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Generate 'No-Args Constructor'", ignoreCase = true) })
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    myFixture.checkResult("""
+package org.test;
+
+public class Test {
+	private Integer num;
+
+
+    public Test() {
+    }
+}""".trimIndent())
   }
 
   fun testGenerateNoArgsConstructor() {

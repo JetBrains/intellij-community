@@ -614,6 +614,7 @@ internal fun findActualIndex(suffix: String, text: CharSequence, offset: Int): I
     var currentIndex = 1
     while (text.getOrNull(offset - currentIndex)?.isLetter() == true ||
            text.getOrNull(offset - currentIndex) == ' ' ||
+           text.getOrNull(offset - currentIndex) == '\t' ||
            text.getOrNull(offset - currentIndex) == '\''
     ) {
       currentIndex++
