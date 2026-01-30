@@ -13,6 +13,7 @@ import com.intellij.util.indexing.DumbModeAccessType
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Async rendering of lookup elements.
@@ -25,9 +26,10 @@ import kotlinx.coroutines.sync.withPermit
  *
  * Cached presentation can be retrieved via [getCachedPresentation].
  */
-internal class AsyncRendering(
+@ApiStatus.Internal
+class AsyncRendering(
   private val coroutineScope: CoroutineScope,
-  private val renderingCallback: () -> Unit,
+  private val renderingCallback: (lookupElement: LookupElement, presentation: LookupElementPresentation) -> Unit,
 ) {
   // Use a maximum of three concurrent rendering jobs to not overload the CPU unnecessarily.
   private val renderersSemaphore = Semaphore(3)
@@ -121,7 +123,7 @@ internal class AsyncRendering(
     computation(presentation)
     presentation.freeze()
     cachePresentation(element, presentation)
-    renderingCallback()
+    renderingCallback(element, presentation)
   }
 }
 

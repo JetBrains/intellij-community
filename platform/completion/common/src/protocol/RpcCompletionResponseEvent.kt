@@ -38,6 +38,11 @@ sealed interface RpcCompletionResponseEvent {
     }
   }
 
+  @Serializable
+  data class ExpensivePresentations(
+    val presentations: List<RpcCompletionExpensivePresentation>
+  ) : RpcCompletionResponseEvent
+
   /**
    * This event is sent when all completion items are sent.
    * After it is sent, the backend can send only updates for the existing items (and [CompletionFinished] event).

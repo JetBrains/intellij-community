@@ -114,7 +114,10 @@ class LookupCellRenderer(
   private val widthLock = ObjectUtils.sentinel("lookup width lock")
   private val shrinkLookup: Boolean = Registry.`is`("ide.lookup.shrink")
 
-  private val asyncRendering: AsyncRendering = AsyncRendering(lookup.coroutineScope, ::scheduleUpdateLookupAfterElementPresentationChange)
+  private val asyncRendering: AsyncRendering = AsyncRendering(
+    coroutineScope = lookup.coroutineScope,
+    renderingCallback = { _, _ -> scheduleUpdateLookupAfterElementPresentationChange() }
+  )
 
   private val customizers: MutableList<ItemPresentationCustomizer> = ContainerUtil.createLockFreeCopyOnWriteList()
 
