@@ -364,6 +364,7 @@ cargo ndk
 cargo ndk-env
 cargo ndk-test
 cargo new
+cargo nextest
 cargo owner
 cargo package
 cargo pkgid
