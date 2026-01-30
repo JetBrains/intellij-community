@@ -88,8 +88,11 @@ fun KtExpression.doesBelongToLoop(loopExpression: KtExpression): Boolean {
         /* parent = */ KtContainerNodeForControlStructureBody::class.java,
         /* includeMyself = */ false
     ) {
-        val p = it.parent
-        p is KtDeclaration && !(allowNonLocalBreaks && p is KtFunctionLiteral)
+        when(val p = it.parent) {
+            is KtProperty if p.isLocal -> false
+            is KtDeclaration -> !(allowNonLocalBreaks && p is KtFunctionLiteral)
+            else -> false
+        }
     }
     // expression belongs to the loop when it is inside the loop body
     return structureBodies.firstOrNull { it.parent is KtLoopExpression }?.parent == loopExpression

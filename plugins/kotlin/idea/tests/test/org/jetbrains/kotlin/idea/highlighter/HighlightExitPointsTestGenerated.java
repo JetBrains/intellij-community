@@ -80,6 +80,11 @@ public class HighlightExitPointsTestGenerated extends AbstractCustomHighlightUsa
         runTest("testData/exitPoints/forLoopNestedBreak2.kt");
     }
 
+    @TestMetadata("forLoopNestedBreakInLocalProperty.kt")
+    public void testForLoopNestedBreakInLocalProperty() throws Exception {
+        runTest("testData/exitPoints/forLoopNestedBreakInLocalProperty.kt");
+    }
+
     @TestMetadata("forLoopNestedLabeledBreak.kt")
     public void testForLoopNestedLabeledBreak() throws Exception {
         runTest("testData/exitPoints/forLoopNestedLabeledBreak.kt");
