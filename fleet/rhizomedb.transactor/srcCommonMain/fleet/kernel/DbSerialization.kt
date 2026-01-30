@@ -13,6 +13,7 @@ import com.jetbrains.rhizomedb.getOne
 import com.jetbrains.rhizomedb.impl.attributeSerializer
 import com.jetbrains.rhizomedb.partition
 import fleet.util.UID
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
 
 fun DbContext<Q>.sharedId(eid: EID, uidAttribute: Attribute<UID>): UID? =
@@ -80,10 +81,12 @@ private fun DbContext<Q>.serializeScalar(
   when (value) {
     is JsonElement -> DurableDbValue.Scalar(lazyOf(value))
     else -> {
-      val serializer = requireNotNull(attributeSerializer(attribute)) {
-        "serializer not found for ${displayAttribute(attribute)}"
-      }
+      val serializer = requireSerializer(attribute)
       DurableDbValue.Scalar(lazy { DbJson.encodeToJsonElement(serializer, value) })
     }
   }
 
+fun DbContext<Q>.requireSerializer(attribute: Attribute<*>): KSerializer<Any> =
+  requireNotNull(attributeSerializer(attribute)) {
+    "serializer not found for ${displayAttribute(attribute)}"
+  }
