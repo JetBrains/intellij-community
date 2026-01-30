@@ -843,13 +843,15 @@ public final class ImportHelper extends ImportHelperBase {
   }
 
   private static @NotNull List<PsiJavaCodeReferenceElement> getImportsFromPackage(@NotNull PsiJavaFile file, @NotNull String packageName) {
-    PsiClass[] refs = file.getSingleClassImports(true);
-    List<PsiJavaCodeReferenceElement> array = new ArrayList<>(refs.length);
-    for (PsiClass ref1 : refs) {
-      String className = ref1.getQualifiedName();
-      if (className == null) continue;
-      if (StringUtil.getPackageName(className).equals(packageName)) {
-        PsiJavaCodeReferenceElement ref = file.findImportReferenceTo(ref1);
+    PsiImportList importList = file.getImportList();
+    if (importList == null) return List.of();
+    PsiImportStatement[] statements = importList.getImportStatements();
+    List<PsiJavaCodeReferenceElement> array = new ArrayList<>();
+    for (PsiImportStatement statement : statements) {
+      if (statement.isOnDemand()) continue;
+      String className = statement.getQualifiedName();
+      if (className != null && StringUtil.getPackageName(className).equals(packageName)) {
+        PsiJavaCodeReferenceElement ref = statement.getImportReference();
         if (ref != null) {
           array.add(ref);
         }
@@ -859,13 +861,8 @@ public final class ImportHelper extends ImportHelperBase {
   }
 
   private static PsiClass findSingleImportByShortName(@NotNull PsiJavaFile file, @NotNull String shortClassName) {
-    PsiClass[] refs = file.getSingleClassImports(true);
-    for (PsiClass ref : refs) {
-      String className = ref.getQualifiedName();
-      if (className != null && PsiNameHelper.getShortClassName(className).equals(shortClassName)) {
-        return ref;
-      }
-    }
+    PsiClass cls = findInImportList(file, shortClassName);
+    if (cls != null) return cls;
     for (PsiClass aClass : file.getClasses()) {
       if (aClass instanceof PsiImplicitClass) continue;
       String className = aClass.getQualifiedName();
@@ -899,6 +896,22 @@ public final class ImportHelper extends ImportHelperBase {
           }
         });
         if (foundRef[0]) return aClass;
+      }
+    }
+    return null;
+  }
+
+  private static @Nullable PsiClass findInImportList(@NotNull PsiJavaFile file, @NotNull String shortClassName) {
+    PsiImportList importList = file.getImportList();
+    if (importList == null) return null;
+    PsiImportStatement[] statements = importList.getImportStatements();
+    for (PsiImportStatement statement : statements) {
+      if (statement.isOnDemand()) continue;
+      String className = statement.getQualifiedName();
+      if (className != null &&
+          PsiNameHelper.getShortClassName(className).equals(shortClassName) &&
+          statement.resolve() instanceof PsiClass cls) {
+        return cls;
       }
     }
     return null;
