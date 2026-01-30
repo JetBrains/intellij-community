@@ -104,7 +104,8 @@
     "https://bcr.bazel.build/modules/nlohmann_json/3.12.0.bcr.1/source.json": "93f82a5ae985eb935c539bfee95e04767187818189241ac956f3ccadbdb8fb02",
     "https://bcr.bazel.build/modules/nlohmann_json/3.6.1/MODULE.bazel": "6f7b417dcc794d9add9e556673ad25cb3ba835224290f4f848f8e2db1e1fca74",
     "https://bcr.bazel.build/modules/package_metadata/0.0.2/MODULE.bazel": "fb8d25550742674d63d7b250063d4580ca530499f045d70748b1b142081ebb92",
-    "https://bcr.bazel.build/modules/package_metadata/0.0.2/source.json": "e53a759a72488d2c0576f57491ef2da0cf4aab05ac0997314012495935531b73",
+    "https://bcr.bazel.build/modules/package_metadata/0.0.3/MODULE.bazel": "77890552ecea9e284b5424c9de827a58099348763a4359e975c359a83d4faa83",
+    "https://bcr.bazel.build/modules/package_metadata/0.0.3/source.json": "742075a428ad12a3fa18a69014c2f57f01af910c6d9d18646c990200853e641a",
     "https://bcr.bazel.build/modules/platforms/0.0.10/MODULE.bazel": "8cb8efaf200bdeb2150d93e162c40f388529a25852b332cec879373771e48ed5",
     "https://bcr.bazel.build/modules/platforms/0.0.11/MODULE.bazel": "0daefc49732e227caa8bfa834d65dc52e8cc18a2faf80df25e8caea151a9413f",
     "https://bcr.bazel.build/modules/platforms/0.0.4/MODULE.bazel": "9b328e31ee156f53f3c416a64f8491f7eb731742655a47c9eec4703a71644aee",
@@ -204,7 +205,8 @@
     "https://bcr.bazel.build/modules/rules_jvm_external/6.3/MODULE.bazel": "c998e060b85f71e00de5ec552019347c8bca255062c990ac02d051bb80a38df0",
     "https://bcr.bazel.build/modules/rules_jvm_external/6.6/MODULE.bazel": "153042249c7060536dc95b6bb9f9bb8063b8a0b0cb7acdb381bddbc2374aed55",
     "https://bcr.bazel.build/modules/rules_jvm_external/6.7/MODULE.bazel": "e717beabc4d091ecb2c803c2d341b88590e9116b8bf7947915eeb33aab4f96dd",
-    "https://bcr.bazel.build/modules/rules_jvm_external/6.7/source.json": "5426f412d0a7fc6b611643376c7e4a82dec991491b9ce5cb1cfdd25fe2e92be4",
+    "https://bcr.bazel.build/modules/rules_jvm_external/6.9/MODULE.bazel": "07c5db05527db7744a54fcffd653e1550d40e0540207a7f7e6d0a4de5bef8274",
+    "https://bcr.bazel.build/modules/rules_jvm_external/6.9/source.json": "b12970214f3cc144b26610caeb101fa622d910f1ab3d98f0bae1058edbd00bd4",
     "https://bcr.bazel.build/modules/rules_kotlin/1.9.0/MODULE.bazel": "ef85697305025e5a61f395d4eaede272a5393cee479ace6686dba707de804d59",
     "https://bcr.bazel.build/modules/rules_kotlin/1.9.5/MODULE.bazel": "043a16a572f610558ec2030db3ff0c9938574e7dd9f58bded1bb07c0192ef025",
     "https://bcr.bazel.build/modules/rules_kotlin/1.9.6/MODULE.bazel": "d269a01a18ee74d0335450b10f62c9ed81f2321d7958a2934e44272fe82dcef3",
@@ -216,7 +218,8 @@
     "https://bcr.bazel.build/modules/rules_license/1.0.0/source.json": "a52c89e54cc311196e478f8382df91c15f7a2bfdf4c6cd0e2675cc2ff0b56efb",
     "https://bcr.bazel.build/modules/rules_pkg/0.7.0/MODULE.bazel": "df99f03fc7934a4737122518bb87e667e62d780b610910f0447665a7e2be62dc",
     "https://bcr.bazel.build/modules/rules_pkg/1.0.1/MODULE.bazel": "5b1df97dbc29623bccdf2b0dcd0f5cb08e2f2c9050aab1092fd39a41e82686ff",
-    "https://bcr.bazel.build/modules/rules_pkg/1.0.1/source.json": "bd82e5d7b9ce2d31e380dd9f50c111d678c3bdaca190cb76b0e1c71b05e1ba8a",
+    "https://bcr.bazel.build/modules/rules_pkg/1.2.0/MODULE.bazel": "c7db3c2b407e673c7a39e3625dc05dc9f12d6682cbd82a3a5924a13b491eda7e",
+    "https://bcr.bazel.build/modules/rules_pkg/1.2.0/source.json": "9062e00845bf91a4247465d371baa837adf9b6ff44c542f73ba084f07667e1dc",
     "https://bcr.bazel.build/modules/rules_proto/4.0.0/MODULE.bazel": "a7a7b6ce9bee418c1a760b3d84f83a299ad6952f9903c67f19e4edd964894e06",
     "https://bcr.bazel.build/modules/rules_proto/5.3.0-21.7/MODULE.bazel": "e8dff86b0971688790ae75528fe1813f71809b5afd57facb44dad9e8eca631b7",
     "https://bcr.bazel.build/modules/rules_proto/6.0.0-rc1/MODULE.bazel": "1e5b502e2e1a9e825eef74476a5a1ee524a92297085015a052510b09a1a09483",
@@ -490,6 +493,35 @@
           "androidsdk": {
             "repoRuleId": "@@rules_android+//rules/android_sdk_repository:rule.bzl%_android_sdk_repository",
             "attributes": {}
+          }
+        },
+        "recordedRepoMappingEntries": []
+      }
+    },
+    "@@rules_jvm+//:test_bazel_tool.bzl%extension": {
+      "general": {
+        "bzlTransitiveDigest": "qGkIs/3yNSU+RyxsUfa8+9i0jlmnXoYwohYDio9VQt8=",
+        "usagesDigest": "W8DfOeyDZF6L7pySiHBbDCXlAWCUd2mYD/Tnijjo5/o=",
+        "recordedFileInputs": {},
+        "recordedDirentsInputs": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "test_bazel_tool": {
+            "repoRuleId": "@@rules_jvm+//:test_bazel_tool.bzl%_repo",
+            "attributes": {
+              "url_darwin_arm64": "https://github.com/JetBrains/bazel/releases/download/8.4.2-jb_20251027_92/bazel-8.4.2-jb_20251027_92-darwin-arm64",
+              "url_darwin_x86_64": "https://github.com/JetBrains/bazel/releases/download/8.4.2-jb_20251027_92/bazel-8.4.2-jb_20251027_92-darwin-x86_64",
+              "url_linux_arm64": "https://github.com/JetBrains/bazel/releases/download/8.4.2-jb_20251027_92/bazel-8.4.2-jb_20251027_92-linux-arm64",
+              "url_linux_x86_64": "https://github.com/JetBrains/bazel/releases/download/8.4.2-jb_20251027_92/bazel-8.4.2-jb_20251027_92-linux-x86_64",
+              "url_windows_arm64": "https://github.com/JetBrains/bazel/releases/download/8.4.2-jb_20251027_92/bazel-8.4.2-jb_20251027_92-windows-arm64.exe",
+              "url_windows_x86_64": "https://github.com/JetBrains/bazel/releases/download/8.4.2-jb_20251027_92/bazel-8.4.2-jb_20251027_92-windows-x86_64.exe",
+              "sha256_darwin_arm64": "ac07be2a25647be6ecdcf780cd9ebded1048149ebadd7a81087e19f7372da706",
+              "sha256_darwin_x86_64": "681ed55cac703c63a31ae46b94f5dcf283c002ce989ab893d230572b4d913ee7",
+              "sha256_linux_arm64": "06513528cff8eacc8674585463bce6e72dd229c52fe53fd14dc1bdbc83e38977",
+              "sha256_linux_x86_64": "b85195356864e3a6dbaf21ab438e66b6e686229f83e3d4e08ac2fb9b79d57d45",
+              "sha256_windows_arm64": "35857356462fd05ebee367278c3008c3da43300a122cc25d5d246406404de07e",
+              "sha256_windows_x86_64": "3f1922b13c84a6ccb0f2c738bc80e0eb90cefd118fa066109d1d3aaa0d44a828"
+            }
           }
         },
         "recordedRepoMappingEntries": []
