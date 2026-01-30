@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.io.createParentDirectories
+import com.intellij.util.io.delete
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.contains
 import org.hamcrest.Matchers.`is`
@@ -360,7 +361,7 @@ class ScriptWorkspaceModelRepresentationTest : HeavyPlatformTestCase() {
 
     private fun removeScript(fileName: String) {
         val projectBasePath = Files.createDirectories(Path.of(project.basePath ?: error("Project basePath doesn't exist")))
-        val scriptFile = projectBasePath.resolve(fileName).toFile().also { it.delete() }
+        val scriptFile = projectBasePath.resolve(fileName).also { it.delete() }
         VfsUtil.markDirtyAndRefresh(false, false, false, scriptFile)
         ScriptConfigurationManager.getInstance(project).updateScriptDefinitionReferences()
     }

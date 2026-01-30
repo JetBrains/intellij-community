@@ -205,7 +205,7 @@ class JdkUpdateNotification(val jdk: Sdk,
 
         //make sure VFS sees the files and sets up the JDK correctly
         indicator.text = ProjectBundle.message("progress.text.updating.jdk.setting.up")
-        VfsUtil.markDirtyAndRefresh(false, true, true, request.installDir.toFile())
+        VfsUtil.markDirtyAndRefresh(false, true, true, request.installDir)
         request.javaHome
       }
     }

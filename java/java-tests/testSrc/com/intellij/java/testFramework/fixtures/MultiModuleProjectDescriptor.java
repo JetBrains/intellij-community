@@ -104,7 +104,7 @@ public class MultiModuleProjectDescriptor extends DefaultLightProjectDescriptor 
     WriteAction.run(() -> {
       FileUtilRt.deleteRecursively(myProjectPath);
       FileUtil.copyDir(getBeforePath().toFile(), myProjectPath.toFile());
-      VfsUtil.markDirtyAndRefresh(false, true, true, myProjectPath.toFile());
+      VfsUtil.markDirtyAndRefresh(false, true, true, myProjectPath);
       ProjectModel projectModel = new ProjectModel(project, myProjectPath);
       if (myProcess != null) myProcess.accept(projectModel);
       myLanguageLevel = projectModel.getLanguageLevel();

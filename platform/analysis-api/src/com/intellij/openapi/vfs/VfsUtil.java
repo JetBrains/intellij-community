@@ -503,6 +503,15 @@ public final class VfsUtil extends VfsUtilCore {
     markDirtyAndRefresh(async, recursive, reloadChildren, virtualFiles);
   }
 
+  /**
+   * @see #markDirtyAndRefresh(boolean, boolean, boolean, VirtualFile...)
+   */
+  public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, Path @NotNull ... paths) {
+    var fileSystem = LocalFileSystem.getInstance();
+    var virtualFiles = ContainerUtil.map(paths, fileSystem::refreshAndFindFileByNioFile, VirtualFile.EMPTY_ARRAY);
+    markDirtyAndRefresh(async, recursive, reloadChildren, virtualFiles);
+  }
+
   public static @NotNull VirtualFile getLocalFile(@NotNull VirtualFile file) {
     if (file.isValid() && file.getFileSystem() instanceof ArchiveFileSystem afs) {
       var localFile = afs.getLocalByEntry(file);

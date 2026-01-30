@@ -40,7 +40,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -366,7 +366,7 @@ public final class SdkDownloadTracker {
             }
 
             // make sure VFS has the right image of our SDK to avoid empty SDK from being created
-            VfsUtil.markDirtyAndRefresh(false, true, true, new File(myTask.getPlannedHomeDir()));
+            VfsUtil.markDirtyAndRefresh(false, true, true, Path.of(myTask.getPlannedHomeDir()));
 
             //update the pending SDKs
             onSdkDownloadCompletedSuccessfully();
