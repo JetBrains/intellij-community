@@ -61,9 +61,9 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
     get() = _vmProxy.get()
 
   @ApiStatus.Internal
-  fun setVmProxy(proxy: VirtualMachineProxyImpl) {
+  fun setVmProxy(proxy: VirtualMachineProxyImpl?) {
     val current = vmProxy
-    if (current != null && current.virtualMachine !== proxy.virtualMachine) {
+    if (current != null && proxy != null && current.virtualMachine !== proxy.virtualMachine) {
       LOG.error("VM proxy changed from $current to $proxy")
     }
     _vmProxy = WeakReference(proxy)

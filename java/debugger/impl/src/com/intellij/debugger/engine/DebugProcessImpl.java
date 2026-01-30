@@ -1065,6 +1065,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
         catch (Throwable ignored) {
         }
+        finally {
+          DebuggerManagerThreadImpl.getCurrentThread().setVmProxy(null);
+        }
       }
 
       var attachedNewThread = unstashAndReattach();
