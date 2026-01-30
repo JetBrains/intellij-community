@@ -381,6 +381,20 @@ class ServiceContainerTest {
     assertEquals("IfcServiceImpl2", ref1.greet(), "Old reference should redirect calls to new instance")
   }
 
+  @Test
+  fun `test not allowlisted services are not proxied`() {
+    val componentManager = TestComponentManager()
+    componentManager.useProxiesForOpenServices = true
+
+    val pluginDescriptor1 = IdeaPluginDescriptorForServiceRegistration("testPlugin1")
+    componentManager.registerService(serviceDescriptor(IfcServiceNotAllowed::class.java, IfcServiceNotAllowedImpl::class.java, open = true),
+                                     pluginDescriptor1)
+    val ref1 = componentManager.getService(IfcServiceNotAllowed::class.java)!!
+    assertEquals(IfcServiceNotAllowedImpl::class.java.name,
+                 ref1.javaClass.name,
+                 "Should be the service class, not a proxy class (because the service interface is not in the `proxied-services.list`).")
+  }
+
   private class IdeaPluginDescriptorForServiceRegistration(
     val pluginId: String,
     private val bundled: Boolean = false,
@@ -429,6 +443,14 @@ private class SimpleService
 
 internal interface IfcService {
   fun greet(): String
+}
+
+internal interface IfcServiceNotAllowed {
+  fun greet(): String
+}
+
+private class IfcServiceNotAllowedImpl : IfcServiceNotAllowed {
+  override fun greet(): String = "IfcServiceNotAllowedImpl"
 }
 
 private class IfcServiceImpl1 : IfcService {
