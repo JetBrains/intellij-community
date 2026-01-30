@@ -78,12 +78,6 @@
                  restartRequired="true"/>
   </extensions>
 
-  <extensions defaultExtensionNs="org.jetbrains.uast">
-    <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.kotlin.analysis.KotlinUastAnalysisPlugin"/>
-    <evaluation.uastEvaluatorExtension implementation="org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension"/>
-    <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.kotlin.generate.KotlinUastCodeGenerationPlugin"/>
-  </extensions>
-
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <scriptAdditionalIdeaDependenciesProvider
             implementation="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchAdditionalIdeaDependenciesProvider"/>

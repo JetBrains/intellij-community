@@ -126,4 +126,9 @@
     <module name="kotlin.base.scripting.k1"/>
     <module name="intellij.kotlin.base.scripting.shared"/>
   </content>
+  <extensions defaultExtensionNs="org.jetbrains.uast">
+    <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.kotlin.analysis.KotlinUastAnalysisPlugin"/>
+    <evaluation.uastEvaluatorExtension implementation="org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension"/>
+    <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.kotlin.generate.KotlinUastCodeGenerationPlugin"/>
+  </extensions>
 </idea-plugin>
