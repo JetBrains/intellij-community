@@ -18,12 +18,12 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.analysis-api-impl-base" level="project" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.common.tests" scope="TEST" />
   </component>
 </module>
