@@ -16,6 +16,13 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     val kotlincArtifactsMode: ArtifactMode by MandatoryPreference(ArtifactMode::valueOf)
 
     /**
+     * YouTrack ticket for performing kt-master/master merge
+     *
+     * https://youtrack.jetbrains.com/articles/KTIJ-A-40/kt-master-merge-process
+     */
+    val ticket: String? by OptionalPreference
+
+    /**
      * The new version of the compiler to be used in the project.
      *
      * @see ApplicationMode.ADVANCE_COMPILER_VERSION

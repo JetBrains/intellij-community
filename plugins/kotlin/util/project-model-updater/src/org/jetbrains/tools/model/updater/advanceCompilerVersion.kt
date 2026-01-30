@@ -6,6 +6,16 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 internal fun advanceCompilerVersion(preferences: GeneratorPreferences) {
+    val ticket = preferences.ticket ?: run {
+        println("No '${GeneratorPreferences::ticket.name}' preference is provided; entering interactive mode...")
+        print("Enter YouTrack ticket: ")
+        readln()
+    }
+
+    if (!ticket.matches(Regex("KTIJ-\\d+"))) {
+        exitWithErrorMessage("Mandatory YouTrack ticket is not a valid KTIJ-xxxx ticket")
+    }
+
     val newVersion = preferences.newKotlincVersion ?: run {
         println("No '${GeneratorPreferences::newKotlincVersion.name}' preference is provided; entering interactive mode...")
         print("Enter a new version: ")
@@ -41,7 +51,7 @@ internal fun advanceCompilerVersion(preferences: GeneratorPreferences) {
             preferences::kotlincArtifactsMode.modify(GeneratorPreferences.ArtifactMode.MAVEN),
             preferences::kotlincVersion.modify(newVersion),
         ),
-        commitTitle = "[kotlin] advance kotlinc version for analyzer to $newVersion",
+        commitTitle = "[kotlin] $ticket advance kotlinc version for analyzer to $newVersion",
         commitDescription = changesDescription,
     )
 }
