@@ -60,7 +60,9 @@ internal class AsyncRendering(
    * Schedule rendering for the lookup element.
    * The new value will overwrite the previously cached presentation.
    */
-  fun scheduleRendering(element: LookupElement, renderer: LookupElementRenderer<LookupElement>) {
+  fun scheduleRendering(element: LookupElement) {
+    val renderer = element.expensiveRendererImpl ?: return
+
     synchronized(LAST_COMPUTATION) {
       cancelRendering(element)
 
@@ -117,6 +119,10 @@ internal class AsyncRendering(
     renderingCallback()
   }
 }
+
+@Suppress("UNCHECKED_CAST")
+private val LookupElement.expensiveRendererImpl: LookupElementRenderer<LookupElement>?
+  get() = this.expensiveRenderer as? LookupElementRenderer<LookupElement>
 
 private val LAST_COMPUTED_PRESENTATION = Key.create<LookupElementPresentation>("LAST_COMPUTED_PRESENTATION")
 private val LAST_COMPUTATION = Key.create<Job>("LAST_COMPUTATION")

@@ -6,7 +6,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupElementPresentation.DecoratedTextRange
 import com.intellij.codeInsight.lookup.LookupElementPresentation.LookupItemDecoration
-import com.intellij.codeInsight.lookup.LookupElementRenderer
 import com.intellij.codeInsight.lookup.LookupFocusDegree
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.MATCHED_FOREGROUND_COLOR
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.bodyInsets
@@ -613,11 +612,8 @@ class LookupCellRenderer(
   }
 
   fun updateItemPresentation(element: LookupElement) {
-    element.expensiveRenderer?.let {
-      if (element.replace(SCHEDULED_FOR_RENDERING, null, true)) {
-        @Suppress("UNCHECKED_CAST")
-        asyncRendering.scheduleRendering(element = element, renderer = it as LookupElementRenderer<LookupElement>)
-      }
+    if (element.expensiveRenderer != null && element.replace(SCHEDULED_FOR_RENDERING, null, true)) {
+      asyncRendering.scheduleRendering(element)
     }
   }
 
