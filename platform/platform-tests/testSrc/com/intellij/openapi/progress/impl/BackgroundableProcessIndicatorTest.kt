@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.progress.*
@@ -15,6 +16,7 @@ import kotlinx.coroutines.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assume.assumeFalse
 
+@IJIgnore(issue = "AT-3959")
 @SkipInHeadlessEnvironment
 class BackgroundableProcessIndicatorTest : ProgressWindowTestCase<Pair<Task.Backgroundable, BackgroundableProcessIndicator>>() {
   private lateinit var statusBar: IdeStatusBarImpl

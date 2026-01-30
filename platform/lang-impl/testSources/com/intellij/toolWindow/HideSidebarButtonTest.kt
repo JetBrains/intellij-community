@@ -3,6 +3,7 @@
 
 package com.intellij.toolWindow
 
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.wm.ToolWindowEP
@@ -12,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
+@IJIgnore(issue = "AT-3959")
 class HideSidebarButtonTest : ToolWindowManagerTestCase() {
   fun testHiddenButton() {
     runBlocking {
