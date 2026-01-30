@@ -2,13 +2,13 @@
 @file:ApiStatus.Internal
 package com.intellij.openapi.wm.impl
 
-import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -16,6 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Cache state for quick application start-up
  */
+@ApiStatus.Internal
 @State(name = "WindowButtonsConfiguration", storages = [Storage(StoragePathMacros.CACHE_FILE)])
 class WindowButtonsConfiguration(private val scope: CoroutineScope) : PersistentStateComponent<WindowButtonsConfiguration.State?> {
   enum class WindowButton {
@@ -33,7 +34,7 @@ class WindowButtonsConfiguration(private val scope: CoroutineScope) : Persistent
   }
 
   private var mutableStateFlow = MutableStateFlow<State?>(null)
-  val stateFlow = mutableStateFlow.asStateFlow()
+  val stateFlow: StateFlow<State?> = mutableStateFlow.asStateFlow()
 
   override fun getState(): State? {
     return mutableStateFlow.value
@@ -48,18 +49,17 @@ class WindowButtonsConfiguration(private val scope: CoroutineScope) : Persistent
     scheduleUpdateFromOs()
   }
 
-  fun scheduleUpdateFromOs() {
+  fun scheduleUpdateFromOs(customConfig: String? = null) {
     scope.launch {
-      loadStateFromOs()
+      loadStateFromOs(customConfig)
     }
   }
 
-  private fun loadStateFromOs() {
+  private fun loadStateFromOs(customConfig: String?) {
     var windowButtonsState: State? = null
 
     if (isSupported()) {
-      val customConfig = if (LoadingState.COMPONENTS_LOADED.isOccurred) Registry.stringValue("ide.linux.window.buttons.config") else ""
-      val config = customConfig.ifBlank { X11UiUtil.getWindowButtonsConfig() }
+      val config = if (customConfig.isNullOrBlank()) X11UiUtil.getWindowButtonsConfig() else customConfig
       if (config != null) {
         windowButtonsState = parseFromString(config)
       }
@@ -113,6 +113,6 @@ private fun stringsToWindowButtons(strings: List<String>): List<WindowButtonsCon
 internal class WindowButtonsAppLifecycleListener : AppLifecycleListener {
 
   override fun appStarted() {
-    WindowButtonsConfiguration.getInstance()?.scheduleUpdateFromOs()
+    WindowButtonsConfiguration.getInstance()?.scheduleUpdateFromOs(Registry.stringValue("ide.linux.window.buttons.config"))
   }
 }
