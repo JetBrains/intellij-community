@@ -71,7 +71,7 @@ enum class MessageType(val value: Int) {
 /**
  * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#window_logMessage">window/logMessage (LSP spec)</a>
  */
-val LogMessageNotification: NotificationType<LogMessageParams> = NotificationType(
+val LogMessageNotificationType: NotificationType<LogMessageParams> = NotificationType(
   method = "window/logMessage",
   paramsSerializer = LogMessageParams.serializer(),
 )
@@ -79,7 +79,7 @@ val LogMessageNotification: NotificationType<LogMessageParams> = NotificationTyp
 /**
  * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#window_showMessage">window/showMessage (LSP spec)</a>
  */
-val ShowMessageNotification: NotificationType<ShowMessageParams> = NotificationType(
+val ShowMessageNotificationType: NotificationType<ShowMessageParams> = NotificationType(
   method = "window/showMessage",
   paramsSerializer = ShowMessageParams.serializer(),
 )
