@@ -684,13 +684,12 @@ object PluginManagerCore {
     }
 
     pluginsState.addPluginNonLoadReasons(pluginNonLoadReasons.filter { it.value !is PluginIsMarkedDisabled })
-    val errorList = preparePluginErrors(
+    pluginsState.addPluginLoadingErrors(preparePluginErrors(
       pluginNonLoadReasons = pluginNonLoadReasons,
       descriptorLoadingErrors = descriptorLoadingErrors,
       duplicateModuleMap = duplicateModuleMap ?: emptyMap(),
       cycleErrors = cycleErrors
-    )
-    pluginsState.addPluginLoadingErrors(errorList)
+    ))
 
     if (initContext.checkEssentialPlugins) {
       checkEssentialPluginsAreAvailable(idMap, initContext.essentialPlugins, pluginNonLoadReasons)
