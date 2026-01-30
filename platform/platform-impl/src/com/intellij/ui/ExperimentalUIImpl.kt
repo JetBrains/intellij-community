@@ -24,6 +24,7 @@ import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
+import com.intellij.util.PlatformUtils
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG: Logger
@@ -166,7 +167,9 @@ private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
       ExperimentalUI.switchedFromClassicToIslandsInSession = false
 
       val settings = UISettings.getInstance()
-      settings.mainMenuDisplayMode = MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR
+      if (!PlatformUtils.isDataGrip()) {
+        settings.mainMenuDisplayMode = MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR
+      }
       settings.compactMode = true
     }
   }
