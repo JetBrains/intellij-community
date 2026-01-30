@@ -114,6 +114,7 @@ abstract class OptInGeneralUtilsBase {
         var statementElement: KtElement = element
         while (statementElement.parent !is KtBlockExpression && statementElement.parent !is KtClassBody) statementElement =
             statementElement.parent as? KtElement ?: return null
+        if (statementElement is KtDestructuringDeclaration) return null
         return CandidateData(statementElement, AddAnnotationFix.Kind.Self)
     }
 }
