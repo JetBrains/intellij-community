@@ -7,6 +7,7 @@ import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.common.*
+import com.intellij.testFramework.common.BazelTestUtil
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
@@ -42,6 +43,14 @@ private class TestApplicationResource(val initializationResult: Result<Unit>) : 
   override fun close() {
     check(!EDT.isCurrentThreadEdt())
     if (!initializationResult.isSuccess) {
+      return
+    }
+
+    // In Bazel test environment, don't dispose the application.
+    // The JVM will terminate after all tests complete anyway, and
+    // disposing here would break JUnit 4 tests that run after JUnit 5 tests.
+    // See BAZEL-2843 for details.
+    if (BazelTestUtil.isUnderBazelTest) {
       return
     }
 
