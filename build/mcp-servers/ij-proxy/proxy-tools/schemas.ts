@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import type {ToolInputSchema} from './types'
+import type {SearchCapabilities, ToolInputSchema} from './types'
 
 type JsonSchemaProperty = Record<string, unknown>
 
@@ -11,6 +11,18 @@ function objectSchema(properties: Record<string, JsonSchemaProperty>, required?:
     required: required && required.length > 0 ? required : undefined,
     additionalProperties: false
   }
+}
+
+function enumSchema(values: string[], description: string): JsonSchemaProperty {
+  const unique = Array.from(new Set(values)).filter((value) => value)
+  const schema: JsonSchemaProperty = {
+    type: 'string',
+    description
+  }
+  if (unique.length > 0) {
+    schema.enum = unique
+  }
+  return schema
 }
 
 export function createReadSchema(includeIndentation: boolean): ToolInputSchema {
@@ -104,65 +116,6 @@ export function createEditSchema(): ToolInputSchema {
   )
 }
 
-export function createGlobSchema(): ToolInputSchema {
-  return objectSchema(
-    {
-      pattern: {
-        type: 'string',
-        description: 'Glob pattern to match.'
-      },
-      path: {
-        type: 'string',
-        description: 'Optional base directory (absolute or project-relative).'
-      }
-    },
-    ['pattern']
-  )
-}
-
-export function createGrepSchemaCodex(): ToolInputSchema {
-  return objectSchema(
-    {
-      pattern: {
-        type: 'string',
-        description: 'Regular expression pattern to search for.'
-      },
-      path: {
-        type: 'string',
-        description: 'Directory or file path to search. Defaults to the session working directory.'
-      },
-      include: {
-        type: 'string',
-        description: 'Optional glob that limits which files are searched.'
-      },
-      glob: {
-        type: 'string',
-        description: 'Optional glob filter for matched files.'
-      },
-      type: {
-        type: 'string',
-        description: 'Optional file extension filter (for example, "ts" for TypeScript files).'
-      },
-      output_mode: {
-        type: 'string',
-        description: 'Output mode: "files_with_matches", "content", or "count".'
-      },
-      '-i': {
-        type: 'boolean',
-        description: 'Case-insensitive search.'
-      },
-      '-n': {
-        type: 'boolean',
-        description: 'Include line numbers in output when in content mode.'
-      },
-      limit: {
-        type: 'number',
-        description: 'Maximum number of results to return.'
-      }
-    },
-    ['pattern']
-  )
-}
 
 export function createListDirSchema(): ToolInputSchema {
   return objectSchema(
@@ -188,32 +141,55 @@ export function createListDirSchema(): ToolInputSchema {
   )
 }
 
-export function createFindSchema(): ToolInputSchema {
-  return objectSchema(
-    {
-      pattern: {
-        type: 'string',
-        description: 'Filename substring or glob pattern to search for.'
-      },
-      path: {
-        type: 'string',
-        description: 'Optional base directory (absolute or project-relative).'
-      },
-      limit: {
-        type: 'number',
-        description: 'Maximum number of file paths to return.'
-      },
-      mode: {
-        type: 'string',
-        description: 'Optional mode: "auto" (default), "glob", or "name".'
-      },
-      add_excluded: {
-        type: 'boolean',
-        description: 'Whether to include excluded/ignored files when using glob mode.'
-      }
+export function createSearchSchema(capabilities: SearchCapabilities): ToolInputSchema {
+  const targetValues = ['auto']
+  if (capabilities.supportsSymbol) targetValues.push('symbol')
+  if (capabilities.supportsFile) targetValues.push('file')
+  if (capabilities.supportsText) targetValues.push('text')
+
+  const queryTypes = ['text']
+  if (capabilities.supportsRegex) queryTypes.push('regex')
+  if (capabilities.supportsFileGlob) queryTypes.push('glob')
+
+  const properties: Record<string, JsonSchemaProperty> = {
+    query: {
+      type: 'string',
+      description: 'Search query text.'
     },
-    ['pattern']
-  )
+    target: enumSchema(
+      targetValues,
+      'Search target: "auto" (default), "symbol", "file", or "text".'
+    ),
+    path: {
+      type: 'string',
+      description: 'Optional base directory (absolute or project-relative).'
+    },
+    file_mask: {
+      type: 'string',
+      description: 'Optional filename mask (e.g. "*.kt") for text searches.'
+    },
+    case_sensitive: {
+      type: 'boolean',
+      description: 'Case-sensitive text search (default: true).'
+    },
+    max_results: {
+      type: 'number',
+      description: 'Maximum number of results to return.'
+    },
+    output: enumSchema(
+      ['entries', 'files'],
+      'Output mode: "entries" (default for text/symbol) or "files" (default for file searches).'
+    )
+  }
+
+  if (queryTypes.length > 1) {
+    properties.query_type = enumSchema(
+      queryTypes,
+      'Query type: "text" (default), "regex" (text searches), or "glob" (file searches).'
+    )
+  }
+
+  return objectSchema(properties, ['query'])
 }
 
 export function createApplyPatchSchema(): ToolInputSchema {

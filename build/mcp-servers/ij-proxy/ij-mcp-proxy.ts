@@ -14,9 +14,9 @@ import {clearLogFile, logProgress, logToFile} from '../shared/mcp-rpc.mjs'
 import {createProjectPathManager} from './project-path'
 import {createStreamTransport} from './stream-transport'
 import {setIdeVersion} from './workarounds'
-import {BLOCKED_TOOL_NAMES, getReplacedToolNames, getSearchToolBlockedNames, SEARCH_TOOL_MODES} from './proxy-tools/registry'
+import {BLOCKED_TOOL_NAMES, getReplacedToolNames} from './proxy-tools/registry'
 import type {SearchToolModeInfo, ToolModeInfo} from './proxy-tools/tooling'
-import {createProxyTooling, resolveSearchToolMode, resolveToolMode, TOOL_MODES} from './proxy-tools/tooling'
+import {createProxyTooling, resolveSearchCapabilities, resolveSearchToolMode, resolveToolMode, TOOL_MODES} from './proxy-tools/tooling'
 import {extractTextFromResult} from './proxy-tools/shared'
 import type {ToolArgs, ToolResultLike, ToolSpecLike} from './proxy-tools/types'
 
@@ -85,50 +85,50 @@ const projectPathManager = createProjectPathManager({projectPath, defaultProject
 const toolModeInfo: ToolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE)
 const REPLACED_TOOL_NAMES = getReplacedToolNames()
 const BASE_BLOCKED_TOOL_NAMES = new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES])
+const searchToolModeInfo: SearchToolModeInfo = resolveSearchToolMode(env.JETBRAINS_MCP_SEARCH_TOOL)
 
-let cachedSearchToolModeInfo: SearchToolModeInfo | null = null
-
-function resolveSearchToolModeInfo(): SearchToolModeInfo {
-  if (cachedSearchToolModeInfo) return cachedSearchToolModeInfo
-  const resolved = resolveSearchToolMode(env.JETBRAINS_MCP_SEARCH_TOOL)
-  cachedSearchToolModeInfo = resolved
-  if (resolved.warning) {
-    warn(resolved.warning)
-  }
-  return resolved
+if (searchToolModeInfo.warning) {
+  warn(searchToolModeInfo.warning)
 }
 
+let searchCapabilities = resolveSearchCapabilities(searchToolModeInfo, []).capabilities
+
 function buildBlockedToolNames(): Set<string> {
-  const blocked = new Set(BASE_BLOCKED_TOOL_NAMES)
-  const searchToolModeInfo = resolveSearchToolModeInfo()
-  for (const name of getSearchToolBlockedNames(searchToolModeInfo.mode)) {
-    blocked.add(name)
-  }
-  return blocked
+  return new Set(BASE_BLOCKED_TOOL_NAMES)
 }
 
 function blockedToolMessage(toolName: string): string {
-  const searchToolModeInfo = resolveSearchToolModeInfo()
   if (toolName === 'create_new_file') {
     if (toolModeInfo.mode === TOOL_MODES.CC) {
       return `Tool '${toolName}' is not exposed by ij-proxy. Use 'write' instead.`
     }
     return `Tool '${toolName}' is not exposed by ij-proxy. Use 'apply_patch' instead.`
   }
-  if (toolName === 'grep' && searchToolModeInfo.mode === SEARCH_TOOL_MODES.SEARCH) {
+  if (toolName === 'grep' || toolName === 'find' || toolName === 'glob') {
     return `Tool '${toolName}' is not exposed by ij-proxy. Use 'search' instead.`
-  }
-  if (toolName === 'search' && searchToolModeInfo.mode === SEARCH_TOOL_MODES.GREP) {
-    return `Tool '${toolName}' is not exposed by ij-proxy. Use 'grep' instead.`
   }
   return `Tool '${toolName}' is not exposed by ij-proxy.`
 }
 
-const {proxyToolSpecs, proxyToolNames, runProxyToolCall} = createProxyTooling({
-  projectPath,
-  callUpstreamTool,
-  toolMode: toolModeInfo.mode
-})
+let proxyToolSpecs: ToolSpecLike[] = []
+let proxyToolNames: Set<string> = new Set()
+let runProxyToolCall: (toolName: string, args: ToolArgs) => Promise<unknown> = async () => {
+  throw new Error('Proxy tooling not initialized')
+}
+
+function updateProxyTooling(): void {
+  const tooling = createProxyTooling({
+    projectPath,
+    callUpstreamTool,
+    toolMode: toolModeInfo.mode,
+    searchCapabilities
+  })
+  proxyToolSpecs = tooling.proxyToolSpecs
+  proxyToolNames = tooling.proxyToolNames
+  runProxyToolCall = tooling.runProxyToolCall
+}
+
+updateProxyTooling()
 
 function note(message: string): void {
   logToFile(message)
@@ -291,6 +291,12 @@ async function refreshUpstreamTools(): Promise<ToolSpecLike[]> {
   projectPathManager.updateProjectPathKeys(tools)
   projectPathManager.stripProjectPathFromTools(tools)
   upstreamTools = tools
+  const resolvedCapabilities = resolveSearchCapabilities(searchToolModeInfo, tools)
+  if (resolvedCapabilities.warning) {
+    warn(resolvedCapabilities.warning)
+  }
+  searchCapabilities = resolvedCapabilities.capabilities
+  updateProxyTooling()
   return tools
 }
 

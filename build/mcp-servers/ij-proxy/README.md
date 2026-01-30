@@ -48,8 +48,8 @@ Environment variables (optional):
 - `JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S`: timeout for upstream tool calls waiting to be sent while the stream is unavailable (seconds). Defaults to the tool-call timeout when set; use `0` to disable.
 - `JETBRAINS_MCP_PROJECT_PATH`: override the injected project path (defaults to `process.cwd()`, relative paths resolve from the current working directory).
 - `MCP_LOG`: path to a log file for proxy progress (cleared on startup).
-- `JETBRAINS_MCP_TOOL_MODE`: tool API shape to expose. `codex` (default) uses `read_file`, `grep`, `find`, `list_dir`, `apply_patch`. `cc` uses `read`, `edit`, `write`, `glob`, `grep`.
-- `JETBRAINS_MCP_SEARCH_TOOL`: which search tool to expose. `grep` (default) hides upstream `search` and exposes the proxy `grep`. `search` hides proxy `grep` and exposes upstream `search` instead.
+- `JETBRAINS_MCP_TOOL_MODE`: tool API shape to expose. `codex` (default) uses `read_file`, `search`, `list_dir`, `apply_patch`, `rename`. `cc` uses `read`, `write`, `edit`, `search`, `rename`.
+- `JETBRAINS_MCP_SEARCH_TOOL`: search capability mode. `auto` (default) uses upstream Search Everywhere when available; otherwise falls back to legacy text/file search. `search` forces Search Everywhere features when available (falls back to legacy with a warning). `legacy` (or `grep`/`false`/`0`) disables Search Everywhere features and exposes only text/file search capabilities.
 - `JETBRAINS_MCP_PROXY_DISABLE_WORKAROUNDS`: disable all version-gated workarounds (set to any non-empty value except `0` or `false`).
 - `JETBRAINS_MCP_PROXY_DISABLE_WORKAROUND_KEYS`: comma-separated list of workaround keys to disable (see `workarounds.ts`).
 - `JETBRAINS_MCP_PROXY_WORKAROUND_DEBUG`: emit debug logs when workarounds are skipped or disabled (set to any non-empty value except `0` or `false`).
@@ -58,14 +58,14 @@ Environment variables (optional):
 
 The proxy is not a pure pass-through: it always exposes a mode-specific proxy tool set, filters out blocked tools (for example `create_new_file` and `execute_terminal_command`), hides upstream tools that are replaced by proxy tools, and keeps the remaining upstream tools whose names do not collide with proxy tools.
 
-| Mode  | Proxy tools (always exposed)                           | Upstream tools also exposed                                                   |
-|-------|--------------------------------------------------------|-------------------------------------------------------------------------------|
-| codex | `read_file`, `grep`, `find`, `list_dir`, `apply_patch` | All upstream tools except blocked names, replaced tools, and name collisions. |
-| cc    | `read`, `write`, `edit`, `glob`, `grep`                | All upstream tools except blocked names, replaced tools, and name collisions. |
+| Mode  | Proxy tools (always exposed)                                      | Upstream tools also exposed                                                   |
+|-------|-------------------------------------------------------------------|-------------------------------------------------------------------------------|
+| codex | `read_file`, `search`, `list_dir`, `apply_patch`, `rename`        | All upstream tools except blocked names, replaced tools, and name collisions. |
+| cc    | `read`, `write`, `edit`, `search`, `rename`                       | All upstream tools except blocked names, replaced tools, and name collisions. |
 
 Notes:
 - Upstream JetBrains file tools that are replaced by proxy tools (for example `get_file_text_by_path`, `replace_text_in_file`, `find_files_by_name_keyword`, `find_files_by_glob`, `search_in_files_*`, `list_directory_tree`) are hidden.
-- Upstream `search` is hidden unless `JETBRAINS_MCP_SEARCH_TOOL=search`.
+- Upstream `search` is wrapped by the proxy `search` tool.
 - Use `apply_patch` (codex) or `write` (cc) to create files.
 
 ## Custom tool commands (name + behavior mapping)
@@ -79,23 +79,21 @@ Each proxy command maps to one or more JetBrains MCP tools:
 
 ### codex mode
 
-| Proxy command | Why this name                                                                                                       | JetBrains MCP under the hood                                                        |
-|---------------|---------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|
-| `read_file`   | Matches Codex `read_file` (line-numbered output + indentation mode).                                                | `get_file_text_by_path`                                                             |
-| `grep`        | Codex-style content search. The closest Codex upstream tool is `grep_files`; we expose `grep` with Codex-like args. | `search_in_files_by_regex` (plus `find_files_by_glob` when probing file paths)      |
-| `find`        | Convenience file-discovery command used by Codex flows (not present in Codex upstream).                             | `find_files_by_glob` or `find_files_by_name_keyword`                                |
-| `list_dir`    | Matches Codex `list_dir`.                                                                                           | `list_directory_tree`                                                               |
-| `apply_patch` | Matches Codex `apply_patch`.                                                                                        | `get_file_text_by_path` + `create_new_file`; uses `git rm`/`git mv` for delete/move |
+| Proxy command | Why this name                                                        | JetBrains MCP under the hood                                                        |
+|---------------|----------------------------------------------------------------------|-------------------------------------------------------------------------------------|
+| `read_file`   | Matches Codex `read_file` (line-numbered output + indentation mode). | `get_file_text_by_path`                                                             |
+| `search`      | Unified search for symbols (when available), files, or text.         | `search` (if available), `search_in_files_*`, `find_files_by_*`                     |
+| `list_dir`    | Matches Codex `list_dir`.                                            | `list_directory_tree`                                                               |
+| `apply_patch` | Matches Codex `apply_patch`.                                         | `get_file_text_by_path` + `create_new_file`; uses `git rm`/`git mv` for delete/move |
 
 ### cc mode
 
-| Proxy command | Why this name                          | JetBrains MCP under the hood                |
-|---------------|----------------------------------------|---------------------------------------------|
-| `read`        | Matches Claude Code `read` (raw text). | `get_file_text_by_path`                     |
-| `write`       | Matches Claude Code `write`.           | `create_new_file` (overwrite)               |
-| `edit`        | Matches Claude Code `edit`.            | `get_file_text_by_path` + `create_new_file` |
-| `glob`        | Matches Claude Code `glob`.            | `find_files_by_glob`                        |
-| `grep`        | Matches Claude Code `grep`.            | `search_in_files_by_regex`                  |
+| Proxy command | Why this name                               | JetBrains MCP under the hood                                    |
+|---------------|---------------------------------------------|-----------------------------------------------------------------|
+| `read`        | Matches Claude Code `read` (raw text).      | `get_file_text_by_path`                                         |
+| `write`       | Matches Claude Code `write`.                | `create_new_file` (overwrite)                                   |
+| `edit`        | Matches Claude Code `edit`.                 | `get_file_text_by_path` + `create_new_file`                     |
+| `search`      | Unified search for symbols (when available), files, or text. | `search` (if available), `search_in_files_*`, `find_files_by_*` |
 
 Example `.mcp.toml` entry (Codex):
 

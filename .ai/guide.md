@@ -47,16 +47,14 @@ Preserve IDE-serialized .iml files in canonical form. Do not:
 <!-- IF_TOOL:CODEX -->
 - Read: `mcp__ijproxy__read_file`
 - Edit/Write: `mcp__ijproxy__apply_patch`
-- Find files: `mcp__ijproxy__find`
-- Search: `mcp__ijproxy__grep`
+- Search: `mcp__ijproxy__search` (use `providers=["files"]` for filenames; `mode=lexical` + `providers=["text"]` for contents; `providers=["symbols"]`/`["classes"]` for symbols)
 - List dir: `mcp__ijproxy__list_dir`
 <!-- /IF_TOOL:CODEX -->
 <!-- IF_TOOL:CLAUDE -->
 - Read: `read`
 - Edit: `edit`
 - Write: `write`
-- Find files: `glob`
-- Search: `grep`
+- Search: `search` (use `providers=["files"]` for filenames; `mode=lexical` + `providers=["text"]` for contents; `providers=["symbols"]`/`["classes"]` for symbols)
 - List dir: `list_dir`
 <!-- /IF_TOOL:CLAUDE -->
 

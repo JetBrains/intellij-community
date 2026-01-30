@@ -1,36 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import path from 'node:path'
-import {fileURLToPath} from 'node:url'
 import {expect, test} from 'bun:test'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {StreamableHTTPClientTransport} from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import {extractEntries} from '../proxy-tools/shared'
 import {setIdeVersion, shouldApplyWorkaround, WorkaroundKey} from '../workarounds'
-
-const streamUrl = process.env.JETBRAINS_MCP_STREAM_URL
-  ?? process.env.MCP_STREAM_URL
-  ?? process.env.JETBRAINS_MCP_URL
-  ?? process.env.MCP_URL
+import {dirAAbs, dirARel, dirBAbs, isUnder, projectRoot, REGEX_SCOPE_PATTERN, streamUrl, toAbsolute} from './jb-mcp-test-utils'
 
 const maybeTest = streamUrl ? test : test.skip
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const projectRoot = path.resolve(__dirname, '../../../../..')
-const dataRoot = path.join(__dirname, 'test-data', 'regex-scope')
-const dirAAbs = path.join(dataRoot, 'dir-a')
-const dirBAbs = path.join(dataRoot, 'dir-b')
-const dirARel = path.relative(projectRoot, dirAAbs)
-const PATTERN = 'ij-proxy-regex-scope-test'
-
-function toAbsolute(filePath: string): string {
-  return path.isAbsolute(filePath) ? path.normalize(filePath) : path.resolve(projectRoot, filePath)
-}
-
-function isUnder(baseDir: string, candidatePath: string): boolean {
-  const relative = path.relative(baseDir, candidatePath)
-  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative))
-}
 
 maybeTest('jb mcp search_in_files_by_regex respects directoryToSearch', async () => {
   if (!streamUrl) return
@@ -54,7 +32,7 @@ maybeTest('jb mcp search_in_files_by_regex respects directoryToSearch', async ()
     const result = await client.callTool({
       name: 'search_in_files_by_regex',
       arguments: {
-        regexPattern: PATTERN,
+        regexPattern: REGEX_SCOPE_PATTERN,
         directoryToSearch: dirARel,
         fileMask: '*.txt',
         caseSensitive: true,

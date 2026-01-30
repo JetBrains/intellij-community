@@ -45,25 +45,36 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
     })
   })
 
-  it('hides search tool by default', async () => {
+  it('exposes unified search tool and hides legacy search tools', async () => {
     await withProxy({tools: upstreamToolsWithSearch}, async ({proxyClient}) => {
-      const listResponse = await proxyClient.send('tools/list')
-      const names = listResponse.result.tools.map((tool) => tool.name)
-
-      ok(!names.includes('search'))
-    })
-  })
-
-  it('exposes search tool and hides grep when search mode is enabled', async () => {
-    await withProxy({
-      tools: upstreamToolsWithSearch,
-      proxyEnv: {JETBRAINS_MCP_SEARCH_TOOL: 'search'}
-    }, async ({proxyClient}) => {
       const listResponse = await proxyClient.send('tools/list')
       const names = listResponse.result.tools.map((tool) => tool.name)
 
       ok(names.includes('search'))
       ok(!names.includes('grep'))
+      ok(!names.includes('find'))
+    })
+  })
+
+  it('removes symbol target when upstream search is unavailable', async () => {
+    await withProxy({}, async ({proxyClient}) => {
+      const listResponse = await proxyClient.send('tools/list')
+      const searchTool = listResponse.result.tools.find((tool) => tool.name === 'search')
+      ok(searchTool)
+      const targetSchema = searchTool.inputSchema?.properties?.target
+      const enumValues = Array.isArray(targetSchema?.enum) ? targetSchema.enum : []
+      ok(!enumValues.includes('symbol'))
+    })
+  })
+
+  it('passes through upstream search tool schema when upstream search is available', async () => {
+    await withProxy({tools: upstreamToolsWithSearch}, async ({proxyClient}) => {
+      const listResponse = await proxyClient.send('tools/list')
+      const searchTool = listResponse.result.tools.find((tool) => tool.name === 'search')
+      ok(searchTool)
+      const properties = searchTool.inputSchema?.properties ?? {}
+      ok('query' in properties)
+      ok(!('target' in properties))
     })
   })
 

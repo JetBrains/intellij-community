@@ -2,25 +2,21 @@
 
 import {handleApplyPatchTool} from './handlers/apply-patch'
 import {handleEditTool} from './handlers/edit'
-import {handleFindTool} from './handlers/find'
-import {handleGlobTool} from './handlers/glob'
-import {handleGrepTool} from './handlers/grep'
 import {handleListDirTool} from './handlers/list-dir'
 import {handleReadTool} from './handlers/read'
 import {handleRenameTool} from './handlers/rename'
+import {handleSearchTool} from './handlers/search'
 import {handleWriteTool} from './handlers/write'
 import {
   createApplyPatchSchema,
   createEditSchema,
-  createFindSchema,
-  createGlobSchema,
-  createGrepSchemaCodex,
   createListDirSchema,
   createReadSchema,
   createRenameSchema,
+  createSearchSchema,
   createWriteSchema
 } from './schemas'
-import type {ToolArgs, ToolInputSchema, ToolSpecLike, UpstreamToolCaller} from './types'
+import type {SearchCapabilities, ToolArgs, ToolInputSchema, ToolSpecLike, UpstreamToolCaller} from './types'
 
 export const TOOL_MODES = {
   CODEX: 'codex',
@@ -28,8 +24,9 @@ export const TOOL_MODES = {
 } as const
 
 export const SEARCH_TOOL_MODES = {
-  GREP: 'grep',
-  SEARCH: 'search'
+  AUTO: 'auto',
+  SEARCH: 'search',
+  LEGACY: 'legacy'
 } as const
 
 type ToolMode = typeof TOOL_MODES[keyof typeof TOOL_MODES]
@@ -38,28 +35,59 @@ export type SearchToolMode = typeof SEARCH_TOOL_MODES[keyof typeof SEARCH_TOOL_M
 interface ToolContext {
   projectPath: string
   callUpstreamTool: UpstreamToolCaller
+  searchCapabilities: SearchCapabilities
 }
 
 type ToolHandler = (args: ToolArgs) => Promise<unknown>
 
+type ToolDescription = string | ((context: ToolContext) => string)
+type ToolExpose = boolean | ((context: ToolContext) => boolean)
+
 interface ToolVariant {
   mode: ToolMode
   name: string
-  description: string
-  schemaFactory: () => ToolInputSchema
+  description: ToolDescription
+  schemaFactory: (context: ToolContext) => ToolInputSchema
   handlerFactory: (context: ToolContext) => ToolHandler
   upstreamNames?: string[]
+  expose?: ToolExpose
 }
 
-export const BLOCKED_TOOL_NAMES = new Set(['create_new_file', 'execute_terminal_command'])
+export const BLOCKED_TOOL_NAMES = new Set(['create_new_file', 'execute_terminal_command', 'grep', 'find', 'glob'])
 
-const EXTRA_REPLACED_TOOL_NAMES = ['search_in_files_by_text', 'execute_terminal_command']
+const EXTRA_REPLACED_TOOL_NAMES = [
+  'search_in_files_by_text',
+  'search_in_files_by_regex',
+  'find_files_by_glob',
+  'find_files_by_name_keyword',
+  'execute_terminal_command'
+]
 const RENAME_TOOL_DESCRIPTION = 'Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use edit/apply_patch for renames.'
+const LEGACY_SEARCH_TOOL_DESCRIPTION = 'PRIMARY PROJECT SEARCH. Use this tool first. Returns JSON {items:[[path,line?,text?]], more?}. File-backed results only; output=files returns [path], output=entries returns [path,line,text] when available.'
 
-function buildToolSpec(name: string, description: string, inputSchema: ToolInputSchema): ToolSpecLike {
+function resolveToolDescription(description: ToolDescription, context: ToolContext): string {
+  return typeof description === 'function' ? description(context) : description
+}
+
+function resolveToolExpose(expose: ToolExpose | undefined, context: ToolContext): boolean {
+  if (expose === undefined) return true
+  if (typeof expose === 'function') return expose(context)
+  return expose !== false
+}
+
+function shouldExposeLegacySearch({searchCapabilities}: ToolContext): boolean {
+  return searchCapabilities.mode === SEARCH_TOOL_MODES.LEGACY || !searchCapabilities.hasUpstreamSearch
+}
+
+function buildToolSpec(
+  name: string,
+  description: ToolDescription,
+  inputSchema: ToolInputSchema,
+  context: ToolContext
+): ToolSpecLike {
   return {
     name,
-    description,
+    description: resolveToolDescription(description, context),
     inputSchema
   }
 }
@@ -85,30 +113,21 @@ const TOOL_VARIANTS: ToolVariant[] = [
   },
   {
     mode: TOOL_MODES.CODEX,
-    name: 'grep',
-    description: 'Searches file contents for a regex pattern and returns matching files or lines.',
-    schemaFactory: () => createGrepSchemaCodex(),
-    handlerFactory: ({projectPath, callUpstreamTool}) => (args) =>
-      handleGrepTool(args, projectPath, callUpstreamTool, true),
-    upstreamNames: ['search_in_files_by_regex']
+    name: 'search',
+    description: LEGACY_SEARCH_TOOL_DESCRIPTION,
+    schemaFactory: ({searchCapabilities}) => createSearchSchema(searchCapabilities),
+    handlerFactory: ({projectPath, callUpstreamTool, searchCapabilities}) => (args) =>
+      handleSearchTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    expose: shouldExposeLegacySearch
   },
   {
     mode: TOOL_MODES.CC,
-    name: 'grep',
-    description: 'Search files for a regex pattern and return matching file paths.',
-    schemaFactory: () => createGrepSchemaCodex(),
-    handlerFactory: ({projectPath, callUpstreamTool}) => (args) =>
-      handleGrepTool(args, projectPath, callUpstreamTool, false),
-    upstreamNames: ['search_in_files_by_regex']
-  },
-  {
-    mode: TOOL_MODES.CODEX,
-    name: 'find',
-    description: 'Finds file paths by name keyword or glob pattern.',
-    schemaFactory: () => createFindSchema(),
-    handlerFactory: ({projectPath, callUpstreamTool}) => (args) =>
-      handleFindTool(args, projectPath, callUpstreamTool),
-    upstreamNames: ['find_files_by_glob', 'find_files_by_name_keyword']
+    name: 'search',
+    description: LEGACY_SEARCH_TOOL_DESCRIPTION,
+    schemaFactory: ({searchCapabilities}) => createSearchSchema(searchCapabilities),
+    handlerFactory: ({projectPath, callUpstreamTool, searchCapabilities}) => (args) =>
+      handleSearchTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    expose: shouldExposeLegacySearch
   },
   {
     mode: TOOL_MODES.CODEX,
@@ -147,15 +166,6 @@ const TOOL_VARIANTS: ToolVariant[] = [
     upstreamNames: ['replace_text_in_file']
   },
   {
-    mode: TOOL_MODES.CC,
-    name: 'glob',
-    description: 'Return file paths matching a glob pattern.',
-    schemaFactory: () => createGlobSchema(),
-    handlerFactory: ({projectPath, callUpstreamTool}) => (args) =>
-      handleGlobTool(args, projectPath, callUpstreamTool),
-    upstreamNames: ['find_files_by_glob']
-  },
-  {
     mode: TOOL_MODES.CODEX,
     name: 'rename',
     description: RENAME_TOOL_DESCRIPTION,
@@ -179,10 +189,18 @@ function getProxyToolVariants(mode: ToolMode): ToolVariant[] {
   return TOOL_VARIANTS.filter((tool) => tool.mode === mode)
 }
 
-export function buildProxyToolSpecs(mode: ToolMode): ToolSpecLike[] {
-  return getProxyToolVariants(mode).map((tool) =>
-    buildToolSpec(tool.name, tool.description, tool.schemaFactory())
-  )
+function isExposedVariant(tool: ToolVariant, context: ToolContext): boolean {
+  return resolveToolExpose(tool.expose, context)
+}
+
+function isExposedVariantByDefault(tool: ToolVariant): boolean {
+  return tool.expose !== false
+}
+
+export function buildProxyToolSpecs(mode: ToolMode, context: ToolContext): ToolSpecLike[] {
+  return getProxyToolVariants(mode)
+    .filter((tool) => isExposedVariant(tool, context))
+    .map((tool) => buildToolSpec(tool.name, tool.description, tool.schemaFactory(context), context))
 }
 
 export function buildProxyToolingData(mode: ToolMode, context: ToolContext): {
@@ -190,14 +208,14 @@ export function buildProxyToolingData(mode: ToolMode, context: ToolContext): {
   proxyToolNames: Set<string>
   handlers: Map<string, ToolHandler>
 } {
-  const variants = getProxyToolVariants(mode)
+  const variants = getProxyToolVariants(mode).filter((tool) => isExposedVariant(tool, context))
   const handlers = new Map()
   for (const tool of variants) {
     handlers.set(tool.name, tool.handlerFactory(context))
   }
   return {
     proxyToolSpecs: variants.map((tool) =>
-      buildToolSpec(tool.name, tool.description, tool.schemaFactory())
+      buildToolSpec(tool.name, tool.description, tool.schemaFactory(context), context)
     ),
     proxyToolNames: new Set(variants.map((tool) => tool.name)),
     handlers
@@ -205,11 +223,7 @@ export function buildProxyToolingData(mode: ToolMode, context: ToolContext): {
 }
 
 export function getProxyToolNames(mode: ToolMode): Set<string> {
-  return new Set(getProxyToolVariants(mode).map((tool) => tool.name))
-}
-
-export function getSearchToolBlockedNames(mode: SearchToolMode): Set<string> {
-  return new Set([mode === SEARCH_TOOL_MODES.SEARCH ? 'grep' : 'search'])
+  return new Set(getProxyToolVariants(mode).filter(isExposedVariantByDefault).map((tool) => tool.name))
 }
 
 export function getReplacedToolNames() {

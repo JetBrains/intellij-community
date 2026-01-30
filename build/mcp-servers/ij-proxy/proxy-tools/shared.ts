@@ -14,6 +14,8 @@ export interface ResolvedPath {
 
 export type TruncateMode = 'NONE' | 'START' | 'END'
 
+export type SearchItem = [string] | [string, number] | [string, number, string]
+
 export interface ReadFileTextOptions {
   maxLinesCount?: number | null
   truncateMode?: TruncateMode | null
@@ -114,10 +116,138 @@ export function extractStructuredContent(result: unknown): unknown | null {
   }
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function coerceSearchItem(value: unknown): SearchItem | null {
+  if (typeof value === 'string') return [value]
+  if (Array.isArray(value)) {
+    if (value.length === 0 || value.length > 3) return null
+    if (typeof value[0] !== 'string') return null
+    const line = typeof value[1] === 'number' ? value[1] : undefined
+    const text = typeof value[2] === 'string' ? value[2] : undefined
+    if (line === undefined) return [value[0]]
+    if (text === undefined) return [value[0], line]
+    return [value[0], line, text]
+  }
+  if (isRecord(value)) {
+    const filePath = typeof value.filePath === 'string' ? value.filePath : null
+    if (!filePath) return null
+    const lineNumber = typeof value.lineNumber === 'number' ? value.lineNumber : undefined
+    const lineText = typeof value.lineText === 'string' ? value.lineText : undefined
+    if (lineNumber === undefined) return [filePath]
+    if (lineText === undefined) return [filePath, lineNumber]
+    return [filePath, lineNumber, lineText]
+  }
+  return null
+}
+
+function coerceItems(value: unknown): SearchItem[] | null {
+  if (!Array.isArray(value)) return null
+  const items: SearchItem[] = []
+  for (const entry of value) {
+    const item = coerceSearchItem(entry)
+    if (item) items.push(item)
+  }
+  return items
+}
+
+function extractItemsFromValue(value: unknown): SearchItem[] | null {
+  if (!value) return null
+  if (Array.isArray(value)) return coerceItems(value)
+  if (!isRecord(value)) return null
+  if (Array.isArray(value.items)) return coerceItems(value.items)
+  if (Array.isArray(value.entries)) return coerceItems(value.entries)
+  if (Array.isArray(value.results)) return coerceItems(value.results)
+  if (Array.isArray(value.files)) return coerceItems(value.files)
+  const resultsMap = extractResultsMapFromValue(value)
+  if (resultsMap) {
+    return coerceItems(flattenResultsMap(resultsMap))
+  }
+  return null
+}
+
+function itemsToEntries(items: SearchItem[]): SearchEntry[] {
+  return items.map((item) => ({
+    filePath: item[0],
+    lineNumber: item.length > 1 ? item[1] : undefined,
+    lineText: item.length > 2 ? item[2] : undefined
+  }))
+}
+
+export function extractItems(result: unknown): SearchItem[] {
+  const structured = extractStructuredContent(result)
+  const fromStructured = extractItemsFromValue(structured)
+  if (fromStructured) return fromStructured
+  const text = extractTextFromResult(result)
+  if (!text) return []
+  const trimmed = text.trim()
+  if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return []
+  try {
+    const parsed = JSON.parse(trimmed)
+    return extractItemsFromValue(parsed) ?? []
+  } catch {
+    return []
+  }
+}
+
+function coerceEntries(value: unknown): SearchEntry[] | null {
+  if (!Array.isArray(value)) return null
+  const entries: SearchEntry[] = []
+  for (const item of value) {
+    if (!item) continue
+    if (typeof item === 'string') {
+      entries.push({filePath: item})
+      continue
+    }
+    if (typeof item === 'object') {
+      entries.push(item as SearchEntry)
+    }
+  }
+  return entries
+}
+
+function extractResultsMapFromValue(value: unknown): Record<string, SearchEntry[]> | null {
+  if (!isRecord(value)) return null
+  const rawResults = value.results
+  if (!isRecord(rawResults)) return null
+  const results: Record<string, SearchEntry[]> = {}
+  for (const [key, rawEntries] of Object.entries(rawResults)) {
+    const entries = coerceEntries(rawEntries)
+    if (entries) {
+      results[key] = entries
+    }
+  }
+  return results
+}
+
+export function extractResultsMap(result: unknown): Record<string, SearchEntry[]> | null {
+  const structured = extractStructuredContent(result)
+  const fromStructured = extractResultsMapFromValue(structured)
+  if (fromStructured) return fromStructured
+  const text = extractTextFromResult(result)
+  if (!text) return null
+  const trimmed = text.trim()
+  if (!trimmed.startsWith('{')) return null
+  try {
+    return extractResultsMapFromValue(JSON.parse(trimmed))
+  } catch {
+    return null
+  }
+}
+
 export function extractFileList(result: unknown): string[] {
+  const resultsMap = extractResultsMap(result)
+  if (resultsMap) {
+    return extractFileListFromResults(resultsMap)
+  }
   const structured = extractStructuredContent(result)
   if (structured) {
     const structuredRecord = structured as Record<string, unknown>
+    if (Array.isArray(structuredRecord.items)) {
+      return extractItems(result).map((item) => item[0])
+    }
     if (Array.isArray(structuredRecord.files)) return structuredRecord.files as string[]
     if (Array.isArray(structured)) return structured as string[]
   }
@@ -134,12 +264,20 @@ export function extractFileList(result: unknown): string[] {
 }
 
 export function extractEntries(result: unknown): SearchEntry[] {
+  const resultsMap = extractResultsMap(result)
+  if (resultsMap) return flattenResultsMap(resultsMap)
   const structured = extractStructuredContent(result)
   if (structured) {
     const structuredRecord = structured as Record<string, unknown>
     if (Array.isArray(structuredRecord.entries)) return structuredRecord.entries as SearchEntry[]
     if (Array.isArray(structuredRecord.results)) return structuredRecord.results as SearchEntry[]
-    if (Array.isArray(structured)) return structured as SearchEntry[]
+    const items = extractItemsFromValue(structuredRecord)
+    if (items) return itemsToEntries(items)
+    if (Array.isArray(structured)) {
+      const fromItems = extractItemsFromValue(structured)
+      if (fromItems) return itemsToEntries(fromItems)
+      return structured as SearchEntry[]
+    }
   }
   const text = extractTextFromResult(result)
   if (!text) return []
@@ -147,11 +285,31 @@ export function extractEntries(result: unknown): SearchEntry[] {
     const parsed = JSON.parse(text)
     if (Array.isArray(parsed.entries)) return parsed.entries
     if (Array.isArray(parsed.results)) return parsed.results
+    const fromItems = extractItemsFromValue(parsed)
+    if (fromItems) return itemsToEntries(fromItems)
     if (Array.isArray(parsed)) return parsed
   } catch {
     return []
   }
   return []
+}
+
+function flattenResultsMap(results: Record<string, SearchEntry[]>): SearchEntry[] {
+  const entries: SearchEntry[] = []
+  for (const groupEntries of Object.values(results)) {
+    entries.push(...groupEntries)
+  }
+  return entries
+}
+
+function extractFileListFromResults(results: Record<string, SearchEntry[]>): string[] {
+  const files: string[] = []
+  for (const entry of flattenResultsMap(results)) {
+    if (typeof entry.filePath === 'string' && entry.filePath.length > 0) {
+      files.push(entry.filePath)
+    }
+  }
+  return files
 }
 
 export function normalizeLineEndings(text: string): string {

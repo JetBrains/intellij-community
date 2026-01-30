@@ -66,8 +66,7 @@ Preserve IDE-serialized .iml files in canonical form. Do not:
 
 - Read: `mcp__ijproxy__read_file`
 - Edit/Write: `mcp__ijproxy__apply_patch`
-- Find files: `mcp__ijproxy__find`
-- Search: `mcp__ijproxy__grep`
+- Search: `mcp__ijproxy__search` (use `providers=["files"]` for filenames; `mode=lexical` + `providers=["text"]` for contents; `providers=["symbols"]`/`["classes"]` for symbols)
 - List dir: `mcp__ijproxy__list_dir`
 
 ### jetbrains MCP (fallback)

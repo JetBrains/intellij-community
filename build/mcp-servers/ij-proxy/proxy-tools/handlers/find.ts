@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import path from 'node:path'
-import {extractFileList, requireString, resolveSearchPath, toPositiveInt} from '../shared'
+import {extractFileList, extractStructuredContent, requireString, resolveSearchPath, toPositiveInt} from '../shared'
 import type {UpstreamToolCaller} from '../types'
 
 const DEFAULT_LIMIT = 1000
@@ -16,6 +16,12 @@ interface FindToolArgs {
   limit?: unknown
   path?: unknown
   add_excluded?: unknown
+}
+
+export interface FindFilesResult {
+  files: string[]
+  probablyHasMoreMatchingFiles: boolean
+  timedOut: boolean
 }
 
 function resolvePattern(args: FindToolArgs | undefined): string | null {
@@ -55,38 +61,62 @@ function toAbsolutePaths(files: string[], projectPath: string): string[] {
   return files.map((file) => path.resolve(projectPath, file))
 }
 
+function extractFilesResult(result: unknown): FindFilesResult {
+  const files = extractFileList(result)
+  const structured = extractStructuredContent(result)
+  const structuredRecord = structured && typeof structured === 'object'
+    ? structured as Record<string, unknown>
+    : null
+  return {
+    files,
+    probablyHasMoreMatchingFiles: structuredRecord?.probablyHasMoreMatchingFiles === true,
+    timedOut: structuredRecord?.timedOut === true
+  }
+}
+
 async function findByNameKeyword(
   pattern: string,
   projectPath: string,
   baseRelative: string,
   limit: number,
   callUpstreamTool: UpstreamToolCaller
-): Promise<string[]> {
+): Promise<FindFilesResult> {
   const shouldFilter = Boolean(baseRelative)
   let requestLimit = shouldFilter ? Math.max(limit, DEFAULT_LIMIT) : limit
   const maxLimit = shouldFilter ? Math.max(limit, NAME_SEARCH_MAX_LIMIT) : limit
+  let timedOut = false
+  let probablyHasMoreMatchingFiles = false
 
   while (true) {
     const result = await callUpstreamTool('find_files_by_name_keyword', {
       nameKeyword: pattern,
       fileCountLimit: requestLimit
     })
-    const files = extractFileList(result)
+    const extracted = extractFilesResult(result)
+    const files = extracted.files
+    timedOut = timedOut || extracted.timedOut
+    const hasMoreHint = extracted.probablyHasMoreMatchingFiles || files.length >= requestLimit
+    probablyHasMoreMatchingFiles = probablyHasMoreMatchingFiles || hasMoreHint
     const filtered = shouldFilter ? filterByBasePath(files, projectPath, baseRelative) : files
+    const reachedLimit = filtered.length >= limit
 
-    if (!shouldFilter || filtered.length >= limit || files.length < requestLimit || requestLimit >= maxLimit) {
-      return filtered.slice(0, limit)
+    if (!shouldFilter || reachedLimit || files.length < requestLimit || requestLimit >= maxLimit) {
+      return {
+        files: filtered.slice(0, limit),
+        timedOut,
+        probablyHasMoreMatchingFiles: timedOut || probablyHasMoreMatchingFiles || reachedLimit
+      }
     }
 
     requestLimit = Math.min(requestLimit * 2, maxLimit)
   }
 }
 
-export async function handleFindTool(
+export async function findFiles(
   args: FindToolArgs,
   projectPath: string,
   callUpstreamTool: UpstreamToolCaller
-): Promise<string> {
+): Promise<FindFilesResult> {
   const rawPattern = resolvePattern(args)
   const pattern = requireString(rawPattern, 'pattern').trim()
   const mode = normalizeMode(args?.mode)
@@ -103,12 +133,26 @@ export async function handleFindTool(
       toolArgs.addExcluded = Boolean(args.add_excluded)
     }
     const result = await callUpstreamTool('find_files_by_glob', toolArgs)
-    const files = extractFileList(result)
-    if (files.length === 0) return 'No matches found.'
-    return toAbsolutePaths(files, projectPath).join('\n')
+    const extracted = extractFilesResult(result)
+    const limited = extracted.files.slice(0, limit)
+    const reachedLimit = limited.length >= limit
+    return {
+      files: limited,
+      timedOut: extracted.timedOut,
+      probablyHasMoreMatchingFiles: extracted.timedOut || extracted.probablyHasMoreMatchingFiles || reachedLimit
+    }
   }
 
-  const matches = await findByNameKeyword(pattern, projectPath, relative, limit, callUpstreamTool)
+  return await findByNameKeyword(pattern, projectPath, relative, limit, callUpstreamTool)
+}
+
+export async function handleFindTool(
+  args: FindToolArgs,
+  projectPath: string,
+  callUpstreamTool: UpstreamToolCaller
+): Promise<string> {
+  const result = await findFiles(args, projectPath, callUpstreamTool)
+  const matches = result.files
   if (matches.length === 0) return 'No matches found.'
   return toAbsolutePaths(matches, projectPath).join('\n')
 }
