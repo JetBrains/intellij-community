@@ -1,9 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl
 
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupElementPresentation.DecoratedTextRange
 import com.intellij.codeInsight.lookup.LookupElementPresentation.LookupItemDecoration
+import com.intellij.codeInsight.lookup.LookupElementRenderer
+import com.intellij.codeInsight.lookup.LookupFocusDegree
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.MATCHED_FOREGROUND_COLOR
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.bodyInsets
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.getGrayedForeground
@@ -576,10 +580,7 @@ class LookupCellRenderer(
     // Ensure that all visible items plus a range of invisible items have been
     // scheduled for async rendering.
     for (item in lookup.getItemsForAsyncRendering()) {
-      if (item.getUserData(SCHEDULED_FOR_RENDERING) != true) {
-        item.putUserData(SCHEDULED_FOR_RENDERING, true)
-        updateItemPresentation(item)
-      }
+      updateItemPresentation(item)
     }
   }
 
@@ -613,8 +614,10 @@ class LookupCellRenderer(
 
   fun updateItemPresentation(element: LookupElement) {
     element.expensiveRenderer?.let {
-      @Suppress("UNCHECKED_CAST")
-      asyncRendering.scheduleRendering(element = element, renderer = it as LookupElementRenderer<LookupElement>)
+      if (element.replace(SCHEDULED_FOR_RENDERING, null, true)) {
+        @Suppress("UNCHECKED_CAST")
+        asyncRendering.scheduleRendering(element = element, renderer = it as LookupElementRenderer<LookupElement>)
+      }
     }
   }
 
@@ -649,6 +652,7 @@ class LookupCellRenderer(
 
   @ApiStatus.Internal
   fun cancelRendering(element: LookupElement) {
+    element.putUserData(SCHEDULED_FOR_RENDERING, null)
     asyncRendering.cancelRendering(element)
   }
 
