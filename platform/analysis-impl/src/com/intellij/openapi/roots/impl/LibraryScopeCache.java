@@ -16,7 +16,6 @@ import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.*;
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
-import com.intellij.platform.workspace.storage.SymbolicEntityId;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
@@ -236,12 +235,22 @@ public final class LibraryScopeCache {
     if (Registry.is("use.workspace.model.for.calculation.library.scope")) {
       var index = ProjectFileIndex.getInstance(myProject);
       var currentSnapshot = WorkspaceModel.getInstance(myProject).getCurrentSnapshot();
-      var sdks = ContainerUtil.map(index.findContainingSdks(virtualFile), SdkEntity::getSymbolicId);
-
-      Set<Module> modulesWithSdk = processEntityWithId(sdks, currentSnapshot);
-      Set<Module> modulesWithLibrary = new HashSet<>();
-
+      var sdks = index.findContainingSdks(virtualFile);
       var libraries = index.findContainingLibraries(virtualFile);
+
+      Set<Module> modulesWithSdk = new HashSet<>();
+      for (var sdk : sdks) {
+        var sdkId = sdk.getSymbolicId();
+        for (var module: SequencesKt.toList(currentSnapshot.referrers(sdkId, ModuleEntity.class))) {
+          var moduleBridge = ModuleBridges.findModule(module, currentSnapshot);
+          if (moduleBridge != null) {
+            modulesWithSdk.add(moduleBridge);
+          }
+        }
+        addModulesInheritingProjectSdk(sdkId, currentSnapshot, modulesWithSdk);
+      }
+
+      Set<Module> modulesWithLibrary = new HashSet<>();
       for (var library : libraries) {
         modulesWithLibrary.addAll(modulesWithLibraryId(library.getSymbolicId(), currentSnapshot));
       }
@@ -304,23 +313,6 @@ public final class LibraryScopeCache {
     public String toString() {
       return "Libraries only in (" + myBaseScope + ")";
     }
-  }
-
-  private Set<Module> processEntityWithId(List<? extends SymbolicEntityId<?>> ids,
-                                          ImmutableEntityStorage currentSnapshot) {
-    Set<Module> result = new HashSet<>();
-    for (var id : ids) {
-      for (var module: SequencesKt.toList(currentSnapshot.referrers(id, ModuleEntity.class))) {
-        var moduleBridge = ModuleBridges.findModule(module, currentSnapshot);
-        if (moduleBridge != null) {
-          result.add(moduleBridge);
-        }
-      }
-      if (id instanceof SdkId sdkId) {
-        addModulesInheritingProjectSdk(sdkId, currentSnapshot, result);
-      }
-    }
-    return result;
   }
 
   private void addModulesInheritingProjectSdk(SdkId sdkId, ImmutableEntityStorage currentSnapshot, Set<Module> result) {
