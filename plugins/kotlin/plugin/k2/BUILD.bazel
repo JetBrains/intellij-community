@@ -29,6 +29,8 @@ jvm_library(
     "//plugins/kotlin/base/analysis-api-platform:kotlin-base-analysis-platform",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/base/compiler-configuration",
+    "//plugins/kotlin/run-configurations/junit",
+    "//plugins/kotlin/run-configurations/testng",
     "//plugins/kotlin/git",
     "//plugins/kotlin/base/compiler-configuration-ui:kotlin-base-compilerConfiguration-ui",
     "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem",
