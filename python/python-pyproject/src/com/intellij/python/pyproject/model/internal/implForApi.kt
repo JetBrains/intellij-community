@@ -1,5 +1,6 @@
 package com.intellij.python.pyproject.model.internal
 
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -15,13 +16,29 @@ internal val Module.isPyProjectTomlBasedImpl: Boolean get() = findModuleEntity()
 internal suspend fun suggestSdkImpl(module: Module): SuggestedSdk? = withContext(Dispatchers.Default) {
   val entity = module.findModuleEntity()?.pyProjectTomlEntity ?: return@withContext null
   val storage = module.project.workspaceModel.currentSnapshot
-  val toolWithWorkspace = entity.participatedTools.firstNotNullOfOrNull { (tool, moduleId) ->
-    val module = moduleId?.resolve(storage)?.findModule(storage)
-    if (module != null) Pair(tool, module) else null
+  val moduleId = module.findModuleEntity(storage)?.symbolicId
+  if (moduleId == null) {
+    logger.warn("Module $module doesn't exist in a storage, no SDK could be suggested")
+    return@withContext null
+  }
+  val toolWithWorkspace = entity.participatedTools.firstNotNullOfOrNull { (tool, workspaceRootModuleId) ->
+    if (workspaceRootModuleId == moduleId) {
+      null // This module is a workspace root and can't be `SameAs()` itself
+    }
+    else {
+      val workspaceRootModule = workspaceRootModuleId?.resolve(storage)?.findModule(storage)
+      if (workspaceRootModule != null) {
+        Pair(tool, workspaceRootModule)
+      }
+      else {
+        null
+      }
+    }
   }
   if (toolWithWorkspace != null) {
-    val (tool, module) = toolWithWorkspace
-    SuggestedSdk.SameAs(module, tool)
+    val (tool, workspaceRootModule) = toolWithWorkspace
+    assert(workspaceRootModule != module) { "$module is a workspace root, can't point to itself" }
+    SuggestedSdk.SameAs(workspaceRootModule, tool)
   }
   else {
     val tools = entity.participatedTools.keys
@@ -33,3 +50,4 @@ internal suspend fun suggestSdkImpl(module: Module): SuggestedSdk? = withContext
   }
 }
 
+private val logger = fileLogger()

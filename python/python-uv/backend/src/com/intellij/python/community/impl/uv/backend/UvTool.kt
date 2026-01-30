@@ -45,11 +45,15 @@ internal class UvTool : Tool {
     val memberToWorkspace = HashMap<ProjectName, MutableSet<ProjectName>>()
     for ((workspaceRoot, matchersAndName) in workspaces) {
       val (matchers, workspaceName) = matchersAndName
+      // From the uv doc: every workspace needs a root, which is also a workspace member.
+      val workspaceMembers = mutableSetOf(workspaceName)
+      workspaceToMembers[workspaceName] = workspaceMembers
+      memberToWorkspace[workspaceName] = mutableSetOf(workspaceName)
       for ((memberRoot, memberName) in dirToProjectName) {
         if (!memberRoot.startsWith(workspaceRoot)) continue
 
         if (matchers.match(memberRoot.relativeTo(workspaceRoot).normalize())) {
-          workspaceToMembers.getOrPut(workspaceName) { HashSet() }.add(memberName)
+          workspaceMembers.add(memberName)
           memberToWorkspace.getOrPut(memberName) { HashSet() }.add(workspaceName)
         }
 
