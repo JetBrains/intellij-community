@@ -796,6 +796,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       return CheckErrorsResult()
     }
 
+    if (session.isPluginDisabled(pluginId)) {
+      return CheckErrorsResult() // suppress any errors for plugins that are marked disabled
+    }
+
     val loadingError = getPluginNonLoadReason(pluginId)
     val disabledDependency = if (loadingError is PluginDependencyIsDisabled) loadingError.dependencyId else null
     if (disabledDependency == null) {
