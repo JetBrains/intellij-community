@@ -8,6 +8,7 @@ import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.application.impl.islands.isColorIslandGradientAvailable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
@@ -111,7 +112,7 @@ internal class ChooseCustomProjectColorAction: AnAction(IdeBundle.message("actio
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.project != null
+    e.presentation.isEnabled = e.project != null && !isColorIslandGradientAvailable()
   }
 }
 

@@ -171,7 +171,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
         if (isManyIslandEnabled) {
           background = JBUI.CurrentTheme.ToolWindow.background()
           createToolWindowBorderPainter(toolWindow, this)
-          configureBackgroundPainting(child, recursive = false)
+          if (!isColorIslandGradient()) {
+            configureBackgroundPainting(child, recursive = false)
+          }
         }
         else {
           border = originalBorderBuilder()
@@ -433,8 +435,10 @@ internal class IslandsUICustomization : InternalUICustomization() {
     createToolWindowBorderPainter(toolwindow, holder)
     clearParentNoBackground(holder)
 
-    for (child in holder.components) {
-      configureBackgroundPainting(child as JComponent, recursive = true)
+    if (!isColorIslandGradient()) {
+      for (child in holder.components) {
+        configureBackgroundPainting(child as JComponent, recursive = true)
+      }
     }
   }
 
