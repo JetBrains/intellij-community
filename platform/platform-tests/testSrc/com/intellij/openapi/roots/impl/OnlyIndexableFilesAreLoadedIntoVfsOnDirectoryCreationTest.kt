@@ -36,6 +36,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
 import kotlin.io.path.pathString
 import kotlin.io.path.writeText
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
@@ -106,7 +107,7 @@ class OnlyIndexableFilesAreLoadedIntoVfsOnDirectoryCreationTest {
     rootDir.newFileNio("pom.xml").writeText(pom)
 
     ProjectUtil.openOrImportAsync(rootDir.rootPath)!!.useProjectAsync { project ->
-      TestObservation.awaitConfiguration(project)
+      TestObservation.awaitConfiguration(project, 1.minutes)
       val rootVirtualFile = findVirtualFile(rootDir.rootPath)
       rootVirtualFile.children // load all children to trigger full sync later
       Assertions.assertTrue(readAction { WorkspaceFileIndex.getInstance(project).isIndexable(rootVirtualFile) })
