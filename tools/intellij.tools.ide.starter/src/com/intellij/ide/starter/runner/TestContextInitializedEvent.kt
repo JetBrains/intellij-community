@@ -9,7 +9,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 class TestContextInitializedEvent(
-  val container: TestContainer<*>,
+  val container: TestContainer,
   val testContext: IDETestContext,
 ) : Event()
 
@@ -17,9 +17,9 @@ class TestContextInitializedEvent(
  * Subscribe for [TestContextInitializedEvent] that belongs to the given [container].
  * Invoked only for rem dev backend in case of rem dev.
  */
-fun <T> EventsBus.subscribeForTestContextInitializedEvent(
+fun EventsBus.subscribeForTestContextInitializedEvent(
   subscriber: Any,
-  container: TestContainer<T>,
+  container: TestContainer,
   timeout: Duration = 2.minutes,
   ignoreExceptions: Boolean = true,
   callback: suspend (event: TestContextInitializedEvent) -> Unit,
