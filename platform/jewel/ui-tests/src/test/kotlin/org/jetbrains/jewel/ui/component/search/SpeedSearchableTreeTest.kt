@@ -262,10 +262,21 @@ class SpeedSearchableTreeTest {
         onSpeedSearchAreaInput.assertDoesNotExist()
     }
 
+    @Test
+    fun `on lose focus with dismissOnLoseFocus false, keep input visible`() =
+        runComposeTest(dismissOnLoseFocus = false) {
+            onLazyTree.performKeyPress("Root 42", rule = this)
+            onSpeedSearchAreaInput.assertExists().assertIsDisplayed()
+
+            onNodeWithTag("Button").performClick()
+            onSpeedSearchAreaInput.assertExists().assertIsDisplayed()
+        }
+
     private fun runComposeTest(
         level1: Int = 100,
         level2: Int = 100,
         level3: Int = 100,
+        dismissOnLoseFocus: Boolean = true,
         block: ComposeContentTestRule.() -> Unit,
     ) {
         val tree = buildTree {
@@ -285,7 +296,10 @@ class SpeedSearchableTreeTest {
 
             IntUiTheme {
                 Column {
-                    SpeedSearchArea(modifier = Modifier.testTag("SpeedSearchArea")) {
+                    SpeedSearchArea(
+                        modifier = Modifier.testTag("SpeedSearchArea"),
+                        dismissOnLoseFocus = dismissOnLoseFocus,
+                    ) {
                         SpeedSearchableTree(
                             tree = tree,
                             modifier = Modifier.size(200.dp).testTag("LazyTree").focusRequester(focusRequester),
