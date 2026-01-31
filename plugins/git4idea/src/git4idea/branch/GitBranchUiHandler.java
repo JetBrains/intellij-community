@@ -114,6 +114,15 @@ public interface GitBranchUiHandler {
    */
   boolean showBranchAlreadyCheckedOutInWorktreeDialog(@NotNull String branchName, @NotNull String worktreePath);
 
+  /**
+   * Shows confirmation dialog when trying to delete a branch that is checked out in another worktree.
+   *
+   * @param branchName    the name of the branch that is checked out in a worktree
+   * @param worktreePath  the path to the worktree where the branch is checked out
+   * @return true if user confirmed to proceed with force deletion, false otherwise
+   */
+  boolean showBranchCheckedOutInWorktreeDeleteDialog(@NotNull String branchName, @NotNull String worktreePath);
+
   enum DeleteRemoteBranchDecision {
     CANCEL,
     DELETE,
