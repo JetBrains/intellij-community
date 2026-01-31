@@ -60,6 +60,20 @@ suspend inline fun <T> SpanBuilder.useWithScope(
 }
 
 @Internal
+suspend inline fun <T> SpanBuilder?.useOrRun(
+  crossinline operation: suspend (Span?) -> T,
+): T {
+  if (this == null) return operation(null)
+
+  return startSpan().useWithoutActiveScope { span ->
+    // inner withContext to ensure that we report the end of the span only when all child tasks are completed
+    withContext(Context.current().with(span).asContextElement()) {
+      operation(span)
+    }
+  }
+}
+
+@Internal
 internal fun <T> computeWithSpanIgnoreThrows(
   spanBuilder: SpanBuilder,
   operation: ThrowableNotNullFunction<Span, T, out Throwable>,
