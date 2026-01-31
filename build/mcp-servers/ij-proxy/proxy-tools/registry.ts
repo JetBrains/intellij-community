@@ -5,7 +5,7 @@ import {handleEditTool} from './handlers/edit'
 import {handleListDirTool} from './handlers/list-dir'
 import {handleReadTool} from './handlers/read'
 import {handleRenameTool} from './handlers/rename'
-import {handleSearchTool} from './handlers/search'
+import {handleSearchFileTool, handleSearchRegexTool, handleSearchSymbolTool, handleSearchTextTool} from './handlers/search'
 import {handleWriteTool} from './handlers/write'
 import {
   createApplyPatchSchema,
@@ -13,29 +13,26 @@ import {
   createListDirSchema,
   createReadSchema,
   createRenameSchema,
-  createSearchSchema,
+  createSearchFileSchema,
+  createSearchRegexSchema,
+  createSearchSymbolSchema,
+  createSearchTextSchema,
   createWriteSchema
 } from './schemas'
-import type {SearchCapabilities, ToolArgs, ToolInputSchema, ToolSpecLike, UpstreamToolCaller} from './types'
+import type {ReadCapabilities, SearchCapabilities, ToolArgs, ToolInputSchema, ToolSpecLike, UpstreamToolCaller} from './types'
 
 export const TOOL_MODES = {
   CODEX: 'codex',
   CC: 'cc'
 } as const
 
-export const SEARCH_TOOL_MODES = {
-  AUTO: 'auto',
-  SEARCH: 'search',
-  LEGACY: 'legacy'
-} as const
-
 type ToolMode = typeof TOOL_MODES[keyof typeof TOOL_MODES]
-export type SearchToolMode = typeof SEARCH_TOOL_MODES[keyof typeof SEARCH_TOOL_MODES]
 
 interface ToolContext {
   projectPath: string
   callUpstreamTool: UpstreamToolCaller
   searchCapabilities: SearchCapabilities
+  readCapabilities: ReadCapabilities
 }
 
 type ToolHandler = (args: ToolArgs) => Promise<unknown>
@@ -53,17 +50,17 @@ interface ToolVariant {
   expose?: ToolExpose
 }
 
-export const BLOCKED_TOOL_NAMES = new Set(['create_new_file', 'execute_terminal_command', 'grep', 'find', 'glob'])
+export const BLOCKED_TOOL_NAMES = new Set(['create_new_file', 'execute_terminal_command'])
 
 const EXTRA_REPLACED_TOOL_NAMES = [
   'search_in_files_by_text',
   'search_in_files_by_regex',
   'find_files_by_glob',
   'find_files_by_name_keyword',
+  'search',
   'execute_terminal_command'
 ]
 const RENAME_TOOL_DESCRIPTION = 'Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use edit/apply_patch for renames.'
-const LEGACY_SEARCH_TOOL_DESCRIPTION = 'PRIMARY PROJECT SEARCH. Use this tool first. Returns JSON {items:[[path,line?,text?]], more?}. File-backed results only; output=files returns [path], output=entries returns [path,line,text] when available.'
 
 function resolveToolDescription(description: ToolDescription, context: ToolContext): string {
   return typeof description === 'function' ? description(context) : description
@@ -73,10 +70,6 @@ function resolveToolExpose(expose: ToolExpose | undefined, context: ToolContext)
   if (expose === undefined) return true
   if (typeof expose === 'function') return expose(context)
   return expose !== false
-}
-
-function shouldExposeLegacySearch({searchCapabilities}: ToolContext): boolean {
-  return searchCapabilities.mode === SEARCH_TOOL_MODES.LEGACY || !searchCapabilities.hasUpstreamSearch
 }
 
 function buildToolSpec(
@@ -98,36 +91,99 @@ const TOOL_VARIANTS: ToolVariant[] = [
     name: 'read_file',
     description: 'Reads a local file with 1-indexed line numbers, supporting slice and indentation-aware block modes.',
     schemaFactory: () => createReadSchema(true),
-    handlerFactory: ({projectPath, callUpstreamTool}) => (args) =>
-      handleReadTool(args, projectPath, callUpstreamTool, {format: 'numbered'}),
-    upstreamNames: ['get_file_text_by_path']
+    handlerFactory: ({projectPath, callUpstreamTool, readCapabilities}) => (args) =>
+      handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, {format: 'numbered'}),
+    upstreamNames: ['get_file_text_by_path'],
+    expose: ({readCapabilities}) => !readCapabilities.hasReadFile
   },
   {
     mode: TOOL_MODES.CC,
     name: 'read',
     description: 'Read a local file using absolute or project-relative paths. Returns raw text.',
     schemaFactory: () => createReadSchema(false),
-    handlerFactory: ({projectPath, callUpstreamTool}) => (args) =>
-      handleReadTool(args, projectPath, callUpstreamTool, {format: 'raw'}),
+    handlerFactory: ({projectPath, callUpstreamTool, readCapabilities}) => (args) =>
+      handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, {format: 'raw'}),
     upstreamNames: ['get_file_text_by_path']
   },
   {
     mode: TOOL_MODES.CODEX,
-    name: 'search',
-    description: LEGACY_SEARCH_TOOL_DESCRIPTION,
-    schemaFactory: ({searchCapabilities}) => createSearchSchema(searchCapabilities),
+    name: 'search_text',
+    description: 'Search for a text substring in project files.',
+    schemaFactory: () => createSearchTextSchema(),
     handlerFactory: ({projectPath, callUpstreamTool, searchCapabilities}) => (args) =>
-      handleSearchTool(args, projectPath, callUpstreamTool, searchCapabilities),
-    expose: shouldExposeLegacySearch
+      handleSearchTextTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    upstreamNames: ['search_text'],
+    expose: ({searchCapabilities}) => !searchCapabilities.hasSearchText && searchCapabilities.supportsText
   },
   {
     mode: TOOL_MODES.CC,
-    name: 'search',
-    description: LEGACY_SEARCH_TOOL_DESCRIPTION,
-    schemaFactory: ({searchCapabilities}) => createSearchSchema(searchCapabilities),
+    name: 'search_text',
+    description: 'Search for a text substring in project files.',
+    schemaFactory: () => createSearchTextSchema(),
     handlerFactory: ({projectPath, callUpstreamTool, searchCapabilities}) => (args) =>
-      handleSearchTool(args, projectPath, callUpstreamTool, searchCapabilities),
-    expose: shouldExposeLegacySearch
+      handleSearchTextTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    upstreamNames: ['search_text'],
+    expose: ({searchCapabilities}) => !searchCapabilities.hasSearchText && searchCapabilities.supportsText
+  },
+  {
+    mode: TOOL_MODES.CODEX,
+    name: 'search_regex',
+    description: 'Search for a regular expression in project files.',
+    schemaFactory: () => createSearchRegexSchema(),
+    handlerFactory: ({projectPath, callUpstreamTool, searchCapabilities}) => (args) =>
+      handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    upstreamNames: ['search_regex'],
+    expose: ({searchCapabilities}) => !searchCapabilities.hasSearchRegex && searchCapabilities.supportsRegex
+  },
+  {
+    mode: TOOL_MODES.CC,
+    name: 'search_regex',
+    description: 'Search for a regular expression in project files.',
+    schemaFactory: () => createSearchRegexSchema(),
+    handlerFactory: ({projectPath, callUpstreamTool, searchCapabilities}) => (args) =>
+      handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    upstreamNames: ['search_regex'],
+    expose: ({searchCapabilities}) => !searchCapabilities.hasSearchRegex && searchCapabilities.supportsRegex
+  },
+  {
+    mode: TOOL_MODES.CODEX,
+    name: 'search_file',
+    description: 'Search for files using a glob pattern.',
+    schemaFactory: () => createSearchFileSchema(),
+    handlerFactory: ({projectPath, callUpstreamTool, searchCapabilities}) => (args) =>
+      handleSearchFileTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    upstreamNames: ['search_file'],
+    expose: ({searchCapabilities}) => !searchCapabilities.hasSearchFile && searchCapabilities.supportsFile
+  },
+  {
+    mode: TOOL_MODES.CC,
+    name: 'search_file',
+    description: 'Search for files using a glob pattern.',
+    schemaFactory: () => createSearchFileSchema(),
+    handlerFactory: ({projectPath, callUpstreamTool, searchCapabilities}) => (args) =>
+      handleSearchFileTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    upstreamNames: ['search_file'],
+    expose: ({searchCapabilities}) => !searchCapabilities.hasSearchFile && searchCapabilities.supportsFile
+  },
+  {
+    mode: TOOL_MODES.CODEX,
+    name: 'search_symbol',
+    description: 'Search for symbols (classes, methods, fields) by name.',
+    schemaFactory: () => createSearchSymbolSchema(),
+    handlerFactory: ({projectPath, callUpstreamTool, searchCapabilities}) => (args) =>
+      handleSearchSymbolTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    upstreamNames: ['search_symbol'],
+    expose: ({searchCapabilities}) => !searchCapabilities.hasSearchSymbol && searchCapabilities.supportsSymbol
+  },
+  {
+    mode: TOOL_MODES.CC,
+    name: 'search_symbol',
+    description: 'Search for symbols (classes, methods, fields) by name.',
+    schemaFactory: () => createSearchSymbolSchema(),
+    handlerFactory: ({projectPath, callUpstreamTool, searchCapabilities}) => (args) =>
+      handleSearchSymbolTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    upstreamNames: ['search_symbol'],
+    expose: ({searchCapabilities}) => !searchCapabilities.hasSearchSymbol && searchCapabilities.supportsSymbol
   },
   {
     mode: TOOL_MODES.CODEX,
@@ -197,12 +253,6 @@ function isExposedVariantByDefault(tool: ToolVariant): boolean {
   return tool.expose !== false
 }
 
-export function buildProxyToolSpecs(mode: ToolMode, context: ToolContext): ToolSpecLike[] {
-  return getProxyToolVariants(mode)
-    .filter((tool) => isExposedVariant(tool, context))
-    .map((tool) => buildToolSpec(tool.name, tool.description, tool.schemaFactory(context), context))
-}
-
 export function buildProxyToolingData(mode: ToolMode, context: ToolContext): {
   proxyToolSpecs: ToolSpecLike[]
   proxyToolNames: Set<string>
@@ -231,6 +281,7 @@ export function getReplacedToolNames() {
   for (const tool of TOOL_VARIANTS) {
     if (!tool.upstreamNames) continue
     for (const name of tool.upstreamNames) {
+      if (name === tool.name) continue
       replaced.add(name)
     }
   }

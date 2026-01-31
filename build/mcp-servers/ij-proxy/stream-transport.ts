@@ -14,7 +14,7 @@ interface PortCandidate {
   kind: 'preferred' | 'scan'
 }
 
-interface StreamTransportOptions {
+export interface StreamTransportOptions {
   explicitUrl?: string
   preferredPorts?: number[]
   portScanStart: number
@@ -29,6 +29,18 @@ interface StreamTransportOptions {
   note?: (message: string) => void
   warn?: (message: string) => void
   probeHost?: string
+}
+
+export interface McpStreamTransport {
+  sessionId: string | undefined
+  onmessage?: (message: TransportMessage, extra?: unknown) => void
+  onerror?: (error: Error) => void
+  onclose?: () => void
+  start: () => Promise<void>
+  send: (message: TransportMessage, options?: TransportSendOptions) => Promise<void>
+  close: () => Promise<void>
+  setProtocolVersion: (version: string) => void
+  resetTransport: (reason: unknown) => Promise<void>
 }
 
 interface QueueEntry {
@@ -82,7 +94,7 @@ function normalizePortList(
   return candidates
 }
 
-class StreamTransport {
+class StreamTransportImpl implements McpStreamTransport {
   _options: StreamTransportOptions
   _queue: QueueEntry[]
   _connectPromise: Promise<void> | null
@@ -143,7 +155,7 @@ class StreamTransport {
     }
   }
 
-  async _resetTransport(reason: unknown): Promise<void> {
+  async resetTransport(reason: unknown): Promise<void> {
     const warn = this._options.warn
     const message = reason instanceof Error ? reason.message : String(reason)
     if (warn) warn(`MCP stream session invalid; reconnecting. ${message}`)
@@ -174,7 +186,7 @@ class StreamTransport {
         const err = error instanceof Error ? error : new Error(String(error))
         if (!retried && isSessionNotFoundError(err)) {
           retried = true
-          await this._resetTransport(err)
+          await this.resetTransport(err)
           continue
         }
         if (this.onerror) this.onerror(err)
@@ -352,8 +364,8 @@ export function createStreamTransport({
   note,
   warn,
   probeHost = '127.0.0.1'
-}: StreamTransportOptions): StreamTransport {
-  return new StreamTransport({
+}: StreamTransportOptions): McpStreamTransport {
+  return new StreamTransportImpl({
     explicitUrl,
     preferredPorts,
     portScanStart,

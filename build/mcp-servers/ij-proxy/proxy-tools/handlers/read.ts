@@ -1,9 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import {readFileText, requireString, resolvePathInProject, splitLines, toNonNegativeInt, toPositiveInt, TRUNCATION_MARKER} from '../shared'
+import {
+  extractTextFromResult,
+  readFileText,
+  requireString,
+  resolvePathInProject,
+  splitLines,
+  toNonNegativeInt,
+  toPositiveInt,
+  TRUNCATION_MARKER
+} from '../shared'
 import {readLinesViaSearch} from '../search-fallback'
 import {findTruncationMarkerLine, findTruncationMarkerSuffix} from '../truncation'
-import type {UpstreamToolCaller} from '../types'
+import type {ReadCapabilities, UpstreamToolCaller} from '../types'
 
 const DEFAULT_READ_LIMIT = 2000
 const MAX_LINE_LENGTH = 500
@@ -56,6 +65,7 @@ export async function handleReadTool(
   args: ReadToolArgs,
   projectPath: string,
   callUpstreamTool: UpstreamToolCaller,
+  readCapabilities: ReadCapabilities,
   {format = 'numbered'}: {format?: ReadFormat} = {}
 ): Promise<string> {
   const filePath = requireString(args.file_path, 'file_path')
@@ -77,6 +87,40 @@ export async function handleReadTool(
     : toPositiveInt(indentation.max_lines, undefined, 'max_lines')
 
   const {relative, absolute} = resolvePathInProject(projectPath, filePath, 'file_path')
+
+  if (format !== 'raw' && readCapabilities.hasReadFile) {
+    const upstreamArgs: Record<string, unknown> = {
+      file_path: relative,
+      offset,
+      limit
+    }
+    if (mode === 'indentation') {
+      upstreamArgs.mode = 'indentation'
+      const indentationPayload: Record<string, unknown> = {
+        include_siblings: includeSiblings,
+        include_header: includeHeader,
+        max_levels: maxLevels
+      }
+      if (anchorLine != null) indentationPayload.anchor_line = anchorLine
+      if (maxLines != null) indentationPayload.max_lines = maxLines
+      upstreamArgs.indentation = indentationPayload
+    } else if (args.mode) {
+      upstreamArgs.mode = 'slice'
+    }
+
+    try {
+      const result = await callUpstreamTool('read_file', upstreamArgs)
+      const text = extractTextFromResult(result)
+      if (typeof text === 'string') {
+        return text
+      }
+      if (typeof result === 'string') {
+        return result
+      }
+    } catch {
+      // Fall back to legacy path below when upstream read_file is unavailable or fails.
+    }
+  }
 
   if (mode === 'indentation') {
     try {

@@ -1,5 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
+import {strictEqual} from 'node:assert/strict'
 import type {ToolArgs, UpstreamToolCaller} from '../types'
 
 interface ToolCall {
@@ -29,6 +30,11 @@ export function createMockToolCaller(responders: ResponderMap = {}): {
   }
 
   return {callUpstreamTool, calls}
+}
+
+export function assertSingleCall(calls: ToolCall[]): ToolCall {
+  strictEqual(calls.length, 1)
+  return calls[0]
 }
 
 export function createSeededRng(seed: number): () => number {

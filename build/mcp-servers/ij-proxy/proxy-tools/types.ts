@@ -24,17 +24,25 @@ export interface SearchEntry {
   [key: string]: unknown
 }
 
-export type SearchCapabilityMode = 'auto' | 'search' | 'legacy'
+export interface SearchItem {
+  filePath: string
+  lineNumber?: number
+  lineText?: string
+}
 
 export interface SearchCapabilities {
-  mode: SearchCapabilityMode
-  hasUpstreamSearch: boolean
+  hasSearchText: boolean
+  hasSearchRegex: boolean
+  hasSearchFile: boolean
+  hasSearchSymbol: boolean
   supportsSymbol: boolean
   supportsText: boolean
   supportsRegex: boolean
   supportsFile: boolean
-  supportsFileGlob: boolean
-  supportsFileName: boolean
+}
+
+export interface ReadCapabilities {
+  hasReadFile: boolean
 }
 
 export interface ToolInputSchema {

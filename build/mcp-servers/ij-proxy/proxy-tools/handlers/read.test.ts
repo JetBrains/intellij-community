@@ -3,7 +3,7 @@
 import {rejects, strictEqual} from 'node:assert/strict'
 import {realpathSync} from 'node:fs'
 import {describe, it} from 'bun:test'
-import {SUITE_TIMEOUT_MS, TOOL_CALL_TIMEOUT_MS, withProxy, withTimeout} from '../../test-utils'
+import {buildUpstreamTool, SUITE_TIMEOUT_MS, TOOL_CALL_TIMEOUT_MS, withProxy, withTimeout} from '../../test-utils'
 import {handleReadTool} from './read'
 import {createMockToolCaller, createSeededRng, randInt, randString} from './test-helpers'
 import {TRUNCATION_MARKER} from '../shared'
@@ -36,6 +36,40 @@ describe('ij MCP proxy read_file', {timeout: SUITE_TIMEOUT_MS}, () => {
       strictEqual(call.args.truncateMode, 'START')
       strictEqual(realpathSync(call.args.project_path), realpathSync(testDir))
 
+      const content = response.result.content[0].text
+      strictEqual(content, 'L2: beta\nL3: gamma')
+    })
+  })
+
+  it('prefers upstream read_file when available', async () => {
+    const tools = [buildUpstreamTool('read_file', {
+      file_path: {type: 'string'},
+      offset: {type: 'number'},
+      limit: {type: 'number'}
+    }, ['file_path'])]
+
+    await withProxy({
+      tools,
+      onToolCall({name}) {
+        if (name === 'read_file') {
+          return {text: 'L2: beta\nL3: gamma'}
+        }
+        return {text: '{}'}
+      }
+    }, async ({fakeServer, proxyClient}) => {
+      await proxyClient.send('tools/list')
+      const callPromise = fakeServer.waitForToolCall()
+      const response = await proxyClient.send('tools/call', {
+        name: 'read_file',
+        arguments: {
+          file_path: 'sample.txt',
+          offset: 2,
+          limit: 2
+        }
+      })
+      const call = await withTimeout(callPromise, TOOL_CALL_TIMEOUT_MS, 'tools/call')
+
+      strictEqual(call.name, 'read_file')
       const content = response.result.content[0].text
       strictEqual(content, 'L2: beta\nL3: gamma')
     })
@@ -103,7 +137,7 @@ describe('read handler (unit)', () => {
         file_path: 'sample.txt',
         offset: 3,
         limit: 1
-      }, projectPath, callUpstreamTool, {format: 'numbered'}),
+      }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'}),
       /file content truncated while reading/
     )
 
@@ -122,7 +156,7 @@ describe('read handler (unit)', () => {
       file_path: 'sample.txt',
       offset: 2,
       limit: 2
-    }, projectPath, callUpstreamTool, {format: 'numbered'})
+    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
     strictEqual(result, 'L2: beta\nL3: gamma')
     strictEqual(calls[0].args.maxLinesCount, 3)
@@ -139,7 +173,7 @@ describe('read handler (unit)', () => {
         file_path: 'sample.txt',
         offset: 5,
         limit: 1
-      }, projectPath, callUpstreamTool),
+      }, projectPath, callUpstreamTool, {hasReadFile: false}),
       /offset exceeds file length/
     )
   })
@@ -160,7 +194,7 @@ describe('read handler (unit)', () => {
       file_path: 'sample.txt',
       offset: 3,
       limit: 2
-    }, projectPath, callUpstreamTool, {format: 'numbered'})
+    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
     strictEqual(result, 'L3: gamma\nL4: delta')
     strictEqual(calls.length, 2)
@@ -198,7 +232,7 @@ describe('read handler (unit)', () => {
       file_path: 'sample.txt',
       offset: 3,
       limit: 1
-    }, projectPath, callUpstreamTool, {format: 'numbered'})
+    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
     strictEqual(result, 'L3: gamma')
     strictEqual(calls.length, 3)
@@ -226,7 +260,7 @@ describe('read handler (unit)', () => {
         anchor_line: 3,
         max_levels: 0
       }
-    }, projectPath, callUpstreamTool, {format: 'numbered'})
+    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
     strictEqual(result, 'L3: gamma')
     strictEqual(calls.length, 2)
@@ -256,7 +290,7 @@ describe('read handler (unit)', () => {
           anchor_line: 3,
           max_levels: 0
         }
-      }, projectPath, callUpstreamTool, {format: 'numbered'}),
+      }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'}),
       /file content truncated while reading/
     )
 
@@ -280,7 +314,7 @@ describe('read handler (unit)', () => {
         anchor_line: 2,
         max_levels: 1
       }
-    }, projectPath, callUpstreamTool, {format: 'numbered'})
+    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
     strictEqual(result, 'L2:   child')
   })
@@ -309,7 +343,7 @@ describe('read handler (unit)', () => {
         anchor_line: 5,
         max_levels: 0
       }
-    }, projectPath, callUpstreamTool, {format: 'numbered'})
+    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
     strictEqual(result, [
       'L1: /**',
@@ -338,7 +372,7 @@ describe('read handler (unit)', () => {
         file_path: 'sample.txt',
         offset,
         limit
-      }, projectPath, callUpstreamTool, {format: 'numbered'})
+      }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
       const end = Math.min(offset - 1 + limit, lineCount)
       const expected = []

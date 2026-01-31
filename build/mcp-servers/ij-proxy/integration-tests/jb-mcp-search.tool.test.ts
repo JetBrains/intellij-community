@@ -9,7 +9,7 @@ import {dirAAbs, dirARel, isUnder, projectRoot, REGEX_SCOPE_PATTERN, streamUrl, 
 const maybeTest = streamUrl ? test : test.skip
 
 
-maybeTest('jb mcp search tool supports lexical text provider', async () => {
+maybeTest('jb mcp search_text tool supports path filtering', async () => {
   if (!streamUrl) return
 
   const client = new Client({name: 'ij-mcp-proxy-integration-test', version: '1.0.0'})
@@ -26,20 +26,15 @@ maybeTest('jb mcp search tool supports lexical text provider', async () => {
   try {
     const toolList = await client.listTools()
     const hasSearch = Array.isArray(toolList?.tools)
-      && toolList.tools.some((tool) => tool?.name === 'search')
+      && toolList.tools.some((tool) => tool?.name === 'search_text')
     if (!hasSearch) return
 
     const result = await client.callTool({
-      name: 'search',
+      name: 'search_text',
       arguments: {
-        query: REGEX_SCOPE_PATTERN,
-        mode: 'lexical',
-        providers: ['text'],
-        directoryToSearch: dirARel,
-        fileMask: '*.txt',
-        queryType: 'text',
-        maxResults: 20,
-        output: 'entries'
+        q: REGEX_SCOPE_PATTERN,
+        paths: [`${dirARel}/`],
+        limit: 20
       }
     })
 
@@ -47,8 +42,8 @@ maybeTest('jb mcp search tool supports lexical text provider', async () => {
     expect(items.length).toBeGreaterThan(0)
 
     const filePaths = items
-      .map((item) => item[0])
-      .filter((filePath) => filePath.length > 0)
+      .map((item) => item.filePath)
+      .filter((filePath) => typeof filePath === 'string' && filePath.length > 0)
       .map(toAbsolute)
 
     expect(filePaths.some((filePath) => isUnder(dirAAbs, filePath))).toBe(true)

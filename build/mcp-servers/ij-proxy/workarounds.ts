@@ -2,7 +2,7 @@
 
 type VersionParts = number[]
 
-export interface ParsedIdeVersion {
+interface ParsedIdeVersion {
   raw: string
   full?: VersionParts
   build?: VersionParts
@@ -16,6 +16,7 @@ type ParsedVersionSpec = {
 const FULL_VERSION_RE = /\b\d{4}\.\d+(?:\.\d+){0,2}\b/
 const BUILD_VERSION_RE = /\b\d{3}\.\d+(?:\.\d+)?\b/
 const SNAPSHOT_BUILD_RE = /\b(\d{3})\.SNAPSHOT\b/i
+const SNAPSHOT_BUILD_PART = Number.MAX_SAFE_INTEGER
 const ANY_VERSION_RE = /\d+(?:\.\d+)+/
 const DISABLE_ALL_ENV = 'JETBRAINS_MCP_PROXY_DISABLE_WORKAROUNDS'
 const DISABLE_KEYS_ENV = 'JETBRAINS_MCP_PROXY_DISABLE_WORKAROUND_KEYS'
@@ -28,8 +29,8 @@ export enum WorkaroundKey {
 }
 
 // Map workaround key -> version when fixed (empty string means not fixed yet).
-export const WORKAROUND_FIXED_IN: Record<WorkaroundKey, string> = {
-  [WorkaroundKey.SearchInFilesByRegexDirectoryScopeIgnored]: '261.SNAPSHOT'
+const WORKAROUND_FIXED_IN: Record<WorkaroundKey, string> = {
+  [WorkaroundKey.SearchInFilesByRegexDirectoryScopeIgnored]: '261.20247'
 }
 
 let currentIdeVersion: ParsedIdeVersion | null = null
@@ -40,10 +41,6 @@ export function setIdeVersion(rawVersion: string | null | undefined): void {
     return
   }
   currentIdeVersion = parseIdeVersion(rawVersion)
-}
-
-export function getIdeVersion(): ParsedIdeVersion | null {
-  return currentIdeVersion
 }
 
 export function shouldApplyWorkaround(key: WorkaroundKey): boolean {
@@ -93,7 +90,17 @@ function logDebug(message: string): void {
 
 function parseIdeVersion(raw: string): ParsedIdeVersion {
   const full = extractVersionParts(raw, FULL_VERSION_RE)
-  const build = extractVersionParts(raw, BUILD_VERSION_RE)
+  let build = extractVersionParts(raw, BUILD_VERSION_RE)
+  if (!build) {
+    // Treat SNAPSHOT builds as "newest" within their train, so fixed-in build thresholds disable workarounds.
+    const snapshotMatch = raw.match(SNAPSHOT_BUILD_RE)
+    if (snapshotMatch) {
+      const train = Number.parseInt(snapshotMatch[1], 10)
+      if (!Number.isNaN(train)) {
+        build = [train, SNAPSHOT_BUILD_PART]
+      }
+    }
+  }
   return {
     raw,
     full: full ?? undefined,

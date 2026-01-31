@@ -17,7 +17,7 @@ describe('read handler (edge cases)', () => {
         file_path: 'sample.txt',
         offset: 0,
         limit: 1
-      }, projectPath, callUpstreamTool),
+      }, projectPath, callUpstreamTool, {hasReadFile: false}),
       /offset must be a positive integer/
     )
   })
@@ -30,7 +30,7 @@ describe('read handler (edge cases)', () => {
         file_path: 'sample.txt',
         offset: 1,
         limit: 0
-      }, projectPath, callUpstreamTool),
+      }, projectPath, callUpstreamTool, {hasReadFile: false}),
       /limit must be a positive integer/
     )
   })
@@ -45,7 +45,7 @@ describe('read handler (edge cases)', () => {
       file_path: 'sample.txt',
       offset: 1,
       limit: 1
-    }, projectPath, callUpstreamTool, {format: 'raw'})
+    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'raw'})
 
     strictEqual(result, longLine)
   })
@@ -60,7 +60,7 @@ describe('read handler (edge cases)', () => {
       file_path: 'sample.txt',
       offset: 1,
       limit: 1
-    }, projectPath, callUpstreamTool, {format: 'numbered'})
+    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
     strictEqual(result.startsWith('L1: '), true)
     strictEqual(result.length, 4 + 500)
@@ -76,7 +76,7 @@ describe('read handler (edge cases)', () => {
         file_path: 'sample.txt',
         offset: 1,
         limit: 3
-      }, projectPath, callUpstreamTool, {format: 'numbered'}),
+      }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'}),
       /file content truncated while reading/
     )
   })
@@ -95,7 +95,7 @@ describe('read handler (edge cases)', () => {
       file_path: 'sample.txt',
       offset: 1,
       limit: 3
-    }, projectPath, callUpstreamTool, {format: 'numbered'})
+    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
     strictEqual(result, 'L1: alpha\nL2: beta\nL3: gamma')
     deepStrictEqual(
@@ -130,7 +130,7 @@ describe('read handler (edge cases)', () => {
         include_siblings: false,
         include_header: false
       }
-    }, projectPath, callUpstreamTool, {format: 'numbered'})
+    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
     strictEqual(result.includes('sibling2'), false)
     strictEqual(result.includes('sibling1'), true)
@@ -162,7 +162,7 @@ describe('read handler (edge cases)', () => {
         include_siblings: true,
         include_header: false
       }
-    }, projectPath, callUpstreamTool, {format: 'numbered'})
+    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
     strictEqual(result.includes('sibling2'), true)
   })
@@ -189,7 +189,7 @@ describe('read handler (edge cases)', () => {
         include_siblings: false,
         include_header: true
       }
-    }, projectPath, callUpstreamTool, {format: 'numbered'})
+    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
     strictEqual(result, 'L2: parent\nL3: child')
   })
@@ -216,7 +216,7 @@ describe('read handler (edge cases)', () => {
         include_siblings: false,
         include_header: false
       }
-    }, projectPath, callUpstreamTool, {format: 'numbered'})
+    }, projectPath, callUpstreamTool, {hasReadFile: false}, {format: 'numbered'})
 
     strictEqual(result, 'L2: parent\nL3: child')
   })
@@ -233,7 +233,7 @@ describe('read handler (edge cases)', () => {
         indentation: {
           max_levels: -1
         }
-      }, projectPath, callUpstreamTool),
+      }, projectPath, callUpstreamTool, {hasReadFile: false}),
       /max_levels must be a non-negative integer/
     )
 
@@ -246,7 +246,7 @@ describe('read handler (edge cases)', () => {
         indentation: {
           max_lines: 0
         }
-      }, projectPath, callUpstreamTool),
+      }, projectPath, callUpstreamTool, {hasReadFile: false}),
       /max_lines must be a positive integer/
     )
   })
@@ -266,7 +266,7 @@ describe('read handler (edge cases)', () => {
           anchor_line: 5,
           max_levels: 1
         }
-      }, projectPath, callUpstreamTool),
+      }, projectPath, callUpstreamTool, {hasReadFile: false}),
       /anchor_line exceeds file length/
     )
   })

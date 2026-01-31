@@ -5469,6 +5469,1067 @@ var require_dist = __commonJS((exports, module) => {
   exports.default = formatsPlugin;
 });
 
+// node_modules/picomatch/lib/constants.js
+var require_constants = __commonJS((exports, module) => {
+  var POSIX_CHARS = {
+    DOT_LITERAL: "\\.",
+    PLUS_LITERAL: "\\+",
+    QMARK_LITERAL: "\\?",
+    SLASH_LITERAL: "\\/",
+    ONE_CHAR: "(?=.)",
+    QMARK: "[^/]",
+    END_ANCHOR: "(?:\\/|$)",
+    DOTS_SLASH: "\\.{1,2}(?:\\/|$)",
+    NO_DOT: "(?!\\.)",
+    NO_DOTS: "(?!(?:^|\\/)\\.{1,2}(?:\\/|$))",
+    NO_DOT_SLASH: "(?!\\.{0,1}(?:\\/|$))",
+    NO_DOTS_SLASH: "(?!\\.{1,2}(?:\\/|$))",
+    QMARK_NO_DOT: "[^.\\/]",
+    STAR: "[^/]*?",
+    START_ANCHOR: "(?:^|\\/)",
+    SEP: "/"
+  }, WINDOWS_CHARS = {
+    ...POSIX_CHARS,
+    SLASH_LITERAL: "[\\\\/]",
+    QMARK: "[^\\\\/]",
+    STAR: "[^\\\\/]*?",
+    DOTS_SLASH: "\\.{1,2}(?:[\\\\/]|$)",
+    NO_DOT: "(?!\\.)",
+    NO_DOTS: "(?!(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$))",
+    NO_DOT_SLASH: "(?!\\.{0,1}(?:[\\\\/]|$))",
+    NO_DOTS_SLASH: "(?!\\.{1,2}(?:[\\\\/]|$))",
+    QMARK_NO_DOT: "[^.\\\\/]",
+    START_ANCHOR: "(?:^|[\\\\/])",
+    END_ANCHOR: "(?:[\\\\/]|$)",
+    SEP: "\\"
+  }, POSIX_REGEX_SOURCE = {
+    alnum: "a-zA-Z0-9",
+    alpha: "a-zA-Z",
+    ascii: "\\x00-\\x7F",
+    blank: " \\t",
+    cntrl: "\\x00-\\x1F\\x7F",
+    digit: "0-9",
+    graph: "\\x21-\\x7E",
+    lower: "a-z",
+    print: "\\x20-\\x7E ",
+    punct: "\\-!\"#$%&'()\\*+,./:;<=>?@[\\]^_`{|}~",
+    space: " \\t\\r\\n\\v\\f",
+    upper: "A-Z",
+    word: "A-Za-z0-9_",
+    xdigit: "A-Fa-f0-9"
+  };
+  module.exports = {
+    MAX_LENGTH: 65536,
+    POSIX_REGEX_SOURCE,
+    REGEX_BACKSLASH: /\\(?![*+?^${}(|)[\]])/g,
+    REGEX_NON_SPECIAL_CHARS: /^[^@![\].,$*+?^{}()|\\/]+/,
+    REGEX_SPECIAL_CHARS: /[-*+?.^${}(|)[\]]/,
+    REGEX_SPECIAL_CHARS_BACKREF: /(\\?)((\W)(\3*))/g,
+    REGEX_SPECIAL_CHARS_GLOBAL: /([-*+?.^${}(|)[\]])/g,
+    REGEX_REMOVE_BACKSLASH: /(?:\[.*?[^\\]\]|\\(?=.))/g,
+    REPLACEMENTS: {
+      __proto__: null,
+      "***": "*",
+      "**/**": "**",
+      "**/**/**": "**"
+    },
+    CHAR_0: 48,
+    CHAR_9: 57,
+    CHAR_UPPERCASE_A: 65,
+    CHAR_LOWERCASE_A: 97,
+    CHAR_UPPERCASE_Z: 90,
+    CHAR_LOWERCASE_Z: 122,
+    CHAR_LEFT_PARENTHESES: 40,
+    CHAR_RIGHT_PARENTHESES: 41,
+    CHAR_ASTERISK: 42,
+    CHAR_AMPERSAND: 38,
+    CHAR_AT: 64,
+    CHAR_BACKWARD_SLASH: 92,
+    CHAR_CARRIAGE_RETURN: 13,
+    CHAR_CIRCUMFLEX_ACCENT: 94,
+    CHAR_COLON: 58,
+    CHAR_COMMA: 44,
+    CHAR_DOT: 46,
+    CHAR_DOUBLE_QUOTE: 34,
+    CHAR_EQUAL: 61,
+    CHAR_EXCLAMATION_MARK: 33,
+    CHAR_FORM_FEED: 12,
+    CHAR_FORWARD_SLASH: 47,
+    CHAR_GRAVE_ACCENT: 96,
+    CHAR_HASH: 35,
+    CHAR_HYPHEN_MINUS: 45,
+    CHAR_LEFT_ANGLE_BRACKET: 60,
+    CHAR_LEFT_CURLY_BRACE: 123,
+    CHAR_LEFT_SQUARE_BRACKET: 91,
+    CHAR_LINE_FEED: 10,
+    CHAR_NO_BREAK_SPACE: 160,
+    CHAR_PERCENT: 37,
+    CHAR_PLUS: 43,
+    CHAR_QUESTION_MARK: 63,
+    CHAR_RIGHT_ANGLE_BRACKET: 62,
+    CHAR_RIGHT_CURLY_BRACE: 125,
+    CHAR_RIGHT_SQUARE_BRACKET: 93,
+    CHAR_SEMICOLON: 59,
+    CHAR_SINGLE_QUOTE: 39,
+    CHAR_SPACE: 32,
+    CHAR_TAB: 9,
+    CHAR_UNDERSCORE: 95,
+    CHAR_VERTICAL_LINE: 124,
+    CHAR_ZERO_WIDTH_NOBREAK_SPACE: 65279,
+    extglobChars(chars) {
+      return {
+        "!": { type: "negate", open: "(?:(?!(?:", close: `))${chars.STAR})` },
+        "?": { type: "qmark", open: "(?:", close: ")?" },
+        "+": { type: "plus", open: "(?:", close: ")+" },
+        "*": { type: "star", open: "(?:", close: ")*" },
+        "@": { type: "at", open: "(?:", close: ")" }
+      };
+    },
+    globChars(win32) {
+      return win32 === !0 ? WINDOWS_CHARS : POSIX_CHARS;
+    }
+  };
+});
+
+// node_modules/picomatch/lib/utils.js
+var require_utils2 = __commonJS((exports) => {
+  var {
+    REGEX_BACKSLASH,
+    REGEX_REMOVE_BACKSLASH,
+    REGEX_SPECIAL_CHARS,
+    REGEX_SPECIAL_CHARS_GLOBAL
+  } = require_constants();
+  exports.isObject = (val) => val !== null && typeof val === "object" && !Array.isArray(val);
+  exports.hasRegexChars = (str) => REGEX_SPECIAL_CHARS.test(str);
+  exports.isRegexChar = (str) => str.length === 1 && exports.hasRegexChars(str);
+  exports.escapeRegex = (str) => str.replace(REGEX_SPECIAL_CHARS_GLOBAL, "\\$1");
+  exports.toPosixSlashes = (str) => str.replace(REGEX_BACKSLASH, "/");
+  exports.isWindows = () => {
+    if (typeof navigator < "u" && navigator.platform) {
+      let platform = navigator.platform.toLowerCase();
+      return platform === "win32" || platform === "windows";
+    }
+    if (typeof process < "u" && process.platform)
+      return process.platform === "win32";
+    return !1;
+  };
+  exports.removeBackslashes = (str) => {
+    return str.replace(REGEX_REMOVE_BACKSLASH, (match) => {
+      return match === "\\" ? "" : match;
+    });
+  };
+  exports.escapeLast = (input, char, lastIdx) => {
+    let idx = input.lastIndexOf(char, lastIdx);
+    if (idx === -1)
+      return input;
+    if (input[idx - 1] === "\\")
+      return exports.escapeLast(input, char, idx - 1);
+    return `${input.slice(0, idx)}\\${input.slice(idx)}`;
+  };
+  exports.removePrefix = (input, state = {}) => {
+    let output = input;
+    if (output.startsWith("./"))
+      output = output.slice(2), state.prefix = "./";
+    return output;
+  };
+  exports.wrapOutput = (input, state = {}, options = {}) => {
+    let prepend = options.contains ? "" : "^", append = options.contains ? "" : "$", output = `${prepend}(?:${input})${append}`;
+    if (state.negated === !0)
+      output = `(?:^(?!${output}).*$)`;
+    return output;
+  };
+  exports.basename = (path7, { windows } = {}) => {
+    let segs = path7.split(windows ? /[\\/]/ : "/"), last = segs[segs.length - 1];
+    if (last === "")
+      return segs[segs.length - 2];
+    return last;
+  };
+});
+
+// node_modules/picomatch/lib/scan.js
+var require_scan = __commonJS((exports, module) => {
+  var utils = require_utils2(), {
+    CHAR_ASTERISK,
+    CHAR_AT,
+    CHAR_BACKWARD_SLASH,
+    CHAR_COMMA,
+    CHAR_DOT,
+    CHAR_EXCLAMATION_MARK,
+    CHAR_FORWARD_SLASH,
+    CHAR_LEFT_CURLY_BRACE,
+    CHAR_LEFT_PARENTHESES,
+    CHAR_LEFT_SQUARE_BRACKET,
+    CHAR_PLUS,
+    CHAR_QUESTION_MARK,
+    CHAR_RIGHT_CURLY_BRACE,
+    CHAR_RIGHT_PARENTHESES,
+    CHAR_RIGHT_SQUARE_BRACKET
+  } = require_constants(), isPathSeparator = (code) => {
+    return code === CHAR_FORWARD_SLASH || code === CHAR_BACKWARD_SLASH;
+  }, depth = (token) => {
+    if (token.isPrefix !== !0)
+      token.depth = token.isGlobstar ? 1 / 0 : 1;
+  }, scan = (input, options) => {
+    let opts = options || {}, length = input.length - 1, scanToEnd = opts.parts === !0 || opts.scanToEnd === !0, slashes = [], tokens = [], parts = [], str = input, index = -1, start = 0, lastIndex = 0, isBrace = !1, isBracket = !1, isGlob = !1, isExtglob = !1, isGlobstar = !1, braceEscaped = !1, backslashes = !1, negated = !1, negatedExtglob = !1, finished = !1, braces = 0, prev, code, token = { value: "", depth: 0, isGlob: !1 }, eos = () => index >= length, peek = () => str.charCodeAt(index + 1), advance = () => {
+      return prev = code, str.charCodeAt(++index);
+    };
+    while (index < length) {
+      code = advance();
+      let next;
+      if (code === CHAR_BACKWARD_SLASH) {
+        if (backslashes = token.backslashes = !0, code = advance(), code === CHAR_LEFT_CURLY_BRACE)
+          braceEscaped = !0;
+        continue;
+      }
+      if (braceEscaped === !0 || code === CHAR_LEFT_CURLY_BRACE) {
+        braces++;
+        while (eos() !== !0 && (code = advance())) {
+          if (code === CHAR_BACKWARD_SLASH) {
+            backslashes = token.backslashes = !0, advance();
+            continue;
+          }
+          if (code === CHAR_LEFT_CURLY_BRACE) {
+            braces++;
+            continue;
+          }
+          if (braceEscaped !== !0 && code === CHAR_DOT && (code = advance()) === CHAR_DOT) {
+            if (isBrace = token.isBrace = !0, isGlob = token.isGlob = !0, finished = !0, scanToEnd === !0)
+              continue;
+            break;
+          }
+          if (braceEscaped !== !0 && code === CHAR_COMMA) {
+            if (isBrace = token.isBrace = !0, isGlob = token.isGlob = !0, finished = !0, scanToEnd === !0)
+              continue;
+            break;
+          }
+          if (code === CHAR_RIGHT_CURLY_BRACE) {
+            if (braces--, braces === 0) {
+              braceEscaped = !1, isBrace = token.isBrace = !0, finished = !0;
+              break;
+            }
+          }
+        }
+        if (scanToEnd === !0)
+          continue;
+        break;
+      }
+      if (code === CHAR_FORWARD_SLASH) {
+        if (slashes.push(index), tokens.push(token), token = { value: "", depth: 0, isGlob: !1 }, finished === !0)
+          continue;
+        if (prev === CHAR_DOT && index === start + 1) {
+          start += 2;
+          continue;
+        }
+        lastIndex = index + 1;
+        continue;
+      }
+      if (opts.noext !== !0) {
+        if ((code === CHAR_PLUS || code === CHAR_AT || code === CHAR_ASTERISK || code === CHAR_QUESTION_MARK || code === CHAR_EXCLAMATION_MARK) === !0 && peek() === CHAR_LEFT_PARENTHESES) {
+          if (isGlob = token.isGlob = !0, isExtglob = token.isExtglob = !0, finished = !0, code === CHAR_EXCLAMATION_MARK && index === start)
+            negatedExtglob = !0;
+          if (scanToEnd === !0) {
+            while (eos() !== !0 && (code = advance())) {
+              if (code === CHAR_BACKWARD_SLASH) {
+                backslashes = token.backslashes = !0, code = advance();
+                continue;
+              }
+              if (code === CHAR_RIGHT_PARENTHESES) {
+                isGlob = token.isGlob = !0, finished = !0;
+                break;
+              }
+            }
+            continue;
+          }
+          break;
+        }
+      }
+      if (code === CHAR_ASTERISK) {
+        if (prev === CHAR_ASTERISK)
+          isGlobstar = token.isGlobstar = !0;
+        if (isGlob = token.isGlob = !0, finished = !0, scanToEnd === !0)
+          continue;
+        break;
+      }
+      if (code === CHAR_QUESTION_MARK) {
+        if (isGlob = token.isGlob = !0, finished = !0, scanToEnd === !0)
+          continue;
+        break;
+      }
+      if (code === CHAR_LEFT_SQUARE_BRACKET) {
+        while (eos() !== !0 && (next = advance())) {
+          if (next === CHAR_BACKWARD_SLASH) {
+            backslashes = token.backslashes = !0, advance();
+            continue;
+          }
+          if (next === CHAR_RIGHT_SQUARE_BRACKET) {
+            isBracket = token.isBracket = !0, isGlob = token.isGlob = !0, finished = !0;
+            break;
+          }
+        }
+        if (scanToEnd === !0)
+          continue;
+        break;
+      }
+      if (opts.nonegate !== !0 && code === CHAR_EXCLAMATION_MARK && index === start) {
+        negated = token.negated = !0, start++;
+        continue;
+      }
+      if (opts.noparen !== !0 && code === CHAR_LEFT_PARENTHESES) {
+        if (isGlob = token.isGlob = !0, scanToEnd === !0) {
+          while (eos() !== !0 && (code = advance())) {
+            if (code === CHAR_LEFT_PARENTHESES) {
+              backslashes = token.backslashes = !0, code = advance();
+              continue;
+            }
+            if (code === CHAR_RIGHT_PARENTHESES) {
+              finished = !0;
+              break;
+            }
+          }
+          continue;
+        }
+        break;
+      }
+      if (isGlob === !0) {
+        if (finished = !0, scanToEnd === !0)
+          continue;
+        break;
+      }
+    }
+    if (opts.noext === !0)
+      isExtglob = !1, isGlob = !1;
+    let base = str, prefix = "", glob = "";
+    if (start > 0)
+      prefix = str.slice(0, start), str = str.slice(start), lastIndex -= start;
+    if (base && isGlob === !0 && lastIndex > 0)
+      base = str.slice(0, lastIndex), glob = str.slice(lastIndex);
+    else if (isGlob === !0)
+      base = "", glob = str;
+    else
+      base = str;
+    if (base && base !== "" && base !== "/" && base !== str) {
+      if (isPathSeparator(base.charCodeAt(base.length - 1)))
+        base = base.slice(0, -1);
+    }
+    if (opts.unescape === !0) {
+      if (glob)
+        glob = utils.removeBackslashes(glob);
+      if (base && backslashes === !0)
+        base = utils.removeBackslashes(base);
+    }
+    let state = {
+      prefix,
+      input,
+      start,
+      base,
+      glob,
+      isBrace,
+      isBracket,
+      isGlob,
+      isExtglob,
+      isGlobstar,
+      negated,
+      negatedExtglob
+    };
+    if (opts.tokens === !0) {
+      if (state.maxDepth = 0, !isPathSeparator(code))
+        tokens.push(token);
+      state.tokens = tokens;
+    }
+    if (opts.parts === !0 || opts.tokens === !0) {
+      let prevIndex;
+      for (let idx = 0;idx < slashes.length; idx++) {
+        let n = prevIndex ? prevIndex + 1 : start, i = slashes[idx], value = input.slice(n, i);
+        if (opts.tokens) {
+          if (idx === 0 && start !== 0)
+            tokens[idx].isPrefix = !0, tokens[idx].value = prefix;
+          else
+            tokens[idx].value = value;
+          depth(tokens[idx]), state.maxDepth += tokens[idx].depth;
+        }
+        if (idx !== 0 || value !== "")
+          parts.push(value);
+        prevIndex = i;
+      }
+      if (prevIndex && prevIndex + 1 < input.length) {
+        let value = input.slice(prevIndex + 1);
+        if (parts.push(value), opts.tokens)
+          tokens[tokens.length - 1].value = value, depth(tokens[tokens.length - 1]), state.maxDepth += tokens[tokens.length - 1].depth;
+      }
+      state.slashes = slashes, state.parts = parts;
+    }
+    return state;
+  };
+  module.exports = scan;
+});
+
+// node_modules/picomatch/lib/parse.js
+var require_parse = __commonJS((exports, module) => {
+  var constants = require_constants(), utils = require_utils2(), {
+    MAX_LENGTH,
+    POSIX_REGEX_SOURCE,
+    REGEX_NON_SPECIAL_CHARS,
+    REGEX_SPECIAL_CHARS_BACKREF,
+    REPLACEMENTS
+  } = constants, expandRange = (args, options) => {
+    if (typeof options.expandRange === "function")
+      return options.expandRange(...args, options);
+    args.sort();
+    let value = `[${args.join("-")}]`;
+    try {
+      new RegExp(value);
+    } catch (ex) {
+      return args.map((v) => utils.escapeRegex(v)).join("..");
+    }
+    return value;
+  }, syntaxError = (type, char) => {
+    return `Missing ${type}: "${char}" - use "\\\\${char}" to match literal characters`;
+  }, parse5 = (input, options) => {
+    if (typeof input !== "string")
+      throw TypeError("Expected a string");
+    input = REPLACEMENTS[input] || input;
+    let opts = { ...options }, max = typeof opts.maxLength === "number" ? Math.min(MAX_LENGTH, opts.maxLength) : MAX_LENGTH, len = input.length;
+    if (len > max)
+      throw SyntaxError(`Input length: ${len}, exceeds maximum allowed length: ${max}`);
+    let bos = { type: "bos", value: "", output: opts.prepend || "" }, tokens = [bos], capture = opts.capture ? "" : "?:", PLATFORM_CHARS = constants.globChars(opts.windows), EXTGLOB_CHARS = constants.extglobChars(PLATFORM_CHARS), {
+      DOT_LITERAL,
+      PLUS_LITERAL,
+      SLASH_LITERAL,
+      ONE_CHAR,
+      DOTS_SLASH,
+      NO_DOT,
+      NO_DOT_SLASH,
+      NO_DOTS_SLASH,
+      QMARK,
+      QMARK_NO_DOT,
+      STAR,
+      START_ANCHOR
+    } = PLATFORM_CHARS, globstar = (opts2) => {
+      return `(${capture}(?:(?!${START_ANCHOR}${opts2.dot ? DOTS_SLASH : DOT_LITERAL}).)*?)`;
+    }, nodot = opts.dot ? "" : NO_DOT, qmarkNoDot = opts.dot ? QMARK : QMARK_NO_DOT, star = opts.bash === !0 ? globstar(opts) : STAR;
+    if (opts.capture)
+      star = `(${star})`;
+    if (typeof opts.noext === "boolean")
+      opts.noextglob = opts.noext;
+    let state = {
+      input,
+      index: -1,
+      start: 0,
+      dot: opts.dot === !0,
+      consumed: "",
+      output: "",
+      prefix: "",
+      backtrack: !1,
+      negated: !1,
+      brackets: 0,
+      braces: 0,
+      parens: 0,
+      quotes: 0,
+      globstar: !1,
+      tokens
+    };
+    input = utils.removePrefix(input, state), len = input.length;
+    let extglobs = [], braces = [], stack = [], prev = bos, value, eos = () => state.index === len - 1, peek = state.peek = (n = 1) => input[state.index + n], advance = state.advance = () => input[++state.index] || "", remaining = () => input.slice(state.index + 1), consume = (value2 = "", num = 0) => {
+      state.consumed += value2, state.index += num;
+    }, append = (token) => {
+      state.output += token.output != null ? token.output : token.value, consume(token.value);
+    }, negate = () => {
+      let count = 1;
+      while (peek() === "!" && (peek(2) !== "(" || peek(3) === "?"))
+        advance(), state.start++, count++;
+      if (count % 2 === 0)
+        return !1;
+      return state.negated = !0, state.start++, !0;
+    }, increment = (type) => {
+      state[type]++, stack.push(type);
+    }, decrement = (type) => {
+      state[type]--, stack.pop();
+    }, push = (tok) => {
+      if (prev.type === "globstar") {
+        let isBrace = state.braces > 0 && (tok.type === "comma" || tok.type === "brace"), isExtglob = tok.extglob === !0 || extglobs.length && (tok.type === "pipe" || tok.type === "paren");
+        if (tok.type !== "slash" && tok.type !== "paren" && !isBrace && !isExtglob)
+          state.output = state.output.slice(0, -prev.output.length), prev.type = "star", prev.value = "*", prev.output = star, state.output += prev.output;
+      }
+      if (extglobs.length && tok.type !== "paren")
+        extglobs[extglobs.length - 1].inner += tok.value;
+      if (tok.value || tok.output)
+        append(tok);
+      if (prev && prev.type === "text" && tok.type === "text") {
+        prev.output = (prev.output || prev.value) + tok.value, prev.value += tok.value;
+        return;
+      }
+      tok.prev = prev, tokens.push(tok), prev = tok;
+    }, extglobOpen = (type, value2) => {
+      let token = { ...EXTGLOB_CHARS[value2], conditions: 1, inner: "" };
+      token.prev = prev, token.parens = state.parens, token.output = state.output;
+      let output = (opts.capture ? "(" : "") + token.open;
+      increment("parens"), push({ type, value: value2, output: state.output ? "" : ONE_CHAR }), push({ type: "paren", extglob: !0, value: advance(), output }), extglobs.push(token);
+    }, extglobClose = (token) => {
+      let output = token.close + (opts.capture ? ")" : ""), rest;
+      if (token.type === "negate") {
+        let extglobStar = star;
+        if (token.inner && token.inner.length > 1 && token.inner.includes("/"))
+          extglobStar = globstar(opts);
+        if (extglobStar !== star || eos() || /^\)+$/.test(remaining()))
+          output = token.close = `)$))${extglobStar}`;
+        if (token.inner.includes("*") && (rest = remaining()) && /^\.[^\\/.]+$/.test(rest)) {
+          let expression = parse5(rest, { ...options, fastpaths: !1 }).output;
+          output = token.close = `)${expression})${extglobStar})`;
+        }
+        if (token.prev.type === "bos")
+          state.negatedExtglob = !0;
+      }
+      push({ type: "paren", extglob: !0, value, output }), decrement("parens");
+    };
+    if (opts.fastpaths !== !1 && !/(^[*!]|[/()[\]{}"])/.test(input)) {
+      let backslashes = !1, output = input.replace(REGEX_SPECIAL_CHARS_BACKREF, (m, esc2, chars, first, rest, index) => {
+        if (first === "\\")
+          return backslashes = !0, m;
+        if (first === "?") {
+          if (esc2)
+            return esc2 + first + (rest ? QMARK.repeat(rest.length) : "");
+          if (index === 0)
+            return qmarkNoDot + (rest ? QMARK.repeat(rest.length) : "");
+          return QMARK.repeat(chars.length);
+        }
+        if (first === ".")
+          return DOT_LITERAL.repeat(chars.length);
+        if (first === "*") {
+          if (esc2)
+            return esc2 + first + (rest ? star : "");
+          return star;
+        }
+        return esc2 ? m : `\\${m}`;
+      });
+      if (backslashes === !0)
+        if (opts.unescape === !0)
+          output = output.replace(/\\/g, "");
+        else
+          output = output.replace(/\\+/g, (m) => {
+            return m.length % 2 === 0 ? "\\\\" : m ? "\\" : "";
+          });
+      if (output === input && opts.contains === !0)
+        return state.output = input, state;
+      return state.output = utils.wrapOutput(output, state, options), state;
+    }
+    while (!eos()) {
+      if (value = advance(), value === "\x00")
+        continue;
+      if (value === "\\") {
+        let next = peek();
+        if (next === "/" && opts.bash !== !0)
+          continue;
+        if (next === "." || next === ";")
+          continue;
+        if (!next) {
+          value += "\\", push({ type: "text", value });
+          continue;
+        }
+        let match = /^\\+/.exec(remaining()), slashes = 0;
+        if (match && match[0].length > 2) {
+          if (slashes = match[0].length, state.index += slashes, slashes % 2 !== 0)
+            value += "\\";
+        }
+        if (opts.unescape === !0)
+          value = advance();
+        else
+          value += advance();
+        if (state.brackets === 0) {
+          push({ type: "text", value });
+          continue;
+        }
+      }
+      if (state.brackets > 0 && (value !== "]" || prev.value === "[" || prev.value === "[^")) {
+        if (opts.posix !== !1 && value === ":") {
+          let inner = prev.value.slice(1);
+          if (inner.includes("[")) {
+            if (prev.posix = !0, inner.includes(":")) {
+              let idx = prev.value.lastIndexOf("["), pre = prev.value.slice(0, idx), rest2 = prev.value.slice(idx + 2), posix = POSIX_REGEX_SOURCE[rest2];
+              if (posix) {
+                if (prev.value = pre + posix, state.backtrack = !0, advance(), !bos.output && tokens.indexOf(prev) === 1)
+                  bos.output = ONE_CHAR;
+                continue;
+              }
+            }
+          }
+        }
+        if (value === "[" && peek() !== ":" || value === "-" && peek() === "]")
+          value = `\\${value}`;
+        if (value === "]" && (prev.value === "[" || prev.value === "[^"))
+          value = `\\${value}`;
+        if (opts.posix === !0 && value === "!" && prev.value === "[")
+          value = "^";
+        prev.value += value, append({ value });
+        continue;
+      }
+      if (state.quotes === 1 && value !== '"') {
+        value = utils.escapeRegex(value), prev.value += value, append({ value });
+        continue;
+      }
+      if (value === '"') {
+        if (state.quotes = state.quotes === 1 ? 0 : 1, opts.keepQuotes === !0)
+          push({ type: "text", value });
+        continue;
+      }
+      if (value === "(") {
+        increment("parens"), push({ type: "paren", value });
+        continue;
+      }
+      if (value === ")") {
+        if (state.parens === 0 && opts.strictBrackets === !0)
+          throw SyntaxError(syntaxError("opening", "("));
+        let extglob = extglobs[extglobs.length - 1];
+        if (extglob && state.parens === extglob.parens + 1) {
+          extglobClose(extglobs.pop());
+          continue;
+        }
+        push({ type: "paren", value, output: state.parens ? ")" : "\\)" }), decrement("parens");
+        continue;
+      }
+      if (value === "[") {
+        if (opts.nobracket === !0 || !remaining().includes("]")) {
+          if (opts.nobracket !== !0 && opts.strictBrackets === !0)
+            throw SyntaxError(syntaxError("closing", "]"));
+          value = `\\${value}`;
+        } else
+          increment("brackets");
+        push({ type: "bracket", value });
+        continue;
+      }
+      if (value === "]") {
+        if (opts.nobracket === !0 || prev && prev.type === "bracket" && prev.value.length === 1) {
+          push({ type: "text", value, output: `\\${value}` });
+          continue;
+        }
+        if (state.brackets === 0) {
+          if (opts.strictBrackets === !0)
+            throw SyntaxError(syntaxError("opening", "["));
+          push({ type: "text", value, output: `\\${value}` });
+          continue;
+        }
+        decrement("brackets");
+        let prevValue = prev.value.slice(1);
+        if (prev.posix !== !0 && prevValue[0] === "^" && !prevValue.includes("/"))
+          value = `/${value}`;
+        if (prev.value += value, append({ value }), opts.literalBrackets === !1 || utils.hasRegexChars(prevValue))
+          continue;
+        let escaped = utils.escapeRegex(prev.value);
+        if (state.output = state.output.slice(0, -prev.value.length), opts.literalBrackets === !0) {
+          state.output += escaped, prev.value = escaped;
+          continue;
+        }
+        prev.value = `(${capture}${escaped}|${prev.value})`, state.output += prev.value;
+        continue;
+      }
+      if (value === "{" && opts.nobrace !== !0) {
+        increment("braces");
+        let open = {
+          type: "brace",
+          value,
+          output: "(",
+          outputIndex: state.output.length,
+          tokensIndex: state.tokens.length
+        };
+        braces.push(open), push(open);
+        continue;
+      }
+      if (value === "}") {
+        let brace = braces[braces.length - 1];
+        if (opts.nobrace === !0 || !brace) {
+          push({ type: "text", value, output: value });
+          continue;
+        }
+        let output = ")";
+        if (brace.dots === !0) {
+          let arr = tokens.slice(), range = [];
+          for (let i = arr.length - 1;i >= 0; i--) {
+            if (tokens.pop(), arr[i].type === "brace")
+              break;
+            if (arr[i].type !== "dots")
+              range.unshift(arr[i].value);
+          }
+          output = expandRange(range, opts), state.backtrack = !0;
+        }
+        if (brace.comma !== !0 && brace.dots !== !0) {
+          let out = state.output.slice(0, brace.outputIndex), toks = state.tokens.slice(brace.tokensIndex);
+          brace.value = brace.output = "\\{", value = output = "\\}", state.output = out;
+          for (let t of toks)
+            state.output += t.output || t.value;
+        }
+        push({ type: "brace", value, output }), decrement("braces"), braces.pop();
+        continue;
+      }
+      if (value === "|") {
+        if (extglobs.length > 0)
+          extglobs[extglobs.length - 1].conditions++;
+        push({ type: "text", value });
+        continue;
+      }
+      if (value === ",") {
+        let output = value, brace = braces[braces.length - 1];
+        if (brace && stack[stack.length - 1] === "braces")
+          brace.comma = !0, output = "|";
+        push({ type: "comma", value, output });
+        continue;
+      }
+      if (value === "/") {
+        if (prev.type === "dot" && state.index === state.start + 1) {
+          state.start = state.index + 1, state.consumed = "", state.output = "", tokens.pop(), prev = bos;
+          continue;
+        }
+        push({ type: "slash", value, output: SLASH_LITERAL });
+        continue;
+      }
+      if (value === ".") {
+        if (state.braces > 0 && prev.type === "dot") {
+          if (prev.value === ".")
+            prev.output = DOT_LITERAL;
+          let brace = braces[braces.length - 1];
+          prev.type = "dots", prev.output += value, prev.value += value, brace.dots = !0;
+          continue;
+        }
+        if (state.braces + state.parens === 0 && prev.type !== "bos" && prev.type !== "slash") {
+          push({ type: "text", value, output: DOT_LITERAL });
+          continue;
+        }
+        push({ type: "dot", value, output: DOT_LITERAL });
+        continue;
+      }
+      if (value === "?") {
+        if (!(prev && prev.value === "(") && opts.noextglob !== !0 && peek() === "(" && peek(2) !== "?") {
+          extglobOpen("qmark", value);
+          continue;
+        }
+        if (prev && prev.type === "paren") {
+          let next = peek(), output = value;
+          if (prev.value === "(" && !/[!=<:]/.test(next) || next === "<" && !/<([!=]|\w+>)/.test(remaining()))
+            output = `\\${value}`;
+          push({ type: "text", value, output });
+          continue;
+        }
+        if (opts.dot !== !0 && (prev.type === "slash" || prev.type === "bos")) {
+          push({ type: "qmark", value, output: QMARK_NO_DOT });
+          continue;
+        }
+        push({ type: "qmark", value, output: QMARK });
+        continue;
+      }
+      if (value === "!") {
+        if (opts.noextglob !== !0 && peek() === "(") {
+          if (peek(2) !== "?" || !/[!=<:]/.test(peek(3))) {
+            extglobOpen("negate", value);
+            continue;
+          }
+        }
+        if (opts.nonegate !== !0 && state.index === 0) {
+          negate();
+          continue;
+        }
+      }
+      if (value === "+") {
+        if (opts.noextglob !== !0 && peek() === "(" && peek(2) !== "?") {
+          extglobOpen("plus", value);
+          continue;
+        }
+        if (prev && prev.value === "(" || opts.regex === !1) {
+          push({ type: "plus", value, output: PLUS_LITERAL });
+          continue;
+        }
+        if (prev && (prev.type === "bracket" || prev.type === "paren" || prev.type === "brace") || state.parens > 0) {
+          push({ type: "plus", value });
+          continue;
+        }
+        push({ type: "plus", value: PLUS_LITERAL });
+        continue;
+      }
+      if (value === "@") {
+        if (opts.noextglob !== !0 && peek() === "(" && peek(2) !== "?") {
+          push({ type: "at", extglob: !0, value, output: "" });
+          continue;
+        }
+        push({ type: "text", value });
+        continue;
+      }
+      if (value !== "*") {
+        if (value === "$" || value === "^")
+          value = `\\${value}`;
+        let match = REGEX_NON_SPECIAL_CHARS.exec(remaining());
+        if (match)
+          value += match[0], state.index += match[0].length;
+        push({ type: "text", value });
+        continue;
+      }
+      if (prev && (prev.type === "globstar" || prev.star === !0)) {
+        prev.type = "star", prev.star = !0, prev.value += value, prev.output = star, state.backtrack = !0, state.globstar = !0, consume(value);
+        continue;
+      }
+      let rest = remaining();
+      if (opts.noextglob !== !0 && /^\([^?]/.test(rest)) {
+        extglobOpen("star", value);
+        continue;
+      }
+      if (prev.type === "star") {
+        if (opts.noglobstar === !0) {
+          consume(value);
+          continue;
+        }
+        let prior = prev.prev, before = prior.prev, isStart = prior.type === "slash" || prior.type === "bos", afterStar = before && (before.type === "star" || before.type === "globstar");
+        if (opts.bash === !0 && (!isStart || rest[0] && rest[0] !== "/")) {
+          push({ type: "star", value, output: "" });
+          continue;
+        }
+        let isBrace = state.braces > 0 && (prior.type === "comma" || prior.type === "brace"), isExtglob = extglobs.length && (prior.type === "pipe" || prior.type === "paren");
+        if (!isStart && prior.type !== "paren" && !isBrace && !isExtglob) {
+          push({ type: "star", value, output: "" });
+          continue;
+        }
+        while (rest.slice(0, 3) === "/**") {
+          let after = input[state.index + 4];
+          if (after && after !== "/")
+            break;
+          rest = rest.slice(3), consume("/**", 3);
+        }
+        if (prior.type === "bos" && eos()) {
+          prev.type = "globstar", prev.value += value, prev.output = globstar(opts), state.output = prev.output, state.globstar = !0, consume(value);
+          continue;
+        }
+        if (prior.type === "slash" && prior.prev.type !== "bos" && !afterStar && eos()) {
+          state.output = state.output.slice(0, -(prior.output + prev.output).length), prior.output = `(?:${prior.output}`, prev.type = "globstar", prev.output = globstar(opts) + (opts.strictSlashes ? ")" : "|$)"), prev.value += value, state.globstar = !0, state.output += prior.output + prev.output, consume(value);
+          continue;
+        }
+        if (prior.type === "slash" && prior.prev.type !== "bos" && rest[0] === "/") {
+          let end = rest[1] !== void 0 ? "|$" : "";
+          state.output = state.output.slice(0, -(prior.output + prev.output).length), prior.output = `(?:${prior.output}`, prev.type = "globstar", prev.output = `${globstar(opts)}${SLASH_LITERAL}|${SLASH_LITERAL}${end})`, prev.value += value, state.output += prior.output + prev.output, state.globstar = !0, consume(value + advance()), push({ type: "slash", value: "/", output: "" });
+          continue;
+        }
+        if (prior.type === "bos" && rest[0] === "/") {
+          prev.type = "globstar", prev.value += value, prev.output = `(?:^|${SLASH_LITERAL}|${globstar(opts)}${SLASH_LITERAL})`, state.output = prev.output, state.globstar = !0, consume(value + advance()), push({ type: "slash", value: "/", output: "" });
+          continue;
+        }
+        state.output = state.output.slice(0, -prev.output.length), prev.type = "globstar", prev.output = globstar(opts), prev.value += value, state.output += prev.output, state.globstar = !0, consume(value);
+        continue;
+      }
+      let token = { type: "star", value, output: star };
+      if (opts.bash === !0) {
+        if (token.output = ".*?", prev.type === "bos" || prev.type === "slash")
+          token.output = nodot + token.output;
+        push(token);
+        continue;
+      }
+      if (prev && (prev.type === "bracket" || prev.type === "paren") && opts.regex === !0) {
+        token.output = value, push(token);
+        continue;
+      }
+      if (state.index === state.start || prev.type === "slash" || prev.type === "dot") {
+        if (prev.type === "dot")
+          state.output += NO_DOT_SLASH, prev.output += NO_DOT_SLASH;
+        else if (opts.dot === !0)
+          state.output += NO_DOTS_SLASH, prev.output += NO_DOTS_SLASH;
+        else
+          state.output += nodot, prev.output += nodot;
+        if (peek() !== "*")
+          state.output += ONE_CHAR, prev.output += ONE_CHAR;
+      }
+      push(token);
+    }
+    while (state.brackets > 0) {
+      if (opts.strictBrackets === !0)
+        throw SyntaxError(syntaxError("closing", "]"));
+      state.output = utils.escapeLast(state.output, "["), decrement("brackets");
+    }
+    while (state.parens > 0) {
+      if (opts.strictBrackets === !0)
+        throw SyntaxError(syntaxError("closing", ")"));
+      state.output = utils.escapeLast(state.output, "("), decrement("parens");
+    }
+    while (state.braces > 0) {
+      if (opts.strictBrackets === !0)
+        throw SyntaxError(syntaxError("closing", "}"));
+      state.output = utils.escapeLast(state.output, "{"), decrement("braces");
+    }
+    if (opts.strictSlashes !== !0 && (prev.type === "star" || prev.type === "bracket"))
+      push({ type: "maybe_slash", value: "", output: `${SLASH_LITERAL}?` });
+    if (state.backtrack === !0) {
+      state.output = "";
+      for (let token of state.tokens)
+        if (state.output += token.output != null ? token.output : token.value, token.suffix)
+          state.output += token.suffix;
+    }
+    return state;
+  };
+  parse5.fastpaths = (input, options) => {
+    let opts = { ...options }, max = typeof opts.maxLength === "number" ? Math.min(MAX_LENGTH, opts.maxLength) : MAX_LENGTH, len = input.length;
+    if (len > max)
+      throw SyntaxError(`Input length: ${len}, exceeds maximum allowed length: ${max}`);
+    input = REPLACEMENTS[input] || input;
+    let {
+      DOT_LITERAL,
+      SLASH_LITERAL,
+      ONE_CHAR,
+      DOTS_SLASH,
+      NO_DOT,
+      NO_DOTS,
+      NO_DOTS_SLASH,
+      STAR,
+      START_ANCHOR
+    } = constants.globChars(opts.windows), nodot = opts.dot ? NO_DOTS : NO_DOT, slashDot = opts.dot ? NO_DOTS_SLASH : NO_DOT, capture = opts.capture ? "" : "?:", state = { negated: !1, prefix: "" }, star = opts.bash === !0 ? ".*?" : STAR;
+    if (opts.capture)
+      star = `(${star})`;
+    let globstar = (opts2) => {
+      if (opts2.noglobstar === !0)
+        return star;
+      return `(${capture}(?:(?!${START_ANCHOR}${opts2.dot ? DOTS_SLASH : DOT_LITERAL}).)*?)`;
+    }, create = (str) => {
+      switch (str) {
+        case "*":
+          return `${nodot}${ONE_CHAR}${star}`;
+        case ".*":
+          return `${DOT_LITERAL}${ONE_CHAR}${star}`;
+        case "*.*":
+          return `${nodot}${star}${DOT_LITERAL}${ONE_CHAR}${star}`;
+        case "*/*":
+          return `${nodot}${star}${SLASH_LITERAL}${ONE_CHAR}${slashDot}${star}`;
+        case "**":
+          return nodot + globstar(opts);
+        case "**/*":
+          return `(?:${nodot}${globstar(opts)}${SLASH_LITERAL})?${slashDot}${ONE_CHAR}${star}`;
+        case "**/*.*":
+          return `(?:${nodot}${globstar(opts)}${SLASH_LITERAL})?${slashDot}${star}${DOT_LITERAL}${ONE_CHAR}${star}`;
+        case "**/.*":
+          return `(?:${nodot}${globstar(opts)}${SLASH_LITERAL})?${DOT_LITERAL}${ONE_CHAR}${star}`;
+        default: {
+          let match = /^(.*?)\.(\w+)$/.exec(str);
+          if (!match)
+            return;
+          let source2 = create(match[1]);
+          if (!source2)
+            return;
+          return source2 + DOT_LITERAL + match[2];
+        }
+      }
+    }, output = utils.removePrefix(input, state), source = create(output);
+    if (source && opts.strictSlashes !== !0)
+      source += `${SLASH_LITERAL}?`;
+    return source;
+  };
+  module.exports = parse5;
+});
+
+// node_modules/picomatch/lib/picomatch.js
+var require_picomatch = __commonJS((exports, module) => {
+  var scan = require_scan(), parse5 = require_parse(), utils = require_utils2(), constants = require_constants(), isObject2 = (val) => val && typeof val === "object" && !Array.isArray(val), picomatch = (glob, options, returnState = !1) => {
+    if (Array.isArray(glob)) {
+      let fns = glob.map((input) => picomatch(input, options, returnState));
+      return (str) => {
+        for (let isMatch of fns) {
+          let state2 = isMatch(str);
+          if (state2)
+            return state2;
+        }
+        return !1;
+      };
+    }
+    let isState = isObject2(glob) && glob.tokens && glob.input;
+    if (glob === "" || typeof glob !== "string" && !isState)
+      throw TypeError("Expected pattern to be a non-empty string");
+    let opts = options || {}, posix = opts.windows, regex = isState ? picomatch.compileRe(glob, options) : picomatch.makeRe(glob, options, !1, !0), state = regex.state;
+    delete regex.state;
+    let isIgnored = () => !1;
+    if (opts.ignore) {
+      let ignoreOpts = { ...options, ignore: null, onMatch: null, onResult: null };
+      isIgnored = picomatch(opts.ignore, ignoreOpts, returnState);
+    }
+    let matcher = (input, returnObject = !1) => {
+      let { isMatch, match, output } = picomatch.test(input, regex, options, { glob, posix }), result = { glob, state, regex, posix, input, output, match, isMatch };
+      if (typeof opts.onResult === "function")
+        opts.onResult(result);
+      if (isMatch === !1)
+        return result.isMatch = !1, returnObject ? result : !1;
+      if (isIgnored(input)) {
+        if (typeof opts.onIgnore === "function")
+          opts.onIgnore(result);
+        return result.isMatch = !1, returnObject ? result : !1;
+      }
+      if (typeof opts.onMatch === "function")
+        opts.onMatch(result);
+      return returnObject ? result : !0;
+    };
+    if (returnState)
+      matcher.state = state;
+    return matcher;
+  };
+  picomatch.test = (input, regex, options, { glob, posix } = {}) => {
+    if (typeof input !== "string")
+      throw TypeError("Expected input to be a string");
+    if (input === "")
+      return { isMatch: !1, output: "" };
+    let opts = options || {}, format = opts.format || (posix ? utils.toPosixSlashes : null), match = input === glob, output = match && format ? format(input) : input;
+    if (match === !1)
+      output = format ? format(input) : input, match = output === glob;
+    if (match === !1 || opts.capture === !0)
+      if (opts.matchBase === !0 || opts.basename === !0)
+        match = picomatch.matchBase(input, regex, options, posix);
+      else
+        match = regex.exec(output);
+    return { isMatch: Boolean(match), match, output };
+  };
+  picomatch.matchBase = (input, glob, options) => {
+    return (glob instanceof RegExp ? glob : picomatch.makeRe(glob, options)).test(utils.basename(input));
+  };
+  picomatch.isMatch = (str, patterns, options) => picomatch(patterns, options)(str);
+  picomatch.parse = (pattern, options) => {
+    if (Array.isArray(pattern))
+      return pattern.map((p) => picomatch.parse(p, options));
+    return parse5(pattern, { ...options, fastpaths: !1 });
+  };
+  picomatch.scan = (input, options) => scan(input, options);
+  picomatch.compileRe = (state, options, returnOutput = !1, returnState = !1) => {
+    if (returnOutput === !0)
+      return state.output;
+    let opts = options || {}, prepend = opts.contains ? "" : "^", append = opts.contains ? "" : "$", source = `${prepend}(?:${state.output})${append}`;
+    if (state && state.negated === !0)
+      source = `^(?!${source}).*$`;
+    let regex = picomatch.toRegex(source, options);
+    if (returnState === !0)
+      regex.state = state;
+    return regex;
+  };
+  picomatch.makeRe = (input, options = {}, returnOutput = !1, returnState = !1) => {
+    if (!input || typeof input !== "string")
+      throw TypeError("Expected a non-empty string");
+    let parsed = { negated: !1, fastpaths: !0 };
+    if (options.fastpaths !== !1 && (input[0] === "." || input[0] === "*"))
+      parsed.output = parse5.fastpaths(input, options);
+    if (!parsed.output)
+      parsed = parse5(input, options);
+    return picomatch.compileRe(parsed, options, returnOutput, returnState);
+  };
+  picomatch.toRegex = (source, options) => {
+    try {
+      let opts = options || {};
+      return new RegExp(source, opts.flags || (opts.nocase ? "i" : ""));
+    } catch (err) {
+      if (options && options.debug === !0)
+        throw err;
+      return /$^/;
+    }
+  };
+  picomatch.constants = constants;
+  module.exports = picomatch;
+});
+
+// node_modules/picomatch/index.js
+var require_picomatch2 = __commonJS((exports, module) => {
+  var pico = require_picomatch(), utils = require_utils2();
+  function picomatch(glob, options, returnState = !1) {
+    if (options && (options.windows === null || options.windows === void 0))
+      options = { ...options, windows: utils.isWindows() };
+    return pico(glob, options, returnState);
+  }
+  Object.assign(picomatch, pico);
+  module.exports = picomatch;
+});
+
 // ij-mcp-proxy.ts
 import path9 from "path";
 import { cwd, env } from "process";
@@ -20900,7 +21961,7 @@ function normalizePortList(preferredPorts, portScanStart, portScanLimit) {
   return candidates;
 }
 
-class StreamTransport {
+class StreamTransportImpl {
   _options;
   _queue;
   _connectPromise;
@@ -20938,7 +21999,7 @@ class StreamTransport {
     if (this._protocolVersion = version2, this._transport?.setProtocolVersion)
       this._transport.setProtocolVersion(version2);
   }
-  async _resetTransport(reason) {
+  async resetTransport(reason) {
     let warn = this._options.warn, message = reason instanceof Error ? reason.message : String(reason);
     if (warn)
       warn(`MCP stream session invalid; reconnecting. ${message}`);
@@ -20963,7 +22024,7 @@ class StreamTransport {
       } catch (error48) {
         let err = error48 instanceof Error ? error48 : Error(String(error48));
         if (!retried && isSessionNotFoundError(err)) {
-          retried = !0, await this._resetTransport(err);
+          retried = !0, await this.resetTransport(err);
           continue;
         }
         if (this.onerror)
@@ -21100,7 +22161,7 @@ function createStreamTransport({
   warn,
   probeHost = "127.0.0.1"
 }) {
-  return new StreamTransport({
+  return new StreamTransportImpl({
     explicitUrl,
     preferredPorts,
     portScanStart,
@@ -21119,9 +22180,9 @@ function createStreamTransport({
 }
 
 // workarounds.ts
-var FULL_VERSION_RE = /\b\d{4}\.\d+(?:\.\d+){0,2}\b/, BUILD_VERSION_RE = /\b\d{3}\.\d+(?:\.\d+)?\b/;
+var FULL_VERSION_RE = /\b\d{4}\.\d+(?:\.\d+){0,2}\b/, BUILD_VERSION_RE = /\b\d{3}\.\d+(?:\.\d+)?\b/, SNAPSHOT_BUILD_RE = /\b(\d{3})\.SNAPSHOT\b/i, SNAPSHOT_BUILD_PART = Number.MAX_SAFE_INTEGER, ANY_VERSION_RE = /\d+(?:\.\d+)+/;
 var WORKAROUND_FIXED_IN = {
-  ["search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */]: "261.SNAPSHOT"
+  ["search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */]: "261.20247"
 }, currentIdeVersion = null;
 function setIdeVersion(rawVersion) {
   if (!rawVersion) {
@@ -21130,13 +22191,72 @@ function setIdeVersion(rawVersion) {
   }
   currentIdeVersion = parseIdeVersion(rawVersion);
 }
+function shouldApplyWorkaround(key) {
+  if (isWorkaroundDisabled(key))
+    return logDebug(`Workaround ${key} not used (disabled by env)`), !1;
+  let fixedInRaw = (WORKAROUND_FIXED_IN[key] ?? "").trim();
+  if (!fixedInRaw)
+    return !0;
+  let ideVersion = currentIdeVersion;
+  if (!ideVersion)
+    return !0;
+  let fixedSpec = parseVersionSpec(fixedInRaw);
+  if (!fixedSpec)
+    return !0;
+  let currentParts = fixedSpec.kind === "build" ? ideVersion.build ?? deriveBuildFromFull(ideVersion.full) : ideVersion.full;
+  if (!currentParts)
+    return !0;
+  if (compareVersionParts(currentParts, fixedSpec.parts) >= 0)
+    return logDebug(`Workaround ${key} not used; fixed in ${fixedInRaw}, ide ${ideVersion.raw}`), !1;
+  return !0;
+}
+function isWorkaroundDisabled(key) {
+  let disabledAll = process.env.JETBRAINS_MCP_PROXY_DISABLE_WORKAROUNDS;
+  if (disabledAll && disabledAll !== "false" && disabledAll !== "0")
+    return !0;
+  let disabledKeys = process.env.JETBRAINS_MCP_PROXY_DISABLE_WORKAROUND_KEYS;
+  if (!disabledKeys)
+    return !1;
+  return disabledKeys.split(",").map((entry) => entry.trim()).filter((entry) => entry.length > 0).includes(key);
+}
+function logDebug(message) {
+  let enabled = process.env.JETBRAINS_MCP_PROXY_WORKAROUND_DEBUG;
+  if (!enabled || enabled === "0" || enabled === "false")
+    return;
+  process.stderr.write(`[ij-mcp-proxy] ${message}
+`);
+}
 function parseIdeVersion(raw) {
   let full = extractVersionParts(raw, FULL_VERSION_RE), build = extractVersionParts(raw, BUILD_VERSION_RE);
+  if (!build) {
+    let snapshotMatch = raw.match(SNAPSHOT_BUILD_RE);
+    if (snapshotMatch) {
+      let train = Number.parseInt(snapshotMatch[1], 10);
+      if (!Number.isNaN(train))
+        build = [train, SNAPSHOT_BUILD_PART];
+    }
+  }
   return {
     raw,
     full: full ?? void 0,
     build: build ?? void 0
   };
+}
+function parseVersionSpec(version2) {
+  let snapshotMatch = version2.match(SNAPSHOT_BUILD_RE);
+  if (snapshotMatch) {
+    let train = Number.parseInt(snapshotMatch[1], 10);
+    if (!Number.isNaN(train))
+      return { parts: [train], kind: "build" };
+  }
+  let match = version2.match(ANY_VERSION_RE);
+  if (!match)
+    return null;
+  let parts = parseVersionParts(match[0]);
+  if (!parts)
+    return null;
+  let kind = parts[0] >= 1000 ? "full" : "build";
+  return { parts, kind };
 }
 function extractVersionParts(raw, regex) {
   let match = raw.match(regex);
@@ -21149,6 +22269,25 @@ function parseVersionParts(value) {
   if (parts.some((part) => Number.isNaN(part)))
     return null;
   return parts;
+}
+function deriveBuildFromFull(full) {
+  if (!full || full.length < 2)
+    return null;
+  let year = full[0], minor = full[1];
+  if (!Number.isFinite(year) || !Number.isFinite(minor))
+    return null;
+  if (year < 2000 || year > 2100)
+    return null;
+  return [(year - 2000) * 10 + minor];
+}
+function compareVersionParts(left, right) {
+  let maxLength = Math.max(left.length, right.length);
+  for (let i = 0;i < maxLength; i += 1) {
+    let leftValue = left[i] ?? 0, rightValue = right[i] ?? 0;
+    if (leftValue !== rightValue)
+      return leftValue - rightValue;
+  }
+  return 0;
 }
 
 // proxy-tools/handlers/apply-patch.ts
@@ -21234,16 +22373,6 @@ function resolvePathInProject(projectPath, inputPath, label) {
     throw Error(`${label} must be within the project root`);
   return { absolute, relative };
 }
-function resolveSearchPath(projectPath, inputPath) {
-  if (inputPath === void 0 || inputPath === null)
-    return { absolute: projectPath, relative: "" };
-  return resolvePathInProject(projectPath, inputPath, "path");
-}
-function looksLikeFilePath(rawPath, relativePath) {
-  if (rawPath.endsWith(path.sep) || rawPath.endsWith("/") || rawPath.endsWith("\\"))
-    return !1;
-  return path.extname(relativePath) !== "";
-}
 function normalizeEntryPath(projectPath, filePath) {
   if (typeof filePath !== "string" || filePath === "")
     return filePath;
@@ -21292,29 +22421,29 @@ function isRecord(value) {
 }
 function coerceSearchItem(value) {
   if (typeof value === "string")
-    return [value];
+    return { filePath: value };
   if (Array.isArray(value)) {
     if (value.length === 0 || value.length > 3)
       return null;
     if (typeof value[0] !== "string")
       return null;
-    let line = typeof value[1] === "number" ? value[1] : void 0, text = typeof value[2] === "string" ? value[2] : void 0;
-    if (line === void 0)
-      return [value[0]];
-    if (text === void 0)
-      return [value[0], line];
-    return [value[0], line, text];
+    let item = { filePath: value[0] };
+    if (typeof value[1] === "number") {
+      if (item.lineNumber = value[1], typeof value[2] === "string")
+        item.lineText = value[2];
+    }
+    return item;
   }
   if (isRecord(value)) {
     let filePath = typeof value.filePath === "string" ? value.filePath : null;
     if (!filePath)
       return null;
-    let lineNumber = typeof value.lineNumber === "number" ? value.lineNumber : void 0, lineText = typeof value.lineText === "string" ? value.lineText : void 0;
-    if (lineNumber === void 0)
-      return [filePath];
-    if (lineText === void 0)
-      return [filePath, lineNumber];
-    return [filePath, lineNumber, lineText];
+    let item = { filePath };
+    if (typeof value.lineNumber === "number")
+      item.lineNumber = value.lineNumber;
+    if (typeof value.lineText === "string")
+      item.lineText = value.lineText;
+    return item;
   }
   return null;
 }
@@ -21351,27 +22480,14 @@ function extractItemsFromValue(value) {
 }
 function itemsToEntries(items) {
   return items.map((item) => ({
-    filePath: item[0],
-    lineNumber: item.length > 1 ? item[1] : void 0,
-    lineText: item.length > 2 ? item[2] : void 0
+    filePath: item.filePath,
+    lineNumber: item.lineNumber,
+    lineText: item.lineText
   }));
 }
 function extractItems(result) {
-  let structured = extractStructuredContent(result), fromStructured = extractItemsFromValue(structured);
-  if (fromStructured)
-    return fromStructured;
-  let text = extractTextFromResult(result);
-  if (!text)
-    return [];
-  let trimmed = text.trim();
-  if (!trimmed.startsWith("{") && !trimmed.startsWith("["))
-    return [];
-  try {
-    let parsed = JSON.parse(trimmed);
-    return extractItemsFromValue(parsed) ?? [];
-  } catch {
-    return [];
-  }
+  let structured = extractStructuredContent(result);
+  return extractItemsFromValue(structured) ?? [];
 }
 function coerceEntries(value) {
   if (!Array.isArray(value))
@@ -21404,47 +22520,27 @@ function extractResultsMapFromValue(value) {
   return results;
 }
 function extractResultsMap(result) {
-  let structured = extractStructuredContent(result), fromStructured = extractResultsMapFromValue(structured);
-  if (fromStructured)
-    return fromStructured;
-  let text = extractTextFromResult(result);
-  if (!text)
-    return null;
-  let trimmed = text.trim();
-  if (!trimmed.startsWith("{"))
-    return null;
-  try {
-    return extractResultsMapFromValue(JSON.parse(trimmed));
-  } catch {
-    return null;
-  }
+  let structured = extractStructuredContent(result);
+  return extractResultsMapFromValue(structured);
 }
 function extractFileList(result) {
   let resultsMap = extractResultsMap(result);
   if (resultsMap)
     return extractFileListFromResults(resultsMap);
   let structured = extractStructuredContent(result);
-  if (structured) {
-    let structuredRecord = structured;
-    if (Array.isArray(structuredRecord.items))
-      return extractItems(result).map((item) => item[0]);
-    if (Array.isArray(structuredRecord.files))
-      return structuredRecord.files;
-    if (Array.isArray(structured))
-      return structured;
-  }
-  let text = extractTextFromResult(result);
-  if (!text)
+  if (!structured)
     return [];
-  try {
-    let parsed = JSON.parse(text);
-    if (Array.isArray(parsed.files))
-      return parsed.files;
-    if (Array.isArray(parsed))
-      return parsed;
-  } catch {
-    return [];
+  if (Array.isArray(structured)) {
+    let items2 = extractItemsFromValue(structured);
+    if (items2)
+      return items2.map((item) => item.filePath);
+    return structured;
   }
+  let structuredRecord = structured, items = extractItemsFromValue(structuredRecord);
+  if (items)
+    return items.map((item) => item.filePath);
+  if (Array.isArray(structuredRecord.files))
+    return structuredRecord.files;
   return [];
 }
 function extractEntries(result) {
@@ -21467,23 +22563,6 @@ function extractEntries(result) {
         return itemsToEntries(fromItems);
       return structured;
     }
-  }
-  let text = extractTextFromResult(result);
-  if (!text)
-    return [];
-  try {
-    let parsed = JSON.parse(text);
-    if (Array.isArray(parsed.entries))
-      return parsed.entries;
-    if (Array.isArray(parsed.results))
-      return parsed.results;
-    let fromItems = extractItemsFromValue(parsed);
-    if (fromItems)
-      return itemsToEntries(fromItems);
-    if (Array.isArray(parsed))
-      return parsed;
-  } catch {
-    return [];
   }
   return [];
 }
@@ -22059,8 +23138,36 @@ function formatEntry(entry) {
 
 // proxy-tools/handlers/read.ts
 var DEFAULT_READ_LIMIT = 2000, MAX_LINE_LENGTH = 500, TAB_WIDTH = 4, COMMENT_PREFIXES = ["#", "//", "--"], BLOCK_COMMENT_START = "/*", BLOCK_COMMENT_END = "*/", ANNOTATION_PREFIX = "@", TRUNCATION_ERROR2 = "file content truncated while reading";
-async function handleReadTool(args, projectPath, callUpstreamTool, { format = "numbered" } = {}) {
+async function handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, { format = "numbered" } = {}) {
   let filePath = requireString(args.file_path, "file_path"), offset = toPositiveInt(args.offset, 1, "offset"), limit = toPositiveInt(args.limit, DEFAULT_READ_LIMIT, "limit"), mode = (args.mode ? String(args.mode).toLowerCase() : "slice") === "indentation" ? "indentation" : "slice", includeLineNumbers = format !== "raw", indentation = args.indentation ?? {}, anchorLine = indentation.anchor_line === void 0 || indentation.anchor_line === null ? null : toPositiveInt(indentation.anchor_line, void 0, "anchor_line"), maxLevels = toNonNegativeInt(indentation.max_levels, 0, "max_levels"), includeSiblings = Boolean(indentation.include_siblings ?? !1), includeHeader = indentation.include_header === void 0 ? !0 : Boolean(indentation.include_header), maxLines = indentation.max_lines === void 0 || indentation.max_lines === null ? null : toPositiveInt(indentation.max_lines, void 0, "max_lines"), { relative, absolute } = resolvePathInProject(projectPath, filePath, "file_path");
+  if (format !== "raw" && readCapabilities.hasReadFile) {
+    let upstreamArgs = {
+      file_path: relative,
+      offset,
+      limit
+    };
+    if (mode === "indentation") {
+      upstreamArgs.mode = "indentation";
+      let indentationPayload = {
+        include_siblings: includeSiblings,
+        include_header: includeHeader,
+        max_levels: maxLevels
+      };
+      if (anchorLine != null)
+        indentationPayload.anchor_line = anchorLine;
+      if (maxLines != null)
+        indentationPayload.max_lines = maxLines;
+      upstreamArgs.indentation = indentationPayload;
+    } else if (args.mode)
+      upstreamArgs.mode = "slice";
+    try {
+      let result = await callUpstreamTool("read_file", upstreamArgs), text = extractTextFromResult(result);
+      if (typeof text === "string")
+        return text;
+      if (typeof result === "string")
+        return result;
+    } catch {}
+  }
   if (mode === "indentation")
     try {
       return await readIndentationMode(relative, offset, limit, {
@@ -22394,273 +23501,16 @@ async function handleRenameTool(args, projectPath, callUpstreamTool) {
   return `Renamed ${symbolName} to ${newName} in ${path5.resolve(projectPath, relative)}`;
 }
 
-// proxy-tools/handlers/search.ts
-import path7 from "path";
-
-// proxy-tools/handlers/find.ts
+// proxy-tools/handlers/search-shared.ts
 import path6 from "path";
-var DEFAULT_LIMIT2 = 1000, NAME_SEARCH_MAX_LIMIT = 1e4, GLOB_CHARS_RE = /[*?\[\]{}]/;
-function resolvePattern(args) {
-  if (args && typeof args.pattern === "string")
-    return args.pattern;
-  if (args && typeof args.query === "string")
-    return args.query;
-  if (args && typeof args.name === "string")
-    return args.name;
-  return null;
-}
-function normalizeMode(value) {
-  if (typeof value !== "string")
-    return "auto";
-  let mode = value.trim().toLowerCase();
-  if (mode === "")
-    return "auto";
-  if (mode === "auto" || mode === "glob" || mode === "name")
-    return mode;
-  throw Error("mode must be one of: auto, glob, name");
-}
-function shouldUseGlob(pattern, mode) {
-  if (mode === "glob")
-    return !0;
-  if (mode === "name")
-    return !1;
-  return GLOB_CHARS_RE.test(pattern) || pattern.includes("/") || pattern.includes("\\");
-}
-function filterByBasePath(files, projectPath, baseRelative) {
-  if (!baseRelative)
-    return files;
-  let normalizedBase = path6.normalize(baseRelative), prefix = normalizedBase.endsWith(path6.sep) ? normalizedBase : `${normalizedBase}${path6.sep}`;
-  return files.filter((file2) => {
-    let relative = path6.isAbsolute(file2) ? path6.relative(projectPath, file2) : file2;
-    return relative === normalizedBase || relative.startsWith(prefix);
-  });
-}
-function extractFilesResult(result) {
-  let files = extractFileList(result), structured = extractStructuredContent(result), structuredRecord = structured && typeof structured === "object" ? structured : null;
-  return {
-    files,
-    probablyHasMoreMatchingFiles: structuredRecord?.probablyHasMoreMatchingFiles === !0,
-    timedOut: structuredRecord?.timedOut === !0
-  };
-}
-async function findByNameKeyword(pattern, projectPath, baseRelative, limit, callUpstreamTool) {
-  let shouldFilter = Boolean(baseRelative), requestLimit = shouldFilter ? Math.max(limit, DEFAULT_LIMIT2) : limit, maxLimit = shouldFilter ? Math.max(limit, NAME_SEARCH_MAX_LIMIT) : limit, timedOut = !1, probablyHasMoreMatchingFiles = !1;
-  while (!0) {
-    let result = await callUpstreamTool("find_files_by_name_keyword", {
-      nameKeyword: pattern,
-      fileCountLimit: requestLimit
-    }), extracted = extractFilesResult(result), files = extracted.files;
-    timedOut = timedOut || extracted.timedOut;
-    let hasMoreHint = extracted.probablyHasMoreMatchingFiles || files.length >= requestLimit;
-    probablyHasMoreMatchingFiles = probablyHasMoreMatchingFiles || hasMoreHint;
-    let filtered = shouldFilter ? filterByBasePath(files, projectPath, baseRelative) : files, reachedLimit = filtered.length >= limit;
-    if (!shouldFilter || reachedLimit || files.length < requestLimit || requestLimit >= maxLimit)
-      return {
-        files: filtered.slice(0, limit),
-        timedOut,
-        probablyHasMoreMatchingFiles: timedOut || probablyHasMoreMatchingFiles || reachedLimit
-      };
-    requestLimit = Math.min(requestLimit * 2, maxLimit);
-  }
-}
-async function findFiles(args, projectPath, callUpstreamTool) {
-  let rawPattern = resolvePattern(args), pattern = requireString(rawPattern, "pattern").trim(), mode = normalizeMode(args?.mode), limit = toPositiveInt(args?.limit, DEFAULT_LIMIT2, "limit"), basePath = args?.path, { relative } = resolveSearchPath(projectPath, basePath);
-  if (shouldUseGlob(pattern, mode)) {
-    let toolArgs = { globPattern: pattern, fileCountLimit: limit };
-    if (relative)
-      toolArgs.subDirectoryRelativePath = relative;
-    if (args?.add_excluded !== void 0)
-      toolArgs.addExcluded = Boolean(args.add_excluded);
-    let result = await callUpstreamTool("find_files_by_glob", toolArgs), extracted = extractFilesResult(result), limited = extracted.files.slice(0, limit), reachedLimit = limited.length >= limit;
-    return {
-      files: limited,
-      timedOut: extracted.timedOut,
-      probablyHasMoreMatchingFiles: extracted.timedOut || extracted.probablyHasMoreMatchingFiles || reachedLimit
-    };
-  }
-  return await findByNameKeyword(pattern, projectPath, relative, limit, callUpstreamTool);
-}
 
-// proxy-tools/handlers/search.ts
-var DEFAULT_MAX_RESULTS = 100, GLOB_CHARS_RE2 = /[*?\[\]{}]/;
-async function handleSearchTool(args, projectPath, callUpstreamTool, capabilities) {
-  let query = requireString(resolveQuery(args), "query").trim(), rawTarget = normalizeString(args.target ?? args.kind), rawQueryType = normalizeString(args.query_type ?? args.queryType ?? args.type), rawOutput = normalizeString(args.output ?? args.output_mode), pathArg = resolvePathArg(args), fileMask = resolveFileMask(args), caseSensitive = resolveBoolean(args.case_sensitive ?? args.caseSensitive, !0), maxResults = toPositiveInt(args.max_results ?? args.maxResults ?? args.limit, DEFAULT_MAX_RESULTS, "max_results"), target = resolveTarget(query, rawTarget, rawQueryType, capabilities), queryType = resolveQueryType(query, target, rawQueryType, capabilities), output = resolveOutput(rawOutput, target);
-  if (target === "symbol")
-    return await searchSymbols(query, {
-      pathArg,
-      fileMask,
-      maxResults,
-      output
-    }, projectPath, callUpstreamTool, capabilities);
-  if (target === "file")
-    return await searchFiles(query, {
-      pathArg,
-      maxResults,
-      queryType
-    }, projectPath, callUpstreamTool, capabilities);
-  return await searchText(query, {
-    pathArg,
-    fileMask,
-    caseSensitive,
-    maxResults,
-    output,
-    queryType
-  }, projectPath, callUpstreamTool, capabilities);
-}
-function resolveQuery(args) {
-  if (args.query !== void 0)
-    return args.query;
-  if (args.pattern !== void 0)
-    return args.pattern;
-  if (args.text !== void 0)
-    return args.text;
-  if (args.name !== void 0)
-    return args.name;
-  return args.query;
-}
-function normalizeString(value) {
-  if (typeof value !== "string")
-    return null;
-  let trimmed = value.trim().toLowerCase();
-  return trimmed === "" ? null : trimmed;
-}
-function resolveBoolean(value, fallback) {
-  if (value === void 0 || value === null)
-    return fallback;
-  if (typeof value === "boolean")
-    return value;
-  if (typeof value === "number")
-    return value !== 0;
-  if (typeof value === "string") {
-    let normalized = value.trim().toLowerCase();
-    if (normalized === "false" || normalized === "0" || normalized === "no")
-      return !1;
-    if (normalized === "true" || normalized === "1" || normalized === "yes")
-      return !0;
-  }
-  return Boolean(value);
-}
-function resolvePathArg(args) {
-  if (args.path !== void 0)
-    return args.path;
-  if (args.directory !== void 0)
-    return args.directory;
-  if (args.directory_to_search !== void 0)
-    return args.directory_to_search;
-  if (args.directoryToSearch !== void 0)
-    return args.directoryToSearch;
-  return;
-}
-function resolveFileMask(args) {
-  if (typeof args.file_mask === "string")
-    return args.file_mask;
-  if (typeof args.fileMask === "string")
-    return args.fileMask;
-  if (typeof args.mask === "string")
-    return args.mask;
-  return;
-}
-function resolveTarget(query, rawTarget, rawQueryType, capabilities) {
-  let allowedTargets = /* @__PURE__ */ new Set;
-  if (capabilities.supportsSymbol)
-    allowedTargets.add("symbol");
-  if (capabilities.supportsFile)
-    allowedTargets.add("file");
-  if (capabilities.supportsText)
-    allowedTargets.add("text");
-  if (rawTarget && rawTarget !== "auto") {
-    if (!allowedTargets.has(rawTarget))
-      throw Error(`target must be one of: auto, ${[...allowedTargets].join(", ")}`);
-    return rawTarget;
-  }
-  if (rawQueryType === "glob")
-    return "file";
-  if (rawQueryType === "regex")
-    return "text";
-  if (looksLikeGlob(query) || looksLikePath(query))
-    return "file";
-  if (containsWhitespace(query))
-    return "text";
-  if (capabilities.supportsSymbol)
-    return "symbol";
-  if (capabilities.supportsFile)
-    return "file";
-  return "text";
-}
-function resolveQueryType(query, target, rawQueryType, capabilities) {
-  let queryType;
-  if (rawQueryType === "regex" || rawQueryType === "glob" || rawQueryType === "text")
-    queryType = rawQueryType;
-  else
-    queryType = target === "file" && looksLikeGlob(query) ? "glob" : "text";
-  if (queryType === "glob" && target !== "file")
-    throw Error("query_type=glob requires target=file");
-  if (queryType === "regex" && target === "file")
-    throw Error("query_type=regex requires target=text");
-  if (queryType === "regex" && !capabilities.supportsRegex)
-    throw Error("query_type=regex is not supported by this IDE version");
-  if (queryType === "glob" && !capabilities.supportsFileGlob)
-    throw Error("query_type=glob is not supported by this IDE version");
-  if (target === "file" && queryType === "text" && !capabilities.supportsFileName) {
-    if (capabilities.supportsFileGlob)
-      return "glob";
-    throw Error("file name search is not supported by this IDE version");
-  }
-  return queryType;
-}
-function resolveOutput(rawOutput, target) {
-  if (!rawOutput)
-    return target === "file" ? "files" : "entries";
-  if (rawOutput === "files" || rawOutput === "entries")
-    return rawOutput;
-  throw Error("output must be one of: entries, files");
-}
-async function searchSymbols(query, options, projectPath, callUpstreamTool, capabilities) {
-  if (!capabilities.supportsSymbol)
-    throw Error("symbol search is not supported by this IDE version");
-  let { relative } = resolveSearchPath(projectPath, options.pathArg), toolArgs = {
-    query,
-    maxResults: options.maxResults,
-    output: options.output === "files" ? "files" : "entries",
-    providers: ["classes", "symbols"]
-  };
-  if (relative)
-    toolArgs.directoryToSearch = relative;
-  if (options.fileMask)
-    toolArgs.fileMask = options.fileMask;
-  let result = await callUpstreamTool("search", toolArgs), items = normalizeItems(extractItems(result), projectPath, options.maxResults, options.output === "entries"), more = resolveMoreFlag(result, items.length, options.maxResults);
-  return serializeSearchResult({ items, more });
-}
-async function searchFiles(query, options, projectPath, callUpstreamTool, capabilities) {
-  if (!capabilities.supportsFile)
-    throw Error("file search is not supported by this IDE version");
-  let mode = options.queryType === "glob" ? "glob" : "name", result = await findFiles({
-    pattern: query,
-    mode,
-    limit: options.maxResults,
-    path: options.pathArg
-  }, projectPath, callUpstreamTool), items = normalizeItemsFromFiles(result.files, projectPath, options.maxResults), more = result.timedOut || result.probablyHasMoreMatchingFiles || result.files.length >= options.maxResults;
-  return serializeSearchResult({ items, more });
-}
-async function searchText(query, options, projectPath, callUpstreamTool, capabilities) {
-  if (!capabilities.supportsText)
-    throw Error("text search is not supported by this IDE version");
-  let { relative } = resolveSearchPath(projectPath, options.pathArg), directoryToSearch = relative || void 0, fileMask = options.fileMask, treatAsFile = !1;
-  if (relative && typeof options.pathArg === "string" && looksLikeFilePath(options.pathArg, relative))
-    treatAsFile = !0, directoryToSearch = path7.dirname(relative), fileMask = fileMask ?? path7.basename(relative);
-  let maxUsageCount = options.output === "files" ? Math.min(options.maxResults * 5, 1000) : options.maxResults, { entries, probablyHasMoreMatchingEntries, timedOut } = await searchInFiles({
-    directoryToSearch,
-    fileMask,
-    caseSensitive: options.caseSensitive,
-    maxUsageCount,
-    ...options.queryType === "regex" ? { regexPattern: query } : { searchText: query }
-  }, callUpstreamTool), filtered = normalizeEntries(filterEntriesByPath(entries, projectPath, relative, treatAsFile), projectPath), entryCount = filtered.length, more = timedOut || probablyHasMoreMatchingEntries || entryCount >= options.maxResults;
-  if (options.output === "files") {
-    let items2 = normalizeItemsFromEntries(filtered, projectPath, options.maxResults, !1);
-    return serializeSearchResult({ items: items2, more });
-  }
-  let items = normalizeItemsFromEntries(filtered, projectPath, options.maxResults, !0);
-  return serializeSearchResult({ items, more });
+// proxy-tools/handlers/search-constants.ts
+var DEFAULT_MAX_RESULTS = 1000, MAX_RESULTS_UPPER_BOUND = 5000, SEARCH_SCOPE_MULTIPLIER = 5;
+
+// proxy-tools/handlers/search-shared.ts
+function normalizeLimit(value, fallback = DEFAULT_MAX_RESULTS) {
+  let parsed = toPositiveInt(value, fallback, "limit") ?? fallback;
+  return Math.min(parsed, MAX_RESULTS_UPPER_BOUND);
 }
 function serializeSearchResult(payload) {
   let result = { items: payload.items };
@@ -22668,35 +23518,21 @@ function serializeSearchResult(payload) {
     result.more = !0;
   return JSON.stringify(result);
 }
-function normalizeProjectRelativePath(projectPath, filePath) {
-  if (!filePath)
-    return "";
-  if (path7.isAbsolute(filePath)) {
-    let relative = path7.relative(projectPath, filePath);
-    if (!relative.startsWith("..") && !path7.isAbsolute(relative))
-      return relative;
-    return path7.normalize(filePath);
-  }
-  return path7.normalize(filePath);
-}
-function normalizeEntries(entries, projectPath) {
-  return entries.map((entry) => {
-    let filePath = typeof entry.filePath === "string" ? normalizeProjectRelativePath(projectPath, entry.filePath) : entry.filePath;
-    if (filePath === entry.filePath)
-      return entry;
-    return { ...entry, filePath };
-  });
-}
 function normalizeItems(items, projectPath, maxResults, includeDetails) {
   let seen = /* @__PURE__ */ new Set, normalized = [];
   for (let item of items) {
-    let rawPath = item[0];
-    if (rawPath === "")
+    let rawPath = item.filePath;
+    if (!rawPath)
       continue;
     let normalizedPath = normalizeProjectRelativePath(projectPath, rawPath);
     if (!normalizedPath)
       continue;
-    let line = includeDetails && typeof item[1] === "number" ? item[1] : void 0, text = includeDetails && typeof item[2] === "string" ? item[2] : void 0, normalizedItem = line === void 0 ? [normalizedPath] : text === void 0 ? [normalizedPath, line] : [normalizedPath, line, text], key = JSON.stringify(normalizedItem);
+    let normalizedItem = { filePath: normalizedPath };
+    if (includeDetails && typeof item.lineNumber === "number") {
+      if (normalizedItem.lineNumber = item.lineNumber, typeof item.lineText === "string")
+        normalizedItem.lineText = item.lineText;
+    }
+    let key = JSON.stringify(normalizedItem);
     if (seen.has(key))
       continue;
     if (seen.add(key), normalized.push(normalizedItem), normalized.length >= maxResults)
@@ -22712,7 +23548,12 @@ function normalizeItemsFromEntries(entries, projectPath, maxResults, includeDeta
     let normalizedPath = normalizeProjectRelativePath(projectPath, entry.filePath);
     if (!normalizedPath)
       continue;
-    let line = includeDetails && typeof entry.lineNumber === "number" ? entry.lineNumber : void 0, text = includeDetails && typeof entry.lineText === "string" ? entry.lineText : void 0, item = line === void 0 ? [normalizedPath] : text === void 0 ? [normalizedPath, line] : [normalizedPath, line, text], key = JSON.stringify(item);
+    let item = { filePath: normalizedPath };
+    if (includeDetails && typeof entry.lineNumber === "number") {
+      if (item.lineNumber = entry.lineNumber, typeof entry.lineText === "string")
+        item.lineText = entry.lineText;
+    }
+    let key = JSON.stringify(item);
     if (seen.has(key))
       continue;
     if (seen.add(key), items.push(item), items.length >= maxResults)
@@ -22728,10 +23569,9 @@ function normalizeItemsFromFiles(files, projectPath, maxResults) {
     let normalizedPath = normalizeProjectRelativePath(projectPath, file2);
     if (!normalizedPath)
       continue;
-    let item = [normalizedPath];
     if (seen.has(normalizedPath))
       continue;
-    if (seen.add(normalizedPath), items.push(item), items.length >= maxResults)
+    if (seen.add(normalizedPath), items.push({ filePath: normalizedPath }), items.length >= maxResults)
       break;
   }
   return items;
@@ -22746,41 +23586,338 @@ function resolveMoreFlag(result, itemCount, maxResults) {
     return !0;
   return itemCount >= maxResults;
 }
-function filterEntriesByPath(entries, projectPath, relativePath, treatAsFile) {
-  if (!relativePath)
-    return entries;
-  let filter = createEntryPathFilter(projectPath, relativePath, treatAsFile);
-  return filter ? entries.filter(filter) : entries;
+function normalizeProjectRelativePath(projectPath, filePath) {
+  if (!filePath)
+    return "";
+  if (path6.isAbsolute(filePath)) {
+    let relative = path6.relative(projectPath, filePath);
+    if (!relative.startsWith("..") && !path6.isAbsolute(relative))
+      return toPosixPath(relative);
+    return path6.normalize(filePath);
+  }
+  return toPosixPath(path6.normalize(filePath));
 }
-function createEntryPathFilter(projectPath, relativePath, treatAsFile) {
-  if (!relativePath)
-    return null;
-  let targetPath = path7.normalize(path7.resolve(projectPath, relativePath));
-  if (treatAsFile)
-    return (entry) => normalizeEntryPath(projectPath, entry.filePath) === targetPath;
-  return (entry) => {
-    let entryPath = normalizeEntryPath(projectPath, entry.filePath);
-    if (typeof entryPath !== "string" || entryPath === "")
-      return !1;
-    return isWithinDirectory(entryPath, targetPath);
+function toPosixPath(value) {
+  return value.replace(/\\/g, "/");
+}
+
+// proxy-tools/handlers/search-scope.ts
+var import_picomatch = __toESM(require_picomatch2(), 1);
+import path7 from "path";
+import { statSync } from "fs";
+function buildPathScope(projectPath, rawPaths) {
+  if (rawPaths === void 0 || rawPaths === null)
+    return { scope: null, normalizedPaths: null };
+  if (!Array.isArray(rawPaths))
+    throw Error("paths must be an array of strings");
+  let normalizedEntries = [];
+  for (let entry of rawPaths) {
+    if (entry === void 0 || entry === null)
+      continue;
+    if (typeof entry !== "string")
+      throw Error("paths must be an array of strings");
+    let normalized = normalizePattern(entry, projectPath);
+    if (normalized)
+      normalizedEntries.push(normalized);
+  }
+  if (normalizedEntries.length === 0)
+    return { scope: null, normalizedPaths: null };
+  let normalizedPaths = normalizedEntries.map((entry) => entry.isExclude ? `!${entry.pattern}` : entry.pattern), includePatterns = normalizedEntries.filter((entry) => !entry.isExclude).map((entry) => entry.pattern), excludePatterns = normalizedEntries.filter((entry) => entry.isExclude).map((entry) => entry.pattern), effectiveIncludes = includePatterns.length > 0 ? includePatterns : ["**/*"], includeMatchers = effectiveIncludes.map(createMatcher), excludeMatchers = excludePatterns.map(createMatcher), commonDirectory = computeCommonDirectory(effectiveIncludes);
+  return {
+    scope: {
+      includeMatchers,
+      excludeMatchers,
+      commonDirectory
+    },
+    normalizedPaths
   };
+}
+function normalizeGlobPattern(raw, projectPath, originalPattern = raw) {
+  let value = raw.trim();
+  if (value === "")
+    throw Error("Glob pattern is empty");
+  value = value.replace(/\\/g, "/");
+  while (value.startsWith("./"))
+    value = value.slice(2);
+  if (value.endsWith("/"))
+    value = value.replace(/\/+$/, ""), value = value === "" ? "**" : `${value}/**`;
+  if (!value.includes("/"))
+    value = `**/${value}`;
+  let normalized = normalizePathPattern(value, projectPath, originalPattern);
+  if (normalized === "")
+    throw Error(`Invalid glob pattern: ${originalPattern}`);
+  return normalized;
+}
+function resolveSearchRoot(projectPath, scope, globPattern) {
+  let candidates = [];
+  if (scope?.commonDirectory)
+    candidates.push(scope.commonDirectory);
+  if (globPattern) {
+    let prefix = extractDirectoryPrefix(globPattern);
+    if (prefix)
+      candidates.push(prefix);
+  }
+  for (let candidate of candidates) {
+    if (!candidate)
+      continue;
+    let absolute = path7.resolve(projectPath, candidate);
+    if (isDirectory(absolute))
+      return candidate;
+  }
+  return null;
+}
+function filterEntriesByScope(entries, projectPath, scope) {
+  return entries.filter((entry) => {
+    let relative = resolveRelativePath(projectPath, entry.filePath);
+    if (!relative)
+      return !1;
+    return matchesScope(scope, relative);
+  });
+}
+function filterEntriesByDirectory(entries, projectPath, directoryToSearch) {
+  let absoluteDir = path7.resolve(projectPath, directoryToSearch);
+  return entries.filter((entry) => {
+    let absolutePath = resolveAbsolutePath(projectPath, entry.filePath);
+    return absolutePath ? isWithinDirectory(absolutePath, absoluteDir) : !1;
+  });
+}
+function filterFilesByScope(files, projectPath, scope) {
+  return files.filter((filePath) => {
+    let relative = resolveRelativePath(projectPath, filePath);
+    if (!relative)
+      return !1;
+    return matchesScope(scope, relative);
+  });
+}
+function expandLimit(limit, scope) {
+  if (!scope)
+    return limit;
+  return Math.min(limit * SEARCH_SCOPE_MULTIPLIER, MAX_RESULTS_UPPER_BOUND);
+}
+function normalizePattern(raw, projectPath) {
+  let value = raw.trim();
+  if (value === "")
+    return null;
+  let isExclude = !1;
+  if (value.startsWith("!")) {
+    if (isExclude = !0, value = value.slice(1).trim(), value === "")
+      throw Error("Exclude pattern is empty");
+  }
+  return { pattern: normalizeGlobPattern(value, projectPath, raw), isExclude };
+}
+function normalizePathPattern(pattern, projectPath, originalPattern) {
+  let globIndex = indexOfGlobChar(pattern), prefix = globIndex < 0 ? pattern : pattern.slice(0, globIndex), prefixTrimmed = prefix.replace(/\/+$/, "");
+  if (prefixTrimmed === "") {
+    if (isAbsolutePattern(pattern))
+      throw Error(`Specified path '${originalPattern}' points outside the project directory`);
+    return pattern;
+  }
+  let absolutePrefix = path7.isAbsolute(prefixTrimmed) ? path7.normalize(prefixTrimmed) : path7.resolve(projectPath, prefixTrimmed);
+  if (!isWithinProject(projectPath, absolutePrefix))
+    throw Error(`Specified path '${originalPattern}' points outside the project directory`);
+  let relativePrefix = toPosixPath2(path7.relative(projectPath, absolutePrefix)), suffix = pattern.slice(prefix.length).replace(/^\/+/, "");
+  if (relativePrefix === "")
+    return suffix;
+  if (suffix === "")
+    return relativePrefix;
+  return `${relativePrefix}/${suffix}`;
+}
+function isAbsolutePattern(pattern) {
+  if (pattern.startsWith("/"))
+    return !0;
+  return /^[A-Za-z]:\//.test(pattern);
+}
+function indexOfGlobChar(pattern) {
+  for (let i = 0;i < pattern.length; i += 1) {
+    let value = pattern[i];
+    if (value === "*" || value === "?" || value === "[" || value === "]" || value === "{" || value === "}")
+      return i;
+  }
+  return -1;
+}
+function computeCommonDirectory(patterns) {
+  let prefixes = patterns.map(extractDirectoryPrefix).filter((value) => Boolean(value));
+  if (prefixes.length === 0)
+    return null;
+  let segments = prefixes.map((value) => value.split("/").filter(Boolean)), common = segments[0];
+  for (let parts of segments.slice(1)) {
+    let max = Math.min(common.length, parts.length), index = 0;
+    while (index < max && common[index] === parts[index])
+      index += 1;
+    if (index === 0)
+      return null;
+    common = common.slice(0, index);
+  }
+  if (common.length === 0)
+    return null;
+  return path7.normalize(common.join("/"));
+}
+function extractDirectoryPrefix(pattern) {
+  let globIndex = indexOfGlobChar(pattern), trimmed = (globIndex < 0 ? pattern : pattern.slice(0, globIndex)).replace(/\/+$/, "");
+  if (trimmed === "")
+    return null;
+  if (globIndex < 0) {
+    let slashIndex = trimmed.lastIndexOf("/");
+    if (slashIndex < 0)
+      return null;
+    let dir = trimmed.slice(0, slashIndex);
+    return dir === "" ? null : dir;
+  }
+  return trimmed;
+}
+function createMatcher(pattern) {
+  let nocase = path7.sep === "\\", matcher = import_picomatch.default(pattern, { dot: !0, nocase });
+  return (candidate) => matcher(candidate);
+}
+function isDirectory(candidatePath) {
+  try {
+    return statSync(candidatePath).isDirectory();
+  } catch {
+    return !1;
+  }
+}
+function resolveRelativePath(projectPath, filePath) {
+  let absolute = resolveAbsolutePath(projectPath, filePath);
+  if (!absolute)
+    return null;
+  let relative = path7.relative(projectPath, absolute);
+  if (relative.startsWith("..") || path7.isAbsolute(relative))
+    return null;
+  return toPosixPath2(relative);
+}
+function resolveAbsolutePath(projectPath, filePath) {
+  let resolved = normalizeEntryPath(projectPath, filePath);
+  if (typeof resolved !== "string" || resolved === "")
+    return null;
+  return path7.normalize(resolved);
+}
+function matchesScope(scope, relativePosix) {
+  if (!scope.includeMatchers.some((matcher) => matcher(relativePosix)))
+    return !1;
+  return scope.excludeMatchers.every((matcher) => !matcher(relativePosix));
+}
+function isWithinProject(projectPath, candidatePath) {
+  let relative = path7.relative(projectPath, candidatePath);
+  return relative === "" || !relative.startsWith("..") && !path7.isAbsolute(relative);
 }
 function isWithinDirectory(filePath, directoryPath) {
   let relative = path7.relative(directoryPath, filePath);
-  if (relative === "")
-    return !0;
-  return !relative.startsWith("..") && !path7.isAbsolute(relative);
+  return relative === "" || !relative.startsWith("..") && !path7.isAbsolute(relative);
 }
-function containsWhitespace(value) {
-  return /\s/.test(value);
-}
-function looksLikeGlob(value) {
-  return GLOB_CHARS_RE2.test(value);
-}
-function looksLikePath(value) {
-  return value.includes("/") || value.includes("\\");
+function toPosixPath2(value) {
+  return value.replace(/\\/g, "/");
 }
 
+// proxy-tools/handlers/search-text.ts
+async function handleSearchTextTool(args, projectPath, callUpstreamTool, capabilities) {
+  let query = requireString(args.q, "q").trim(), limit = normalizeLimit(args.limit), { scope, normalizedPaths } = buildPathScope(projectPath, args.paths);
+  if (capabilities.hasSearchText) {
+    let result = await callUpstreamTool("search_text", {
+      q: query,
+      ...normalizedPaths ? { paths: normalizedPaths } : {},
+      limit
+    }), items = normalizeItems(extractItems(result), projectPath, limit, !0), more = resolveMoreFlag(result, items.length, limit);
+    return serializeSearchResult({ items, more });
+  }
+  if (!capabilities.supportsText)
+    throw Error("text search is not supported by this IDE version");
+  return await searchTextLegacy(query, scope, limit, projectPath, callUpstreamTool);
+}
+async function handleSearchRegexTool(args, projectPath, callUpstreamTool, capabilities) {
+  let query = requireString(args.q, "q").trim(), limit = normalizeLimit(args.limit), { scope, normalizedPaths } = buildPathScope(projectPath, args.paths);
+  if (capabilities.hasSearchRegex) {
+    let result = await callUpstreamTool("search_regex", {
+      q: query,
+      ...normalizedPaths ? { paths: normalizedPaths } : {},
+      limit
+    }), items = normalizeItems(extractItems(result), projectPath, limit, !0), more = resolveMoreFlag(result, items.length, limit);
+    return serializeSearchResult({ items, more });
+  }
+  if (!capabilities.supportsRegex)
+    throw Error("regex search is not supported by this IDE version");
+  return await searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool);
+}
+async function searchTextLegacy(query, scope, limit, projectPath, callUpstreamTool) {
+  let requestLimit = expandLimit(limit, scope), directoryToSearch = resolveSearchRoot(projectPath, scope, null), { entries, probablyHasMoreMatchingEntries, timedOut } = await searchInFiles({
+    searchText: query,
+    directoryToSearch: directoryToSearch ?? void 0,
+    caseSensitive: !0,
+    maxUsageCount: requestLimit
+  }, callUpstreamTool), filtered = scope ? filterEntriesByScope(entries, projectPath, scope) : entries, items = normalizeItemsFromEntries(filtered, projectPath, limit, !0), more = timedOut || probablyHasMoreMatchingEntries || filtered.length > limit;
+  return serializeSearchResult({ items, more });
+}
+async function searchRegexLegacy(query, scope, limit, projectPath, callUpstreamTool) {
+  let requestLimit = expandLimit(limit, scope), directoryToSearch = resolveSearchRoot(projectPath, scope, null), { entries, probablyHasMoreMatchingEntries, timedOut } = await searchInFiles({
+    regexPattern: query,
+    directoryToSearch: directoryToSearch ?? void 0,
+    caseSensitive: !0,
+    maxUsageCount: requestLimit
+  }, callUpstreamTool), filtered = entries;
+  if (directoryToSearch && shouldApplyWorkaround("search_in_files_by_regex_directory_scope_ignored" /* SearchInFilesByRegexDirectoryScopeIgnored */))
+    filtered = filterEntriesByDirectory(filtered, projectPath, directoryToSearch);
+  if (scope)
+    filtered = filterEntriesByScope(filtered, projectPath, scope);
+  let items = normalizeItemsFromEntries(filtered, projectPath, limit, !0), more = timedOut || probablyHasMoreMatchingEntries || filtered.length > limit;
+  return serializeSearchResult({ items, more });
+}
+// proxy-tools/handlers/search-file.ts
+async function handleSearchFileTool(args, projectPath, callUpstreamTool, capabilities) {
+  let query = requireString(args.q, "q").trim(), includeExcluded = resolveIncludeExcluded(args), limit = normalizeLimit(args.limit), { scope, normalizedPaths } = buildPathScope(projectPath, args.paths);
+  if (capabilities.hasSearchFile) {
+    let result = await callUpstreamTool("search_file", {
+      q: query,
+      ...normalizedPaths ? { paths: normalizedPaths } : {},
+      ...includeExcluded ? { includeExcluded: !0 } : {},
+      limit
+    }), items = normalizeItems(extractItems(result), projectPath, limit, !1), more = resolveMoreFlag(result, items.length, limit);
+    return serializeSearchResult({ items, more });
+  }
+  if (!capabilities.supportsFile)
+    throw Error("file search is not supported by this IDE version");
+  return await searchFilesLegacy(query, scope, includeExcluded, limit, projectPath, callUpstreamTool);
+}
+async function searchFilesLegacy(query, scope, includeExcluded, limit, projectPath, callUpstreamTool) {
+  let normalizedPattern = normalizeGlobPattern(query, projectPath), requestLimit = expandLimit(limit, scope), basePath = resolveSearchRoot(projectPath, scope, normalizedPattern), result = await findFilesByGlob(normalizedPattern, requestLimit, basePath, callUpstreamTool, includeExcluded), filtered = scope ? filterFilesByScope(result.files, projectPath, scope) : result.files, items = normalizeItemsFromFiles(filtered, projectPath, limit), more = result.timedOut || result.probablyHasMoreMatchingFiles || filtered.length > limit;
+  return serializeSearchResult({ items, more });
+}
+async function findFilesByGlob(pattern, limit, basePath, callUpstreamTool, includeExcluded) {
+  let toolArgs = { globPattern: pattern, fileCountLimit: limit };
+  if (basePath)
+    toolArgs.subDirectoryRelativePath = basePath;
+  if (includeExcluded)
+    toolArgs.addExcluded = !0;
+  let result = await callUpstreamTool("find_files_by_glob", toolArgs);
+  return extractFilesResult(result);
+}
+function resolveIncludeExcluded(args) {
+  let raw = args.includeExcluded;
+  if (raw === void 0 || raw === null)
+    return !1;
+  if (typeof raw !== "boolean")
+    throw Error("includeExcluded must be a boolean");
+  return raw;
+}
+function extractFilesResult(result) {
+  let files = extractFileList(result), structured = extractStructuredContent(result), structuredRecord = structured && typeof structured === "object" ? structured : null;
+  return {
+    files,
+    probablyHasMoreMatchingFiles: structuredRecord?.probablyHasMoreMatchingFiles === !0,
+    timedOut: structuredRecord?.timedOut === !0
+  };
+}
+// proxy-tools/handlers/search-symbol.ts
+async function handleSearchSymbolTool(args, projectPath, callUpstreamTool, capabilities) {
+  let query = requireString(args.q, "q").trim(), limit = normalizeLimit(args.limit), { normalizedPaths } = buildPathScope(projectPath, args.paths);
+  if (capabilities.hasSearchSymbol) {
+    let result = await callUpstreamTool("search_symbol", {
+      q: query,
+      ...normalizedPaths ? { paths: normalizedPaths } : {},
+      limit
+    }), items = normalizeItems(extractItems(result), projectPath, limit, !0), more = resolveMoreFlag(result, items.length, limit);
+    return serializeSearchResult({ items, more });
+  }
+  throw Error("symbol search is not supported by this IDE version");
+}
 // proxy-tools/handlers/write.ts
 import path8 from "path";
 async function handleWriteTool(args, projectPath, callUpstreamTool) {
@@ -22803,15 +23940,6 @@ function objectSchema(properties, required2) {
     required: required2 && required2.length > 0 ? required2 : void 0,
     additionalProperties: !1
   };
-}
-function enumSchema(values, description) {
-  let unique = Array.from(new Set(values)).filter((value) => value), schema = {
-    type: "string",
-    description
-  };
-  if (unique.length > 0)
-    schema.enum = unique;
-  return schema;
 }
 function createReadSchema(includeIndentation) {
   let properties = {
@@ -22908,46 +24036,43 @@ function createListDirSchema() {
     }
   }, ["dir_path"]);
 }
-function createSearchSchema(capabilities) {
-  let targetValues = ["auto"];
-  if (capabilities.supportsSymbol)
-    targetValues.push("symbol");
-  if (capabilities.supportsFile)
-    targetValues.push("file");
-  if (capabilities.supportsText)
-    targetValues.push("text");
-  let queryTypes = ["text"];
-  if (capabilities.supportsRegex)
-    queryTypes.push("regex");
-  if (capabilities.supportsFileGlob)
-    queryTypes.push("glob");
-  let properties = {
-    query: {
+function createSearchSchema(qDescription) {
+  return objectSchema({
+    q: {
       type: "string",
-      description: "Search query text."
+      description: qDescription
     },
-    target: enumSchema(targetValues, 'Search target: "auto" (default), "symbol", "file", or "text".'),
-    path: {
-      type: "string",
-      description: "Optional base directory (absolute or project-relative)."
+    paths: {
+      type: "array",
+      description: "Optional list of project-relative glob patterns (supports ! excludes).",
+      items: {
+        type: "string"
+      }
     },
-    file_mask: {
-      type: "string",
-      description: 'Optional filename mask (e.g. "*.kt") for text searches.'
-    },
-    case_sensitive: {
-      type: "boolean",
-      description: "Case-sensitive text search (default: true)."
-    },
-    max_results: {
+    limit: {
       type: "number",
       description: "Maximum number of results to return."
-    },
-    output: enumSchema(["entries", "files"], 'Output mode: "entries" (default for text/symbol) or "files" (default for file searches).')
-  };
-  if (queryTypes.length > 1)
-    properties.query_type = enumSchema(queryTypes, 'Query type: "text" (default), "regex" (text searches), or "glob" (file searches).');
-  return objectSchema(properties, ["query"]);
+    }
+  }, ["q"]);
+}
+function createSearchTextSchema() {
+  return createSearchSchema("Text substring to search for.");
+}
+function createSearchRegexSchema() {
+  return createSearchSchema("Regular expression pattern to search for.");
+}
+function createSearchFileSchema() {
+  let base = createSearchSchema("Glob pattern to match file paths.");
+  return objectSchema({
+    ...base.properties,
+    includeExcluded: {
+      type: "boolean",
+      description: "Whether to include excluded/ignored files in results."
+    }
+  }, base.required);
+}
+function createSearchSymbolSchema() {
+  return createSearchSchema("Symbol query text (class, method, field, etc.).");
 }
 function createApplyPatchSchema() {
   return objectSchema({
@@ -22978,17 +24103,14 @@ function createRenameSchema() {
 var TOOL_MODES = {
   CODEX: "codex",
   CC: "cc"
-}, SEARCH_TOOL_MODES = {
-  AUTO: "auto",
-  SEARCH: "search",
-  LEGACY: "legacy"
-}, BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set(["create_new_file", "execute_terminal_command", "grep", "find", "glob"]), EXTRA_REPLACED_TOOL_NAMES = [
+}, BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set(["create_new_file", "execute_terminal_command"]), EXTRA_REPLACED_TOOL_NAMES = [
   "search_in_files_by_text",
   "search_in_files_by_regex",
   "find_files_by_glob",
   "find_files_by_name_keyword",
+  "search",
   "execute_terminal_command"
-], RENAME_TOOL_DESCRIPTION = "Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use edit/apply_patch for renames.", LEGACY_SEARCH_TOOL_DESCRIPTION = "PRIMARY PROJECT SEARCH. Use this tool first. Returns JSON {items:[[path,line?,text?]], more?}. File-backed results only; output=files returns [path], output=entries returns [path,line,text] when available.";
+], RENAME_TOOL_DESCRIPTION = "Rename a symbol (class/function/variable/etc.) using IDE refactoring. Updates all references across the project; do not use edit/apply_patch for renames.";
 function resolveToolDescription(description, context) {
   return typeof description === "function" ? description(context) : description;
 }
@@ -22998,9 +24120,6 @@ function resolveToolExpose(expose, context) {
   if (typeof expose === "function")
     return expose(context);
   return expose !== !1;
-}
-function shouldExposeLegacySearch({ searchCapabilities }) {
-  return searchCapabilities.mode === SEARCH_TOOL_MODES.LEGACY || !searchCapabilities.hasUpstreamSearch;
 }
 function buildToolSpec(name, description, inputSchema, context) {
   return {
@@ -23015,32 +24134,89 @@ var TOOL_VARIANTS = [
     name: "read_file",
     description: "Reads a local file with 1-indexed line numbers, supporting slice and indentation-aware block modes.",
     schemaFactory: () => createReadSchema(!0),
-    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleReadTool(args, projectPath, callUpstreamTool, { format: "numbered" }),
-    upstreamNames: ["get_file_text_by_path"]
+    handlerFactory: ({ projectPath, callUpstreamTool, readCapabilities }) => (args) => handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, { format: "numbered" }),
+    upstreamNames: ["get_file_text_by_path"],
+    expose: ({ readCapabilities }) => !readCapabilities.hasReadFile
   },
   {
     mode: TOOL_MODES.CC,
     name: "read",
     description: "Read a local file using absolute or project-relative paths. Returns raw text.",
     schemaFactory: () => createReadSchema(!1),
-    handlerFactory: ({ projectPath, callUpstreamTool }) => (args) => handleReadTool(args, projectPath, callUpstreamTool, { format: "raw" }),
+    handlerFactory: ({ projectPath, callUpstreamTool, readCapabilities }) => (args) => handleReadTool(args, projectPath, callUpstreamTool, readCapabilities, { format: "raw" }),
     upstreamNames: ["get_file_text_by_path"]
   },
   {
     mode: TOOL_MODES.CODEX,
-    name: "search",
-    description: LEGACY_SEARCH_TOOL_DESCRIPTION,
-    schemaFactory: ({ searchCapabilities }) => createSearchSchema(searchCapabilities),
-    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchTool(args, projectPath, callUpstreamTool, searchCapabilities),
-    expose: shouldExposeLegacySearch
+    name: "search_text",
+    description: "Search for a text substring in project files.",
+    schemaFactory: () => createSearchTextSchema(),
+    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchTextTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    upstreamNames: ["search_text"],
+    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchText && searchCapabilities.supportsText
   },
   {
     mode: TOOL_MODES.CC,
-    name: "search",
-    description: LEGACY_SEARCH_TOOL_DESCRIPTION,
-    schemaFactory: ({ searchCapabilities }) => createSearchSchema(searchCapabilities),
-    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchTool(args, projectPath, callUpstreamTool, searchCapabilities),
-    expose: shouldExposeLegacySearch
+    name: "search_text",
+    description: "Search for a text substring in project files.",
+    schemaFactory: () => createSearchTextSchema(),
+    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchTextTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    upstreamNames: ["search_text"],
+    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchText && searchCapabilities.supportsText
+  },
+  {
+    mode: TOOL_MODES.CODEX,
+    name: "search_regex",
+    description: "Search for a regular expression in project files.",
+    schemaFactory: () => createSearchRegexSchema(),
+    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    upstreamNames: ["search_regex"],
+    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchRegex && searchCapabilities.supportsRegex
+  },
+  {
+    mode: TOOL_MODES.CC,
+    name: "search_regex",
+    description: "Search for a regular expression in project files.",
+    schemaFactory: () => createSearchRegexSchema(),
+    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchRegexTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    upstreamNames: ["search_regex"],
+    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchRegex && searchCapabilities.supportsRegex
+  },
+  {
+    mode: TOOL_MODES.CODEX,
+    name: "search_file",
+    description: "Search for files using a glob pattern.",
+    schemaFactory: () => createSearchFileSchema(),
+    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchFileTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    upstreamNames: ["search_file"],
+    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchFile && searchCapabilities.supportsFile
+  },
+  {
+    mode: TOOL_MODES.CC,
+    name: "search_file",
+    description: "Search for files using a glob pattern.",
+    schemaFactory: () => createSearchFileSchema(),
+    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchFileTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    upstreamNames: ["search_file"],
+    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchFile && searchCapabilities.supportsFile
+  },
+  {
+    mode: TOOL_MODES.CODEX,
+    name: "search_symbol",
+    description: "Search for symbols (classes, methods, fields) by name.",
+    schemaFactory: () => createSearchSymbolSchema(),
+    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchSymbolTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    upstreamNames: ["search_symbol"],
+    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchSymbol && searchCapabilities.supportsSymbol
+  },
+  {
+    mode: TOOL_MODES.CC,
+    name: "search_symbol",
+    description: "Search for symbols (classes, methods, fields) by name.",
+    schemaFactory: () => createSearchSymbolSchema(),
+    handlerFactory: ({ projectPath, callUpstreamTool, searchCapabilities }) => (args) => handleSearchSymbolTool(args, projectPath, callUpstreamTool, searchCapabilities),
+    upstreamNames: ["search_symbol"],
+    expose: ({ searchCapabilities }) => !searchCapabilities.hasSearchSymbol && searchCapabilities.supportsSymbol
   },
   {
     mode: TOOL_MODES.CODEX,
@@ -23112,8 +24288,11 @@ function getReplacedToolNames() {
   for (let tool of TOOL_VARIANTS) {
     if (!tool.upstreamNames)
       continue;
-    for (let name of tool.upstreamNames)
+    for (let name of tool.upstreamNames) {
+      if (name === tool.name)
+        continue;
       replaced.add(name);
+    }
   }
   return replaced;
 }
@@ -23132,55 +24311,54 @@ function resolveToolMode(rawValue) {
     warning: `Unknown JETBRAINS_MCP_TOOL_MODE '${rawValue}', defaulting to codex.`
   };
 }
-function resolveSearchToolMode(rawValue) {
-  if (rawValue === void 0 || rawValue === null || rawValue === "")
-    return { mode: SEARCH_TOOL_MODES.AUTO };
-  let normalized = String(rawValue).trim().toLowerCase();
-  if (normalized === "" || normalized === SEARCH_TOOL_MODES.AUTO)
-    return { mode: SEARCH_TOOL_MODES.AUTO };
-  if (normalized === SEARCH_TOOL_MODES.LEGACY || normalized === "legacy" || normalized === "grep" || normalized === "false" || normalized === "0")
-    return { mode: SEARCH_TOOL_MODES.LEGACY };
-  if (normalized === SEARCH_TOOL_MODES.SEARCH || normalized === "true" || normalized === "1" || normalized === "semantic")
-    return { mode: SEARCH_TOOL_MODES.SEARCH };
-  return {
-    mode: SEARCH_TOOL_MODES.AUTO,
-    warning: `Unknown JETBRAINS_MCP_SEARCH_TOOL '${rawValue}', defaulting to auto.`
-  };
+var DISABLE_NEW_SEARCH_ENV = "JETBRAINS_MCP_PROXY_DISABLE_NEW_SEARCH";
+function isEnvFlagEnabled(name) {
+  let raw = process.env[name];
+  if (!raw)
+    return !1;
+  let normalized = raw.trim().toLowerCase();
+  return normalized !== "" && normalized !== "0" && normalized !== "false";
 }
-function resolveSearchCapabilities(modeInfo, upstreamTools) {
+function resolveSearchCapabilities(upstreamTools) {
   let names = /* @__PURE__ */ new Set;
   for (let tool of upstreamTools ?? []) {
     let name = typeof tool?.name === "string" ? tool.name : "";
     if (name)
       names.add(name);
   }
-  let hasToolInfo = (upstreamTools ?? []).length > 0, hasUpstreamSearch = names.has("search"), supportsRegex = hasToolInfo ? names.has("search_in_files_by_regex") : !0, supportsText = hasToolInfo ? names.has("search_in_files_by_text") || supportsRegex : !0, supportsFileGlob = hasToolInfo ? names.has("find_files_by_glob") : !0, supportsFileName = hasToolInfo ? names.has("find_files_by_name_keyword") : !0, supportsFile = supportsFileGlob || supportsFileName, supportsSymbol = modeInfo.mode !== SEARCH_TOOL_MODES.LEGACY && hasUpstreamSearch, capabilities = {
-    mode: modeInfo.mode,
-    hasUpstreamSearch,
-    supportsSymbol,
+  let disableNewSearch = isEnvFlagEnabled(DISABLE_NEW_SEARCH_ENV), hasToolInfo = (upstreamTools ?? []).length > 0, hasSearchText = !disableNewSearch && names.has("search_text"), hasSearchRegex = !disableNewSearch && names.has("search_regex"), hasSearchFile = !disableNewSearch && names.has("search_file"), hasSearchSymbol = names.has("search_symbol"), supportsText = hasSearchText || (hasToolInfo ? names.has("search_in_files_by_text") : !0), supportsRegex = hasSearchRegex || (hasToolInfo ? names.has("search_in_files_by_regex") : !0), supportsFile = hasSearchFile || (hasToolInfo ? names.has("find_files_by_glob") : !0);
+  return { capabilities: {
+    hasSearchText,
+    hasSearchRegex,
+    hasSearchFile,
+    hasSearchSymbol,
+    supportsSymbol: hasSearchSymbol,
     supportsText,
     supportsRegex,
-    supportsFile,
-    supportsFileGlob,
-    supportsFileName
-  };
-  if (modeInfo.mode === SEARCH_TOOL_MODES.SEARCH && hasToolInfo && !hasUpstreamSearch)
-    return {
-      capabilities,
-      warning: "JETBRAINS_MCP_SEARCH_TOOL=search requested, but upstream search is unavailable; falling back to legacy search."
-    };
-  return { capabilities };
+    supportsFile
+  } };
+}
+function resolveReadCapabilities(upstreamTools) {
+  let names = /* @__PURE__ */ new Set;
+  for (let tool of upstreamTools ?? []) {
+    let name = typeof tool?.name === "string" ? tool.name : "";
+    if (name)
+      names.add(name);
+  }
+  return { capabilities: { hasReadFile: names.has("read_file") } };
 }
 function createProxyTooling({
   projectPath,
   callUpstreamTool,
   toolMode,
-  searchCapabilities
+  searchCapabilities,
+  readCapabilities
 }) {
   let resolvedMode = toolMode === TOOL_MODES.CC ? TOOL_MODES.CC : TOOL_MODES.CODEX, { proxyToolSpecs, proxyToolNames, handlers } = buildProxyToolingData(resolvedMode, {
     projectPath,
     callUpstreamTool,
-    searchCapabilities
+    searchCapabilities,
+    readCapabilities
   });
   async function runProxyToolCall(toolName, args) {
     let handler = handlers.get(toolName);
@@ -23217,21 +24395,13 @@ function parseEnvSeconds(name, fallbackSeconds) {
 function buildStreamUrl(port) {
   return `http://${defaultHost}:${port}${defaultPath}`;
 }
-var explicitProjectPath = env.JETBRAINS_MCP_PROJECT_PATH, projectPath = explicitProjectPath && explicitProjectPath.length > 0 ? path9.resolve(explicitProjectPath) : path9.resolve(cwd()), defaultProjectPathKey = "project_path", projectPathManager = createProjectPathManager({ projectPath, defaultProjectPathKey }), toolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE), REPLACED_TOOL_NAMES = getReplacedToolNames(), BASE_BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES]), searchToolModeInfo = resolveSearchToolMode(env.JETBRAINS_MCP_SEARCH_TOOL);
-if (searchToolModeInfo.warning)
-  warn(searchToolModeInfo.warning);
-var searchCapabilities = resolveSearchCapabilities(searchToolModeInfo, []).capabilities;
-function buildBlockedToolNames() {
-  return new Set(BASE_BLOCKED_TOOL_NAMES);
-}
+var explicitProjectPath = env.JETBRAINS_MCP_PROJECT_PATH, projectPath = explicitProjectPath && explicitProjectPath.length > 0 ? path9.resolve(explicitProjectPath) : path9.resolve(cwd()), defaultProjectPathKey = "project_path", projectPathManager = createProjectPathManager({ projectPath, defaultProjectPathKey }), toolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE), REPLACED_TOOL_NAMES = getReplacedToolNames(), BASE_BLOCKED_TOOL_NAMES = /* @__PURE__ */ new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES]), searchCapabilities = resolveSearchCapabilities([]).capabilities, readCapabilities = resolveReadCapabilities([]).capabilities;
 function blockedToolMessage(toolName) {
   if (toolName === "create_new_file") {
     if (toolModeInfo.mode === TOOL_MODES.CC)
       return `Tool '${toolName}' is not exposed by ij-proxy. Use 'write' instead.`;
     return `Tool '${toolName}' is not exposed by ij-proxy. Use 'apply_patch' instead.`;
   }
-  if (toolName === "grep" || toolName === "find" || toolName === "glob")
-    return `Tool '${toolName}' is not exposed by ij-proxy. Use 'search' instead.`;
   return `Tool '${toolName}' is not exposed by ij-proxy.`;
 }
 var proxyToolSpecs = [], proxyToolNames = /* @__PURE__ */ new Set, runProxyToolCall = async () => {
@@ -23242,7 +24412,8 @@ function updateProxyTooling() {
     projectPath,
     callUpstreamTool,
     toolMode: toolModeInfo.mode,
-    searchCapabilities
+    searchCapabilities,
+    readCapabilities
   });
   proxyToolSpecs = tooling.proxyToolSpecs, proxyToolNames = tooling.proxyToolNames, runProxyToolCall = tooling.runProxyToolCall;
 }
@@ -23274,6 +24445,9 @@ var streamTransport = createStreamTransport({
 upstreamClient.onerror = (error48) => {
   warn(`Upstream client error: ${error48.message}`);
 };
+upstreamClient.onclose = () => {
+  resetUpstreamState(), warn("Upstream client connection closed; will reconnect on next request");
+};
 var proxyServer = new Server({ name: "ij-mcp-proxy", version: "1.0.0" }, {
   capabilities: {
     tools: { listChanged: !0 },
@@ -23283,16 +24457,16 @@ var proxyServer = new Server({ name: "ij-mcp-proxy", version: "1.0.0" }, {
   }
 });
 proxyServer.setRequestHandler(ListToolsRequestSchema, async () => {
-  let upstreamTools = await getUpstreamTools(), blocked = buildBlockedToolNames();
+  let upstreamTools = await getUpstreamTools();
   return {
-    tools: mergeToolLists(proxyToolSpecs, upstreamTools, blocked)
+    tools: mergeToolLists(proxyToolSpecs, upstreamTools, BASE_BLOCKED_TOOL_NAMES)
   };
 });
 proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
   let toolName = typeof request.params?.name === "string" ? request.params.name : "", rawArgs = request.params?.arguments, args = rawArgs && typeof rawArgs === "object" ? { ...rawArgs } : {};
   if (!toolName)
     return makeToolError("Tool name is required");
-  if (buildBlockedToolNames().has(toolName))
+  if (BASE_BLOCKED_TOOL_NAMES.has(toolName))
     return makeToolError(blockedToolMessage(toolName));
   if (proxyToolNames.has(toolName))
     try {
@@ -23310,10 +24484,14 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 proxyServer.fallbackRequestHandler = async (request) => {
-  return await ensureUpstreamConnected(), await upstreamClient.request({ method: request.method, params: request.params }, ResultSchema);
+  return await withUpstreamReconnect(request.method, async () => {
+    return await ensureUpstreamConnected(), await upstreamClient.request({ method: request.method, params: request.params }, ResultSchema);
+  });
 };
 proxyServer.fallbackNotificationHandler = async (notification) => {
-  await ensureUpstreamConnected(), await upstreamClient.notification(notification);
+  await withUpstreamReconnect(notification.method, async () => {
+    await ensureUpstreamConnected(), await upstreamClient.notification(notification);
+  });
 };
 upstreamClient.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
   try {
@@ -23342,8 +24520,35 @@ proxyServer.connect(stdioTransport).catch((error48) => {
   let message = error48 instanceof Error ? error48.message : String(error48);
   warn(`Failed to start stdio transport: ${message}`);
 });
-var upstreamConnectedPromise = null, upstreamTools = null;
+var upstreamConnectedPromise = null, upstreamTools = null, RECOVERABLE_UPSTREAM_ERROR_RE = /\b(not connected|connection closed|session not found|server not initialized|mcp-session-id header is required)\b/i;
+function getErrorMessage(error48) {
+  return error48 instanceof Error ? error48.message : String(error48);
+}
+function isRecoverableUpstreamError(error48) {
+  let message = getErrorMessage(error48);
+  return RECOVERABLE_UPSTREAM_ERROR_RE.test(message);
+}
+function resetUpstreamState() {
+  upstreamConnectedPromise = null, upstreamTools = null, searchCapabilities = resolveSearchCapabilities([]).capabilities, readCapabilities = resolveReadCapabilities([]).capabilities, updateProxyTooling(), setIdeVersion(null);
+}
+async function withUpstreamReconnect(label, fn) {
+  try {
+    return await fn();
+  } catch (error48) {
+    if (!isRecoverableUpstreamError(error48))
+      throw error48;
+    warn(`Upstream ${label} failed (${getErrorMessage(error48)}); reconnecting and retrying once`), resetUpstreamState();
+    try {
+      await streamTransport.resetTransport(error48);
+    } catch (resetError) {
+      warn(`Failed to reset MCP stream transport: ${getErrorMessage(resetError)}`);
+    }
+    return await ensureUpstreamConnected(), fn();
+  }
+}
 async function ensureUpstreamConnected() {
+  if (!upstreamClient.transport)
+    upstreamConnectedPromise = null, upstreamTools = null;
   if (upstreamConnectedPromise)
     return upstreamConnectedPromise;
   return upstreamConnectedPromise = upstreamClient.connect(streamTransport).catch((error48) => {
@@ -23357,13 +24562,11 @@ function updateIdeVersionFromUpstream() {
   setIdeVersion(typeof version2 === "string" ? version2 : null);
 }
 async function refreshUpstreamTools() {
-  await ensureUpstreamConnected();
-  let response = await upstreamClient.listTools(), tools = Array.isArray(response?.tools) ? response.tools : [];
-  projectPathManager.updateProjectPathKeys(tools), projectPathManager.stripProjectPathFromTools(tools), upstreamTools = tools;
-  let resolvedCapabilities = resolveSearchCapabilities(searchToolModeInfo, tools);
-  if (resolvedCapabilities.warning)
-    warn(resolvedCapabilities.warning);
-  return searchCapabilities = resolvedCapabilities.capabilities, updateProxyTooling(), tools;
+  return await withUpstreamReconnect("tools/list", async () => {
+    await ensureUpstreamConnected();
+    let response = await upstreamClient.listTools(), tools = Array.isArray(response?.tools) ? response.tools : [];
+    return projectPathManager.updateProjectPathKeys(tools), projectPathManager.stripProjectPathFromTools(tools), upstreamTools = tools, searchCapabilities = resolveSearchCapabilities(tools).capabilities, readCapabilities = resolveReadCapabilities(tools).capabilities, updateProxyTooling(), tools;
+  });
 }
 async function getUpstreamTools() {
   if (!upstreamTools)
@@ -23397,21 +24600,25 @@ function makeToolError(text) {
   };
 }
 async function callUpstreamToolForClient(toolName, args) {
-  await ensureUpstreamConnected(), await getUpstreamTools(), projectPathManager.injectProjectPathArgs(toolName, args);
-  let options = toolCallTimeoutMs > 0 ? { timeout: toolCallTimeoutMs } : void 0, result = await upstreamClient.callTool({ name: toolName, arguments: args }, void 0, options);
-  return normalizeToolResult(result);
+  return await withUpstreamReconnect(`tools/call ${toolName}`, async () => {
+    await ensureUpstreamConnected(), await getUpstreamTools(), projectPathManager.injectProjectPathArgs(toolName, args);
+    let options = toolCallTimeoutMs > 0 ? { timeout: toolCallTimeoutMs } : void 0, result = await upstreamClient.callTool({ name: toolName, arguments: args }, void 0, options);
+    return normalizeToolResult(result);
+  });
 }
 async function callUpstreamTool(toolName, args) {
-  await ensureUpstreamConnected(), await getUpstreamTools();
-  let callArgs = { ...args };
-  projectPathManager.injectProjectPathArgs(toolName, callArgs);
-  let options = toolCallTimeoutMs > 0 ? { timeout: toolCallTimeoutMs } : void 0, result = normalizeToolResult(await upstreamClient.callTool({ name: toolName, arguments: callArgs }, void 0, options));
-  if (result?.isError)
-    throw Error(extractTextFromResult(result) || "Upstream tool error");
-  return result;
+  return await withUpstreamReconnect(`tools/call ${toolName}`, async () => {
+    await ensureUpstreamConnected(), await getUpstreamTools();
+    let callArgs = { ...args };
+    projectPathManager.injectProjectPathArgs(toolName, callArgs);
+    let options = toolCallTimeoutMs > 0 ? { timeout: toolCallTimeoutMs } : void 0, result = normalizeToolResult(await upstreamClient.callTool({ name: toolName, arguments: callArgs }, void 0, options));
+    if (result?.isError)
+      throw Error(extractTextFromResult(result) || "Upstream tool error");
+    return result;
+  });
 }
 function mergeToolLists(proxyTools, upstreamTools2, blockedNames) {
-  let blocked = new Set(blockedNames || []), result = [], seen = /* @__PURE__ */ new Set;
+  let blocked = blockedNames instanceof Set ? blockedNames : new Set(blockedNames || []), result = [], seen = /* @__PURE__ */ new Set;
   for (let tool of proxyTools || []) {
     if (!tool || typeof tool.name !== "string")
       continue;

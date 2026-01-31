@@ -2,7 +2,7 @@
 
 import path from 'node:path'
 import {z, type ZodType} from 'zod'
-import type {SearchEntry, ToolResultLike, UpstreamToolCaller} from './types'
+import type {SearchEntry, SearchItem, ToolResultLike, UpstreamToolCaller} from './types'
 
 export const TRUNCATION_MARKER = '<<<...content truncated...>>>'
 const FULL_READ_MAX_LINES = 200_000
@@ -14,16 +14,9 @@ export interface ResolvedPath {
 
 export type TruncateMode = 'NONE' | 'START' | 'END'
 
-export type SearchItem = [string] | [string, number] | [string, number, string]
-
 export interface ReadFileTextOptions {
   maxLinesCount?: number | null
   truncateMode?: TruncateMode | null
-}
-
-export interface SplitLinesResult {
-  lines: string[]
-  trailingNewline: boolean
 }
 
 const nonEmptyStringSchema = z.string().refine((value) => value.trim() !== '', {
@@ -68,18 +61,6 @@ export function resolvePathInProject(projectPath: string, inputPath: unknown, la
   return {absolute, relative}
 }
 
-export function resolveSearchPath(projectPath: string, inputPath: unknown): ResolvedPath {
-  if (inputPath === undefined || inputPath === null) {
-    return {absolute: projectPath, relative: ''}
-  }
-  return resolvePathInProject(projectPath, inputPath, 'path')
-}
-
-export function looksLikeFilePath(rawPath: string, relativePath: string): boolean {
-  if (rawPath.endsWith(path.sep) || rawPath.endsWith('/') || rawPath.endsWith('\\')) return false
-  return path.extname(relativePath) !== ''
-}
-
 export function normalizeEntryPath<T>(projectPath: string, filePath: T): T extends string ? string : T {
   if (typeof filePath !== 'string' || filePath === '') return filePath as T extends string ? string : T
   if (path.isAbsolute(filePath)) return filePath as T extends string ? string : T
@@ -121,24 +102,30 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function coerceSearchItem(value: unknown): SearchItem | null {
-  if (typeof value === 'string') return [value]
+  if (typeof value === 'string') return {filePath: value}
   if (Array.isArray(value)) {
     if (value.length === 0 || value.length > 3) return null
     if (typeof value[0] !== 'string') return null
-    const line = typeof value[1] === 'number' ? value[1] : undefined
-    const text = typeof value[2] === 'string' ? value[2] : undefined
-    if (line === undefined) return [value[0]]
-    if (text === undefined) return [value[0], line]
-    return [value[0], line, text]
+    const item: SearchItem = {filePath: value[0]}
+    if (typeof value[1] === 'number') {
+      item.lineNumber = value[1]
+      if (typeof value[2] === 'string') {
+        item.lineText = value[2]
+      }
+    }
+    return item
   }
   if (isRecord(value)) {
     const filePath = typeof value.filePath === 'string' ? value.filePath : null
     if (!filePath) return null
-    const lineNumber = typeof value.lineNumber === 'number' ? value.lineNumber : undefined
-    const lineText = typeof value.lineText === 'string' ? value.lineText : undefined
-    if (lineNumber === undefined) return [filePath]
-    if (lineText === undefined) return [filePath, lineNumber]
-    return [filePath, lineNumber, lineText]
+    const item: SearchItem = {filePath}
+    if (typeof value.lineNumber === 'number') {
+      item.lineNumber = value.lineNumber
+    }
+    if (typeof value.lineText === 'string') {
+      item.lineText = value.lineText
+    }
+    return item
   }
   return null
 }
@@ -170,26 +157,16 @@ function extractItemsFromValue(value: unknown): SearchItem[] | null {
 
 function itemsToEntries(items: SearchItem[]): SearchEntry[] {
   return items.map((item) => ({
-    filePath: item[0],
-    lineNumber: item.length > 1 ? item[1] : undefined,
-    lineText: item.length > 2 ? item[2] : undefined
+    filePath: item.filePath,
+    lineNumber: item.lineNumber,
+    lineText: item.lineText
   }))
 }
 
 export function extractItems(result: unknown): SearchItem[] {
   const structured = extractStructuredContent(result)
   const fromStructured = extractItemsFromValue(structured)
-  if (fromStructured) return fromStructured
-  const text = extractTextFromResult(result)
-  if (!text) return []
-  const trimmed = text.trim()
-  if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return []
-  try {
-    const parsed = JSON.parse(trimmed)
-    return extractItemsFromValue(parsed) ?? []
-  } catch {
-    return []
-  }
+  return fromStructured ?? []
 }
 
 function coerceEntries(value: unknown): SearchEntry[] | null {
@@ -224,17 +201,7 @@ function extractResultsMapFromValue(value: unknown): Record<string, SearchEntry[
 
 export function extractResultsMap(result: unknown): Record<string, SearchEntry[]> | null {
   const structured = extractStructuredContent(result)
-  const fromStructured = extractResultsMapFromValue(structured)
-  if (fromStructured) return fromStructured
-  const text = extractTextFromResult(result)
-  if (!text) return null
-  const trimmed = text.trim()
-  if (!trimmed.startsWith('{')) return null
-  try {
-    return extractResultsMapFromValue(JSON.parse(trimmed))
-  } catch {
-    return null
-  }
+  return extractResultsMapFromValue(structured)
 }
 
 export function extractFileList(result: unknown): string[] {
@@ -243,23 +210,16 @@ export function extractFileList(result: unknown): string[] {
     return extractFileListFromResults(resultsMap)
   }
   const structured = extractStructuredContent(result)
-  if (structured) {
-    const structuredRecord = structured as Record<string, unknown>
-    if (Array.isArray(structuredRecord.items)) {
-      return extractItems(result).map((item) => item[0])
-    }
-    if (Array.isArray(structuredRecord.files)) return structuredRecord.files as string[]
-    if (Array.isArray(structured)) return structured as string[]
+  if (!structured) return []
+  if (Array.isArray(structured)) {
+    const items = extractItemsFromValue(structured)
+    if (items) return items.map((item) => item.filePath)
+    return structured as string[]
   }
-  const text = extractTextFromResult(result)
-  if (!text) return []
-  try {
-    const parsed = JSON.parse(text)
-    if (Array.isArray(parsed.files)) return parsed.files
-    if (Array.isArray(parsed)) return parsed
-  } catch {
-    return []
-  }
+  const structuredRecord = structured as Record<string, unknown>
+  const items = extractItemsFromValue(structuredRecord)
+  if (items) return items.map((item) => item.filePath)
+  if (Array.isArray(structuredRecord.files)) return structuredRecord.files as string[]
   return []
 }
 
@@ -278,18 +238,6 @@ export function extractEntries(result: unknown): SearchEntry[] {
       if (fromItems) return itemsToEntries(fromItems)
       return structured as SearchEntry[]
     }
-  }
-  const text = extractTextFromResult(result)
-  if (!text) return []
-  try {
-    const parsed = JSON.parse(text)
-    if (Array.isArray(parsed.entries)) return parsed.entries
-    if (Array.isArray(parsed.results)) return parsed.results
-    const fromItems = extractItemsFromValue(parsed)
-    if (fromItems) return itemsToEntries(fromItems)
-    if (Array.isArray(parsed)) return parsed
-  } catch {
-    return []
   }
   return []
 }
@@ -348,37 +296,4 @@ export function splitLines(text: string): string[] {
     lines.pop()
   }
   return lines
-}
-
-export function splitLinesWithTrailing(text: string): SplitLinesResult {
-  const normalized = normalizeLineEndings(text)
-  const trailingNewline = normalized.endsWith('\n')
-  const lines = normalized.split('\n')
-  if (trailingNewline) {
-    lines.pop()
-  }
-  return {lines, trailingNewline}
-}
-
-export function countOccurrences(haystack: string, needle: string): number {
-  if (needle.length === 0) return 0
-  let count = 0
-  let index = 0
-  while (true) {
-    const next = haystack.indexOf(needle, index)
-    if (next === -1) break
-    count += 1
-    index = next + needle.length
-  }
-  return count
-}
-
-export function replaceFirst(text: string, oldString: string, newString: string): string | null {
-  const index = text.indexOf(oldString)
-  if (index === -1) return null
-  return text.slice(0, index) + newString + text.slice(index + oldString.length)
-}
-
-export function replaceAll(text: string, oldString: string, newString: string): string {
-  return text.split(oldString).join(newString)
 }

@@ -10,7 +10,7 @@ This note compares the file read/search/edit tool surfaces for:
 
 Note: The Claude Code tool list was captured on January 21, 2026 (see cc-tools.json). It can drift from current Claude Code builds.
 Note: The proxy tool list is mode-specific (`JETBRAINS_MCP_TOOL_MODE`, default: `codex`).
-Note: The proxy search capabilities are configurable (`JETBRAINS_MCP_SEARCH_TOOL`, default: `auto`).
+Note: The proxy exposes search shims only when upstream does not provide the same `search_*` tools; otherwise it passes the upstream tools through.
 
 ## Comparison table
 
@@ -20,8 +20,8 @@ Note: The proxy search capabilities are configurable (`JETBRAINS_MCP_SEARCH_TOOL
 | Read            | Read abs path; offset/limit          | read_file abs + indentation            | get_file_text_by_path (pathInProject)     | codex: read_file (numbered); cc: read (raw)                                    |
 | Indentation     | No                                   | Yes                                    | No                                        | codex only                                                                     |
 | Dir listing     | None in capture                      | list_dir                               | list_directory_tree                       | codex: list_dir; cc: none                                                      |
-| File discovery  | Glob                                 | None (use list_dir)                    | find_files_by_glob/name                   | search (target=file)                                                           |
-| Search output   | Grep (content/paths)                 | grep (paths)                           | search_in_files_* (entries)               | search (unified; uses upstream search when available, otherwise legacy text/file)
+| File discovery  | Glob                                 | None (use list_dir)                    | find_files_by_glob/name                   | cc: glob; codex: find                                                          |
+| Search output   | Grep (content/paths)                 | grep (paths)                           | search_in_files_* (entries)               | search_text/search_regex/search_file/search_symbol (when available)            |
 | Edit/write      | Edit/Write (no MultiEdit in capture) | apply_patch                            | replace_text_in_file + create_new_file    | codex: apply_patch; cc: edit/write                                             |
 | Path model      | Absolute paths                       | Abs for read/list; cwd for apply_patch | Project-relative                          | Abs or project-relative                                                        |
 | apply_patch     | No                                   | Yes                                    | No                                        | codex: yes; cc: no                                                             |
@@ -29,9 +29,9 @@ Note: The proxy search capabilities are configurable (`JETBRAINS_MCP_SEARCH_TOOL
 
 ## Key differences
 
-- The proxy is not a pure pass-through: it always exposes a mode-specific proxy tool set, hides upstream tools replaced by proxy tools, and keeps the remaining upstream tools that do not collide with proxy tool names (blocked tools are filtered).
+- The proxy is not a pure pass-through: it exposes a mode-specific proxy tool set unless the upstream already provides the same tool name, hides upstream tools replaced by proxy tools, and keeps the remaining upstream tools that do not collide with proxy tool names (blocked tools are filtered).
 - Upstream JetBrains MCP uses project-relative paths and structured search entries; the proxy returns plain text outputs.
-- The proxy exposes a single `search` tool that routes to Search Everywhere when available and falls back to legacy text/file search otherwise.
+- The proxy exposes `search_*` shims only when upstream does not provide the same tools; otherwise it passes upstream search tools through unchanged.
 - Codex relies on apply_patch for edits; Claude Code uses string replacement, and the proxy follows the selected mode.
 - Indentation-aware reads are Codex-style and only exposed in codex mode.
 

@@ -66,7 +66,10 @@ Preserve IDE-serialized .iml files in canonical form. Do not:
 
 - Read: `mcp__ijproxy__read_file`
 - Edit/Write: `mcp__ijproxy__apply_patch`
-- Search: `mcp__ijproxy__search` (use `providers=["files"]` for filenames; `mode=lexical` + `providers=["text"]` for contents; `providers=["symbols"]`/`["classes"]` for symbols)
+- **Search symbols (preferred):** `mcp__ijproxy__search_symbol`
+- Find files (glob): `mcp__ijproxy__search_file`
+- Search text: `mcp__ijproxy__search_text`
+- Search regex: `mcp__ijproxy__search_regex`
 - List dir: `mcp__ijproxy__list_dir`
 
 ### jetbrains MCP (fallback)
@@ -83,11 +86,12 @@ Direct JetBrains MCP connection. Use when ijproxy unavailable.
 
 ### Client fallback (no MCP)
 
-- Use `./tools/fd.cmd` instead of Glob and `./tools/rg.cmd` instead of Grep. These are the only allowed shell file ops on repo paths.
+- **No MCP:** use `./tools/fd.cmd` (file search) and `./tools/rg.cmd` (text/regex search). These are the only allowed shell file ops on repo paths.
 
 ### IDE-backed semantic tools
 Available via ijproxy or JetBrains MCP. Use these for semantic operations; avoid manual search/replace when a refactor exists.
 
+- **Default to `search_symbol` (if available) for classes/methods/fields; use `search_text`/`search_regex` mainly for strings, comments, and non-symbol matches.**
 - Inspections & symbol info: `get_file_problems`, `get_symbol_info`
 - Refactors: `rename` (ijproxy) / `rename_refactoring` (JetBrains MCP); use for renames and avoid manual search/replace.
 - Formatting: `reformat_file`
