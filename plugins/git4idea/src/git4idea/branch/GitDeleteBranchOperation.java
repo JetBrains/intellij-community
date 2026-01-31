@@ -90,11 +90,18 @@ public class GitDeleteBranchOperation extends GitBranchOperation {
 
       GitSimpleEventDetector notFullyMergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.BRANCH_NOT_FULLY_MERGED);
       GitBranchNotMergedToUpstreamDetector notMergedToUpstreamDetector = new GitBranchNotMergedToUpstreamDetector();
-      GitCommandResult result = myGit.branchDelete(repository, myBranchName, false, notFullyMergedDetector, notMergedToUpstreamDetector);
+      GitBranchCheckedOutInWorktreeDeleteDetector worktreeDetector = new GitBranchCheckedOutInWorktreeDeleteDetector();
+      GitCommandResult result = myGit.branchDelete(repository, myBranchName, false, notFullyMergedDetector, notMergedToUpstreamDetector, worktreeDetector);
 
       if (result.success()) {
         refresh(repository);
         markSuccessful(repository);
+      }
+      else if (worktreeDetector.isDetected()) {
+        boolean deleteSucceeded = handleWorktreeBranchDelete(repository, worktreeDetector);
+        if (!deleteSucceeded) {
+          fatalErrorHappened = true;
+        }
       }
       else if (notFullyMergedDetector.isDetected()) {
         String baseBranch = notMergedToUpstreamDetector.getBaseBranch();
@@ -122,6 +129,39 @@ public class GitDeleteBranchOperation extends GitBranchOperation {
 
     if (!fatalErrorHappened) {
       notifySuccess();
+    }
+  }
+
+  /**
+   * Handles the case when the branch is checked out in another worktree.
+   * Shows a confirmation dialog and retries deletion with force flag if the user confirms.
+   */
+  private boolean handleWorktreeBranchDelete(@NotNull GitRepository repository,
+                                              @NotNull GitBranchCheckedOutInWorktreeDeleteDetector worktreeDetector) {
+    String branchName = worktreeDetector.getBranchName();
+    String worktreePath = worktreeDetector.getWorktreePath();
+
+    if (branchName == null || worktreePath == null) {
+      // Should not happen, but handle gracefully
+      fatalError(getErrorTitle(), GitBundle.message("delete.branch.operation.branch.was.not.deleted.error", myBranchName));
+      return false;
+    }
+
+    boolean userConfirmed = myUiHandler.showBranchCheckedOutInWorktreeDeleteDialog(branchName, worktreePath);
+    if (!userConfirmed) {
+      return false;
+    }
+
+    // Retry deletion with force flag
+    GitCommandResult forceDeleteResult = myGit.branchDelete(repository, myBranchName, true);
+    if (forceDeleteResult.success()) {
+      refresh(repository);
+      markSuccessful(repository);
+      return true;
+    }
+    else {
+      fatalError(getErrorTitle(), forceDeleteResult);
+      return false;
     }
   }
 
