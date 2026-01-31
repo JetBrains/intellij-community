@@ -1,22 +1,22 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil
+import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.actions.AttachDirectoryUsagesCollector.SpecialDirectory
 import com.intellij.ide.actions.AttachDirectoryUsagesCollector.logAttachedDirectoryFilesCount
 import com.intellij.ide.actions.AttachDirectoryUsagesCollector.logAttachedSpecialDirectory
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil
-import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.SystemProperties
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
+import com.intellij.util.SystemProperties
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

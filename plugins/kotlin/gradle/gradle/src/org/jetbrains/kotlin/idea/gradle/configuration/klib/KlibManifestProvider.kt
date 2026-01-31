@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.library.KLIB_MANIFEST_FILE_NAME
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Properties
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import kotlin.io.path.isRegularFile

@@ -10,7 +10,12 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.xml.XmlAttribute
@@ -19,6 +24,7 @@ import com.intellij.util.Processor
 import com.intellij.util.xml.DomUtil
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.dom.Extension
+import org.jetbrains.idea.devkit.inspections.DescriptionTypeResolverKeys.INSPECTION_SHORT_NAME_IN_XML
 import org.jetbrains.idea.devkit.util.DevKitDomUtil
 import org.jetbrains.idea.devkit.util.ExtensionCandidate
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass

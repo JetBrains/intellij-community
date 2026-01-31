@@ -11,7 +11,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 
 import java.io.IOException;

@@ -7,7 +7,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.artifact.JpsArtifactReference;
-import org.jetbrains.jps.model.artifact.elements.*;
+import org.jetbrains.jps.model.artifact.elements.JpsArchivePackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsArtifactOutputPackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsArtifactRootElement;
+import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsDirectoryCopyPackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsDirectoryPackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsExtractedDirectoryPackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsFileCopyPackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsLibraryFilesPackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElementFactory;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 
 @ApiStatus.Internal

@@ -12,7 +12,9 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Insets;
 
 /**
  * This is utility for serialization of component hierarchy.

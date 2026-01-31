@@ -13,8 +13,31 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ExpectedReferenceFou
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFixFactories
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecationFixFactory
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.ReplaceProtectedToPublishedApiCallFixFactory
-import org.jetbrains.kotlin.idea.quickfix.*
-import org.jetbrains.kotlin.lexer.KtTokens.*
+import org.jetbrains.kotlin.idea.quickfix.AddFunctionBodyFix
+import org.jetbrains.kotlin.idea.quickfix.AddIfElseBranchFix
+import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
+import org.jetbrains.kotlin.idea.quickfix.AddModifierFixMpp
+import org.jetbrains.kotlin.idea.quickfix.AddWhenElseBranchFix
+import org.jetbrains.kotlin.idea.quickfix.RemoveExclExclCallFix
+import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
+import org.jetbrains.kotlin.idea.quickfix.RemoveNullableFix
+import org.jetbrains.kotlin.idea.quickfix.RemovePsiElementSimpleFix
+import org.jetbrains.kotlin.idea.quickfix.RemoveRedundantSpreadOperatorFix
+import org.jetbrains.kotlin.idea.quickfix.RemoveUseSiteTargetFix
+import org.jetbrains.kotlin.idea.quickfix.RemoveUselessCastFix
+import org.jetbrains.kotlin.idea.quickfix.RemoveUselessElvisFix
+import org.jetbrains.kotlin.idea.quickfix.RemoveValVarFromParameterFix
+import org.jetbrains.kotlin.idea.quickfix.RemoveWhenBranchFix
+import org.jetbrains.kotlin.idea.quickfix.RemoveWrongOptInAnnotationTargetFix
+import org.jetbrains.kotlin.idea.quickfix.ReplaceWithArrayCallInAnnotationFix
+import org.jetbrains.kotlin.lexer.KtTokens.ACTUAL_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.CONST_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.FUN_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.INLINE_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.IN_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.LATEINIT_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.OUT_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.OVERRIDE_KEYWORD
 
 class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     private val keywords = KtQuickFixesListBuilder.registerPsiQuickFix {

@@ -10,7 +10,7 @@ import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLScalar;
 import org.jetbrains.yaml.psi.YAMLValue;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 import static org.jetbrains.yaml.structureView.YAMLStructureViewFactory.ALIAS_ICON;
 

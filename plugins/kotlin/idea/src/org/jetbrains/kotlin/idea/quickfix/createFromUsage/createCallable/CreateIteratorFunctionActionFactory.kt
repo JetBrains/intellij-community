@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.types.TypeProjectionImpl
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.toDefaultAttributes
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import java.util.*
+import java.util.Collections
 
 @K1Deprecation
 object CreateIteratorFunctionActionFactory : CreateCallableMemberFromUsageFactory<KtForExpression>() {

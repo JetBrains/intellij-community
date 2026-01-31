@@ -15,7 +15,8 @@ import com.intellij.openapi.externalSystem.model.project.repository.UrlRepositor
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import java.util.*
+import java.util.Collections
+import java.util.IdentityHashMap
 
 class ProjectRepositoriesResolver: AbstractProjectResolverExtension() {
 

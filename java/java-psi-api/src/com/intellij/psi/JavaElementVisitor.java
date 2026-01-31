@@ -1,7 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
-import com.intellij.psi.javadoc.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.psi.javadoc.PsiInlineDocTag;
+import com.intellij.psi.javadoc.PsiMarkdownCodeBlock;
+import com.intellij.psi.javadoc.PsiMarkdownReferenceLabel;
+import com.intellij.psi.javadoc.PsiMarkdownReferenceLink;
+import com.intellij.psi.javadoc.PsiSnippetAttribute;
+import com.intellij.psi.javadoc.PsiSnippetAttributeList;
+import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
+import com.intellij.psi.javadoc.PsiSnippetDocTag;
+import com.intellij.psi.javadoc.PsiSnippetDocTagBody;
+import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class JavaElementVisitor extends PsiElementVisitor {

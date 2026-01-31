@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.gradle.scripting.k2.definition.GradleScriptDefinitio
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptProcessingFilter
 import org.jetbrains.kotlin.idea.core.script.shared.scriptDefinitionsSourceOfType
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.psi.KtFile
 
 private const val GRADLE_KTS = ".gradle.kts"
 

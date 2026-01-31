@@ -13,7 +13,7 @@ import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UQualifiedReferenceExpression
 import org.jetbrains.uast.toUElement
 import org.junit.Test
-import java.util.*
+import java.util.Objects
 
 @PerformanceUnitTest
 class JavaUastPerformanceTest : AbstractJavaUastTest() {

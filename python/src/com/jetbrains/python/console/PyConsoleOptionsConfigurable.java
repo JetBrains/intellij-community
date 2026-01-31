@@ -13,7 +13,8 @@ import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

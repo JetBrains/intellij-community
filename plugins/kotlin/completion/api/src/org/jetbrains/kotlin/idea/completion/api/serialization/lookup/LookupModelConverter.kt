@@ -15,14 +15,14 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableLookupObject
+import org.jetbrains.kotlin.idea.completion.api.serialization.ensureSerializable
 import org.jetbrains.kotlin.idea.completion.api.serialization.lookup.model.LookupElementModel
 import org.jetbrains.kotlin.idea.completion.api.serialization.lookup.model.LookupObjectModel
 import org.jetbrains.kotlin.idea.completion.api.serialization.lookup.model.PsiElementModel
 import org.jetbrains.kotlin.idea.completion.api.serialization.lookup.model.UserDataValueModel
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.idea.completion.api.serialization.ensureSerializable
+
 /**
  * Converts a [LookupElement] to a [LookupElementModel] for serialization for Kotlin LSP
  *

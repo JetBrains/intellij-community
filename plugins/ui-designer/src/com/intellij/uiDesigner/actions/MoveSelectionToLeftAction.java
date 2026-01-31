@@ -3,7 +3,7 @@ package com.intellij.uiDesigner.actions;
 
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 
-import java.awt.*;
+import java.awt.Point;
 
 public final class MoveSelectionToLeftAction extends AbstractMoveSelectionAction {
   public MoveSelectionToLeftAction(final GuiEditor editor, boolean extend, final boolean moveToLast) {

@@ -6,7 +6,12 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.resolveClassByFqName
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.diagnostics.Errors.*
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_OVERRIDE
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_OVERRIDE_ERROR
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_TO_INHERITANCE
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_TO_INHERITANCE_ERROR
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_USAGE
+import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_USAGE_ERROR
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.core.isVisible

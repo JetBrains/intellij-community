@@ -7,7 +7,6 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionTypingListener

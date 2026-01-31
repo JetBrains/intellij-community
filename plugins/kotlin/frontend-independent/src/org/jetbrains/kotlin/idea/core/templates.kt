@@ -8,7 +8,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.name.FqName
-import java.util.*
+import java.util.Properties
 
 private const val FUNCTION_BODY_TEMPLATE = "New Kotlin Function Body.kt"
 private const val PROPERTY_INITIALIZER_TEMPLATE = "New Kotlin Property Initializer.kt"

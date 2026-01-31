@@ -15,7 +15,11 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
 class VariableUsedInArrayInitializerVisitor extends JavaRecursiveElementWalkingVisitor {

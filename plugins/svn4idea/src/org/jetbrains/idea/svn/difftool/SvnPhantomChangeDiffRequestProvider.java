@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.ConflictedSvnChange;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 

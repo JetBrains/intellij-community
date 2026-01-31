@@ -3,7 +3,12 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyKeywordArgument;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringTest;
 import org.jetbrains.annotations.NotNull;
 

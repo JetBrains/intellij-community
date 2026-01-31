@@ -9,7 +9,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
-import static com.intellij.openapi.vcs.Executor.*;
+import static com.intellij.openapi.vcs.Executor.cat;
+import static com.intellij.openapi.vcs.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.pwd;
+import static com.intellij.openapi.vcs.Executor.touch;
 import static git4idea.test.GitExecutor.cd;
 import static git4idea.test.GitExecutor.git;
 

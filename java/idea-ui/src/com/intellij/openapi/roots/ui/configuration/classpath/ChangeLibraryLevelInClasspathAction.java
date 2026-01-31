@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 class ChangeLibraryLevelInClasspathAction extends ChangeLibraryLevelActionBase {
   private final ClasspathPanel myPanel;

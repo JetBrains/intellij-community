@@ -1,7 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.script
 
-import org.hamcrest.*
+import org.hamcrest.Description
+import org.hamcrest.Matcher
+import org.hamcrest.MatcherAssert
+import org.hamcrest.Matchers
+import org.hamcrest.TypeSafeMatcher
 import org.jetbrains.kotlin.idea.script.TransformingMatcher.Companion.transformInput
 
 internal fun Collection<Any>.assertContainsOnly(reason: String, vararg elementPatterns: Map<String, Any>) {

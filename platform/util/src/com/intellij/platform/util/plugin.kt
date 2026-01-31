@@ -3,7 +3,7 @@ package com.intellij.platform.util
 
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 
 /*
  * Sort the files heuristically to load the plugin jar containing plugin descriptors without extra ZipFile accesses.

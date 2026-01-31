@@ -4,9 +4,6 @@ package com.intellij.openapi.projectRoots.impl
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionHost.LensInvalidateSignal
 import com.intellij.execution.wsl.WslPath
-import com.intellij.java.JavaBundle
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction

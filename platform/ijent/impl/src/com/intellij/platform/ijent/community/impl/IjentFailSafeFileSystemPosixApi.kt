@@ -6,7 +6,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelUserPosixInfo
-import com.intellij.platform.eel.fs.*
+import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.EelFileSystemPosixApi
+import com.intellij.platform.eel.fs.EelOpenedFile
+import com.intellij.platform.eel.fs.EelPosixFileInfo
+import com.intellij.platform.eel.fs.StreamingReadResult
+import com.intellij.platform.eel.fs.StreamingWriteResult
+import com.intellij.platform.eel.fs.WalkDirectoryEntryResult
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ijent.IjentApi
@@ -15,9 +21,15 @@ import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.runBlocking
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicReference
 

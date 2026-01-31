@@ -1,6 +1,10 @@
 package com.intellij.database.run.ui.grid;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.ResultView;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 

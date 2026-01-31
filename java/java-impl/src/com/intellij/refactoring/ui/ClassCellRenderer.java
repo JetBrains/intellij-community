@@ -9,7 +9,9 @@ import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
 
 /**
  * Renders a list cell which contains a class.

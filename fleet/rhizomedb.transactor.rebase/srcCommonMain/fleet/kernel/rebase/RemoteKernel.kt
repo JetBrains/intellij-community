@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rebase
 
-import fleet.kernel.DurableSnapshot
 import fleet.kernel.DurableDbValue
+import fleet.kernel.DurableSnapshot
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
-import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.InstanceId
+import fleet.rpc.core.RpcFlow
 import fleet.util.UID
 import fleet.util.openmap.SerializedValue
 import kotlinx.coroutines.channels.ReceiveChannel

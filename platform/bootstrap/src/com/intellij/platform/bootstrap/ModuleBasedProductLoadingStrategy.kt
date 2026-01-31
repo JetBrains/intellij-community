@@ -1,7 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.bootstrap
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.ClassPathXmlPathResolver
+import com.intellij.ide.plugins.DiscoveredPluginsList
+import com.intellij.ide.plugins.ImmutableZipFileDataLoader
+import com.intellij.ide.plugins.LocalFsDataLoader
+import com.intellij.ide.plugins.ModuleLoadingRule
+import com.intellij.ide.plugins.PluginDescriptorLoadingContext
+import com.intellij.ide.plugins.PluginMainDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginModuleId
+import com.intellij.ide.plugins.PluginXmlPathResolver
+import com.intellij.ide.plugins.PluginsSourceContext
+import com.intellij.ide.plugins.ProductLoadingStrategy
+import com.intellij.ide.plugins.deprecatedLoadCorePluginForModuleBasedLoader
+import com.intellij.ide.plugins.loadDescriptorFromDir
+import com.intellij.ide.plugins.loadDescriptorFromFileOrDir
+import com.intellij.ide.plugins.loadDescriptorFromJar
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
@@ -23,7 +38,12 @@ import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepos
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.ZipEntryResolverPool
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists

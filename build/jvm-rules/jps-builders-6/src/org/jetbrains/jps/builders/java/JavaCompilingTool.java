@@ -4,7 +4,8 @@ package org.jetbrains.jps.builders.java;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileManager;
 import java.io.File;
 import java.util.Collections;
 import java.util.Iterator;

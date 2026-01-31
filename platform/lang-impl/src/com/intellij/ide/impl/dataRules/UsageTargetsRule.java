@@ -10,7 +10,9 @@ import com.intellij.usages.UsageTargetUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.actionSystem.CommonDataKeys.*;
+import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
+import static com.intellij.openapi.actionSystem.CommonDataKeys.PSI_ELEMENT;
+import static com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE;
 
 final class UsageTargetsRule {
   static UsageTarget @Nullable [] getData(@NotNull DataMap dataProvider) {

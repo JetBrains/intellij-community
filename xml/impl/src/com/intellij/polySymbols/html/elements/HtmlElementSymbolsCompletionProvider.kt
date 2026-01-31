@@ -5,10 +5,10 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.LegacyCompletionContributor
 import com.intellij.codeInsight.completion.XmlTagInsertHandler
-import com.intellij.polySymbols.html.StandardHtmlSymbol
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
 import com.intellij.polySymbols.html.HTML_ELEMENTS
+import com.intellij.polySymbols.html.StandardHtmlSymbol
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.html.HtmlTag

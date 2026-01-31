@@ -3,8 +3,11 @@ package com.intellij.lang.properties.customizeActions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.lang.properties.PropertiesImplUtil;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.ResourceBundleManager;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -20,7 +23,11 @@ import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich

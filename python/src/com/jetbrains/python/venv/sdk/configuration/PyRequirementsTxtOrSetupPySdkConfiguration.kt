@@ -15,8 +15,13 @@ import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUti
 import com.jetbrains.python.packaging.setupPy.SetupPyManager
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.configuration.*
+import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.EnvCheckerResult
+import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtension
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector
 import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.VirtualEnvResult
+import com.jetbrains.python.sdk.configuration.prepareSdkCreator
 
 internal class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExtension {
 

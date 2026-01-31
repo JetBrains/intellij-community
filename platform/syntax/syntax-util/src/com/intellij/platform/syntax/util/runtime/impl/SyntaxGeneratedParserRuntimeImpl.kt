@@ -9,7 +9,12 @@ import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
-import com.intellij.platform.syntax.util.runtime.*
+import com.intellij.platform.syntax.util.runtime.BracePair
+import com.intellij.platform.syntax.util.runtime.DUMMY_BLOCK
+import com.intellij.platform.syntax.util.runtime.ErrorState
+import com.intellij.platform.syntax.util.runtime.Frame
+import com.intellij.platform.syntax.util.runtime.Hook
+import com.intellij.platform.syntax.util.runtime.Modifiers
 import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._AND_
 import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._COLLAPSE_
 import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._LEFT_
@@ -17,6 +22,11 @@ import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._LEFT_INNER
 import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._NONE_
 import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._NOT_
 import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._UPPER_
+import com.intellij.platform.syntax.util.runtime.Parser
+import com.intellij.platform.syntax.util.runtime.ParserUserState
+import com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
+import com.intellij.platform.syntax.util.runtime.SyntaxRuntimeBundle
+import com.intellij.platform.syntax.util.runtime.TOKEN_ADVANCER
 import org.jetbrains.annotations.Contract
 import kotlin.math.min
 

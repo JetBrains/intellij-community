@@ -7,7 +7,11 @@ import com.intellij.mcpserver.clients.configs.ServerConfig
 import com.intellij.mcpserver.clients.configs.VSCodeConfig
 import com.intellij.mcpserver.clients.configs.VSCodeSSEConfig
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.decodeFromStream
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream

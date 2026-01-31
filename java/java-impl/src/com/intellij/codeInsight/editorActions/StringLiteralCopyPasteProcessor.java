@@ -10,7 +10,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFragment;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator;
 import com.intellij.psi.tree.TokenSet;
@@ -26,7 +31,15 @@ import java.awt.datatransfer.DataFlavor;
 import java.util.Collections;
 
 import static com.intellij.openapi.util.text.StringUtil.unescapeStringCharacters;
-import static com.intellij.psi.JavaTokenType.*;
+import static com.intellij.psi.JavaTokenType.CHARACTER_LITERAL;
+import static com.intellij.psi.JavaTokenType.STRING_LITERAL;
+import static com.intellij.psi.JavaTokenType.STRING_TEMPLATE_BEGIN;
+import static com.intellij.psi.JavaTokenType.STRING_TEMPLATE_END;
+import static com.intellij.psi.JavaTokenType.STRING_TEMPLATE_MID;
+import static com.intellij.psi.JavaTokenType.TEXT_BLOCK_LITERAL;
+import static com.intellij.psi.JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN;
+import static com.intellij.psi.JavaTokenType.TEXT_BLOCK_TEMPLATE_END;
+import static com.intellij.psi.JavaTokenType.TEXT_BLOCK_TEMPLATE_MID;
 
 public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
 

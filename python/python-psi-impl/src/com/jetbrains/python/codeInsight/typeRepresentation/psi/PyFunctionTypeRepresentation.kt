@@ -21,10 +21,27 @@ import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.ast.findChildByClass
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyDoubleStarExpression
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyPsiFacade
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PySlashParameter
+import com.jetbrains.python.psi.PyStarExpression
+import com.jetbrains.python.psi.PyTypeParameterList
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyElementImpl
-import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.psi.types.PyCallableParameter
+import com.jetbrains.python.psi.types.PyCallableParameterImpl
+import com.jetbrains.python.psi.types.PyCallableTypeImpl
+import com.jetbrains.python.psi.types.PyCollectionTypeImpl
+import com.jetbrains.python.psi.types.PyFunctionTypeImpl
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeVarType
+import com.jetbrains.python.psi.types.PyTypeVarTypeImpl
+import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), PyExpression {
   val functionName: QualifiedName? by lazy {

@@ -17,7 +17,11 @@
 
 package com.intellij.openapi.vcs.ex
 
-import com.intellij.diff.comparison.*
+import com.intellij.diff.comparison.ByLine
+import com.intellij.diff.comparison.ComparisonPolicy
+import com.intellij.diff.comparison.ComparisonUtil
+import com.intellij.diff.comparison.DiffTooBigException
+import com.intellij.diff.comparison.expand
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.comparison.iterables.DiffIterableUtil.fair
 import com.intellij.diff.comparison.iterables.FairDiffIterable

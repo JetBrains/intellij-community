@@ -1,9 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rebase
 
-import com.jetbrains.rhizomedb.*
-import fleet.kernel.*
+import com.jetbrains.rhizomedb.AllParts
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.Mut
+import com.jetbrains.rhizomedb.SchemaPart
+import com.jetbrains.rhizomedb.displayDatom
+import com.jetbrains.rhizomedb.partition
+import com.jetbrains.rhizomedb.processingNovelty
 import fleet.fastutil.ints.IntList
+import fleet.kernel.CommonPart
+import fleet.kernel.SharedPart
 
 internal fun Mut.preventReadsFromLocal(): Mut = intersectingPartitions(IntList.of(SchemaPart, SharedPart, CommonPart))
   .cachedQueryWithParts(IntList.of(SchemaPart, SharedPart, CommonPart))

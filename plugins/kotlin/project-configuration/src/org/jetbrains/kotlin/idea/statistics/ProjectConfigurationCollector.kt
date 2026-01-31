@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.configuration.getPlatform
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.konan.target.KonanTarget
-import java.util.*
+import java.util.Locale
 
 internal class ProjectConfigurationCollector : ProjectUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP

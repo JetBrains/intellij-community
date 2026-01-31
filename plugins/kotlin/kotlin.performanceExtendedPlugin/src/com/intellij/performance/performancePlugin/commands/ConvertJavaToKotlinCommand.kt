@@ -2,12 +2,8 @@
 package com.intellij.performance.performancePlugin.commands
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager

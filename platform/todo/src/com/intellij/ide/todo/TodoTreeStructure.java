@@ -4,8 +4,6 @@ package com.intellij.ide.todo;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.todo.nodes.ToDoRootNode;
-import static com.intellij.ide.todo.rpc.TodoHelperKt.fileMatchesFilter;
-import static com.intellij.ide.todo.rpc.TodoHelperKt.getTodoCount;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -24,6 +22,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import static com.intellij.ide.todo.TodoImplementationChooserKt.shouldUseSplitTodo;
+import static com.intellij.ide.todo.rpc.TodoHelperKt.fileMatchesFilter;
+import static com.intellij.ide.todo.rpc.TodoHelperKt.getTodoCount;
 
 @ApiStatus.Internal
 public abstract class TodoTreeStructure extends AbstractTreeStructureBase implements ToDoSettings {

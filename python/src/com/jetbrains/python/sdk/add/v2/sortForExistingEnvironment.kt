@@ -4,7 +4,10 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.associatedModulePath
+import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.isAssociatedWithAnotherModule
+import com.jetbrains.python.sdk.isAssociatedWithModule
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow

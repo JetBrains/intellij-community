@@ -5,7 +5,23 @@ import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.tasks.jira.jql.psi.impl.*;
+import com.intellij.tasks.jira.jql.psi.impl.JqlAndClauseImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlArgumentListImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlChangedClauseImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlEmptyValueImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlFunctionCallImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlHistoryPredicateImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlIdentifierImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlListImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlLiteralImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlNotClauseImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlOrClauseImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlOrderByImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlQueryImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlSimpleClauseImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlSortKeyImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlSubClauseImpl;
+import com.intellij.tasks.jira.jql.psi.impl.JqlWasClauseImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**

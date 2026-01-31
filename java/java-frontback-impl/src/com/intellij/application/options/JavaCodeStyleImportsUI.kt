@@ -2,7 +2,6 @@
 package com.intellij.application.options
 
 import com.intellij.application.options.JavaCodeStyleImportsPanel.InnerClassItem
-import com.intellij.psi.codeStyle.ImportsLayoutSettings
 import com.intellij.psi.codeStyle.JavaImportsLayoutSettings
 import com.intellij.ui.AnActionButtonRunnable
 import com.intellij.ui.TableUtil

@@ -19,7 +19,9 @@ import java.io.InputStream
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
+import java.util.MissingResourceException
+import java.util.ResourceBundle
 import java.util.regex.Pattern
 
 @ApiStatus.Internal

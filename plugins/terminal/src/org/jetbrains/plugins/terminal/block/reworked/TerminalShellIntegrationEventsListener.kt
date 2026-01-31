@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 @ApiStatus.Internal
 interface TerminalShellIntegrationEventsListener : EventListener {

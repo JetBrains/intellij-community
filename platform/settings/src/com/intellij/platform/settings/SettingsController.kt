@@ -5,7 +5,8 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.xmlb.SettingsInternalApi
 import kotlinx.serialization.json.JsonElement
-import org.jetbrains.annotations.ApiStatus.*
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.NonExtendable
 import java.nio.file.Path
 
 @NonExtendable

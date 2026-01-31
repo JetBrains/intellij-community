@@ -6,9 +6,11 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiDelegateReference
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.AstAccessControl.ALLOW_AST_ACCESS_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.AstAccessControl.execute
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.MockLibraryFacility
+import org.jetbrains.kotlin.idea.test.runAll
 import java.io.File
 
 abstract class AbstractReferenceResolveWithLibTest : AbstractReferenceResolveTest() {

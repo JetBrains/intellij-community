@@ -17,7 +17,11 @@ import com.intellij.psi.PsiField
 import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.tryResolve
 
 @IntellijInternalApi
 enum class LevelType {

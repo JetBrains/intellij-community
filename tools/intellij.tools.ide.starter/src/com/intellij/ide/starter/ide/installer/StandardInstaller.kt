@@ -1,7 +1,11 @@
 package com.intellij.ide.starter.ide.installer
 
 import com.intellij.ide.starter.di.di
-import com.intellij.ide.starter.ide.*
+import com.intellij.ide.starter.ide.IdeArchiveExtractor
+import com.intellij.ide.starter.ide.IdeDistributionFactory
+import com.intellij.ide.starter.ide.IdeDownloader
+import com.intellij.ide.starter.ide.IdeInstaller
+import com.intellij.ide.starter.ide.InstalledIde
 import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.utils.FileSystem.deleteRecursivelyQuietly

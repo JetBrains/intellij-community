@@ -20,7 +20,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.time.Instant
-import java.util.*
+import java.util.Date
 import java.util.function.Predicate
 import java.util.zip.ZipEntry
 import java.util.zip.ZipException

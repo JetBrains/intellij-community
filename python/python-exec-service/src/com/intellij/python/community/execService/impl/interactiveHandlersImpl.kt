@@ -3,7 +3,12 @@ package com.intellij.python.community.execService.impl
 
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.asEelChannel
-import com.intellij.python.community.execService.*
+import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.community.execService.CustomErrorMessage
+import com.intellij.python.community.execService.ProcessEvent
+import com.intellij.python.community.execService.ProcessInteractiveHandler
+import com.intellij.python.community.execService.ProcessSemiInteractiveFun
+import com.intellij.python.community.execService.PyProcessListener
 import com.intellij.util.io.awaitExit
 import com.jetbrains.python.Result
 import com.jetbrains.python.mapError

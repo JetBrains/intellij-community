@@ -1,7 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl
 
-import com.intellij.codeInsight.AnnotationUtil.*
+import com.intellij.codeInsight.AnnotationUtil.LANGUAGE
+import com.intellij.codeInsight.AnnotationUtil.NLS
+import com.intellij.codeInsight.AnnotationUtil.NON_NLS
+import com.intellij.codeInsight.AnnotationUtil.PROPERTY_KEY
+import com.intellij.codeInsight.AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil
 import com.intellij.codeInsight.navigation.PsiTargetNavigator
@@ -10,7 +14,22 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.JavaFeature
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiArrayAccessExpression
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiExpressionStatement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeCastExpression
+import com.intellij.psi.PsiVariable
 import com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiElementProcessor
@@ -25,7 +44,10 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.areSam
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findRequiredTypeParameters
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
-import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.ArtificialBooleanOutput
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.EmptyOutput
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.ExpressionOutput
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.VariableOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import com.intellij.refactoring.util.RefactoringUtil

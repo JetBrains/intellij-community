@@ -4,7 +4,6 @@ package com.intellij.debugger.actions
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
-import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.engine.executeOnDMT
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl

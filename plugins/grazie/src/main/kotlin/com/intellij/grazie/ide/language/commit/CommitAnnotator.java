@@ -24,7 +24,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EnumSet;
 import java.util.List;
 
-import static com.intellij.grazie.ide.TextProblemSeverities.*;
+import static com.intellij.grazie.ide.TextProblemSeverities.GRAMMAR_ERROR;
+import static com.intellij.grazie.ide.TextProblemSeverities.GRAMMAR_ERROR_ATTRIBUTES;
+import static com.intellij.grazie.ide.TextProblemSeverities.STYLE_SUGGESTION;
+import static com.intellij.grazie.ide.TextProblemSeverities.STYLE_SUGGESTION_ATTRIBUTES;
 import static com.intellij.spellchecker.SpellCheckerSeveritiesProvider.TYPO;
 import static com.intellij.spellchecker.SpellCheckerSeveritiesProvider.TYPO_KEY;
 

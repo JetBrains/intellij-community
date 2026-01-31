@@ -1,7 +1,7 @@
 package com.intellij.ml.local.models
 
-import com.intellij.ml.local.models.api.LocalModel
 import com.intellij.lang.Language
+import com.intellij.ml.local.models.api.LocalModel
 import com.intellij.ml.local.models.api.LocalModelFactory
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project

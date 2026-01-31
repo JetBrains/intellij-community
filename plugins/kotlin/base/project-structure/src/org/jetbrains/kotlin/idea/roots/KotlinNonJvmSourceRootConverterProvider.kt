@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.roots
 
-import com.intellij.conversion.*
+import com.intellij.conversion.ConversionContext
+import com.intellij.conversion.ConversionProcessor
+import com.intellij.conversion.ConverterProvider
+import com.intellij.conversion.ModuleSettings
+import com.intellij.conversion.ProjectConverter
 import com.intellij.conversion.impl.ConversionContextImpl
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.OrderRootType
@@ -21,7 +25,16 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot
 import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.CONTENT_TAG
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.LEVEL_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.LIBRARY_TAG
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.LIBRARY_TYPE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.MODULE_LIBRARY_TYPE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.NAME_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.SOURCE_FOLDER_TAG
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.URL_ATTRIBUTE
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.loadSourceRoot
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.saveSourceRoot
 import org.jetbrains.kotlin.config.getFacetPlatformByConfigurationElement
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptStdlibDetectorFacility
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJvmStdlibDetectorFacility

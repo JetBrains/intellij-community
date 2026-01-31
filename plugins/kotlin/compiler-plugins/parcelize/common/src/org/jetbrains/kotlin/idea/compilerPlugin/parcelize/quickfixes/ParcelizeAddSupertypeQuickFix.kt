@@ -18,7 +18,8 @@ package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes
 
 import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.KotlinParcelizeBundle
 import org.jetbrains.kotlin.parcelize.ParcelizeNames
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtPsiFactory
 
 class ParcelizeAddSupertypeQuickFix(clazz: KtClassOrObject) : AbstractParcelizePsiOnlyQuickFix<KtClassOrObject>(clazz) {
     override fun getText() = KotlinParcelizeBundle.message("parcelize.fix.add.parcelable.supertype")

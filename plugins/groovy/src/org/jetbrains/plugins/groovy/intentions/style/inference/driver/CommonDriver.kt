@@ -1,13 +1,33 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeMapper
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.PsiWildcardType
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.plugins.groovy.intentions.style.inference.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.CollectingGroovyInferenceSession
+import org.jetbrains.plugins.groovy.intentions.style.inference.NameGenerator
+import org.jetbrains.plugins.groovy.intentions.style.inference.SignatureInferenceEnvironment
+import org.jetbrains.plugins.groovy.intentions.style.inference.createProperTypeParameter
+import org.jetbrains.plugins.groovy.intentions.style.inference.createVirtualMethod
+import org.jetbrains.plugins.groovy.intentions.style.inference.createVirtualToActualSubstitutor
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureDriver
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.compose
+import org.jetbrains.plugins.groovy.intentions.style.inference.eligibleForExtendedInference
+import org.jetbrains.plugins.groovy.intentions.style.inference.forceWildcardsAsTypeArguments
+import org.jetbrains.plugins.groovy.intentions.style.inference.isClosureTypeDeep
+import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
+import org.jetbrains.plugins.groovy.intentions.style.inference.removeWildcard
+import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
@@ -22,7 +42,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.Convers
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.ASSIGNMENT
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.METHOD_PARAMETER
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpectedType
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCallConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.lang.sam.findSingleAbstractMethod
 
 class CommonDriver private constructor(private val targetParameters: Set<GrParameter>,

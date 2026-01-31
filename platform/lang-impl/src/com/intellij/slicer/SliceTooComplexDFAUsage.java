@@ -12,8 +12,8 @@ import com.intellij.usages.UsagePresentation;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Font;
 
 public final class SliceTooComplexDFAUsage extends SliceUsage {
   public SliceTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent) {

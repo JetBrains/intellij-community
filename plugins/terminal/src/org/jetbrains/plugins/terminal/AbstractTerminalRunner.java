@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.block.TerminalWidgetImpl;
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils;
 
-import java.awt.*;
+import java.awt.Component;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;

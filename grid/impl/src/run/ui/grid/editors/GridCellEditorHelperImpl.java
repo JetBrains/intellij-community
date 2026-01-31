@@ -1,6 +1,11 @@
 package com.intellij.database.run.ui.grid.editors;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.CoreGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridDataHookUp;
+import com.intellij.database.datagrid.GridModel;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.extractors.FormatterCreator;
 import com.intellij.database.run.ReservedCellValue;
 import com.intellij.database.run.ui.DataAccessType;
@@ -18,7 +23,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
 
-import static com.intellij.database.run.ui.grid.editors.FormatsCache.*;
+import static com.intellij.database.run.ui.grid.editors.FormatsCache.getDateFormatProvider;
+import static com.intellij.database.run.ui.grid.editors.FormatsCache.getTimeFormatProvider;
+import static com.intellij.database.run.ui.grid.editors.FormatsCache.getTimestampFormatProvider;
 
 public class GridCellEditorHelperImpl implements GridCellEditorHelper {
   @Override

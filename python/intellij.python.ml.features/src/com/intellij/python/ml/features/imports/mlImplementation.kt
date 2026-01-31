@@ -16,7 +16,11 @@ import com.jetbrains.mlapi.logs.MLLogsTree
 import com.jetbrains.mlapi.model.MLModel
 import com.jetbrains.mlapi.model.prediction.RegressionResult
 import com.jetbrains.python.codeInsight.imports.ImportCandidateHolder
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.seconds
 

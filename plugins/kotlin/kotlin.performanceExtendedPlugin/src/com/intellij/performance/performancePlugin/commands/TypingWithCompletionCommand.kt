@@ -9,12 +9,16 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AlphaNumericTypeCommand
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import kotlin.time.Duration.Companion.milliseconds
 

@@ -23,7 +23,11 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JProgressBar
+import javax.swing.SwingConstants
 
 internal class ImportProgressPage(
   importFromProduct: DialogImportData,

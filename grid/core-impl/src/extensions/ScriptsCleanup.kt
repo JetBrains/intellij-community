@@ -3,7 +3,11 @@ package com.intellij.database.extensions
 import com.intellij.database.GridScopeProvider
 import com.intellij.ide.plugins.PluginManagerCore.getPlugin
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil

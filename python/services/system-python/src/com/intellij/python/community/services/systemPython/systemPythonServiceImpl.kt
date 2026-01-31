@@ -2,8 +2,13 @@
 package com.intellij.python.community.services.systemPython
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level.APP
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.eel.EelApi
@@ -17,12 +22,20 @@ import com.intellij.python.community.services.systemPython.SystemPythonServiceIm
 import com.intellij.python.community.services.systemPython.impl.Cache
 import com.intellij.python.community.services.systemPython.impl.PySystemPythonBundle
 import com.intellij.python.community.services.systemPython.impl.asSysPythonRegisterError
-import com.jetbrains.python.*
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
+import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.getOr
+import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.installer.installBinary
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.InvalidPathException
 import java.nio.file.Path

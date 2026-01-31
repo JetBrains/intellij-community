@@ -2,7 +2,13 @@
 package com.intellij.python.community.execService.python
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.python.community.execService.*
+import com.intellij.python.community.execService.Args
+import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.community.execService.ExecOptions
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.PyProcessListener
+import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
+import com.intellij.python.community.execService.asBinToExec
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.executeHelperAdvanced
 import com.intellij.python.community.execService.python.advancedApi.validatePythonAndGetInfo

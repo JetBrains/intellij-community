@@ -19,7 +19,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Marker interface for a {@link RunConfiguration} to indicate that it can provide custom icons.

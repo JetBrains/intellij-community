@@ -3,7 +3,12 @@ package com.intellij.terminal.completion.engine
 
 import com.intellij.terminal.completion.ShellArgumentSuggestion
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
-import com.intellij.terminal.completion.spec.*
+import com.intellij.terminal.completion.spec.ShellAliasSuggestion
+import com.intellij.terminal.completion.spec.ShellArgumentSpec
+import com.intellij.terminal.completion.spec.ShellCommandSpec
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.completion.spec.ShellOptionSpec
+import com.intellij.terminal.completion.spec.ShellRuntimeContext
 
 internal class ShellCommandTreeSuggestionsProvider(
   private val context: ShellRuntimeContext,

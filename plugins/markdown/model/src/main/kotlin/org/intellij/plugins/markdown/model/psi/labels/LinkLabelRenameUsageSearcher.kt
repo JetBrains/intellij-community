@@ -3,7 +3,12 @@ package org.intellij.plugins.markdown.model.psi.labels
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
-import com.intellij.refactoring.rename.api.*
+import com.intellij.refactoring.rename.api.ModifiableRenameUsage
+import com.intellij.refactoring.rename.api.PsiModifiableRenameUsage
+import com.intellij.refactoring.rename.api.RenameUsage
+import com.intellij.refactoring.rename.api.RenameUsageSearchParameters
+import com.intellij.refactoring.rename.api.RenameUsageSearcher
+import com.intellij.refactoring.rename.api.fileRangeUpdater
 import com.intellij.util.Query
 import org.intellij.plugins.markdown.model.psi.MarkdownPsiUsage
 import org.intellij.plugins.markdown.model.psi.MarkdownSymbolUsageSearcher

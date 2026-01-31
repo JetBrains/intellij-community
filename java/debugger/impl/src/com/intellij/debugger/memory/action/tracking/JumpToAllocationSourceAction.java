@@ -14,12 +14,13 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeBackendOnlyActionBase;
-import static com.intellij.debugger.memory.action.DebuggerTreeAction.getObjectReference;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.intellij.debugger.memory.action.DebuggerTreeAction.getObjectReference;
 
 public class JumpToAllocationSourceAction extends XDebuggerTreeBackendOnlyActionBase {
   @Override

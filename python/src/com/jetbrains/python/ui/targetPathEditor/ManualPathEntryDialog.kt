@@ -1,7 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.ui.targetPathEditor
 
-import com.intellij.execution.target.*
+import com.intellij.execution.target.BrowsableTargetEnvironmentType
+import com.intellij.execution.target.TargetBrowserHints
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.getTargetType
+import com.intellij.execution.target.textFieldWithBrowseTargetButton
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.dsl.builder.bindText

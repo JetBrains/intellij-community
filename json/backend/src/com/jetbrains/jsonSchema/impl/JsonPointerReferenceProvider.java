@@ -9,7 +9,12 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonFileType;
 import com.intellij.json.pointer.JsonPointerResolver;
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonArray;
+import com.intellij.json.psi.JsonContainer;
+import com.intellij.json.psi.JsonFile;
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -35,12 +40,15 @@ import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
+import static com.jetbrains.jsonSchema.JsonPointerUtil.escapeForJsonPointer;
+import static com.jetbrains.jsonSchema.JsonPointerUtil.normalizeId;
+import static com.jetbrains.jsonSchema.JsonPointerUtil.normalizeSlashes;
+import static com.jetbrains.jsonSchema.JsonPointerUtil.split;
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
 
 public final class JsonPointerReferenceProvider extends PsiReferenceProvider {

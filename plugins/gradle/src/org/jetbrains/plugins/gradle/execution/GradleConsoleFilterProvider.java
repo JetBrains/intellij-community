@@ -34,7 +34,9 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.execution.filters.RegexpFilter.*;
+import static com.intellij.execution.filters.RegexpFilter.COLUMN_MACROS;
+import static com.intellij.execution.filters.RegexpFilter.FILE_PATH_MACROS;
+import static com.intellij.execution.filters.RegexpFilter.LINE_MACROS;
 import static java.lang.String.format;
 
 public final class GradleConsoleFilterProvider implements ConsoleFilterProvider {

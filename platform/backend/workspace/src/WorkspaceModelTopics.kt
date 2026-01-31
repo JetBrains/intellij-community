@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 /**
  * Obsolete listener for the workspace model. Use [WorkspaceModel.eventLog]

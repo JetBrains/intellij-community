@@ -2,7 +2,6 @@
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.JavaTestUtil
-import com.intellij.codeInsight.daemon.impl.quickfix.InsertMissingTokenFix
 import com.intellij.codeInspection.ImplicitToExplicitClassBackwardMigrationInspection
 import com.intellij.codeInspection.MigrateFromJavaLangIoInspection
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor

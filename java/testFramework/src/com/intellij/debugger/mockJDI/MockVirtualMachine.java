@@ -4,17 +4,50 @@
  */
 package com.intellij.debugger.mockJDI;
 
-import com.intellij.debugger.mockJDI.types.*;
-import com.intellij.debugger.mockJDI.values.*;
+import com.intellij.debugger.mockJDI.types.MockArrayType;
+import com.intellij.debugger.mockJDI.types.MockBooleanType;
+import com.intellij.debugger.mockJDI.types.MockClassType;
+import com.intellij.debugger.mockJDI.types.MockIntegerType;
+import com.intellij.debugger.mockJDI.types.MockInterfaceType;
+import com.intellij.debugger.mockJDI.types.MockLongType;
+import com.intellij.debugger.mockJDI.types.MockPsiClassType;
+import com.intellij.debugger.mockJDI.types.MockPsiInterfaceType;
+import com.intellij.debugger.mockJDI.types.MockPsiReferenceType;
+import com.intellij.debugger.mockJDI.types.MockReferenceType;
+import com.intellij.debugger.mockJDI.types.MockShortType;
+import com.intellij.debugger.mockJDI.types.MockType;
+import com.intellij.debugger.mockJDI.types.MockVoidType;
+import com.intellij.debugger.mockJDI.values.MockBooleanValue;
+import com.intellij.debugger.mockJDI.values.MockIntegerValue;
+import com.intellij.debugger.mockJDI.values.MockStringReference;
+import com.intellij.debugger.mockJDI.values.MockThreadReference;
+import com.intellij.debugger.mockJDI.values.MockVoidValue;
 import com.intellij.psi.PsiClass;
-import com.sun.jdi.*;
+import com.sun.jdi.BooleanValue;
+import com.sun.jdi.ByteValue;
+import com.sun.jdi.CharValue;
+import com.sun.jdi.DoubleValue;
+import com.sun.jdi.FloatValue;
+import com.sun.jdi.IntegerValue;
+import com.sun.jdi.LongValue;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.ShortValue;
+import com.sun.jdi.StringReference;
+import com.sun.jdi.ThreadGroupReference;
+import com.sun.jdi.ThreadReference;
+import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.VoidValue;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MockVirtualMachine implements VirtualMachine {
   private final Map<Class<?>, MockReferenceType> myCachedClasses = new HashMap<>();

@@ -4,7 +4,12 @@ package org.intellij.plugins.markdown.lang.psi.impl
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.AbstractElementManipulator
+import com.intellij.psi.ElementManipulators
+import com.intellij.psi.LiteralTextEscaper
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager

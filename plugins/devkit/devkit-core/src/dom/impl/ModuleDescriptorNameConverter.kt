@@ -17,7 +17,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlFile
 import com.intellij.util.Processor
-import com.intellij.util.xml.*
+import com.intellij.util.xml.ConvertContext
+import com.intellij.util.xml.DomUtil
+import com.intellij.util.xml.ElementPresentationManager
+import com.intellij.util.xml.GenericDomValue
+import com.intellij.util.xml.ResolvingConverter
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.ContentDescriptor
 import org.jetbrains.idea.devkit.dom.IdeaPlugin

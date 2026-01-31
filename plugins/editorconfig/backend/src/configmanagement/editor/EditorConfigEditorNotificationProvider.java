@@ -15,7 +15,7 @@ import org.editorconfig.configmanagement.EditorConfigActionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.function.Function;
 
 final class EditorConfigEditorNotificationProvider implements EditorNotificationProvider {

@@ -21,12 +21,20 @@ import org.jetbrains.idea.devkit.kotlin.inspections.CompanionObjectInExtensionIn
 import org.jetbrains.idea.devkit.kotlin.inspections.CompanionObjectInExtensionInspectionSupport.CreateObjectAndMoveProhibitedDeclarationsQuickFixBase
 import org.jetbrains.idea.devkit.kotlin.inspections.CompanionObjectInExtensionInspectionSupport.MoveProhibitedDeclarationsToTopLevelFixBase
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringEventListener
-import org.jetbrains.kotlin.idea.refactoring.move.*
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveDeclarationDelegate
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMover
+import org.jetbrains.kotlin.idea.refactoring.move.MoveDeclarationsDescriptor
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.JvmStandardClassIds
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
 
 class K1CompanionObjectInExtensionInspectionSupport : CompanionObjectInExtensionInspectionSupport() {
   override fun createRemoveEmptyCompanionObjectFix(companionObject: KtObjectDeclaration): LocalQuickFix {

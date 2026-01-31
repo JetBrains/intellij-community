@@ -10,7 +10,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.MoveDeclarationsOutHelperKt;
 import org.jetbrains.kotlin.name.ClassId;
-import org.jetbrains.kotlin.psi.*;
+import org.jetbrains.kotlin.psi.KtBlockExpression;
+import org.jetbrains.kotlin.psi.KtElement;
+import org.jetbrains.kotlin.psi.KtParameter;
+import org.jetbrains.kotlin.psi.KtPsiFactory;
+import org.jetbrains.kotlin.psi.KtTryExpression;
 
 import java.util.List;
 

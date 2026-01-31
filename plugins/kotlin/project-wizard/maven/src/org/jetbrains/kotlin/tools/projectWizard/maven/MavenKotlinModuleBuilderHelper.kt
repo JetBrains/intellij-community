@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.DefaultRepository
 import java.io.IOException
 import java.nio.file.Path
-import java.util.*
+import java.util.Properties
 
 class MavenKotlinModuleBuilderHelper(
     projectId: MavenId,

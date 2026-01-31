@@ -21,7 +21,8 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import java.time.ZoneOffset
-import java.util.*
+import java.util.Date
+import java.util.MissingResourceException
 
 private val LOG: Logger
   get() = PluginManagerCore.logger

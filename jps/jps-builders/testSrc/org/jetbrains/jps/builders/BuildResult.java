@@ -27,7 +27,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public final class BuildResult implements MessageHandler {
   private final List<BuildMessage> myErrorMessages;

@@ -2,17 +2,22 @@
 package com.intellij.testFramework;
 
 import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.java.testFramework.backend.CompilerTestUtil;
 import com.intellij.compiler.CompilerTests;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.wsl.WslPath;
+import com.intellij.java.testFramework.backend.CompilerTestUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IComponentStoreKt;
@@ -48,10 +53,19 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.cmdline.LogSetup;
 import org.junit.Assert;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import static com.intellij.configurationStore.StoreUtilKt.getPersistentStateComponentStorageLocation;

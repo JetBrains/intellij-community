@@ -12,9 +12,13 @@ import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.*
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.LOG
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExecutor
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExpression
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutput
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutputType
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.printDebugMessage
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.resolve.AnalyzingUtils

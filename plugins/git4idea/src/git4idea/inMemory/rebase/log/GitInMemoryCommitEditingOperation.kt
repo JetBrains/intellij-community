@@ -3,7 +3,6 @@ package git4idea.inMemory.rebase.log
 
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -11,7 +10,6 @@ import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitUtil
 import git4idea.commands.Git.getInstance
-import git4idea.config.GitVcsSettings.getInstance
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.GitObjectRepository
 import git4idea.inMemory.findCommitsRange

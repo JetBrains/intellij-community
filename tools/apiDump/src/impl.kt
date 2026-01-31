@@ -6,13 +6,25 @@ package com.intellij.tools.apiDump
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.toPersistentHashMap
-import kotlinx.validation.api.*
+import kotlinx.validation.api.ClassBinarySignature
+import kotlinx.validation.api.MEMBER_SORT_ORDER
+import kotlinx.validation.api.MemberBinarySignature
+import kotlinx.validation.api.MethodBinarySignature
+import kotlinx.validation.api.isEffectivelyPublic
+import kotlinx.validation.api.loadApiFromJvmClasses
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AnnotationNode
 import java.nio.file.FileSystems
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.inputStream
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.name
+import kotlin.io.path.walk
 import kotlin.metadata.jvm.JvmFieldSignature
 import kotlin.metadata.jvm.JvmMethodSignature
 

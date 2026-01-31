@@ -16,7 +16,7 @@
 
 package com.intellij.facet.ui.libraries;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.EventListener;
 
 public interface LibrariesValidationComponent {

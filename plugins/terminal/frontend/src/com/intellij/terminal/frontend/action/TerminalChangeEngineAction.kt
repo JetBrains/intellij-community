@@ -1,7 +1,10 @@
 package com.intellij.terminal.frontend.action
 
 import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.terminal.frontend.toolwindow.impl.createTerminalTab
 import com.intellij.ui.ExperimentalUI

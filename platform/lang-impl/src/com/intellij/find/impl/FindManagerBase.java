@@ -2,7 +2,11 @@
 package com.intellij.find.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.find.*;
+import com.intellij.find.FindBundle;
+import com.intellij.find.FindManager;
+import com.intellij.find.FindModel;
+import com.intellij.find.FindResult;
+import com.intellij.find.FindSettings;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.LanguageUtil;

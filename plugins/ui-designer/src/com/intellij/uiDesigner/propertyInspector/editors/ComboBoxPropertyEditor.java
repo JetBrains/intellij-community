@@ -5,10 +5,13 @@ import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingUtilities;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
-import java.awt.*;
+import java.awt.Component;
 
 public abstract class ComboBoxPropertyEditor<V> extends PropertyEditor<V> {
   protected final ComboBox<V> myCbx;

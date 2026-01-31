@@ -21,7 +21,8 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
 final class FoldingHintMouseMotionListener implements EditorMouseMotionListener {

@@ -17,8 +17,8 @@ import com.intellij.usageView.UsageTreeColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
 
 public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
   public static final HierarchyNodeDescriptor[] EMPTY_ARRAY = new HierarchyNodeDescriptor[0];

@@ -3,7 +3,11 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDocTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaReference;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.javadoc.PsiDocTag;

@@ -4,7 +4,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.plugins.textmate.configuration.TextMatePersistentBundle;
 import org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings;
 

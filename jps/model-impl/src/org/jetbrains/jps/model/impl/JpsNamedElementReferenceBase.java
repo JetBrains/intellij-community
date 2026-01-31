@@ -3,7 +3,13 @@ package org.jetbrains.jps.model.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsCompositeElement;
+import org.jetbrains.jps.model.JpsElementChildRole;
+import org.jetbrains.jps.model.JpsElementCollection;
+import org.jetbrains.jps.model.JpsElementReference;
+import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.JpsNamedElement;
+import org.jetbrains.jps.model.JpsNamedElementCollection;
 import org.jetbrains.jps.model.ex.JpsCompositeElementBase;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 

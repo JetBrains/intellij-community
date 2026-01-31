@@ -3,7 +3,11 @@ package com.intellij.codeInspection.dataFlow.java.inliner;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -12,7 +16,9 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTIONS;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COMPARATOR;
-import static com.siyeh.ig.callMatcher.CallMatcher.*;
+import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
+import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
+import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
 /**
  * Simplified model for comparator: does not perform actual comparison, just executes key extractors, etc.

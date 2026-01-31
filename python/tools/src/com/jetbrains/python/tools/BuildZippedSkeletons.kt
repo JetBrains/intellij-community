@@ -4,11 +4,11 @@ package com.jetbrains.python.tools
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.util.io.Compressor
-import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher
 import com.jetbrains.python.tools.sdkTools.PySdkTools
 import com.jetbrains.python.tools.sdkTools.SdkCreationType
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import java.io.File
 import kotlin.io.path.Path
 import kotlin.math.abs

@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NotNull;
 

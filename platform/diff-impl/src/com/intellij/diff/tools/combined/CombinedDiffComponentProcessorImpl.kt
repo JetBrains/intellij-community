@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
-import com.intellij.diff.*
+import com.intellij.diff.DiffContext
+import com.intellij.diff.DiffExtension
+import com.intellij.diff.DiffManagerEx
+import com.intellij.diff.DiffTool
+import com.intellij.diff.DiffToolType
+import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.editor.DiffEditorTabFilesUtil
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.impl.DiffEditorViewerListener

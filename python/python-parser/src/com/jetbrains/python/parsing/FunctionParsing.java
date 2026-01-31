@@ -4,8 +4,8 @@ package com.jetbrains.python.parsing;
 import com.intellij.lang.SyntaxTreeBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.PyParsingBundle.message;

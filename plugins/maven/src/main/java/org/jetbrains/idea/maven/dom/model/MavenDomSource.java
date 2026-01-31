@@ -2,18 +2,13 @@
 package org.jetbrains.idea.maven.dom.model;
 
 import com.intellij.openapi.paths.PathReference;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.converters.MavenDependencyTypeConverter;
-import org.jetbrains.idea.maven.dom.converters.MavenParentRelativePathConverter;
 import org.jetbrains.idea.maven.dom.converters.MavenSourceLangConverter;
 import org.jetbrains.idea.maven.dom.converters.MavenSourceScopeConverter;
 import org.jetbrains.idea.maven.dom.references.MavenDirectoryPathReferenceConverter;
-
-import java.util.List;
 
 public interface MavenDomSource {
 

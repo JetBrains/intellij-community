@@ -13,7 +13,15 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
-import git4idea.index.*
+import git4idea.index.ContentVersion
+import git4idea.index.GitFileStatus
+import git4idea.index.GitStageTracker
+import git4idea.index.compareHeadWithStaged
+import git4idea.index.compareStagedWithLocal
+import git4idea.index.getRoot
+import git4idea.index.has
+import git4idea.index.isStagingAreaAvailable
+import git4idea.index.status
 import git4idea.index.vfs.GitIndexVirtualFile
 import git4idea.index.vfs.filePath
 

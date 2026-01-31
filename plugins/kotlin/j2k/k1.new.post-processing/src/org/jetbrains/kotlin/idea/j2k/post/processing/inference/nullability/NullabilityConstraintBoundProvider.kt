@@ -3,7 +3,16 @@
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.nullability
 
 import org.jetbrains.kotlin.K1Deprecation
-import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.*
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeLabel
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintBound
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintBoundProviderImpl
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.GenericLabel
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.LiteralBound
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.LiteralLabel
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.NullLiteralLabel
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.StarProjectionLabel
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.TypeParameterLabel
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.TypeVariableLabel
 
 @K1Deprecation
 class NullabilityConstraintBoundProvider : ConstraintBoundProviderImpl() {

@@ -3,7 +3,10 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.DependencyScope
-import com.intellij.openapi.roots.DependencyScope.*
+import com.intellij.openapi.roots.DependencyScope.COMPILE
+import com.intellij.openapi.roots.DependencyScope.PROVIDED
+import com.intellij.openapi.roots.DependencyScope.RUNTIME
+import com.intellij.openapi.roots.DependencyScope.TEST
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemFacade
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.gradleJava.kotlinGradlePluginVersion

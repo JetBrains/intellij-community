@@ -15,7 +15,7 @@ import java.security.KeyPairGenerator
 import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
-import java.util.*
+import java.util.Date
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 

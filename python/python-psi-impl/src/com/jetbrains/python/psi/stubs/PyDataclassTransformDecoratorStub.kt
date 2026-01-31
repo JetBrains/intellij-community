@@ -5,7 +5,10 @@ import com.intellij.psi.stubs.StubOutputStream
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.io.DataInputOutputUtil
 import com.jetbrains.python.codeInsight.PyDataclassNames
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyDecorator
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.stubs.PyCustomDecoratorStub
 import com.jetbrains.python.psi.resolve.PyResolveUtil

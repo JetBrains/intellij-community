@@ -7,13 +7,25 @@ import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractShare
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2LocalInspectionTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractSharedK2MultiFileQuickFixTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.idea.kdoc.AbstractSharedK2KDocHighlightingTest
-import org.jetbrains.kotlin.idea.k2.inspections.tests.*
+import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2ActualExpectTest
+import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2AmbiguousActualsTest
+import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2InspectionTest
+import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2LocalInspectionAndGeneralHighlightingTest
+import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2LocalInspectionTest
+import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2MultiFileInspectionTest
+import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2MultiFileLocalInspectionTest
 import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2MultiFileQuickFixTest
 import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2QuickFixTest
-import org.jetbrains.kotlin.testGenerator.model.*
-import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.HIGHLIGHTING
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.INSPECTIONS
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.QUICKFIXES
+import org.jetbrains.kotlin.testGenerator.model.MutableTWorkspace
+import org.jetbrains.kotlin.testGenerator.model.Patterns
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
+import org.jetbrains.kotlin.testGenerator.model.model
+import org.jetbrains.kotlin.testGenerator.model.testClass
+import org.jetbrains.kotlin.testGenerator.model.testGroup
 
 
 internal fun MutableTWorkspace.generateK2InspectionTests() {

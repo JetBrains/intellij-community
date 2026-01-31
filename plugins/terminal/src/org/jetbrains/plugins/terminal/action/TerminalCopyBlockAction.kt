@@ -8,9 +8,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.terminal.block.output.CommandBlock
+import org.jetbrains.plugins.terminal.block.output.textRange
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.selectionController
-import org.jetbrains.plugins.terminal.block.output.textRange
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
 internal class TerminalCopyBlockAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {

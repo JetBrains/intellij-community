@@ -11,8 +11,15 @@ import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
-import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.types.PyClassLikeType
+import com.jetbrains.python.psi.types.PyCollectionType
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeUtil
+import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyInvalidCastInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {

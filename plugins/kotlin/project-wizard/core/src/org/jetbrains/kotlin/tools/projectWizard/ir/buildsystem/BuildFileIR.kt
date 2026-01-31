@@ -2,8 +2,16 @@
 package org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem
 
 import kotlinx.collections.immutable.PersistentList
-import org.jetbrains.kotlin.tools.projectWizard.core.*
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.*
+import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
+import org.jetbrains.kotlin.tools.projectWizard.core.ignore
+import org.jetbrains.kotlin.tools.projectWizard.core.map
+import org.jetbrains.kotlin.tools.projectWizard.core.safeAs
+import org.jetbrains.kotlin.tools.projectWizard.core.sequence
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.BuildScriptDependencyIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.BuildScriptIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.BuildScriptRepositoryIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleImportIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.DefaultTargetConfigurationIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.TargetConfigurationIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.maven.MavenPropertyIR

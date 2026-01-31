@@ -3,7 +3,12 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.parameterInfo.ParameterFlag;
-import com.intellij.lang.parameterInfo.*;
+import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
+import com.intellij.lang.parameterInfo.DeleteParameterInfoContext;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.lang.parameterInfo.ParameterInfoUIContext;
+import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
+import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -27,10 +32,16 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Component;
+import java.awt.FlowLayout;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 
 public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, PyParameterInfoUtils.CallInfo> {
   private static final int MY_PARAM_LENGTH_LIMIT = 50;

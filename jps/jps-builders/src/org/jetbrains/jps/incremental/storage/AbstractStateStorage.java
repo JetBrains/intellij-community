@@ -2,7 +2,11 @@
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.PersistentHashMapValueStorage;
+import com.intellij.util.io.PersistentMapBuilder;
+import com.intellij.util.io.PersistentMapImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,7 +16,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.function.Function;
 
 public abstract class AbstractStateStorage<Key, T> implements StorageOwner {

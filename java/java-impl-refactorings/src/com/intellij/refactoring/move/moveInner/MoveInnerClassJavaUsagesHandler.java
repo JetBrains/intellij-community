@@ -15,7 +15,14 @@
  */
 package com.intellij.refactoring.move.moveInner;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiThisExpression;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;

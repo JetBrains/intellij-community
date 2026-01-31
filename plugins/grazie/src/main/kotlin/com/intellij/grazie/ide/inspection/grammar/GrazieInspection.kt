@@ -9,8 +9,14 @@ import com.intellij.codeInspection.ex.UnfairLocalInspectionTool
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
-import com.intellij.grazie.text.*
+import com.intellij.grazie.text.CheckerRunner
+import com.intellij.grazie.text.ProblemFilter
+import com.intellij.grazie.text.TextChecker
+import com.intellij.grazie.text.TextContent
+import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.text.TextExtractor.findAllTextContents
+import com.intellij.grazie.text.TextProblem
+import com.intellij.grazie.text.TreeRuleChecker
 import com.intellij.grazie.utils.HighlightingUtil.isInspectionEnabled
 import com.intellij.grazie.utils.isGrammar
 import com.intellij.grazie.utils.isSpelling
@@ -31,7 +37,7 @@ import com.intellij.spellchecker.inspections.SpellCheckingInspection.SpellChecki
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy.getSpellcheckingStrategy
 import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.EnumSet
 
 class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspectionTool {
 

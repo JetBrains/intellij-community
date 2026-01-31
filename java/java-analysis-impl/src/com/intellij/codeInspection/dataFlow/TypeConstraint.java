@@ -26,7 +26,20 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.intellij.codeInspection.dataFlow.TypeConstraints.*;
+import static com.intellij.codeInspection.dataFlow.TypeConstraints.ArraySuperInterface;
+import static com.intellij.codeInspection.dataFlow.TypeConstraints.BOTTOM;
+import static com.intellij.codeInspection.dataFlow.TypeConstraints.BottomConstraint;
+import static com.intellij.codeInspection.dataFlow.TypeConstraints.EXACTLY_OBJECT;
+import static com.intellij.codeInspection.dataFlow.TypeConstraints.ExactArray;
+import static com.intellij.codeInspection.dataFlow.TypeConstraints.ExactClass;
+import static com.intellij.codeInspection.dataFlow.TypeConstraints.ExactObject;
+import static com.intellij.codeInspection.dataFlow.TypeConstraints.ExactSubclass;
+import static com.intellij.codeInspection.dataFlow.TypeConstraints.PrimitiveArray;
+import static com.intellij.codeInspection.dataFlow.TypeConstraints.TOP;
+import static com.intellij.codeInspection.dataFlow.TypeConstraints.TopConstraint;
+import static com.intellij.codeInspection.dataFlow.TypeConstraints.TypeConstraintFactory;
+import static com.intellij.codeInspection.dataFlow.TypeConstraints.Unresolved;
+import static com.intellij.codeInspection.dataFlow.TypeConstraints.exact;
 
 /**
  * Immutable object representing a number of type constraints applied to some reference value.

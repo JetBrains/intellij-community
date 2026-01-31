@@ -4,14 +4,14 @@ package com.intellij.python.community.services.systemPython.impl.providers
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.isMac
-import com.jetbrains.python.PyToolUIInfo
-import com.intellij.python.community.services.systemPython.icons.PythonCommunityServicesSystemPythonIcons
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
+import com.intellij.python.community.services.systemPython.icons.PythonCommunityServicesSystemPythonIcons
+import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
-import java.nio.file.Path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.nio.file.Path
 
 
 internal class BrewSystemPythonProvider : SystemPythonProvider {

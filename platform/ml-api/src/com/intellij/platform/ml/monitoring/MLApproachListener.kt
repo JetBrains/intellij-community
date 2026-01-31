@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.monitoring
 
-import com.intellij.platform.ml.*
+import com.intellij.platform.ml.MLApiPlatform
+import com.intellij.platform.ml.MLModel
+import com.intellij.platform.ml.MLTaskApproach
+import com.intellij.platform.ml.MLTaskApproachBuilder
+import com.intellij.platform.ml.Session
 import com.intellij.platform.ml.environment.Environment
 import com.intellij.platform.ml.monitoring.MLApproachInitializationListener.Companion.asJoinedListener
 import com.intellij.platform.ml.monitoring.MLApproachListener.Companion.asJoinedListener

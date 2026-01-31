@@ -7,8 +7,12 @@ import com.intellij.diff.tools.simple.SimpleDiffChange
 import com.intellij.diff.tools.simple.SimpleDiffChangeUi
 import com.intellij.diff.tools.simple.SimpleDiffViewer
 import com.intellij.diff.tools.util.DiffNotifications.createError
-import com.intellij.diff.util.*
+import com.intellij.diff.util.DiffDividerDrawUtil
+import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffDrawUtil.LineHighlighterBuilder
+import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.Side
+import com.intellij.diff.util.TextDiffType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -46,7 +50,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.Arrays
 import javax.swing.JComponent
 
 @ApiStatus.Internal

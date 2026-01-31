@@ -11,7 +11,14 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.slicer.*;
+import com.intellij.slicer.SliceLanguageSupportProvider;
+import com.intellij.slicer.SliceLeafAnalyzer;
+import com.intellij.slicer.SliceLeafEquality;
+import com.intellij.slicer.SliceLeafValueRootNode;
+import com.intellij.slicer.SliceManager;
+import com.intellij.slicer.SliceNode;
+import com.intellij.slicer.SliceRootNode;
+import com.intellij.slicer.SliceUsage;
 import com.intellij.util.WalkingState;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,7 +27,13 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class HackedSliceNullnessAnalyzerBase {
   private final @NotNull SliceLeafEquality myLeafEquality;

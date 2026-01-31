@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.utils.collectDescriptorsFiltered
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isError
-import java.util.*
+import java.util.Locale
 
 @K1Deprecation
 class VariableOrParameterNameWithTypeCompletion(

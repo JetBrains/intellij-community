@@ -3,7 +3,11 @@ package com.intellij.util.ui.html
 
 import com.intellij.icons.AllIcons
 import com.intellij.ui.Graphics2DDelegate
-import java.awt.*
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Image
+import java.awt.Rectangle
+import java.awt.Shape
 import java.awt.image.ImageObserver
 import javax.swing.Icon
 import javax.swing.text.Element

@@ -4,7 +4,11 @@ package com.intellij.util.containers;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>, ReferenceQueueable {
   private final RefHashMap<K, ValueReference<K,V>> myMap;

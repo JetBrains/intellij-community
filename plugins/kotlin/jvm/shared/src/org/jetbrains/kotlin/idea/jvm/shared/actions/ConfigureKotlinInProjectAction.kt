@@ -5,9 +5,12 @@ package org.jetbrains.kotlin.idea.jvm.shared.actions
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.ui.Messages
-import org.jetbrains.kotlin.idea.configuration.*
+import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
+import org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider
+import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
+import org.jetbrains.kotlin.idea.configuration.getConfigurableModules
+import org.jetbrains.kotlin.idea.configuration.isModuleConfigured
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.platform.jvm.isJvm
 

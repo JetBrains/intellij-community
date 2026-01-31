@@ -1,7 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections.dfa
 
-import com.intellij.codeInspection.dataFlow.*
+import com.intellij.codeInspection.dataFlow.ContractReturnValue
+import com.intellij.codeInspection.dataFlow.CustomMethodHandlers
+import com.intellij.codeInspection.dataFlow.DfaCallArguments
+import com.intellij.codeInspection.dataFlow.DfaCallState
+import com.intellij.codeInspection.dataFlow.Mutability
+import com.intellij.codeInspection.dataFlow.MutationSignature
+import com.intellij.codeInspection.dataFlow.TypeConstraints
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter
 import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil
@@ -15,12 +21,27 @@ import com.intellij.codeInspection.dataFlow.types.DfJvmIntegralType
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
-import com.intellij.codeInspection.dataFlow.value.*
+import com.intellij.codeInspection.dataFlow.value.DfaCondition
+import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue
+import com.intellij.codeInspection.dataFlow.value.DfaTypeValue
+import com.intellij.codeInspection.dataFlow.value.DfaValue
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
+import com.intellij.codeInspection.dataFlow.value.RelationType
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.contracts.description.*
-import org.jetbrains.kotlin.contracts.description.expressions.*
+import org.jetbrains.kotlin.contracts.description.BooleanExpression
+import org.jetbrains.kotlin.contracts.description.ConditionalEffectDeclaration
+import org.jetbrains.kotlin.contracts.description.ContractProviderKey
+import org.jetbrains.kotlin.contracts.description.EffectDeclaration
+import org.jetbrains.kotlin.contracts.description.ReturnsEffectDeclaration
+import org.jetbrains.kotlin.contracts.description.expressions.BooleanConstantReference
+import org.jetbrains.kotlin.contracts.description.expressions.BooleanVariableReference
+import org.jetbrains.kotlin.contracts.description.expressions.ConstantReference
+import org.jetbrains.kotlin.contracts.description.expressions.IsInstancePredicate
+import org.jetbrains.kotlin.contracts.description.expressions.IsNullPredicate
+import org.jetbrains.kotlin.contracts.description.expressions.LogicalNot
+import org.jetbrains.kotlin.contracts.description.expressions.VariableReference
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor

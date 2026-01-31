@@ -2,7 +2,7 @@
 package org.jetbrains.tools.model.updater.impl
 
 import org.jetbrains.tools.model.updater.exitWithErrorMessage
-import java.util.*
+import java.util.Properties
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 

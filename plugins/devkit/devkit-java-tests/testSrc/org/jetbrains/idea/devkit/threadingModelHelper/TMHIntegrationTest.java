@@ -8,12 +8,24 @@ import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.concurrency.annotations.*;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-import static com.intellij.util.concurrency.ThreadingAssertions.*;
+import static com.intellij.util.concurrency.ThreadingAssertions.MUST_EXECUTE_IN_EDT;
+import static com.intellij.util.concurrency.ThreadingAssertions.MUST_EXECUTE_IN_READ_ACTION;
+import static com.intellij.util.concurrency.ThreadingAssertions.MUST_EXECUTE_IN_WRITE_ACTION;
+import static com.intellij.util.concurrency.ThreadingAssertions.MUST_NOT_EXECUTE_IN_READ_ACTION;
 
 /**
  * Ensures that the instrumenter of the Threading Model annotations (such as {@link RequiresEdt}) is in sync with

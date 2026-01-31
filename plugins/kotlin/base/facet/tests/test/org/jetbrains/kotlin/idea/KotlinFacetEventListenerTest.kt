@@ -14,7 +14,12 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.createOrLoadProject
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import junit.framework.TestCase
@@ -23,8 +28,17 @@ import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinModuleKind
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
-import org.jetbrains.kotlin.idea.workspaceModel.*
-import org.junit.*
+import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetBridgeFactory
+import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetContributor
+import org.jetbrains.kotlin.idea.workspaceModel.KotlinModuleSettingsSerializer
+import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
+import org.jetbrains.kotlin.idea.workspaceModel.kotlinSettings
+import org.jetbrains.kotlin.idea.workspaceModel.modifyKotlinSettingsEntity
+import org.junit.Assume
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 
 class KotlinFacetEventListenerTest {
     companion object {

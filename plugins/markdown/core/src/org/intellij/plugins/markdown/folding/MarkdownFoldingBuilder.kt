@@ -19,7 +19,15 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.MarkdownRecursiveElementVisitor
-import org.intellij.plugins.markdown.lang.psi.impl.*
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.settings.MarkdownCodeFoldingSettings
 import org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil

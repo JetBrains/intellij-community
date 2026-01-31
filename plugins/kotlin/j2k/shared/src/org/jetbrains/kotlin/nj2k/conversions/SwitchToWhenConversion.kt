@@ -10,7 +10,33 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.blockStatement
 import org.jetbrains.kotlin.nj2k.runExpression
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKBlockStatement
+import org.jetbrains.kotlin.nj2k.tree.JKBreakStatement
+import org.jetbrains.kotlin.nj2k.tree.JKContinueStatement
+import org.jetbrains.kotlin.nj2k.tree.JKExpressionStatement
+import org.jetbrains.kotlin.nj2k.tree.JKIfElseStatement
+import org.jetbrains.kotlin.nj2k.tree.JKJavaArrowSwitchLabelCase
+import org.jetbrains.kotlin.nj2k.tree.JKJavaDefaultSwitchCase
+import org.jetbrains.kotlin.nj2k.tree.JKJavaLabelSwitchCase
+import org.jetbrains.kotlin.nj2k.tree.JKJavaSwitchBlock
+import org.jetbrains.kotlin.nj2k.tree.JKJavaSwitchCase
+import org.jetbrains.kotlin.nj2k.tree.JKJavaSwitchExpression
+import org.jetbrains.kotlin.nj2k.tree.JKJavaSwitchStatement
+import org.jetbrains.kotlin.nj2k.tree.JKJavaYieldStatement
+import org.jetbrains.kotlin.nj2k.tree.JKKtElseWhenLabel
+import org.jetbrains.kotlin.nj2k.tree.JKKtValueWhenLabel
+import org.jetbrains.kotlin.nj2k.tree.JKKtWhenBlock
+import org.jetbrains.kotlin.nj2k.tree.JKKtWhenCase
+import org.jetbrains.kotlin.nj2k.tree.JKKtWhenExpression
+import org.jetbrains.kotlin.nj2k.tree.JKKtWhenStatement
+import org.jetbrains.kotlin.nj2k.tree.JKLabelEmpty
+import org.jetbrains.kotlin.nj2k.tree.JKReturnStatement
+import org.jetbrains.kotlin.nj2k.tree.JKStatement
+import org.jetbrains.kotlin.nj2k.tree.JKThrowExpression
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.copyTreeAndDetach
+import org.jetbrains.kotlin.nj2k.tree.detached
+import org.jetbrains.kotlin.nj2k.tree.withFormattingFrom
 import org.jetbrains.kotlin.util.takeWhileInclusive
 
 class SwitchToWhenConversion(context: ConverterContext) : RecursiveConversion(context) {

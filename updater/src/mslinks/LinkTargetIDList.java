@@ -14,7 +14,12 @@
 */
 package mslinks;
 
-import mslinks.data.*;
+import mslinks.data.ItemID;
+import mslinks.data.ItemIDDrive;
+import mslinks.data.ItemIDFS;
+import mslinks.data.ItemIDRegItem;
+import mslinks.data.ItemIDRoot;
+import mslinks.data.ItemIDUnknown;
 import mslinks.io.ByteReader;
 
 import java.io.IOException;

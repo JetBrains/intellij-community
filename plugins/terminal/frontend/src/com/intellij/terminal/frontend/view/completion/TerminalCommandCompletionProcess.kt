@@ -1,6 +1,13 @@
 package com.intellij.terminal.frontend.view.completion
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.BaseCompletionLookupArranger
+import com.intellij.codeInsight.completion.CompletionLookupArrangerImpl
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProcessEx
+import com.intellij.codeInsight.completion.CompletionResult
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.OffsetMap
+import com.intellij.codeInsight.completion.OffsetsInFile
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement

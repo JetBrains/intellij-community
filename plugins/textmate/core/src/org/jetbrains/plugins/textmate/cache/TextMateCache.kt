@@ -1,6 +1,11 @@
 package org.jetbrains.plugins.textmate.cache
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlin.time.Duration
 
 interface TextMateCachedValue<V>: AutoCloseable {

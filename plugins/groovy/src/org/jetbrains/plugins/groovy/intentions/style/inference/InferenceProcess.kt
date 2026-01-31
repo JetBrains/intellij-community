@@ -3,7 +3,11 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.CommonDriver
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.EmptyDriver
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.InferenceDriver
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.ParameterizationManager
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitGraph
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.createGraphFromInferenceVariables
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.determineDependencies

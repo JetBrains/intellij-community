@@ -15,7 +15,11 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.TreeMap;
 
 public final class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule> {
   private static final int MIN_JAVA_VERSION = JavaFeature.MODULES.getMinimumLevel().feature();

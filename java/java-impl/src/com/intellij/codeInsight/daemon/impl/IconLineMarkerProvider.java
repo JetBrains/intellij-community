@@ -17,7 +17,15 @@ import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UIdentifier;
+import org.jetbrains.uast.ULiteralExpression;
+import org.jetbrains.uast.UParenthesizedExpression;
+import org.jetbrains.uast.UPolyadicExpression;
+import org.jetbrains.uast.UReferenceExpression;
+import org.jetbrains.uast.UUnaryExpression;
+import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.evaluation.UEvaluationContextKt;
 import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.values.UConstant;
@@ -25,8 +33,12 @@ import org.jetbrains.uast.values.UStringConstant;
 import org.jetbrains.uast.values.UValue;
 import org.jetbrains.uast.values.UValueKt;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Shows small (16x16 or less) icons as gutters.

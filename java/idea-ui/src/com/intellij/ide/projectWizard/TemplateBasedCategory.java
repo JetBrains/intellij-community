@@ -5,7 +5,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Dmitry Avdeev

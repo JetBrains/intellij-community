@@ -4,7 +4,12 @@ package com.jetbrains
 import com.intellij.execution.processTools.getBareExecutionResult
 import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.processTools.mapFlat
-import com.intellij.execution.target.*
+import com.intellij.execution.target.FullPathOnTarget
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.TargetProgressIndicatorAdapter
+import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.execution.target.createProcessWithResult
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project

@@ -6,7 +6,13 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import org.jetbrains.idea.completion.api.*
+import org.jetbrains.idea.completion.api.BaseDependencyCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionResult
+import org.jetbrains.idea.completion.api.DependencyCompletionService
+import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
 import org.jetbrains.idea.completion.util.logWarn
 import kotlin.coroutines.cancellation.CancellationException
 

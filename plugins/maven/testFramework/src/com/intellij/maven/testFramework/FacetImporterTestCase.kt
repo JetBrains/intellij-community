@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework
 
-import com.intellij.facet.*
+import com.intellij.facet.Facet
+import com.intellij.facet.FacetConfiguration
+import com.intellij.facet.FacetManager
+import com.intellij.facet.FacetType
+import com.intellij.facet.FacetTypeId
+import com.intellij.facet.FacetTypeRegistry
 import com.intellij.openapi.vfs.VfsUtilCore
 
 abstract class FacetImporterTestCase<FACET, C : FacetConfiguration> : MavenMultiVersionImportingTestCase() where FACET : Facet<C> {

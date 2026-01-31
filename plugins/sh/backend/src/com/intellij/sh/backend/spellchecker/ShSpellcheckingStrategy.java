@@ -10,7 +10,9 @@ import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.sh.ShTypes.*;
+import static com.intellij.sh.ShTypes.HEREDOC_CONTENT;
+import static com.intellij.sh.ShTypes.RAW_STRING;
+import static com.intellij.sh.ShTypes.STRING_CONTENT;
 import static com.intellij.sh.lexer.ShTokenTypes.COMMENT;
 
 public class ShSpellcheckingStrategy extends SpellcheckingStrategy implements DumbAware {

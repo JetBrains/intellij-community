@@ -9,7 +9,12 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 final class ModulePackageRepr extends Proto {
   private static final DataExternalizer<Integer> INT_EXTERNALIZER = new DataExternalizer<>() {

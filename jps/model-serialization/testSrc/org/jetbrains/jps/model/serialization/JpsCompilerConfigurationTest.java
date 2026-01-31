@@ -3,7 +3,11 @@ package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.java.compiler.*;
+import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
+import org.jetbrains.jps.model.java.compiler.JpsValidationConfiguration;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.junit.jupiter.api.Test;
 
@@ -11,7 +15,10 @@ import java.io.File;
 import java.util.Map;
 
 import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JpsCompilerConfigurationTest {
   @Test

@@ -4,7 +4,12 @@ package com.intellij.diff.merge
 import com.intellij.diff.comparison.ComparisonMergeUtil
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.fragments.MergeLineFragment
-import com.intellij.diff.util.*
+import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.LineRange
+import com.intellij.diff.util.MergeConflictResolutionStrategy
+import com.intellij.diff.util.MergeConflictType
+import com.intellij.diff.util.Side
+import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.diagnostic.logger
@@ -19,7 +24,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import it.unimi.dsi.fastutil.ints.IntList
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 /**
  * Handles all merge-related stuff

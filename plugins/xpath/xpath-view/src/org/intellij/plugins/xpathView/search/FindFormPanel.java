@@ -21,7 +21,12 @@ import com.intellij.openapi.util.Disposer;
 import org.intellij.plugins.xpathView.ui.InputForm;
 import org.intellij.plugins.xpathView.ui.InputFormPanel;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 
 public class FindFormPanel extends JPanel implements InputForm {
     @SuppressWarnings({"UnusedDeclaration" })

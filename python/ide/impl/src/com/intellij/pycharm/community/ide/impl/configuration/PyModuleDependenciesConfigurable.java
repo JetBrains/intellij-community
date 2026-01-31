@@ -15,8 +15,10 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.ui.EditableListModelDecorator;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListModel;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

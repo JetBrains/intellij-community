@@ -7,7 +7,11 @@ import com.intellij.lang.jvm.actions.ChangeParametersRequest
 import com.intellij.lang.jvm.actions.ExpectedParameter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.JvmPsiConversionHelper
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
 
 internal class ChangeMethodParameters(
   target: PsiMethod,

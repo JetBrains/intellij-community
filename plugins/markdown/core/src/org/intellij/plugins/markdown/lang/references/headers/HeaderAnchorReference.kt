@@ -2,7 +2,11 @@ package org.intellij.plugins.markdown.lang.references.headers
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiElementResolveResult
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiPolyVariantReferenceBase
+import com.intellij.psi.PsiReference
+import com.intellij.psi.ResolveResult
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination

@@ -7,7 +7,7 @@ import io.opentelemetry.api.trace.Span;
 import oshi.SystemInfo;
 import oshi.software.os.OSProcess;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.ScheduledExecutorService;

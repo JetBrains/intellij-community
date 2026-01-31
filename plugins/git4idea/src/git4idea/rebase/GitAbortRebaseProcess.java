@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.vcs.log.Hash;
 import git4idea.DialogManager;
 import git4idea.GitActivity;
-import git4idea.GitNotificationIdsHolder;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -32,7 +31,10 @@ import static com.intellij.CommonBundle.getCancelButtonText;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
-import static git4idea.GitNotificationIdsHolder.*;
+import static git4idea.GitNotificationIdsHolder.REBASE_ABORT_FAILED;
+import static git4idea.GitNotificationIdsHolder.REBASE_ABORT_SUCCESS;
+import static git4idea.GitNotificationIdsHolder.REBASE_ROLLBACK_FAILED;
+import static git4idea.GitNotificationIdsHolder.REBASE_STOPPED_ON_EDITING;
 import static git4idea.rebase.GitRebaseUtils.mentionLocalChangesRemainingInStash;
 
 class GitAbortRebaseProcess {

@@ -3,7 +3,12 @@ package com.jetbrains.python.codeInsight.regexp
 
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.AbstractElementManipulator
+import com.intellij.psi.ContributedReferenceHost
+import com.intellij.psi.FileViewProvider
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceService
 import com.intellij.util.IncorrectOperationException
 import org.intellij.lang.regexp.RegExpFile
 

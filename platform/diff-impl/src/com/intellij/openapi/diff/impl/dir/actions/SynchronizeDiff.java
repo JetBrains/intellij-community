@@ -9,7 +9,9 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.ide.diff.DirDiffOperation.*;
+import static com.intellij.ide.diff.DirDiffOperation.COPY_FROM;
+import static com.intellij.ide.diff.DirDiffOperation.COPY_TO;
+import static com.intellij.ide.diff.DirDiffOperation.DELETE;
 
 /**
  * @author Konstantin Bulenkov

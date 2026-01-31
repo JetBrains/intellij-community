@@ -12,7 +12,7 @@ import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class UsageInArtifact extends ProjectStructureElementUsage {
   private final Artifact myOriginalArtifact;

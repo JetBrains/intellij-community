@@ -15,7 +15,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.VisibilityIcons;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 public class MemberSelectionTable extends AbstractMemberSelectionTable<PsiMember, MemberInfo> {

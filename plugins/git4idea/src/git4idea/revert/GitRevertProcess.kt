@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsFullCommitDetails
 import git4idea.GitActivity
-import git4idea.applyChanges.GitApplyChangesProcess
 import git4idea.actions.GitAbortOperationAction
+import git4idea.applyChanges.GitApplyChangesProcess
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
 import git4idea.commands.GitLineHandlerListener

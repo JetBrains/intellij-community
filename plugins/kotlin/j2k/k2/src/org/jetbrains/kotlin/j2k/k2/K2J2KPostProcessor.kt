@@ -2,24 +2,43 @@
 
 package org.jetbrains.kotlin.j2k.k2
 
+// import removed: forbidAnalysis no longer used during application phase
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.checkCanceled
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
-// import removed: forbidAnalysis no longer used during application phase
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
-import org.jetbrains.kotlin.j2k.*
-import org.jetbrains.kotlin.j2k.k2.postProcessings.*
-import org.jetbrains.kotlin.j2k.postProcessings.*
+import org.jetbrains.kotlin.j2k.ConverterContext
+import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup
+import org.jetbrains.kotlin.j2k.NamedPostProcessingGroup
+import org.jetbrains.kotlin.j2k.PostProcessingApplier
+import org.jetbrains.kotlin.j2k.PostProcessingTarget
+import org.jetbrains.kotlin.j2k.PostProcessor
+import org.jetbrains.kotlin.j2k.files
+import org.jetbrains.kotlin.j2k.k2.postProcessings.K2ConvertGettersAndSettersToPropertyProcessing
+import org.jetbrains.kotlin.j2k.k2.postProcessings.K2ShortenReferenceProcessing
+import org.jetbrains.kotlin.j2k.k2.postProcessings.argumentTypeMismatchProcessing
+import org.jetbrains.kotlin.j2k.k2.postProcessings.assignmentTypeMismatchProcessing
+import org.jetbrains.kotlin.j2k.k2.postProcessings.initializerTypeMismatchProcessing
+import org.jetbrains.kotlin.j2k.k2.postProcessings.iteratorOnNullableProcessing
+import org.jetbrains.kotlin.j2k.k2.postProcessings.returnTypeMismatchProcessing
+import org.jetbrains.kotlin.j2k.k2.postProcessings.smartcastImpossibleProcessing
+import org.jetbrains.kotlin.j2k.k2.postProcessings.unnecessaryNotNullAssertionProcessing
+import org.jetbrains.kotlin.j2k.k2.postProcessings.unsafeCallProcessing
+import org.jetbrains.kotlin.j2k.k2.postProcessings.unsafeInfixCallProcessing
+import org.jetbrains.kotlin.j2k.k2.postProcessings.unsafeOperatorCallProcessing
+import org.jetbrains.kotlin.j2k.k2.postProcessings.uselessCastProcessing
+import org.jetbrains.kotlin.j2k.postProcessings.FormatCodeProcessing
+import org.jetbrains.kotlin.j2k.postProcessings.MergePropertyWithConstructorParameterProcessing
+import org.jetbrains.kotlin.j2k.postProcessings.OptimizeImportsProcessing
+import org.jetbrains.kotlin.j2k.postProcessings.RemoveExplicitPropertyTypeProcessing
+import org.jetbrains.kotlin.j2k.postProcessings.RemoveRedundantEmptyLinesProcessing
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtFile

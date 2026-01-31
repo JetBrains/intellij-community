@@ -5,10 +5,17 @@ package org.jetbrains.kotlin.nj2k.conversions
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKArgumentImpl
+import org.jetbrains.kotlin.nj2k.tree.JKArgumentList
+import org.jetbrains.kotlin.nj2k.tree.JKCallExpressionImpl
+import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression
 import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType
+import org.jetbrains.kotlin.nj2k.tree.JKQualifiedExpression
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.copyTreeAndDetach
+import org.jetbrains.kotlin.nj2k.tree.withFormattingFrom
 import java.math.BigInteger
-import java.util.*
+import java.util.Locale
 
 class LiteralConversion(context: ConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

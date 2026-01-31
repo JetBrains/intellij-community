@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import java.util.*
+import java.util.BitSet
 
 abstract class LineStatusTrackerBase<R : Range>(
   override val project: Project?,

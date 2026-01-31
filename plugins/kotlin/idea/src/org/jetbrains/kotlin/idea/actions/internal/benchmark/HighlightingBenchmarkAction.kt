@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
-import java.util.*
+import java.util.Random
 import javax.swing.JFileChooser
 import kotlin.properties.Delegates
 

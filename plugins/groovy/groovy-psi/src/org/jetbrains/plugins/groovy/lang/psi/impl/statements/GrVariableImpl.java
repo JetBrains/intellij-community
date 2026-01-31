@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrVariableStub;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 import static org.jetbrains.plugins.groovy.lang.typing.TuplesKt.getMultiAssignmentType;
 

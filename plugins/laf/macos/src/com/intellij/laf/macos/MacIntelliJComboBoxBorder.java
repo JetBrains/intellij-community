@@ -5,14 +5,28 @@ import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.ComboBoxEditor;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.geom.Area;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.Outline;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.getOutline;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isTableCellEditor;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintCellEditorBorder;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintOutlineBorder;
 
 /**
  * @author Konstantin Bulenkov

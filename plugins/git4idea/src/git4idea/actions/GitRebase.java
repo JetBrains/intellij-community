@@ -26,7 +26,10 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.dvcs.DvcsUtil.sortRepositories;
-import static git4idea.GitUtil.*;
+import static git4idea.GitUtil.getRepositories;
+import static git4idea.GitUtil.getRepositoriesInStates;
+import static git4idea.GitUtil.getRootsFromRepositories;
+import static git4idea.GitUtil.hasGitRepositories;
 import static git4idea.rebase.GitRebaseUtils.getRebasingRepositories;
 import static java.util.Collections.singletonList;
 

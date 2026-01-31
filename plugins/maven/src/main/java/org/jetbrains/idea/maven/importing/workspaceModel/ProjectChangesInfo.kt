@@ -4,8 +4,6 @@ package org.jetbrains.idea.maven.importing.workspaceModel
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectModifications
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 @Internal
 internal data class ProjectChangesInfo(val allProjectsToChanges: Map<MavenProject, MavenProjectModifications>) {

@@ -6,7 +6,10 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.ConverterContext
-import org.jetbrains.kotlin.nj2k.*
+import org.jetbrains.kotlin.nj2k.JKElementInfo
+import org.jetbrains.kotlin.nj2k.JKElementInfoLabel
+import org.jetbrains.kotlin.nj2k.JKTypeInfo
+import org.jetbrains.kotlin.nj2k.asInferenceLabel
 import org.jetbrains.kotlin.psi.KtTypeElement
 import org.jetbrains.kotlin.psi.KtTypeProjection
 import org.jetbrains.kotlin.psi.KtTypeReference

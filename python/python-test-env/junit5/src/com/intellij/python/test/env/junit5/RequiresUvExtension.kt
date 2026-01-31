@@ -3,8 +3,8 @@ package com.intellij.python.test.env.junit5
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.core.LATEST_PYTHON_VERSION
+import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.uv.UvPyEnvironment
 import com.intellij.python.test.env.uv.uvEnvironment
 import kotlinx.coroutines.runBlocking

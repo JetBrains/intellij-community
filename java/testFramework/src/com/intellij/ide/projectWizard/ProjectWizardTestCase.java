@@ -31,7 +31,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestObservation;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

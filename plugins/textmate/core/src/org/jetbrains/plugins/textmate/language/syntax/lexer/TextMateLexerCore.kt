@@ -11,7 +11,17 @@ import org.jetbrains.plugins.textmate.language.syntax.TextMateCapture
 import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils.replaceGroupsWithMatchDataInCaptures
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateLexerState.Companion.notMatched
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh
-import org.jetbrains.plugins.textmate.regex.*
+import org.jetbrains.plugins.textmate.regex.MatchData
+import org.jetbrains.plugins.textmate.regex.TextMateByteOffset
+import org.jetbrains.plugins.textmate.regex.TextMateCharOffset
+import org.jetbrains.plugins.textmate.regex.TextMateCharRange
+import org.jetbrains.plugins.textmate.regex.TextMateString
+import org.jetbrains.plugins.textmate.regex.byteOffset
+import org.jetbrains.plugins.textmate.regex.byteOffsetByCharOffset
+import org.jetbrains.plugins.textmate.regex.charOffset
+import org.jetbrains.plugins.textmate.regex.get
+import org.jetbrains.plugins.textmate.regex.indexOf
+import org.jetbrains.plugins.textmate.regex.subSequence
 import kotlin.math.min
 
 class TextMateLexerCore(

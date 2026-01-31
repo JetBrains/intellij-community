@@ -10,7 +10,11 @@ import com.intellij.platform.navbar.NavBarItemPresentation
 import com.intellij.platform.navbar.NavBarItemPresentationData
 import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.platform.navbar.backend.NavBarItem
-import com.intellij.platform.navbar.backend.impl.*
+import com.intellij.platform.navbar.backend.impl.DefaultNavBarItem
+import com.intellij.platform.navbar.backend.impl.IdeNavBarVmItem
+import com.intellij.platform.navbar.backend.impl.children
+import com.intellij.platform.navbar.backend.impl.compatibilityNavBarItem
+import com.intellij.platform.navbar.backend.impl.pathToItem
 import com.intellij.platform.navbar.frontend.contextModel
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus.Internal

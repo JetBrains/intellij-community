@@ -14,7 +14,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.ThrowableComputable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import java.util.*
+import java.util.Enumeration
 
 fun ProblemFix.Part.Change.ijRange(): TextRange = TextRange(range.start, range.endExclusive)
 fun ai.grazie.text.TextRange.ijRange(): TextRange = TextRange(start, endExclusive)

@@ -24,7 +24,13 @@ import org.zmlx.hg4idea.HgChange;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileStatusEnum;
 import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.command.*;
+import org.zmlx.hg4idea.command.HgHeadsCommand;
+import org.zmlx.hg4idea.command.HgIncomingCommand;
+import org.zmlx.hg4idea.command.HgParentsCommand;
+import org.zmlx.hg4idea.command.HgPullCommand;
+import org.zmlx.hg4idea.command.HgStatusCommand;
+import org.zmlx.hg4idea.command.HgUpdateCommand;
+import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.provider.update.HgRegularUpdater;
 import org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings;
 import org.zmlx.hg4idea.provider.update.HgUpdateType;
@@ -37,7 +43,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @SuppressWarnings({"ConstantConditions"})
 public class HgUpdateTest extends HgCollaborativeTest {

@@ -6,7 +6,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.observable.util.whenDisposed
-import com.intellij.platform.ml.*
+import com.intellij.platform.ml.MLApiPlatform
+import com.intellij.platform.ml.MLTaskApproachBuilder
+import com.intellij.platform.ml.SystemLogger
+import com.intellij.platform.ml.SystemLoggerBuilder
+import com.intellij.platform.ml.TierDescriptor
 import com.intellij.platform.ml.environment.EnvironmentExtender
 import com.intellij.platform.ml.impl.ReplaceableIJPlatform.replacingWith
 import com.intellij.platform.ml.monitoring.MLTaskGroupListener

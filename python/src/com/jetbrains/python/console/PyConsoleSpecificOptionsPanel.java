@@ -16,8 +16,8 @@ import com.jetbrains.python.run.PyCommonOptionsFormData;
 import com.jetbrains.python.run.PyCommonOptionsFormFactory;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.List;
 
 public class PyConsoleSpecificOptionsPanel {

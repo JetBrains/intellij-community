@@ -2,7 +2,12 @@
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import org.jetbrains.kotlin.tools.projectWizard.YamlSettingsParser
-import org.jetbrains.kotlin.tools.projectWizard.core.*
+import org.jetbrains.kotlin.tools.projectWizard.core.Context
+import org.jetbrains.kotlin.tools.projectWizard.core.ParsingState
+import org.jetbrains.kotlin.tools.projectWizard.core.Plugin
+import org.jetbrains.kotlin.tools.projectWizard.core.Reader
+import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
+import org.jetbrains.kotlin.tools.projectWizard.core.computeM
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.PipelineTask
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSetting
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingReference

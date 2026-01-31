@@ -6,7 +6,12 @@ import com.intellij.codeInsight.navigation.getRelatedItemsPopup
 import com.intellij.ide.ui.IdeUiService
 import com.intellij.lang.LangBundle
 import com.intellij.navigation.GotoRelatedItem
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.actionSystem.impl.Utils.computeWithProgressIcon
 import com.intellij.openapi.application.readAction

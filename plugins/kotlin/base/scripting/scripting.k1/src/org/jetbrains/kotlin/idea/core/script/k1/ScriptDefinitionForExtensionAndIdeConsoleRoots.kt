@@ -11,7 +11,16 @@ import org.jetbrains.kotlin.idea.core.script.shared.definition.scriptClassPath
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.KotlinType
+import kotlin.script.experimental.api.ScriptAcceptedLocation
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptEvaluationConfiguration
+import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.api.acceptedLocations
+import kotlin.script.experimental.api.baseClass
+import kotlin.script.experimental.api.dependencies
+import kotlin.script.experimental.api.displayName
+import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.experimental.jvm.dependenciesFromCurrentContext

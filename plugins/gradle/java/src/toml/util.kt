@@ -20,8 +20,22 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADL
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROVIDER_PROVIDER_CONVERTIBLE
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator
 import org.jetbrains.plugins.gradle.service.resolve.getVersionCatalogFiles
-import org.jetbrains.plugins.gradle.util.*
-import org.toml.lang.psi.*
+import org.jetbrains.plugins.gradle.util.BUNDLE_ACCESSORS_SUFFIX
+import org.jetbrains.plugins.gradle.util.LIBRARIES_FOR_PREFIX
+import org.jetbrains.plugins.gradle.util.LIBRARY_ACCESSORS_SUFFIX
+import org.jetbrains.plugins.gradle.util.PLUGIN_ACCESSORS_SUFFIX
+import org.jetbrains.plugins.gradle.util.VERSION_ACCESSORS_SUFFIX
+import org.jetbrains.plugins.gradle.util.getCapitalizedAccessorName
+import org.jetbrains.plugins.gradle.util.isInVersionCatalogAccessor
+import org.toml.lang.psi.TomlFile
+import org.toml.lang.psi.TomlHeaderOwner
+import org.toml.lang.psi.TomlInlineTable
+import org.toml.lang.psi.TomlKeySegment
+import org.toml.lang.psi.TomlKeyValue
+import org.toml.lang.psi.TomlKeyValueOwner
+import org.toml.lang.psi.TomlLiteral
+import org.toml.lang.psi.TomlRecursiveVisitor
+import org.toml.lang.psi.TomlTable
 import org.toml.lang.psi.ext.name
 
 private fun getTableEntries(context: PsiElement, tableName: @NlsSafe String) : List<TomlKeySegment> {

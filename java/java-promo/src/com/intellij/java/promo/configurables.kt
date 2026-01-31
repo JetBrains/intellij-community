@@ -7,7 +7,11 @@ import com.intellij.java.ui.icons.JavaUIIcons
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.options.ConfigurableWithId
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FeaturePromoBundle
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeatureListItem
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeaturePage
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoPages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import javax.swing.Icon

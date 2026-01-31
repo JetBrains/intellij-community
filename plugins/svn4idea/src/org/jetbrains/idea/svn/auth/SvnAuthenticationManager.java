@@ -19,7 +19,11 @@ import java.nio.file.Path;
 import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.SYSTEM_CONFIGURATION_PATH;
-import static org.jetbrains.idea.svn.config.SvnIniFile.*;
+import static org.jetbrains.idea.svn.config.SvnIniFile.CONFIG_FILE_NAME;
+import static org.jetbrains.idea.svn.config.SvnIniFile.SERVERS_FILE_NAME;
+import static org.jetbrains.idea.svn.config.SvnIniFile.getPropertyIdea;
+import static org.jetbrains.idea.svn.config.SvnIniFile.getValue;
+import static org.jetbrains.idea.svn.config.SvnIniFile.isTurned;
 
 public final class SvnAuthenticationManager {
   // TODO Looks reasonable to introduce some AuthType/AuthKind class

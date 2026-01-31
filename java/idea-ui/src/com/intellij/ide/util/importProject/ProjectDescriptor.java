@@ -19,7 +19,10 @@ import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ProjectDescriptor {
   private List<ModuleDescriptor> myModules = Collections.emptyList();

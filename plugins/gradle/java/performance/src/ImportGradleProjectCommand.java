@@ -34,7 +34,11 @@ import org.jetbrains.plugins.gradle.service.project.open.GradleProjectImportUtil
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
-import org.jetbrains.plugins.gradle.util.*;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleJvmResolutionUtil;
+import org.jetbrains.plugins.gradle.util.GradleJvmSupportMatrices;
+import org.jetbrains.plugins.gradle.util.GradleJvmValidationUtil;
+import org.jetbrains.plugins.gradle.util.SuggestGradleVersionOptions;
 
 import java.io.File;
 import java.util.Arrays;

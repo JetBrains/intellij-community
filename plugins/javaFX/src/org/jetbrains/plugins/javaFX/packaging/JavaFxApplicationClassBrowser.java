@@ -15,7 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
-import javax.swing.*;
+import javax.swing.JTextField;
 import java.util.Collections;
 import java.util.Set;
 

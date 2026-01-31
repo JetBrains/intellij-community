@@ -3,7 +3,12 @@ package com.intellij.codeInsight.editorActions.wordSelection;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiKeyword;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

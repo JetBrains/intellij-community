@@ -2,7 +2,12 @@
 package org.jetbrains.kotlin.idea.debugger.core.stepping
 
 import com.intellij.debugger.SourcePosition
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.LightOrRealThreadInfo
+import com.intellij.debugger.engine.MethodFilter
+import com.intellij.debugger.engine.RealThreadInfo
+import com.intellij.debugger.engine.RequestHint
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.statistics.Engine
 import com.intellij.openapi.diagnostic.Logger

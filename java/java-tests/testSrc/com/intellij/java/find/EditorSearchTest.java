@@ -19,7 +19,6 @@ import com.intellij.find.EditorSearchSession;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;

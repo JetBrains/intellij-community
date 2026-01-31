@@ -1,11 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
+import com.intellij.codeInspection.CommonQuickFixBundle
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.isInheritorOf
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.codeInspection.registerUProblem
 import com.intellij.execution.JUnitBundle
-import com.intellij.execution.junit.codeInspection.HamcrestCommonClassNames.*
+import com.intellij.execution.junit.codeInspection.HamcrestCommonClassNames.ORG_HAMCREST_CORE_MATCHERS
+import com.intellij.execution.junit.codeInspection.HamcrestCommonClassNames.ORG_HAMCREST_MATCHERS
+import com.intellij.execution.junit.codeInspection.HamcrestCommonClassNames.ORG_HAMCREST_MATCHER_ASSERT
+import com.intellij.execution.junit.codeInspection.HamcrestCommonClassNames.ORG_HAMCREST_NUMBER_ORDERING_COMPARISON
 import com.intellij.openapi.project.Project
 import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION
@@ -17,11 +26,22 @@ import com.intellij.util.asSafely
 import com.siyeh.ig.junit.JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT
 import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_ASSERT
 import com.siyeh.ig.psiutils.TypeUtils
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.UastCallKind
 import org.jetbrains.uast.generate.UastElementFactory
 import org.jetbrains.uast.generate.getUastElementFactory
 import org.jetbrains.uast.generate.importMemberOnDemand
 import org.jetbrains.uast.generate.replace
+import org.jetbrains.uast.getContainingUClass
+import org.jetbrains.uast.getQualifiedParentOrThis
+import org.jetbrains.uast.getUastParentOfType
+import org.jetbrains.uast.resolveToUElement
+import org.jetbrains.uast.resolveToUElementOfType
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class HamcrestAssertionsConverterInspection : AbstractBaseUastLocalInspectionTool() {

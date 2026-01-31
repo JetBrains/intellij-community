@@ -5,7 +5,13 @@ package git4idea.test
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.Executor.append
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.Executor.child
+import com.intellij.openapi.vcs.Executor.ourCurrentDir
+import com.intellij.openapi.vcs.Executor.overwrite
+import com.intellij.openapi.vcs.Executor.splitCommandInParameters
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.vcs.ExecutableHelper
 import com.intellij.vcs.log.util.VcsLogUtil

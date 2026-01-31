@@ -49,7 +49,11 @@ import org.jetbrains.jps.model.serialization.JpsMavenSettings;
 
 import java.io.File;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigurationTestCase {
   public static ProcessOutput doStartTestsProcess(RunConfiguration configuration) throws ExecutionException {

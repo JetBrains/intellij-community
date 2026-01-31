@@ -2,11 +2,14 @@
 package fleet.kernel.rete.impl
 
 import com.jetbrains.rhizomedb.Change
-import fleet.kernel.rete.*
+import fleet.kernel.rete.Rete
 import fleet.kernel.rete.ReteNetwork
+import fleet.kernel.rete.ReteState
+import fleet.kernel.rete.Subscription
+import fleet.kernel.rete.dbOrThrow
 import fleet.kernel.timestamp
-import kotlinx.coroutines.flow.StateFlow
 import fleet.util.PriorityQueue
+import kotlinx.coroutines.flow.StateFlow
 
 internal interface PosponedVars {
   fun command(cmd: Rete.Command)

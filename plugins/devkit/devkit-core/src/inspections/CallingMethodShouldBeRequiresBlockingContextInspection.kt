@@ -10,7 +10,15 @@ import com.intellij.lang.LanguageExtension
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.psi.*
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiLambdaExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiNewExpression
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting

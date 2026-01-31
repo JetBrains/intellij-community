@@ -5,7 +5,11 @@ package org.jetbrains.kotlin.idea.refactoring.pushDown
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.classMembers.*
+import com.intellij.refactoring.classMembers.ANDCombinedMemberInfoModel
+import com.intellij.refactoring.classMembers.DelegatingMemberInfoModel
+import com.intellij.refactoring.classMembers.MemberInfoChange
+import com.intellij.refactoring.classMembers.MemberInfoModel
+import com.intellij.refactoring.classMembers.UsedByDependencyMemberInfoModel
 import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.util.ui.JBUI
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings

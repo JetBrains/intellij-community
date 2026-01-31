@@ -1,8 +1,12 @@
 package com.intellij.database.run.actions
 
 import com.intellij.database.DatabaseDataKeys
-import com.intellij.database.datagrid.*
+import com.intellij.database.datagrid.DataGrid
+import com.intellij.database.datagrid.GridHelper
+import com.intellij.database.datagrid.GridPagingModel
+import com.intellij.database.datagrid.GridRequestSource
 import com.intellij.database.datagrid.GridUtil.addBottomHeader
+import com.intellij.database.datagrid.setPageSize
 import com.intellij.database.run.ui.DataGridRequestPlace
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent

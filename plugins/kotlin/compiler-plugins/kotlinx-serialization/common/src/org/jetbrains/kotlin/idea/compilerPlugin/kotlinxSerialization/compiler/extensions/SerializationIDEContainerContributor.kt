@@ -6,9 +6,9 @@ import org.jetbrains.kotlin.container.StorageComponentContainer
 import org.jetbrains.kotlin.container.useInstance
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
-import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.compiler.diagnostic.SerializationPluginIDEDeclarationChecker
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.compiler.diagnostic.JsonFormatRedundantDiagnostic
+import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.compiler.diagnostic.SerializationPluginIDEDeclarationChecker
+import org.jetbrains.kotlin.platform.TargetPlatform
 
 class SerializationIDEContainerContributor : StorageComponentContainerContributor {
     override fun registerModuleComponents(

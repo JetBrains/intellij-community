@@ -6,7 +6,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.jetbrains.idea.devkit.run.ProductInfo.Launch.OS.*
+import org.jetbrains.idea.devkit.run.ProductInfo.Launch.OS.Linux
+import org.jetbrains.idea.devkit.run.ProductInfo.Launch.OS.Windows
+import org.jetbrains.idea.devkit.run.ProductInfo.Launch.OS.macOS
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists

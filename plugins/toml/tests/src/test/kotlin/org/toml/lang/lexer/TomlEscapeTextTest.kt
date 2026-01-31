@@ -10,7 +10,10 @@ import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import org.toml.lang.psi.TomlElementTypes.*
+import org.toml.lang.psi.TomlElementTypes.BASIC_STRING
+import org.toml.lang.psi.TomlElementTypes.LITERAL_STRING
+import org.toml.lang.psi.TomlElementTypes.MULTILINE_BASIC_STRING
+import org.toml.lang.psi.TomlElementTypes.MULTILINE_LITERAL_STRING
 
 @RunWith(Parameterized::class)
 class TomlEscapeTextTest(

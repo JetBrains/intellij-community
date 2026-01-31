@@ -20,7 +20,27 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 
-import static com.intellij.database.extractors.FormatterCreator.*;
+import static com.intellij.database.extractors.FormatterCreator.FormatterKey;
+import static com.intellij.database.extractors.FormatterCreator.LOCAL_DATE_FORMATTER_KEY;
+import static com.intellij.database.extractors.FormatterCreator.LOCAL_DATE_WITH_MILLI_FORMATTER_KEY;
+import static com.intellij.database.extractors.FormatterCreator.OFFSET_DATE_TIME_FORMATTER_KEY;
+import static com.intellij.database.extractors.FormatterCreator.SHORT_TIMESTAMP_FORMATTER_KEY;
+import static com.intellij.database.extractors.FormatterCreator.SIMPLE_DATE_FORMATTER_KEY;
+import static com.intellij.database.extractors.FormatterCreator.SIMPLE_TIMESTAMP_FORMATTER_KEY;
+import static com.intellij.database.extractors.FormatterCreator.TIMESTAMP_WITH_MILLI_FORMATTER_KEY;
+import static com.intellij.database.extractors.FormatterCreator.getBigIntKey;
+import static com.intellij.database.extractors.FormatterCreator.getDateKey;
+import static com.intellij.database.extractors.FormatterCreator.getDecimalKey;
+import static com.intellij.database.extractors.FormatterCreator.getDecimalWithPriorityTypeKey;
+import static com.intellij.database.extractors.FormatterCreator.getDoubleKey;
+import static com.intellij.database.extractors.FormatterCreator.getFloatKey;
+import static com.intellij.database.extractors.FormatterCreator.getIntKey;
+import static com.intellij.database.extractors.FormatterCreator.getLongKey;
+import static com.intellij.database.extractors.FormatterCreator.getShortEraZonedTimestampKey;
+import static com.intellij.database.extractors.FormatterCreator.getTimeKey;
+import static com.intellij.database.extractors.FormatterCreator.getTimestampKey;
+import static com.intellij.database.extractors.FormatterCreator.getZonedTimeKey;
+import static com.intellij.database.extractors.FormatterCreator.getZonedTimestampKey;
 
 /**
  * SimpleDateFormat is not thread-safe therefore FormatsCache is not thread-safe too

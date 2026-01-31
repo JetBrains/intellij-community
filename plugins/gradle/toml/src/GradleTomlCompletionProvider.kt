@@ -5,15 +5,19 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.util.ProcessingContext
-import org.jetbrains.idea.completion.api.*
 import com.intellij.gradle.completion.FullStringInsertHandler
 import com.intellij.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
 import com.intellij.gradle.completion.GradleDependencyCompletionMatcher
 import com.intellij.gradle.completion.getCompletionContext
 import com.intellij.gradle.completion.removeDummySuffix
+import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.util.ProcessingContext
+import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionService
+import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 import org.toml.lang.psi.TomlLiteral
 

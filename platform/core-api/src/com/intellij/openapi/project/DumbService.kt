@@ -16,7 +16,11 @@ import com.intellij.openapi.project.DumbService.Companion.DUMB_MODE
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.DumbService.Companion.isDumbAware
 import com.intellij.openapi.roots.FileIndexFacade
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThrowableRunnable
@@ -24,14 +28,17 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
-import org.jetbrains.annotations.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Obsolete
-import java.util.*
+import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.Unmodifiable
+import java.util.Collections
 import javax.swing.JComponent
 
 /**

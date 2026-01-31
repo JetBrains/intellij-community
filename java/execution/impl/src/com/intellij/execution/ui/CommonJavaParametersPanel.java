@@ -11,8 +11,8 @@ import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.BorderLayout;
 
 public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
   private LabeledComponent<RawCommandLineEditor> myVMParametersComponent;

@@ -8,7 +8,7 @@ import com.intellij.ide.util.treeView.smartTree.Sorter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Comparator;
 
 public class VisibilitySorter implements Sorter{

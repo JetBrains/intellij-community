@@ -10,7 +10,14 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
-import org.jetbrains.kotlin.types.typeUtil.*
+import org.jetbrains.kotlin.types.typeUtil.isByte
+import org.jetbrains.kotlin.types.typeUtil.isChar
+import org.jetbrains.kotlin.types.typeUtil.isDouble
+import org.jetbrains.kotlin.types.typeUtil.isFloat
+import org.jetbrains.kotlin.types.typeUtil.isInt
+import org.jetbrains.kotlin.types.typeUtil.isShort
+import org.jetbrains.kotlin.types.typeUtil.isSignedOrUnsignedNumberType
+import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 
 @K1Deprecation
 object EqualityNotApplicableFactory : KotlinIntentionActionsFactory() {

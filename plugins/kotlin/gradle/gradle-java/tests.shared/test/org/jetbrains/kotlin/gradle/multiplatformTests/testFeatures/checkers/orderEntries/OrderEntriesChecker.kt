@@ -3,7 +3,12 @@ package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.ord
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.ExportableOrderEntry
+import com.intellij.openapi.roots.JdkOrderEntry
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderEntry
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.ModuleReportData

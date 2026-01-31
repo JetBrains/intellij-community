@@ -12,7 +12,13 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.toml.lang.psi.*
+import org.toml.lang.psi.TomlArray
+import org.toml.lang.psi.TomlArrayTable
+import org.toml.lang.psi.TomlElementTypes
+import org.toml.lang.psi.TomlFile
+import org.toml.lang.psi.TomlInlineTable
+import org.toml.lang.psi.TomlRecursiveVisitor
+import org.toml.lang.psi.TomlTable
 
 class TomlFoldingBuilder : CustomFoldingBuilder(), DumbAware {
     override fun buildLanguageFoldRegions(

@@ -15,12 +15,12 @@
  */
 package com.jetbrains.env;
 
+import com.intellij.commandInterface.command.Command;
+import com.intellij.commandInterface.command.SimpleCommand;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.commandInterface.command.Command;
-import com.intellij.commandInterface.command.SimpleCommand;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

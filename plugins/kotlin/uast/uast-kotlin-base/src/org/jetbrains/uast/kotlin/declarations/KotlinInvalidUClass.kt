@@ -8,7 +8,13 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.light.LightPsiClassBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UClassInitializer
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.getContainingUFile
 
 /**
  * implementation of [UClass] for invalid code, when it is impossible to create a [KtLightClass]

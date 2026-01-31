@@ -1,7 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.terminal.completion
 
-import com.intellij.execution.vmOptions.*
+import com.intellij.execution.vmOptions.JdkOptionsData
+import com.intellij.execution.vmOptions.VMOption
+import com.intellij.execution.vmOptions.VMOptionKind
+import com.intellij.execution.vmOptions.VMOptionVariant
+import com.intellij.execution.vmOptions.VMOptionsService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion

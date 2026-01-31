@@ -2,10 +2,14 @@
 package com.intellij.platform.backend.presentation;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
 
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable

@@ -3,7 +3,12 @@ package org.jetbrains.kotlin.tools.projectWizard.core.entity
 
 
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.tools.projectWizard.core.*
+import org.jetbrains.kotlin.tools.projectWizard.core.ALWAYS_AVAILABLE_CHECKER
+import org.jetbrains.kotlin.tools.projectWizard.core.Checker
+import org.jetbrains.kotlin.tools.projectWizard.core.Failure
+import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
+import org.jetbrains.kotlin.tools.projectWizard.core.UNIT_SUCCESS
+import org.jetbrains.kotlin.tools.projectWizard.core.Writer
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 
 sealed class Task : EntityBase()

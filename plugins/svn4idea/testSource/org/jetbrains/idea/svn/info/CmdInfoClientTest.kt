@@ -3,7 +3,11 @@ package org.jetbrains.idea.svn.info
 
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.svn.SvnUtil.createUrl
-import org.jetbrains.idea.svn.api.*
+import org.jetbrains.idea.svn.api.AbstractSvnClientTest
+import org.jetbrains.idea.svn.api.Depth
+import org.jetbrains.idea.svn.api.NodeKind
+import org.jetbrains.idea.svn.api.Revision
+import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.conflict.ConflictAction
 import org.jetbrains.idea.svn.conflict.ConflictOperation
 import org.jetbrains.idea.svn.conflict.ConflictReason

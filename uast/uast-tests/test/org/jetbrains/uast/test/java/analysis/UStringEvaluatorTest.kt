@@ -16,7 +16,11 @@ import junit.framework.TestCase
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UExpressionList
 import org.jetbrains.uast.ULiteralExpression
-import org.jetbrains.uast.analysis.*
+import org.jetbrains.uast.analysis.DeclarationValueEvaluator
+import org.jetbrains.uast.analysis.MethodCallEvaluator
+import org.jetbrains.uast.analysis.UNeDfaConfiguration
+import org.jetbrains.uast.analysis.UNeDfaValueEvaluator
+import org.jetbrains.uast.analysis.UStringEvaluator
 import org.jetbrains.uast.toUElement
 
 class UStringEvaluatorTest : AbstractStringEvaluatorTest() {

@@ -3,9 +3,20 @@ package com.intellij.openapi.vcs.changes.actions.diff.lst
 
 import com.intellij.diff.DiffContext
 import com.intellij.diff.fragments.LineFragment
-import com.intellij.diff.tools.fragmented.*
-import com.intellij.diff.util.*
+import com.intellij.diff.tools.fragmented.HighlightRange
+import com.intellij.diff.tools.fragmented.LineNumberConvertor
+import com.intellij.diff.tools.fragmented.UnifiedDiffChange
+import com.intellij.diff.tools.fragmented.UnifiedDiffChangeUi
+import com.intellij.diff.tools.fragmented.UnifiedDiffState
+import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
+import com.intellij.diff.tools.fragmented.UnifiedFragmentBuilder
+import com.intellij.diff.tools.fragmented.asLineRange
+import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffDrawUtil.LineHighlighterBuilder
+import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.LineRange
+import com.intellij.diff.util.Side
+import com.intellij.diff.util.TextDiffType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -46,7 +57,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.BitSet
 import javax.swing.JComponent
 
 @ApiStatus.Internal

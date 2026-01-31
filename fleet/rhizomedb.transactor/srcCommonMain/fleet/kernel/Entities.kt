@@ -4,7 +4,11 @@ package fleet.kernel
 import com.jetbrains.rhizomedb.Entity
 import fleet.kernel.rete.ContextMatches
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 /**

@@ -9,8 +9,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions;
 import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Container;
 
 @SuppressWarnings("UnusedDeclaration")
 public class KotlinPasteFromJavaDialog extends DialogWrapper {

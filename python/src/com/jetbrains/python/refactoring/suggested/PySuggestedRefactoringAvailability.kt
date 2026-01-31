@@ -3,7 +3,11 @@ package com.jetbrains.python.refactoring.suggested
 
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.suggested.*
+import com.intellij.refactoring.suggested.SuggestedChangeSignatureData
+import com.intellij.refactoring.suggested.SuggestedRefactoringAvailability
+import com.intellij.refactoring.suggested.SuggestedRefactoringData
+import com.intellij.refactoring.suggested.SuggestedRefactoringState
+import com.intellij.refactoring.suggested.SuggestedRenameData
 
 internal class PySuggestedRefactoringAvailability(support: PySuggestedRefactoringSupport) : SuggestedRefactoringAvailability(support) {
 

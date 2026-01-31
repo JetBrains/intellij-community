@@ -11,9 +11,22 @@ import com.jetbrains.python.codeInsight.PyInjectionUtil
 import com.jetbrains.python.codeInsight.PyInjectorBase
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintDialect
-import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.PyAnnotation
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyAssignmentStatement
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PySubscriptionExpression
+import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyTypeParameter
+import com.jetbrains.python.psi.PyTypeParameterListOwner
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType
+import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**

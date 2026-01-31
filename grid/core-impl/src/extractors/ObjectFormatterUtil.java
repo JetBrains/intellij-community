@@ -1,6 +1,11 @@
 package com.intellij.database.extractors;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.CoreGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.JdbcColumnDescriptor;
+import com.intellij.database.datagrid.JdbcGridColumn;
+import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.grid.editors.GridCellEditorHelper;
 import com.intellij.openapi.util.text.StringUtil;

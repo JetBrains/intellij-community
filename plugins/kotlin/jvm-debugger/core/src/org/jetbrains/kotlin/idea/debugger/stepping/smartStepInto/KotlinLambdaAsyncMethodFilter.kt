@@ -3,11 +3,17 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.SourcePosition
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.BasicStepMethodFilter
+import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebugProcessImpl.StepOverCommand
+import com.intellij.debugger.engine.MethodFilter
+import com.intellij.debugger.engine.RequestHint
+import com.intellij.debugger.engine.StepIntoMethodBreakpoint
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.impl.DexDebugFacility
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.ui.breakpoints.StepIntoBreakpoint
@@ -23,7 +29,6 @@ import com.sun.jdi.ObjectReference
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.event.LocatableEvent
 import com.sun.jdi.request.StepRequest
-import com.intellij.debugger.impl.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeThisObject

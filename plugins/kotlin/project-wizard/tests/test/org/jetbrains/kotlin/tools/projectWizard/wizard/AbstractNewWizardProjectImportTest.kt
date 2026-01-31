@@ -30,7 +30,11 @@ import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.tools.projectWizard.Versions
-import org.jetbrains.kotlin.tools.projectWizard.cli.*
+import org.jetbrains.kotlin.tools.projectWizard.cli.BuildSystem
+import org.jetbrains.kotlin.tools.projectWizard.cli.DefaultTestParameters
+import org.jetbrains.kotlin.tools.projectWizard.cli.TestWizardService
+import org.jetbrains.kotlin.tools.projectWizard.cli.assertSuccess
+import org.jetbrains.kotlin.tools.projectWizard.cli.isGradle
 import org.jetbrains.kotlin.tools.projectWizard.core.service.Services
 import org.jetbrains.kotlin.tools.projectWizard.core.service.ServicesManager
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase

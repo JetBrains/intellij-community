@@ -24,8 +24,6 @@ import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.TypeParameterLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
-import kotlin.collections.orEmpty
-import kotlin.sequences.forEach
 
 internal class K2KDocParameterNameContributor : K2SimpleCompletionContributor<KDocNameReferencePositionContext>(
     KDocNameReferencePositionContext::class

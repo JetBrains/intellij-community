@@ -7,7 +7,11 @@ import com.intellij.grazie.detection.toAvailableLang
 import com.intellij.grazie.ide.ui.components.utils.html
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
-import com.intellij.grazie.text.*
+import com.intellij.grazie.text.ExternalTextChecker
+import com.intellij.grazie.text.Rule
+import com.intellij.grazie.text.RuleGroup
+import com.intellij.grazie.text.TextContent
+import com.intellij.grazie.text.TextProblem
 import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.grazie.utils.getTextDomain
 import com.intellij.grazie.utils.shouldCheckGrammarStyle
@@ -35,7 +39,7 @@ import org.languagetool.rules.GenericUnpairedBracketsRule
 import org.languagetool.rules.RuleMatch
 import org.languagetool.rules.en.EnglishUnpairedQuotesRule
 import org.slf4j.LoggerFactory
-import java.util.*
+import java.util.Locale
 import java.util.function.Predicate
 import kotlin.coroutines.cancellation.CancellationException
 

@@ -4,7 +4,13 @@ package com.jetbrains.python.packaging
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.util.NlsContexts
-import com.jetbrains.python.errorProcessing.*
+import com.jetbrains.python.errorProcessing.Exe
+import com.jetbrains.python.errorProcessing.ExecErrorImpl
+import com.jetbrains.python.errorProcessing.ExecErrorReason
+import com.jetbrains.python.errorProcessing.MessageError
+import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.asExecutionFailed
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 

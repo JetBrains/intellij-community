@@ -5,8 +5,8 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.python.community.impl.poetry.common.poetryPath
 import com.intellij.python.junit5Tests.framework.resolvePythonTool
-import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.core.LATEST_PYTHON_VERSION
+import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.plain.pythonEnvironment
 import com.jetbrains.python.sdk.impl.resolvePythonHome
 import kotlinx.coroutines.runBlocking

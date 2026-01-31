@@ -2,10 +2,12 @@
 package andel.editor
 
 import andel.intervals.Interval
-import andel.operation.*
+import andel.operation.Op
+import andel.operation.Operation
+import andel.operation.Sticky
+import andel.operation.composeAll
 import andel.text.Text
 import andel.text.TextRange
-import andel.text.insertOperation
 import andel.text.replaceOperation
 
 fun MutableDocument.replaceRange(range: TextRange, replacement: String) {

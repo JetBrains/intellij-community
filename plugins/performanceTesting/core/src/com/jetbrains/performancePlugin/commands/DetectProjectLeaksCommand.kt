@@ -2,7 +2,11 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier
-import com.intellij.diagnostic.hprof.analysis.*
+import com.intellij.diagnostic.hprof.analysis.AnalysisConfig
+import com.intellij.diagnostic.hprof.analysis.AnalysisContext
+import com.intellij.diagnostic.hprof.analysis.AnalyzeGraph
+import com.intellij.diagnostic.hprof.analysis.GCRootPathsTree
+import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
 import com.intellij.diagnostic.hprof.util.AnalysisReport
 import com.intellij.diagnostic.hprof.util.ListProvider
 import com.intellij.openapi.diagnostic.logger
@@ -20,7 +24,7 @@ import java.nio.channels.FileChannel
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
 
 class DetectProjectLeaksCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {

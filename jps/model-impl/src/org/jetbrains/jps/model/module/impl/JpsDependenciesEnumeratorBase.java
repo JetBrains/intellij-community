@@ -10,7 +10,13 @@ import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsLibrary;
-import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.module.JpsDependenciesEnumerator;
+import org.jetbrains.jps.model.module.JpsDependencyElement;
+import org.jetbrains.jps.model.module.JpsLibraryDependency;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleDependency;
+import org.jetbrains.jps.model.module.JpsModuleSourceDependency;
+import org.jetbrains.jps.model.module.JpsSdkDependency;
 
 import java.util.Collection;
 import java.util.Collections;

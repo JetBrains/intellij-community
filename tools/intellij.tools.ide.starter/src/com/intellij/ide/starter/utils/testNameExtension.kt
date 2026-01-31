@@ -1,6 +1,6 @@
 package com.intellij.ide.starter.utils
 
-import java.util.*
+import java.util.Locale
 import kotlin.io.path.Path
 import kotlin.io.path.name
 

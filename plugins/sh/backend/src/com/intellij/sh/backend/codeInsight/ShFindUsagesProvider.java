@@ -13,7 +13,9 @@ import com.intellij.sh.psi.ShFunctionDefinition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.sh.lexer.ShTokenTypes.*;
+import static com.intellij.sh.lexer.ShTokenTypes.WORD;
+import static com.intellij.sh.lexer.ShTokenTypes.commentTokens;
+import static com.intellij.sh.lexer.ShTokenTypes.literals;
 
 final class ShFindUsagesProvider implements FindUsagesProvider {
   @Override

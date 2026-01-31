@@ -5,7 +5,11 @@ import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.vcs.Executor.cd
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitWorkTreeBaseTest
-import git4idea.test.*
+import git4idea.test.assertCurrentRevision
+import git4idea.test.checkout
+import git4idea.test.git
+import git4idea.test.initRepo
+import git4idea.test.tac
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Files
 import java.nio.file.Path

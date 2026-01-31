@@ -1,6 +1,12 @@
 package de.plushnikov.intellij.plugin.highlights;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
 
 public final class ResolveInSyntheticCodeTest extends AbstractLombokHighlightsTest {
   public void testResolveInSyntheticMethod() {

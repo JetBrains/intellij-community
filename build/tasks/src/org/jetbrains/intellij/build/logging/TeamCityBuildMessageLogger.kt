@@ -7,7 +7,23 @@ import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
-import org.jetbrains.intellij.build.logging.LogMessage.Kind.*
+import org.jetbrains.intellij.build.logging.LogMessage.Kind.ARTIFACT_BUILT
+import org.jetbrains.intellij.build.logging.LogMessage.Kind.BLOCK_FINISHED
+import org.jetbrains.intellij.build.logging.LogMessage.Kind.BLOCK_STARTED
+import org.jetbrains.intellij.build.logging.LogMessage.Kind.BUILD_CANCEL
+import org.jetbrains.intellij.build.logging.LogMessage.Kind.BUILD_NUMBER
+import org.jetbrains.intellij.build.logging.LogMessage.Kind.BUILD_PROBLEM
+import org.jetbrains.intellij.build.logging.LogMessage.Kind.BUILD_STATUS
+import org.jetbrains.intellij.build.logging.LogMessage.Kind.BUILD_STATUS_CHANGED_TO_SUCCESSFUL
+import org.jetbrains.intellij.build.logging.LogMessage.Kind.COMPILATION_ERRORS
+import org.jetbrains.intellij.build.logging.LogMessage.Kind.DEBUG
+import org.jetbrains.intellij.build.logging.LogMessage.Kind.ERROR
+import org.jetbrains.intellij.build.logging.LogMessage.Kind.IMPORT_DATA
+import org.jetbrains.intellij.build.logging.LogMessage.Kind.INFO
+import org.jetbrains.intellij.build.logging.LogMessage.Kind.PROGRESS
+import org.jetbrains.intellij.build.logging.LogMessage.Kind.SET_PARAMETER
+import org.jetbrains.intellij.build.logging.LogMessage.Kind.STATISTICS
+import org.jetbrains.intellij.build.logging.LogMessage.Kind.WARNING
 import org.jetbrains.intellij.build.telemetry.TraceManager
 
 class TeamCityBuildMessageLogger : BuildMessageLogger() {

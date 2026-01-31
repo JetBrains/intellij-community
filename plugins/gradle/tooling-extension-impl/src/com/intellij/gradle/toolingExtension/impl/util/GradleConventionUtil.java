@@ -9,7 +9,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.*;
+import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.getGradleClass;
+import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.getValue;
+import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.invokeMethod;
 
 @ApiStatus.Internal
 public final class GradleConventionUtil {

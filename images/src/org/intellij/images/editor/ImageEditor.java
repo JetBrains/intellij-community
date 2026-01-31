@@ -21,7 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.ui.ImageComponentDecorator;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * Image viewer.

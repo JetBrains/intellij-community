@@ -32,7 +32,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import java.io.IOException;
 
 public class PackagesTreeStructureTest extends TestSourceBasedTestCase {

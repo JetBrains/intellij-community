@@ -10,7 +10,11 @@ import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 import com.intellij.util.asDisposable
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.job
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.doExecuteGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCacheableDataGenerator
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener

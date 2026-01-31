@@ -5,7 +5,12 @@ import com.intellij.concurrency.AsyncFutureResult;
 import com.intellij.database.DataGridBundle;
 import com.intellij.database.DatabaseDataKeys;
 import com.intellij.database.connection.throwable.info.ErrorInfo;
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridDataHookUp;
+import com.intellij.database.datagrid.GridPagingModel;
+import com.intellij.database.datagrid.GridRequestSource;
+import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.run.ui.DataGridRequestPlace;
 import com.intellij.database.run.ui.FloatingPagingManager;
 import com.intellij.openapi.Disposable;
@@ -25,8 +30,9 @@ import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.Insets;
 import java.util.Objects;
 
 import static com.intellij.database.datagrid.GridUtil.hidePageActions;

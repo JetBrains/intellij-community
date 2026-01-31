@@ -13,7 +13,6 @@ import java.util.function.Supplier
 import javax.swing.ButtonGroup
 import javax.swing.Icon
 import javax.swing.JPanel
-import kotlin.collections.iterator
 
 @Deprecated(
   "Custom Python SDKs support was removed from python plugin for IDEA because of UI/UX unification with PyCharm",

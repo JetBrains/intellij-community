@@ -29,7 +29,11 @@ import git4idea.rebase.log.GitNewCommitMessageActionDialog
 import git4idea.rebase.log.executeInMemoryWithFallback
 import git4idea.rebase.log.notifySuccess
 import git4idea.repo.GitRepository
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 
 @Service(Service.Level.PROJECT)

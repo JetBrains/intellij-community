@@ -23,10 +23,10 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 
 public class ExpressionCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer {
     private final Project project;

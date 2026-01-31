@@ -1,6 +1,12 @@
 package com.jetbrains.lsp.implementation
 
-import kotlinx.io.*
+import kotlinx.io.Buffer
+import kotlinx.io.IOException
+import kotlinx.io.InternalIoApi
+import kotlinx.io.Sink
+import kotlinx.io.Source
+import kotlinx.io.readByteArray
+import kotlinx.io.readString
 
 /** Replicates the ByteReadChannel interface from ktor utils with the same semantics. */
 interface ByteReader {

@@ -4,8 +4,12 @@ package org.jetbrains.kotlin.idea.formatter
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper
 import org.jetbrains.kotlin.idea.KotlinLanguage

@@ -8,8 +8,11 @@ import com.intellij.openapi.util.ExpirableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
+import java.awt.Window;
 
 public final class PassThroughIdeFocusManager extends IdeFocusManager {
   private static final PassThroughIdeFocusManager ourInstance = new PassThroughIdeFocusManager();

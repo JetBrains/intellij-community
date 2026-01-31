@@ -4,7 +4,12 @@ package andel.text
 import andel.editor.Caret
 import andel.editor.CaretPosition
 import andel.editor.MutableDocument
-import fleet.codepoints.*
+import fleet.codepoints.CodepointClass
+import fleet.codepoints.codePointAt
+import fleet.codepoints.codePointBefore
+import fleet.codepoints.codepointClass
+import fleet.codepoints.forEachCodepoint
+import fleet.codepoints.forEachCodepointReversed
 
 private enum class Direction {
   FORWARD,

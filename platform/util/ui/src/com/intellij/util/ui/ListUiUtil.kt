@@ -3,7 +3,12 @@ package com.intellij.util.ui
 
 import com.intellij.ui.JBColor
 import java.awt.Color
-import java.awt.event.*
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.awt.event.MouseListener
 import javax.swing.JList
 import javax.swing.SwingUtilities
 

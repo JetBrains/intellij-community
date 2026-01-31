@@ -3,7 +3,11 @@ package org.jetbrains.plugins.terminal.block.completion.spec.specs
 
 import com.intellij.terminal.completion.spec.ShellCommandParserOptions
 import org.jetbrains.plugins.terminal.TerminalBundle
-import org.jetbrains.plugins.terminal.block.completion.spec.*
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
 
 internal class PowerShellCommandSpecsProvider : ShellCommandSpecsProvider {
   override fun getCommandSpecs(): List<ShellCommandSpecInfo> {

@@ -12,7 +12,9 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.xml.XmlElementType.XML_ELEMENT_CONTENT_GROUP;
 import static com.intellij.psi.xml.XmlElementType.XML_ELEMENT_CONTENT_SPEC;
-import static com.intellij.psi.xml.XmlTokenType.*;
+import static com.intellij.psi.xml.XmlTokenType.XML_CONTENT_ANY;
+import static com.intellij.psi.xml.XmlTokenType.XML_CONTENT_EMPTY;
+import static com.intellij.psi.xml.XmlTokenType.XML_PCDATA;
 
 public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElementContentSpec {
   private static final Logger LOG = Logger.getInstance(XmlElementContentSpecImpl.class);

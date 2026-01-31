@@ -13,7 +13,9 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 public class CompilerCacheConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myPanel;

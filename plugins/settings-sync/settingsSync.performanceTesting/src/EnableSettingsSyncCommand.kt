@@ -3,10 +3,20 @@ package com.intellij.settingsSync.performanceTesting
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
-import com.intellij.settingsSync.core.*
+import com.intellij.settingsSync.core.CROSS_IDE_SYNC_MARKER_FILE
+import com.intellij.settingsSync.core.SettingsSyncEvents
+import com.intellij.settingsSync.core.SettingsSyncLocalSettings
+import com.intellij.settingsSync.core.SettingsSyncMain
+import com.intellij.settingsSync.core.SettingsSyncSettings
+import com.intellij.settingsSync.core.SyncSettingsEvent
+import com.intellij.settingsSync.core.UpdateResult
 import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
 import com.intellij.settingsSync.core.config.SettingsSyncEnabler
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.TimeUnit
 

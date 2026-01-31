@@ -10,8 +10,9 @@ import com.intellij.ui.icons.MenuBarIconProvider;
 import com.intellij.util.ui.JBCachingScalableIcon;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
+import java.awt.Graphics;
 
 import static java.lang.Math.ceil;
 import static java.lang.Math.floor;

@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.debugger.test.cases
 
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
-import org.jetbrains.kotlin.idea.debugger.test.*
+import org.jetbrains.kotlin.idea.debugger.test.AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest
 
 abstract class AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest :
     AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest()

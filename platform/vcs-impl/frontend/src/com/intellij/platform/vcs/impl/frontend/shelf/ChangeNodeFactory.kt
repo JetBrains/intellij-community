@@ -3,13 +3,12 @@
 
 package com.intellij.platform.vcs.impl.frontend.shelf
 
-import com.intellij.platform.vcs.impl.frontend.shelf.tree.ChangesBrowserNode
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.platform.vcs.impl.frontend.changes.tree.FilePathTreeNode
 import com.intellij.platform.vcs.impl.frontend.changes.tree.ModuleTreeNode
 import com.intellij.platform.vcs.impl.frontend.changes.tree.RepositoryTreeNode
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.ChangeSelectionIdentifier
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.ChangelistSelectionIdentifier
+import com.intellij.platform.vcs.impl.frontend.shelf.tree.ChangesBrowserNode
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.ChangesBrowserRootNode
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.SELECTION_IDENTIFIER_KEY
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.ShelvedChangeListNode
@@ -23,6 +22,7 @@ import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.platform.vcs.impl.shared.rhizome.ShelvesTreeRootEntity
 import com.intellij.platform.vcs.impl.shared.rhizome.TagNodeEntity
+import com.intellij.ui.SimpleTextAttributes
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultMutableTreeNode
 import kotlin.reflect.KClass

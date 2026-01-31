@@ -3,8 +3,19 @@ package com.intellij.platform.pasta.common
 
 import andel.operation.Operation
 import andel.operation.isIdentity
-import com.jetbrains.rhizomedb.*
-import fleet.kernel.rebase.*
+import com.jetbrains.rhizomedb.DbContext
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Instruction
+import com.jetbrains.rhizomedb.InstructionExpansion
+import com.jetbrains.rhizomedb.Op
+import com.jetbrains.rhizomedb.Q
+import com.jetbrains.rhizomedb.entity
+import com.jetbrains.rhizomedb.lookupSingle
+import fleet.kernel.rebase.InstructionCoder
+import fleet.kernel.rebase.InstructionDecodingContext
+import fleet.kernel.rebase.InstructionEncodingContext
+import fleet.kernel.rebase.SharedInstructionData
+import fleet.kernel.rebase.sharedInstruction
 import fleet.kernel.sharedId
 import fleet.util.Random
 import fleet.util.UID

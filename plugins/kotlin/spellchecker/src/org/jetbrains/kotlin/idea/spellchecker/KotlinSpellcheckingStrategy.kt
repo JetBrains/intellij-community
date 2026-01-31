@@ -12,7 +12,11 @@ import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy
 import com.intellij.spellchecker.tokenizer.Tokenizer
 import com.intellij.spellchecker.tokenizer.TokenizerBase
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParameterList
 
 internal class KotlinSpellcheckingStrategy : SpellcheckingStrategy(), DumbAware {
     private val plainTextTokenizer: Tokenizer<PsiElement> = TokenizerBase(PlainTextSplitter.getInstance())

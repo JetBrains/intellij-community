@@ -8,7 +8,11 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiModifierList
 import com.intellij.psi.PsiModifierListOwner
-import org.jetbrains.kotlin.asJava.elements.*
+import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.asJava.elements.KtLightField
+import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.elements.KtLightNullabilityAnnotation
+import org.jetbrains.kotlin.asJava.elements.KtLightParameter
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.kotlinStdlib
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.kotlinStdlibCommonSources
@@ -16,7 +20,11 @@ import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.kotlinStdlibJdk8
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.kotlinStdlibJdk8Sources
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.kotlinStdlibSources
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.Directives
+import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.setupKotlinFacet
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import kotlin.test.assertNotNull

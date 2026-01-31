@@ -15,7 +15,14 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiTypes
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.changeSignature.*
+import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor
+import com.intellij.refactoring.changeSignature.ChangeSignatureUtil
+import com.intellij.refactoring.changeSignature.JavaChangeInfo
+import com.intellij.refactoring.changeSignature.JavaChangeInfoImpl
+import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog
+import com.intellij.refactoring.changeSignature.JavaMethodDescriptor
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl
+import com.intellij.refactoring.changeSignature.ThrownExceptionInfo
 import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.util.VisibilityUtil
@@ -33,7 +40,12 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeProp
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog
 import org.jetbrains.kotlin.idea.refactoring.createJavaMethod
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 @K1Deprecation

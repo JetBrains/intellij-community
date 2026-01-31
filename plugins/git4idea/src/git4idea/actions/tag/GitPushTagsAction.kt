@@ -13,8 +13,12 @@ import git4idea.GitTag
 import git4idea.GitVcs.getInstance
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.i18n.GitBundle
-import git4idea.push.*
+import git4idea.push.GitPushSource
 import git4idea.push.GitPushSource.createTag
+import git4idea.push.GitPushSupport
+import git4idea.push.GitPushTarget
+import git4idea.push.GitPushTargetType
+import git4idea.push.GitSpecialRefRemoteBranch
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.launch

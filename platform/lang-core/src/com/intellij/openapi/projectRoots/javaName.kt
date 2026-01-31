@@ -4,7 +4,6 @@ package com.intellij.openapi.projectRoots
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.channels.EelDelicateApi
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.osFamily
 import java.nio.file.Path
 

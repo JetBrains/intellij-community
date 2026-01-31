@@ -1,6 +1,12 @@
 package com.intellij.cce.python.visitor
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.CodeFragmentWithPsi
+import com.intellij.cce.core.CodeTokenWithPsi
+import com.intellij.cce.core.Language
+import com.intellij.cce.core.SimpleTokenProperties
+import com.intellij.cce.core.SymbolLocation
+import com.intellij.cce.core.TypeProperty
 import com.intellij.cce.visitor.EvaluationVisitor
 import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.jetbrains.python.psi.PyFile

@@ -3,16 +3,29 @@ package com.intellij.vcs.log.history
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
 import com.intellij.util.xmlb.annotations.OptionTag
-import com.intellij.vcs.log.impl.*
+import com.intellij.vcs.log.impl.CommonUiProperties
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties
+import com.intellij.vcs.log.impl.VcsLogApplicationSettings
+import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
+import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
-import com.intellij.vcs.log.ui.table.column.*
+import com.intellij.vcs.log.impl.isColumnVisible
+import com.intellij.vcs.log.ui.table.column.Author
+import com.intellij.vcs.log.ui.table.column.Commit
+import com.intellij.vcs.log.ui.table.column.Date
+import com.intellij.vcs.log.ui.table.column.Root
+import com.intellij.vcs.log.ui.table.column.TableColumnVisibilityProperty
+import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty
 import org.jetbrains.annotations.ApiStatus
-import kotlin.collections.set
 
 @ApiStatus.Internal
 @State(name = "Vcs.Log.History.Properties", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])

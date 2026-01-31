@@ -8,8 +8,9 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JTree;
+import java.awt.Graphics2D;
 
 /**
  * @author Konstantin Bulenkov

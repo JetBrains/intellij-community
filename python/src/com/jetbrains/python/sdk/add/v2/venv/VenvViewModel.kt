@@ -4,7 +4,11 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
-import com.jetbrains.python.sdk.add.v2.*
+import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.FolderValidator
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.PythonToolViewModel
+import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 

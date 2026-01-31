@@ -5,8 +5,10 @@ package com.intellij.grazie.grammar.strategy
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.grazie.GraziePlugin
-import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.ElementBehavior.*
-import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain.*
+import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.ElementBehavior.ABSORB
+import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.ElementBehavior.STEALTH
+import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.ElementBehavior.TEXT
+import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain.PLAIN_TEXT
 import com.intellij.grazie.grammar.strategy.impl.ReplaceCharRule
 import com.intellij.grazie.grammar.strategy.impl.RuleGroup
 import com.intellij.grazie.utils.LinkedSet

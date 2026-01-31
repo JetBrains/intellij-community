@@ -9,9 +9,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope
 import org.jetbrains.kotlin.K1Deprecation
-import org.jetbrains.kotlin.idea.core.script.shared.ScriptClassPathUtil
 import org.jetbrains.kotlin.idea.core.script.shared.HeavyScriptInfo
 import org.jetbrains.kotlin.idea.core.script.shared.LightScriptInfo
+import org.jetbrains.kotlin.idea.core.script.shared.ScriptClassPathUtil
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import java.lang.ref.SoftReference
 

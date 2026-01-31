@@ -18,7 +18,7 @@ import kotlinx.io.IOException
 import org.jetbrains.annotations.ApiStatus
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.Base64
 
 
 @ApiStatus.Experimental

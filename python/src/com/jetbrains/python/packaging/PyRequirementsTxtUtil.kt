@@ -24,10 +24,13 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.components.dialog
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiPackageUtil
-import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -35,6 +38,7 @@ import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUti
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion.ANALYZE_ENTRIES_IN_REQUIREMENTS_FILE_FAILED
 import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion.CREATE_REQUIREMENTS_FILE_FAILED
@@ -42,7 +46,7 @@ import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion
 import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion.SOME_REQUIREMENTS_FROM_BASE_FILES_WERE_NOT_UPDATED
 import com.jetbrains.python.util.runWithModalBlockingOrInBackground
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Locale
 import kotlin.io.path.Path
 
 

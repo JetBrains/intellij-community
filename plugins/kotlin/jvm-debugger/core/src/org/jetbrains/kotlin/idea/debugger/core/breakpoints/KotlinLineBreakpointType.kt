@@ -35,13 +35,27 @@ import org.jetbrains.kotlin.idea.debugger.KotlinLambdaStartSourcePosition
 import org.jetbrains.kotlin.idea.debugger.KotlinReentrantSourcePosition
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 import org.jetbrains.kotlin.idea.debugger.core.KotlinSourcePositionHighlighter
-import org.jetbrains.kotlin.idea.debugger.core.breakpoints.*
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.ApplicabilityResult
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinLineBreakpoint
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.LineBreakpointExpressionVisitor
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.getLambdasAtLineIfAny
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.isBreakpointApplicable
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.isInlineOnly
 import org.jetbrains.kotlin.idea.debugger.getContainingMethod
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassInitializer
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
-import java.util.*
+import java.util.LinkedList
 
 interface KotlinBreakpointType
 

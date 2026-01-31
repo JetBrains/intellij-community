@@ -2,8 +2,11 @@
 package com.intellij.filePrediction
 
 import com.intellij.filePrediction.logger.FileUsagePredictionLogger
-import com.intellij.filePrediction.predictor.*
+import com.intellij.filePrediction.predictor.FilePredictionCandidatesHolder
+import com.intellij.filePrediction.predictor.FilePredictionCompressedCandidate
 import com.intellij.filePrediction.predictor.FilePredictionCompressedCandidatesHolder
+import com.intellij.filePrediction.predictor.FileUsagePredictor
+import com.intellij.filePrediction.predictor.FileUsagePredictorProvider
 import com.intellij.filePrediction.references.FilePredictionReferencesHelper
 import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.project.Project

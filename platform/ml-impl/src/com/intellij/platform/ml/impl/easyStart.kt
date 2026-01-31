@@ -3,15 +3,17 @@ package com.intellij.platform.ml.impl
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.ml.*
+import com.intellij.platform.ml.MLApiPlatform
+import com.intellij.platform.ml.MLModel
+import com.intellij.platform.ml.MLTask
+import com.intellij.platform.ml.MLTaskApproach
+import com.intellij.platform.ml.Session
 import com.intellij.platform.ml.environment.Environment
 import com.intellij.platform.ml.impl.logs.ComponentAsFusEventRegister
 import com.intellij.platform.ml.logs.AnalysisMethods
 import com.intellij.platform.ml.logs.MLSessionLoggingStrategy
 import com.intellij.platform.ml.logs.registerMLTaskLogging
-import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

@@ -1,7 +1,11 @@
 package org.jetbrains.plugins.textmate.cache
 
 import org.jetbrains.plugins.textmate.createTextMateLock
-import kotlin.concurrent.atomics.*
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.decrementAndFetch
+import kotlin.concurrent.atomics.incrementAndFetch
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeMark

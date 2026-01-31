@@ -1,7 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
-import kotlin.metadata.*;
+import kotlin.metadata.Attributes;
+import kotlin.metadata.KmClass;
+import kotlin.metadata.KmConstructor;
+import kotlin.metadata.KmDeclarationContainer;
+import kotlin.metadata.KmFunction;
+import kotlin.metadata.KmPackage;
+import kotlin.metadata.KmProperty;
+import kotlin.metadata.KmPropertyAccessorAttributes;
+import kotlin.metadata.KmType;
+import kotlin.metadata.KmTypeAlias;
+import kotlin.metadata.KmTypeParameter;
+import kotlin.metadata.KmValueParameter;
+import kotlin.metadata.Modality;
+import kotlin.metadata.Visibility;
 import kotlin.metadata.jvm.JvmExtensionsKt;
 import kotlin.metadata.jvm.KotlinClassHeader;
 import kotlin.metadata.jvm.KotlinClassMetadata;
@@ -15,7 +28,11 @@ import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.jps.util.Iterators;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**

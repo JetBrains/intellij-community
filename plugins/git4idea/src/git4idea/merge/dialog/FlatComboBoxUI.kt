@@ -6,7 +6,12 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.*
+import com.intellij.util.ui.ComponentWithEmptyText
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBValue
+import com.intellij.util.ui.StatusText
+import com.intellij.util.ui.UIUtil
 import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.Insets

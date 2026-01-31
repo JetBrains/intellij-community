@@ -2,12 +2,20 @@
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.ShutDownTracker;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.IdentityHashMap;
-import java.util.logging.*;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Filter;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 
 import static com.intellij.openapi.diagnostic.AsyncLogKt.log;
 import static com.intellij.openapi.diagnostic.AsyncLogKt.shutdownLogProcessing;

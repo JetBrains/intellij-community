@@ -5,7 +5,6 @@ import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class EmmetPreviewTestBase extends BasePlatformTestCase {

@@ -11,21 +11,21 @@ import com.intellij.ide.todo.rpc.TodoResult
 import com.intellij.ide.ui.SerializableTextChunk
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
-import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProjectOrNull
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.platform.project.ProjectId
+import com.intellij.platform.project.findProjectOrNull
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.PsiTodoSearchHelper
 import com.intellij.psi.search.TodoAttributesUtil
 import com.intellij.psi.search.TodoPattern
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
 
 private val LOG: Logger = logger<TodoRemoteApiImpl>()
 

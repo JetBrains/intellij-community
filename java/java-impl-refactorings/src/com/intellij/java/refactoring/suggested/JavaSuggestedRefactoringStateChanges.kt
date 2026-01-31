@@ -3,7 +3,15 @@ package com.intellij.java.refactoring.suggested
 
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiParameter
 import com.intellij.psi.impl.source.PsiExtensibleClass
 import com.intellij.refactoring.suggested.SuggestedRefactoringState
 import com.intellij.refactoring.suggested.SuggestedRefactoringStateChanges

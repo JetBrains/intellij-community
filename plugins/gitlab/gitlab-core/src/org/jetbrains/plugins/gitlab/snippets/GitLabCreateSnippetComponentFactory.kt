@@ -15,7 +15,17 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextArea
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.rows
 import com.intellij.util.ui.NamedColorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -25,7 +35,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
-import java.util.*
+import java.util.Optional
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JTextField

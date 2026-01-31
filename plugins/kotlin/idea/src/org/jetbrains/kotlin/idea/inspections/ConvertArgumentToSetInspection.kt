@@ -8,9 +8,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.intentions.ConvertArgumentToSetIntention.Holder.getConvertibleArguments
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.intentions.ConvertArgumentToSetIntention.Holder.getConvertibleArguments
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.expressionVisitor
 
 /**
  * Detects function calls where an argument could be converted to `Set` to improve performance.

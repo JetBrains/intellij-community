@@ -3,7 +3,6 @@ package com.intellij.settingsSync.jba
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.options.newEditor.AbstractEditor
 import com.intellij.openapi.options.newEditor.SettingsDialogListener
 import com.intellij.openapi.options.newEditor.SettingsEditor
 import com.intellij.openapi.options.newEditor.SettingsTreeView

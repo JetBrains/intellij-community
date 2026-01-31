@@ -16,7 +16,7 @@ import com.intellij.psi.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 // cannot be final because of backward compatibility (~8 external usages)
 /**

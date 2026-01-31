@@ -26,7 +26,12 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
-import com.intellij.task.*
+import com.intellij.task.BuildTask
+import com.intellij.task.ExecuteRunConfigurationTask
+import com.intellij.task.ModuleBuildTask
+import com.intellij.task.ProjectTask
+import com.intellij.task.ProjectTaskContext
+import com.intellij.task.ProjectTaskRunner
 import com.intellij.task.TaskRunnerResults.SUCCESS
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.async
@@ -39,7 +44,9 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asPromise
 import org.jetbrains.plugins.gradle.GradleJavaCoroutineScope.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.service.execution.loadHotswapDetectionInitScript
-import org.jetbrains.plugins.gradle.service.task.GradleTaskManager.*
+import org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_KEY
+import org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_PREFIX_KEY
+import org.jetbrains.plugins.gradle.service.task.GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID

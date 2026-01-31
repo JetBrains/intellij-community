@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import kotlin.test.Test
 import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
+import kotlin.test.Test
 
 class RstLexerTest : TextMateLexerTestCase() {
   @Test

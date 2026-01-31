@@ -19,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Dimension
-import java.util.*
+import java.util.UUID
 import javax.swing.JPanel
 import kotlin.math.min
 

@@ -13,8 +13,10 @@ import com.intellij.tools.ide.performanceTesting.commands.MarshallableCommand
 import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.util.common.logError
 import io.qameta.allure.Allure
-import kotlinx.coroutines.*
-import java.util.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+import java.util.UUID
 import kotlin.time.Duration
 
 class LocalDriverRunner : DriverRunner {

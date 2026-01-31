@@ -7,7 +7,12 @@ import com.intellij.lang.LighterASTTokenNode
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.DataIndexer
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
+import com.intellij.util.indexing.FileBasedIndexExtension
+import com.intellij.util.indexing.FileContent
+import com.intellij.util.indexing.ID
+import com.intellij.util.indexing.PsiDependentFileContent
 import com.intellij.util.indexing.impl.CollectionDataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
 import org.jetbrains.kotlin.K1Deprecation

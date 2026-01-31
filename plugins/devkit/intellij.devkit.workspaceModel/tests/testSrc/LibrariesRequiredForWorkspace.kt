@@ -6,7 +6,11 @@ import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library.ModifiableModel
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.PathUtil
 import com.jetbrains.rd.framework.RdId

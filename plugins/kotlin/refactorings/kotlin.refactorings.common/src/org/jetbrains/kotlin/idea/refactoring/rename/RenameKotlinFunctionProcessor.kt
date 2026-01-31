@@ -7,10 +7,16 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pass
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
-import com.intellij.refactoring.rename.*
+import com.intellij.refactoring.rename.PsiElementRenameHandler
+import com.intellij.refactoring.rename.RenameDialog
+import com.intellij.refactoring.rename.RenameJavaMethodProcessor
+import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
@@ -24,7 +30,10 @@ import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflic
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 
 class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {

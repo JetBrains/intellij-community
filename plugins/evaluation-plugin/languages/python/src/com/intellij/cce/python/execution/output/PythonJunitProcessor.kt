@@ -1,9 +1,9 @@
 package com.intellij.cce.python.execution.output
 
 import org.w3c.dom.Document
+import org.xml.sax.InputSource
 import java.io.StringReader
 import javax.xml.parsers.DocumentBuilderFactory
-import org.xml.sax.InputSource
 
 class PythonJunitProcessor() {
   /**

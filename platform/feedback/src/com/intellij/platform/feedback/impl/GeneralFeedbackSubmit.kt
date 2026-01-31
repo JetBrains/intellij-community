@@ -9,7 +9,14 @@ import com.intellij.platform.feedback.impl.statistics.FeedbackSendActionCountCol
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpRequests.JSON_CONTENT_TYPE
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import java.io.IOException
 import java.net.HttpURLConnection
 import javax.net.ssl.HttpsURLConnection

@@ -2,7 +2,11 @@
 package com.intellij.ide.startup.importSettings.transfer
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.ide.startup.importSettings.data.DialogImportItem
+import com.intellij.ide.startup.importSettings.data.IconProductSize
+import com.intellij.ide.startup.importSettings.data.ImportFromProduct
+import com.intellij.ide.startup.importSettings.data.ImportProgress
+import com.intellij.ide.startup.importSettings.data.SettingsContributor
 import com.intellij.ide.startup.importSettings.jb.JbProductInfo
 import com.intellij.ide.startup.importSettings.jb.NameMappings
 import com.intellij.ide.startup.importSettings.models.BaseIdeVersion

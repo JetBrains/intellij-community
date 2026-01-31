@@ -22,10 +22,13 @@ import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 
-import static com.intellij.ide.actions.runAnything.RunAnythingUtil.*;
+import static com.intellij.ide.actions.runAnything.RunAnythingUtil.LOG;
+import static com.intellij.ide.actions.runAnything.RunAnythingUtil.getAdContextText;
+import static com.intellij.ide.actions.runAnything.RunAnythingUtil.getAdDebugText;
+import static com.intellij.ide.actions.runAnything.RunAnythingUtil.getAdDeleteCommandText;
 
 public abstract class RunAnythingCommandProvider extends RunAnythingProviderBase<String> {
   @Override

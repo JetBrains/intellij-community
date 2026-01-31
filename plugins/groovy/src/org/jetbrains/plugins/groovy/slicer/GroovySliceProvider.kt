@@ -5,7 +5,15 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.slicer.*
+import com.intellij.slicer.GroupByLeavesAction
+import com.intellij.slicer.LanguageSlicing
+import com.intellij.slicer.SliceAnalysisParams
+import com.intellij.slicer.SliceLanguageSupportProvider
+import com.intellij.slicer.SliceLeafAnalyzer
+import com.intellij.slicer.SliceLeafEquality
+import com.intellij.slicer.SliceTreeBuilder
+import com.intellij.slicer.SliceUsage
+import com.intellij.slicer.SliceUsageTransformer
 import com.intellij.util.CommonProcessors
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement

@@ -8,10 +8,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenCommandLineOptions.Option;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Component;
 
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
+import static com.intellij.openapi.util.text.StringUtil.substringAfterLast;
 
 public class RunAnythingMavenItem extends RunAnythingItemBase {
 

@@ -13,8 +13,8 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.K1Deprecation
-import org.jetbrains.kotlin.idea.core.script.v1.ScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 import java.nio.file.Path
 import kotlin.io.path.pathString

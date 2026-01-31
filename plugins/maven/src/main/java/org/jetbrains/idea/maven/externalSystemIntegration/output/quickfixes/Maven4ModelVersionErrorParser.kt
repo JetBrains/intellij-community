@@ -38,7 +38,11 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.execution.SyncBundle
-import org.jetbrains.idea.maven.externalSystemIntegration.output.*
+import org.jetbrains.idea.maven.externalSystemIntegration.output.LogMessageType
+import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryReader
+import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser
+import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext
+import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenSpyLoggedEventParser
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.MavenImportLoggedEventParser
 import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenEventType
 import org.jetbrains.idea.maven.model.MavenConstants

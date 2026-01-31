@@ -6,10 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.testFramework.LightProjectDescriptor;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
-import de.plushnikov.intellij.plugin.LombokTestUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.concurrent.ExecutionException;

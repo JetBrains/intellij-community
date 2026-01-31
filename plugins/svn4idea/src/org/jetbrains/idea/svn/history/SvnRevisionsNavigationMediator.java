@@ -18,7 +18,11 @@ import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 

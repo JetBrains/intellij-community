@@ -35,7 +35,11 @@ import git4idea.config.GitExecutableManager
 import git4idea.config.GitMergeSettings
 import git4idea.config.GitVersionSpecialty.NO_VERIFY_SUPPORTED
 import git4idea.i18n.GitBundle
-import git4idea.merge.dialog.*
+import git4idea.merge.dialog.CmdLabel
+import git4idea.merge.dialog.FlatComboBoxUI
+import git4idea.merge.dialog.GitOptionsPanel
+import git4idea.merge.dialog.GitOptionsPopupBuilder
+import git4idea.merge.dialog.OptionInfo
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitRepositoryReader

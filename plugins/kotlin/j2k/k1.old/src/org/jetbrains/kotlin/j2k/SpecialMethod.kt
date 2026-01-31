@@ -2,14 +2,40 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiSuperExpression
+import com.intellij.psi.PsiType
 import com.intellij.psi.impl.PsiExpressionEvaluator
 import org.jetbrains.kotlin.K1Deprecation
-import org.jetbrains.kotlin.j2k.ast.*
+import org.jetbrains.kotlin.j2k.ast.ArgumentList
+import org.jetbrains.kotlin.j2k.ast.AssignmentExpression
+import org.jetbrains.kotlin.j2k.ast.BinaryExpression
+import org.jetbrains.kotlin.j2k.ast.Block
+import org.jetbrains.kotlin.j2k.ast.ClassType
+import org.jetbrains.kotlin.j2k.ast.CommentsAndSpacesInheritance
+import org.jetbrains.kotlin.j2k.ast.Expression
+import org.jetbrains.kotlin.j2k.ast.Identifier
+import org.jetbrains.kotlin.j2k.ast.LPar
+import org.jetbrains.kotlin.j2k.ast.LambdaExpression
+import org.jetbrains.kotlin.j2k.ast.LiteralExpression
+import org.jetbrains.kotlin.j2k.ast.MethodCallExpression
+import org.jetbrains.kotlin.j2k.ast.Operator
+import org.jetbrains.kotlin.j2k.ast.QualifiedExpression
+import org.jetbrains.kotlin.j2k.ast.RPar
+import org.jetbrains.kotlin.j2k.ast.ReferenceElement
+import org.jetbrains.kotlin.j2k.ast.Type
+import org.jetbrains.kotlin.j2k.ast.TypeCastExpression
+import org.jetbrains.kotlin.j2k.ast.assignNoPrototype
+import org.jetbrains.kotlin.j2k.ast.assignPrototype
 import java.io.PrintStream
-import java.util.*
+import java.util.Collections
 
 @K1Deprecation
 enum class SpecialMethod(private val qualifiedClassName: String?, val methodName: String, val parameterCount: Int?) {

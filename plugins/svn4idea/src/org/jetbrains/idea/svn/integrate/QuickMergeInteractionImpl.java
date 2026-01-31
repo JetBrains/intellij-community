@@ -20,13 +20,19 @@ import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import java.util.List;
 
 import static com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE;
-import static com.intellij.openapi.ui.Messages.*;
+import static com.intellij.openapi.ui.Messages.OK;
+import static com.intellij.openapi.ui.Messages.getQuestionIcon;
+import static com.intellij.openapi.ui.Messages.showDialog;
+import static com.intellij.openapi.ui.Messages.showOkCancelDialog;
 import static com.intellij.util.Functions.TO_STRING;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
 import static org.jetbrains.idea.svn.SvnBundle.message;
-import static org.jetbrains.idea.svn.integrate.LocalChangesAction.*;
+import static org.jetbrains.idea.svn.integrate.LocalChangesAction.cancel;
+import static org.jetbrains.idea.svn.integrate.LocalChangesAction.continueMerge;
+import static org.jetbrains.idea.svn.integrate.LocalChangesAction.inspect;
+import static org.jetbrains.idea.svn.integrate.LocalChangesAction.shelve;
 import static org.jetbrains.idea.svn.integrate.ToBeMergedDialog.MERGE_ALL_CODE;
 
 public class QuickMergeInteractionImpl implements QuickMergeInteraction {

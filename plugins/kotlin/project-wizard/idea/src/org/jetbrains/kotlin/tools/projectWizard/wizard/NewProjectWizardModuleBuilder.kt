@@ -3,7 +3,12 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.actions.NewProjectAction
-import com.intellij.ide.util.projectWizard.*
+import com.intellij.ide.util.projectWizard.EmptyModuleBuilder
+import com.intellij.ide.util.projectWizard.ModuleBuilder
+import com.intellij.ide.util.projectWizard.ModuleWizardStep
+import com.intellij.ide.util.projectWizard.ProjectWizardUtil
+import com.intellij.ide.util.projectWizard.SettingsStep
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.AbstractWizard
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -49,7 +54,7 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep.FirstWizardS
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.runWithProgressBar
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.SecondStepWizardComponent
 import java.io.File
-import java.util.*
+import java.util.Locale
 import java.util.regex.Pattern
 import javax.swing.JButton
 import javax.swing.JComponent

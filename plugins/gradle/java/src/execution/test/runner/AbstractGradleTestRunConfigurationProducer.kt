@@ -10,11 +10,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.gradle.execution.test.runner.TestTasksChooser.Companion.contextWithLocationName
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
+import org.jetbrains.plugins.gradle.util.TasksToRun
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine.Companion.parse
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTasks
-import org.jetbrains.plugins.gradle.util.TasksToRun
 import org.jetbrains.plugins.gradle.util.createTestWildcardFilter
-import java.util.*
+import java.util.StringJoiner
 import java.util.function.Consumer
 
 abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : PsiElement> : GradleTestRunConfigurationProducer() {

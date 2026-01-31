@@ -3,7 +3,13 @@ package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.java.refactoring.JavaRefactoringBundle
-import com.intellij.psi.*
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiVariable
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle

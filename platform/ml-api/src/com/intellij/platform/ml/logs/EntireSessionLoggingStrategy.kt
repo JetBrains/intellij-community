@@ -7,8 +7,21 @@ import com.intellij.platform.ml.TierInstance
 import com.intellij.platform.ml.environment.Environment
 import com.intellij.platform.ml.feature.Feature
 import com.intellij.platform.ml.feature.FeatureDeclaration
-import com.intellij.platform.ml.logs.schema.*
-import com.intellij.platform.ml.session.*
+import com.intellij.platform.ml.logs.schema.BooleanEventField
+import com.intellij.platform.ml.logs.schema.DoubleEventField
+import com.intellij.platform.ml.logs.schema.EventField
+import com.intellij.platform.ml.logs.schema.EventPair
+import com.intellij.platform.ml.logs.schema.IntEventField
+import com.intellij.platform.ml.logs.schema.ObjectDescription
+import com.intellij.platform.ml.logs.schema.ObjectEventData
+import com.intellij.platform.ml.logs.schema.ObjectEventField
+import com.intellij.platform.ml.logs.schema.ObjectListEventField
+import com.intellij.platform.ml.session.AnalysedRootContainer
+import com.intellij.platform.ml.session.AnalysedSessionTree
+import com.intellij.platform.ml.session.AnalysedTierScheme
+import com.intellij.platform.ml.session.DescribedTierScheme
+import com.intellij.platform.ml.session.DescriptionPartition
+import com.intellij.platform.ml.session.SessionTree
 import org.jetbrains.annotations.ApiStatus
 
 /**

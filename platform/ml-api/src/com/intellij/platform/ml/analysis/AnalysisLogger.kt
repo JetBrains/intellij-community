@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.analysis
 
-import com.intellij.platform.ml.*
+import com.intellij.platform.ml.MLApiPlatform
+import com.intellij.platform.ml.MLModel
+import com.intellij.platform.ml.PerTier
+import com.intellij.platform.ml.PerTierInstance
+import com.intellij.platform.ml.Session
 import com.intellij.platform.ml.environment.Environment
 import com.intellij.platform.ml.feature.Feature
 import com.intellij.platform.ml.logs.MLSessionLogger
@@ -9,7 +13,14 @@ import com.intellij.platform.ml.logs.schema.EventPair
 import com.intellij.platform.ml.monitoring.MLApproachInitializationListener
 import com.intellij.platform.ml.monitoring.MLApproachListener
 import com.intellij.platform.ml.monitoring.MLSessionListener
-import com.intellij.platform.ml.session.*
+import com.intellij.platform.ml.session.AnalysedLevel
+import com.intellij.platform.ml.session.AnalysedRootContainer
+import com.intellij.platform.ml.session.AnalysedSessionTree
+import com.intellij.platform.ml.session.AnalysedTierData
+import com.intellij.platform.ml.session.DescribedRootContainer
+import com.intellij.platform.ml.session.DescribedSessionTree
+import com.intellij.platform.ml.session.DescribedTierData
+import com.intellij.platform.ml.session.SessionTree
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantLock

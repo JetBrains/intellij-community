@@ -17,8 +17,9 @@ import com.jetbrains.python.module.PyContentEntriesEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 public class PyContentEntriesModuleConfigurable extends SearchableConfigurable.Parent.Abstract {
   private final Module myModule;

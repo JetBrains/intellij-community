@@ -2,7 +2,15 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vcs.changes.local.*;
+import com.intellij.openapi.vcs.changes.local.AddList;
+import com.intellij.openapi.vcs.changes.local.ChangeListCommand;
+import com.intellij.openapi.vcs.changes.local.EditComment;
+import com.intellij.openapi.vcs.changes.local.EditData;
+import com.intellij.openapi.vcs.changes.local.EditName;
+import com.intellij.openapi.vcs.changes.local.MoveChanges;
+import com.intellij.openapi.vcs.changes.local.RemoveList;
+import com.intellij.openapi.vcs.changes.local.SetDefault;
+import com.intellij.openapi.vcs.changes.local.SetReadOnly;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

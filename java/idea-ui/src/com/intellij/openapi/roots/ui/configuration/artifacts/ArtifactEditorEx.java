@@ -25,7 +25,7 @@ import com.intellij.packaging.ui.ArtifactEditor;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface ArtifactEditorEx extends ArtifactEditor, Disposable {
   DataKey<ArtifactEditorEx> ARTIFACTS_EDITOR_KEY = DataKey.create("artifactsEditor");

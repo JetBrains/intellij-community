@@ -1,8 +1,18 @@
 package com.intellij.database.run.ui;
 
 import com.intellij.database.DataGridBundle;
-import com.intellij.database.datagrid.*;
-import com.intellij.database.extractors.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtil;
+import com.intellij.database.datagrid.GridWidget;
+import com.intellij.database.datagrid.ResultView;
+import com.intellij.database.datagrid.SelectionModel;
+import com.intellij.database.extractors.DataAggregatorFactory;
+import com.intellij.database.extractors.DataExtractor;
+import com.intellij.database.extractors.DataExtractorFactories;
+import com.intellij.database.extractors.ExtractorConfig;
+import com.intellij.database.extractors.ExtractorsHelper;
 import com.intellij.database.settings.DataGridSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts;

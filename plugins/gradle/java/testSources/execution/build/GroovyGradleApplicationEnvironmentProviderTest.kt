@@ -8,7 +8,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.execution.build.GroovyGradleProjectTaskRunnerTest.Companion.GROOVY5_PROJECT
 import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGroovy5IsSupported
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType

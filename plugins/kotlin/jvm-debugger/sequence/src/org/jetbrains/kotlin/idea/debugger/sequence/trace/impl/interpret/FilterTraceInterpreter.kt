@@ -2,7 +2,13 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.interpret
 
-import com.intellij.debugger.streams.core.trace.*
+import com.intellij.debugger.streams.core.trace.ArrayReference
+import com.intellij.debugger.streams.core.trace.BooleanValue
+import com.intellij.debugger.streams.core.trace.CallTraceInterpreter
+import com.intellij.debugger.streams.core.trace.IntegerValue
+import com.intellij.debugger.streams.core.trace.TraceElement
+import com.intellij.debugger.streams.core.trace.TraceInfo
+import com.intellij.debugger.streams.core.trace.Value
 import com.intellij.debugger.streams.core.trace.impl.TraceElementImpl
 import com.intellij.debugger.streams.core.trace.impl.interpret.ValuesOrderInfo
 import com.intellij.debugger.streams.core.trace.impl.interpret.ex.UnexpectedValueTypeException

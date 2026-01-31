@@ -22,7 +22,11 @@ import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.PlatformUtils
-import com.jetbrains.rd.util.reactive.*
+import com.jetbrains.rd.util.reactive.IProperty
+import com.jetbrains.rd.util.reactive.IPropertyView
+import com.jetbrains.rd.util.reactive.ISignal
+import com.jetbrains.rd.util.reactive.Property
+import com.jetbrains.rd.util.reactive.Signal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async

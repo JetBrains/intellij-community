@@ -5,7 +5,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
 
 public final class LoremGenerator {
   @ApiStatus.Internal

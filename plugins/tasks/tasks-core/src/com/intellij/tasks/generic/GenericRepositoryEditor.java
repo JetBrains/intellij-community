@@ -18,15 +18,23 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import java.awt.CardLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.tasks.generic.GenericRepositoryUtil.*;
+import static com.intellij.tasks.generic.GenericRepositoryUtil.concat;
+import static com.intellij.tasks.generic.GenericRepositoryUtil.createPlaceholdersList;
+import static com.intellij.tasks.generic.GenericRepositoryUtil.prettifyVariableName;
 import static com.intellij.ui.TextFieldWithAutoCompletion.StringsCompletionProvider;
 
 /**

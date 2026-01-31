@@ -4,7 +4,9 @@ package org.jetbrains.plugins.groovy.lang.resolve.modifiers;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 
-import static com.intellij.psi.PsiModifier.*;
+import static com.intellij.psi.PsiModifier.PACKAGE_LOCAL;
+import static com.intellij.psi.PsiModifier.PRIVATE;
+import static com.intellij.psi.PsiModifier.PUBLIC;
 
 public class GrConstructorVisibilityTest extends GrVisibilityTestBase {
   public void testPackageScope() {

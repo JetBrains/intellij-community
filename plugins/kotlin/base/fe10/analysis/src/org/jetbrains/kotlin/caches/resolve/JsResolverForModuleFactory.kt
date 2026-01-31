@@ -4,7 +4,12 @@ package org.jetbrains.kotlin.caches.resolve
 
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.kotlin.K1Deprecation
-import org.jetbrains.kotlin.analyzer.*
+import org.jetbrains.kotlin.analyzer.LibraryModuleInfo
+import org.jetbrains.kotlin.analyzer.ModuleContent
+import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.analyzer.ResolverForModule
+import org.jetbrains.kotlin.analyzer.ResolverForModuleFactory
+import org.jetbrains.kotlin.analyzer.ResolverForProject
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.container.StorageComponentContainer
 import org.jetbrains.kotlin.container.get

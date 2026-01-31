@@ -22,7 +22,7 @@ import org.jetbrains.plugins.github.api.data.GithubPullRequestMergeMethod
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListSearchValue
 import org.jetbrains.plugins.github.util.GHEnterpriseServerMetadataLoader
-import java.util.*
+import java.util.Locale
 
 // TODO: Fix or replace a whole bunch of these statistics as they're no longer being collected since generalizing to Collab Tools
 internal object GHPRStatisticsCollector : CounterUsagesCollector() {

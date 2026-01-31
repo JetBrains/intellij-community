@@ -21,8 +21,13 @@ import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.asSafely
-import com.jetbrains.jsonSchema.impl.*
+import com.jetbrains.jsonSchema.impl.IfThenElse
+import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject
+import com.jetbrains.jsonSchema.impl.JsonSchemaReader
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver.selectSchema
+import com.jetbrains.jsonSchema.impl.JsonSchemaType
+import com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder
 import com.jetbrains.jsonSchema.impl.tree.JsonSchemaNodeExpansionRequest
 import org.intellij.lang.annotations.Language
 import org.junit.Assert

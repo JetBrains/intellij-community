@@ -15,7 +15,7 @@ import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHCommitHash
 import org.jetbrains.plugins.github.api.data.GHNode
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread.Companion.LOG
-import java.util.*
+import java.util.Date
 
 @GraphQLFragment("/graphql/fragment/pullRequestReviewThread.graphql")
 data class GHPullRequestReviewThread(

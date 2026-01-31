@@ -22,7 +22,11 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PluginRelatedLocatorsUtils;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**

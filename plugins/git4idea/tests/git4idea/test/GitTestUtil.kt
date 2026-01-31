@@ -5,7 +5,9 @@ package git4idea.test
 
 import com.intellij.dvcs.push.PushSpec
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.Executor.append
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
@@ -35,7 +37,6 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.collections.contains
 
 const val USER_NAME = "John Doe"
 const val USER_EMAIL = "John.Doe@example.com"

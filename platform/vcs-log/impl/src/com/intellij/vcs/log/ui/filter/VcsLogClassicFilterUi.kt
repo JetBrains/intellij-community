@@ -3,7 +3,16 @@ package com.intellij.vcs.log.ui.filter
 
 import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -20,7 +29,12 @@ import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogDataPack
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.VcsLogRootFilter
+import com.intellij.vcs.log.VcsLogStructureFilter
+import com.intellij.vcs.log.VcsLogUserFilter
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.roots
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties

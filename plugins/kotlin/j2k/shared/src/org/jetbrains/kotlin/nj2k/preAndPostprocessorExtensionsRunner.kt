@@ -4,13 +4,11 @@ package org.jetbrains.kotlin.nj2k
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
-import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.j2k.J2kExtension
 import org.jetbrains.kotlin.j2k.J2kPostprocessorExtension
 import org.jetbrains.kotlin.j2k.J2kPreprocessorExtension

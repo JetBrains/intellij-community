@@ -4,7 +4,11 @@ import com.intellij.cce.util.httpGet
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.util.SystemProperties
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.exists
+import kotlin.io.path.name
+import kotlin.io.path.readText
 
 
 sealed interface DatasetRef {

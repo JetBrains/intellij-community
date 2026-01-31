@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress;
 
-import com.intellij.build.*;
+import com.intellij.build.BuildBundle;
+import com.intellij.build.BuildDescriptor;
+import com.intellij.build.BuildViewManager;
+import com.intellij.build.DefaultBuildDescriptor;
+import com.intellij.build.FilePosition;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
 import com.intellij.build.progress.BuildProgress;
@@ -15,7 +19,13 @@ import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.execution.filters.UrlFilter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -31,13 +41,34 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Stack;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static com.intellij.execution.filters.RegexpFilter.*;
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.execution.filters.RegexpFilter.COLUMN_MACROS;
+import static com.intellij.execution.filters.RegexpFilter.FILE_PATH_MACROS;
+import static com.intellij.execution.filters.RegexpFilter.LINE_MACROS;
+import static com.intellij.openapi.util.text.StringUtil.capitalize;
+import static com.intellij.openapi.util.text.StringUtil.endsWithLineBreak;
+import static com.intellij.openapi.util.text.StringUtil.escapeMnemonics;
+import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.openapi.util.text.StringUtil.splitByLines;
+import static com.intellij.openapi.util.text.StringUtil.startsWithChar;
+import static com.intellij.openapi.util.text.StringUtil.trimEnd;
+import static com.intellij.openapi.util.text.StringUtil.trimStart;
+import static com.intellij.openapi.util.text.StringUtil.wordsToBeginFromLowerCase;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 @ApiStatus.Internal

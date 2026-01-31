@@ -2,6 +2,7 @@
 package org.jetbrains.jewel.foundation.search
 
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
+import org.jetbrains.jewel.foundation.search.SpeedSearchMatcher.Companion.patternMatcher
 import org.jetbrains.jewel.foundation.search.impl.ExactSubstringSpeedSearchMatcher
 import org.jetbrains.jewel.foundation.search.impl.PatternSpeedSearchMatcher
 

@@ -11,8 +11,11 @@ import org.jetbrains.plugins.textmate.TestUtil
 import org.jetbrains.plugins.textmate.TestUtil.findScopeByFileName
 import org.jetbrains.plugins.textmate.TestUtil.loadBundle
 import org.jetbrains.plugins.textmate.language.TextMateConcurrentMapInterner
-import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
-import org.jetbrains.plugins.textmate.language.syntax.lexer.*
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateCachingSyntaxMatcher
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateHighlightingLexer
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateSyntaxMatcher
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateSyntaxMatcherImpl
+import org.jetbrains.plugins.textmate.language.syntax.lexer.caching
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
 import org.jetbrains.plugins.textmate.language.syntax.selector.caching

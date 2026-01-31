@@ -15,11 +15,18 @@ import org.jetbrains.kotlin.idea.completion.handlers.KeywordConstructLookupObjec
 import org.jetbrains.kotlin.idea.completion.handlers.KeywordConstructorInsertionHandler
 import org.jetbrains.kotlin.idea.completion.handlers.LineAdjusterInsertionHandler
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.ChainedInsertHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.CompoundInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.SuperLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.TailTextInsertHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.TypeParameterInWhenClauseILookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.TypeParameterInWhenClauseInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.WhenConditionInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.WhenConditionLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.AdaptToExplicitReceiverInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.BracketOperatorInsertionHandler
-import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.QualifyContextSensitiveResolutionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.InsertRequiredTypeArgumentsInsertHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.QualifyContextSensitiveResolutionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.TrailingLambdaInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WithImportInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WrapSingleStringTemplateEntryWithBracesInsertHandler
@@ -33,7 +40,18 @@ import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.InsertStr
 import org.jetbrains.kotlin.idea.completion.lookups.QuotedNamesAwareInsertionHandler
 import org.jetbrains.kotlin.idea.completion.lookups.UniqueLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.UpdateLookupElementBuilderToInsertTypeQualifierOnSuperInsertionHandler
-import org.jetbrains.kotlin.idea.completion.lookups.factories.*
+import org.jetbrains.kotlin.idea.completion.lookups.factories.AsIdentifierCustomInsertionHandler
+import org.jetbrains.kotlin.idea.completion.lookups.factories.CallableIdentifierInsertionHandler
+import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierInsertionHandler
+import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
+import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject
+import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionInsertionHandler
+import org.jetbrains.kotlin.idea.completion.lookups.factories.OperatorNameLookupObject
+import org.jetbrains.kotlin.idea.completion.lookups.factories.PackagePartInsertionHandler
+import org.jetbrains.kotlin.idea.completion.lookups.factories.PackagePartLookupObject
+import org.jetbrains.kotlin.idea.completion.lookups.factories.VariableInsertionHandler
+import org.jetbrains.kotlin.idea.completion.lookups.factories.VariableLookupObject
+import org.jetbrains.kotlin.idea.completion.lookups.factories.WithCallArgsInsertionHandler
 
 @ApiStatus.Internal
 val serializableInsertionHandlerSerializersModule: SerializersModule = SerializersModule {

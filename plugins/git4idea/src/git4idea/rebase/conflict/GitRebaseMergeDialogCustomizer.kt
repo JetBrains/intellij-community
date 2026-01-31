@@ -17,7 +17,14 @@ import git4idea.GitUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.history.GitHistoryUtils
 import git4idea.i18n.GitBundleExtensions.html
-import git4idea.merge.*
+import git4idea.merge.GitDefaultMergeDialogCustomizer
+import git4idea.merge.GitMergeDialogCustomizerHelper
+import git4idea.merge.GitMergeProvider
+import git4idea.merge.getDefaultLeftPanelTitleForBranch
+import git4idea.merge.getDefaultRightPanelTitleForBranch
+import git4idea.merge.getDescriptionForRebase
+import git4idea.merge.getTitleWithCommitDetailsCustomizer
+import git4idea.merge.getTitleWithCommitsRangeDetailsCustomizer
 import git4idea.rebase.GitRebaseSpec
 import git4idea.repo.GitRepository
 

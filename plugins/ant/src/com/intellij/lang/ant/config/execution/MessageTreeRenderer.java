@@ -8,8 +8,10 @@ import com.intellij.ui.MultilineTreeCellRenderer;
 import com.intellij.ui.SideBorder;
 import icons.AntIcons;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
+import java.awt.Color;
 
 final class MessageTreeRenderer extends MultilineTreeCellRenderer {
 

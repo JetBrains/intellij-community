@@ -33,10 +33,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static git4idea.GitNotificationIdsHolder.*;
-import static git4idea.GitUtil.*;
+import static git4idea.GitNotificationIdsHolder.RESET_FAILED;
+import static git4idea.GitNotificationIdsHolder.RESET_PARTIALLY_FAILED;
+import static git4idea.GitNotificationIdsHolder.RESET_SUCCESSFUL;
+import static git4idea.GitUtil.findLocalChangesForPaths;
+import static git4idea.GitUtil.getHead;
+import static git4idea.GitUtil.toAbsolute;
+import static git4idea.GitUtil.updateAndRefreshChangedVfs;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.RESET;
 
 public class GitResetOperation {

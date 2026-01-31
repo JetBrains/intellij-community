@@ -6,8 +6,11 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
-import org.jetbrains.uast.*
-import java.util.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UComment
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UImportStatement
+import org.jetbrains.uast.UastLanguagePlugin
 
 class GrUFile(override val sourcePsi: GroovyFile, override val languagePlugin: UastLanguagePlugin) : UFile {
   override val psi: PsiFile

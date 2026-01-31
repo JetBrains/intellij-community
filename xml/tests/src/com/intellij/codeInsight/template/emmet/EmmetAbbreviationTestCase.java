@@ -13,7 +13,6 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ui.UIUtil;
 
 import static com.intellij.codeInsight.template.emmet.ZenCodingTemplate.doWrap;
 

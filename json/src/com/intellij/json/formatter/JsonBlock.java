@@ -1,7 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.formatter;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.ASTBlock;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.ChildAttributes;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Spacing;
+import com.intellij.formatting.SpacingBuilder;
+import com.intellij.formatting.Wrap;
+import com.intellij.formatting.WrapType;
 import com.intellij.json.psi.JsonArray;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
@@ -18,7 +26,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.json.JsonElementTypes.*;
+import static com.intellij.json.JsonElementTypes.ARRAY;
+import static com.intellij.json.JsonElementTypes.COLON;
+import static com.intellij.json.JsonElementTypes.COMMA;
+import static com.intellij.json.JsonElementTypes.L_BRACKET;
+import static com.intellij.json.JsonElementTypes.L_CURLY;
+import static com.intellij.json.JsonElementTypes.OBJECT;
+import static com.intellij.json.JsonElementTypes.PROPERTY;
+import static com.intellij.json.JsonElementTypes.R_BRACKET;
+import static com.intellij.json.JsonElementTypes.R_CURLY;
 import static com.intellij.json.JsonTokenSets.JSON_CONTAINERS;
 import static com.intellij.json.formatter.JsonCodeStyleSettings.ALIGN_PROPERTY_ON_COLON;
 import static com.intellij.json.formatter.JsonCodeStyleSettings.ALIGN_PROPERTY_ON_VALUE;

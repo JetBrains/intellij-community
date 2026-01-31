@@ -14,7 +14,9 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import java.awt.event.ActionEvent;

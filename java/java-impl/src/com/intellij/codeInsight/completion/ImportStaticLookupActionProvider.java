@@ -11,7 +11,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 final class ImportStaticLookupActionProvider implements LookupActionProvider {
   @Override

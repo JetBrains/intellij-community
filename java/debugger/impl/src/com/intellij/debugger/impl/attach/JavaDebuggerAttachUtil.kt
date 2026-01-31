@@ -7,7 +7,11 @@ import com.intellij.execution.process.BaseProcessHandler
 import com.intellij.openapi.project.Project
 import com.sun.tools.attach.AttachNotSupportedException
 import com.sun.tools.attach.VirtualMachine
-import sun.jvmstat.monitor.*
+import sun.jvmstat.monitor.HostIdentifier
+import sun.jvmstat.monitor.MonitoredHost
+import sun.jvmstat.monitor.MonitoredVm
+import sun.jvmstat.monitor.MonitoredVmUtil
+import sun.jvmstat.monitor.VmIdentifier
 import java.io.IOException
 
 object JavaDebuggerAttachUtil {

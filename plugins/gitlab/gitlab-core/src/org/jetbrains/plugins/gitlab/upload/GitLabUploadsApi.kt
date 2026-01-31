@@ -11,7 +11,7 @@ import org.jetbrains.plugins.gitlab.api.restApiUri
 import java.io.InputStream
 import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse
-import java.util.*
+import java.util.UUID
 
 
 @SinceGitLab("15.10")

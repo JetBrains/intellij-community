@@ -4,7 +4,13 @@ package com.intellij.searchEverywhereMl.ranking.core.features
 import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField
+import com.intellij.internal.statistic.eventLog.events.DoubleEventField
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.IntEventField
+import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.searchEverywhereMl.ranking.core.searchEverywhereMlRankingService

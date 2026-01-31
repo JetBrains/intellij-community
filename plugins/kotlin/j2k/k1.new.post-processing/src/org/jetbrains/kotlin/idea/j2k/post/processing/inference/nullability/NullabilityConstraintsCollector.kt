@@ -9,7 +9,14 @@ import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.Constraint
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.InferenceContext
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors.ConstraintsCollector
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtWhileExpressionBase
 
 @K1Deprecation
 class NullabilityConstraintsCollector : ConstraintsCollector() {

@@ -4,7 +4,15 @@ package org.jetbrains.kotlin.idea.j2k.post.processing.inference.nullability
 
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
-import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.*
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.DefaultStateProvider
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.FunctionParameter
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.FunctionReturnType
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.OtherTarget
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.Property
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.State
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.TypeArgument
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.TypeElementBasedTypeVariable
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.TypeVariable
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate

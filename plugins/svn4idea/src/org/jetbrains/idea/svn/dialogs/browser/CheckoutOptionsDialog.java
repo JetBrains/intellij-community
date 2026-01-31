@@ -21,8 +21,14 @@ import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.revision.SvnSelectRevisionPanel;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListModel;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ScrollPaneConstants;
+import java.awt.Dimension;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;

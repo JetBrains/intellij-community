@@ -3,7 +3,14 @@ package org.intellij.plugins.intelliLang
 
 import com.intellij.openapi.project.Project
 import com.intellij.ui.ReferenceEditorWithBrowseButton
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.MutableProperty
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import org.intellij.plugins.intelliLang.util.PsiUtilEx
 import org.jetbrains.annotations.ApiStatus

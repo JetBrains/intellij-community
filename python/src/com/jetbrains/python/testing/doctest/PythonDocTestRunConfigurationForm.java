@@ -23,12 +23,14 @@ import com.jetbrains.python.testing.PyTestSharedForm;
 import com.jetbrains.python.testing.PythonTestLegacyRunConfigurationForm;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
+import java.awt.BorderLayout;
 
 public class PythonDocTestRunConfigurationForm implements PythonDocTestRunConfigurationParams {
   private final JPanel myRootPanel;

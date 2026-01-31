@@ -8,8 +8,20 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.*;
-import com.intellij.util.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceProviderBean;
+import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.PsiReferencesWrapper;
+import com.intellij.psi.ReferenceRange;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IdempotenceChecker;
+import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectMap;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectMaps;
@@ -18,7 +30,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {

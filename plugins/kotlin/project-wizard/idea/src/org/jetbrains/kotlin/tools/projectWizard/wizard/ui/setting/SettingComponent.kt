@@ -6,8 +6,8 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.Setting
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingReference
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingType
 import org.jetbrains.kotlin.tools.projectWizard.wizard.OnUserSettingChangeStatisticsLogger
-import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.TitledComponent
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.FocusableComponent
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.TitledComponent
 
 abstract class SettingComponent<V : Any, T : SettingType<V>>(
     val reference: SettingReference<V, T>,

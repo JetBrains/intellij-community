@@ -9,13 +9,21 @@ import com.intellij.codeInspection.dataFlow.lang.ir.EvalInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.codeInspection.dataFlow.types.DfBooleanType;
+import com.intellij.codeInspection.dataFlow.types.DfFloatingPointType;
+import com.intellij.codeInspection.dataFlow.types.DfIntType;
+import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInspection.dataFlow.types.DfTypes.*;
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.NULL;
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.concatenationResult;
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.intRange;
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.intValue;
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.referenceConstant;
 
 public class StringConcatInstruction extends EvalInstruction {
   private final @NotNull TypeConstraint myStringType;

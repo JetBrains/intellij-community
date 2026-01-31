@@ -13,11 +13,14 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.UnderscoreTypeArgumentsU
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.UnderscoreTypeArgumentsUtils.replaceTypeProjection
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.types.error.ErrorType
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtTypeArgumentList
+import org.jetbrains.kotlin.psi.KtTypeProjection
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext.isNullableAny
+import org.jetbrains.kotlin.types.error.ErrorType
 
 @K1Deprecation
 class ReplaceUnderscoreWithTypeArgumentIntention : SelfTargetingRangeIntention<KtTypeProjection>(

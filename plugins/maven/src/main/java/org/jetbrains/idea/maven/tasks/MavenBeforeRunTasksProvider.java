@@ -34,7 +34,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 import static com.intellij.openapi.util.Pair.pair;

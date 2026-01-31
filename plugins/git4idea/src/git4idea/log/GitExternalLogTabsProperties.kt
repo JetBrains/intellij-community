@@ -15,7 +15,7 @@ import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties.Companion.getRecent
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties.RecentGroup
 import com.intellij.vcs.log.impl.VcsLogTabsProperties
 import com.intellij.vcs.log.impl.VcsLogUiPropertiesImpl
-import java.util.*
+import java.util.TreeMap
 
 @State(name = "Git.Log.External.Tabs.Properties",
        storages = [Storage(value = "git.external.log.tabs.xml", roamingType = RoamingType.DISABLED)])

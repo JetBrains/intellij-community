@@ -11,8 +11,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
 import com.intellij.platform.debugger.impl.rpc.HotSwapSource;
+import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
 import org.jetbrains.annotations.NotNull;
 
 public class HotSwapAction extends AnAction {

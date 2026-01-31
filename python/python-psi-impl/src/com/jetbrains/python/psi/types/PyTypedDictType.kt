@@ -5,10 +5,18 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.isProtocol
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyCallSiteExpression
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyDictLiteralExpression
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyKeyValueExpression
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Objects
 
 class PyTypedDictType @JvmOverloads constructor(
   private val name: String,

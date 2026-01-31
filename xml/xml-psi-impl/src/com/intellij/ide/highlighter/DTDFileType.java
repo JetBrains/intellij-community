@@ -7,7 +7,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.xml.XmlCoreBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class DTDFileType extends LanguageFileType {
   public static final DTDFileType INSTANCE = new DTDFileType();

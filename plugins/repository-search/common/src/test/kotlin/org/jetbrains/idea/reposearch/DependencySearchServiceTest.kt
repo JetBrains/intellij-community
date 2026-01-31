@@ -8,7 +8,7 @@ import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.ConcurrentLinkedDeque
 
 class DependencySearchServiceTest : LightPlatformTestCase() {

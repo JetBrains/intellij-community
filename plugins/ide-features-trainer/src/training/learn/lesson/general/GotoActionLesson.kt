@@ -9,10 +9,13 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.editor.actions.ToggleShowLineNumbersGloballyAction
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import training.dsl.*
 import training.dsl.EditorSettingsState.isLineNumbersShown
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.checkInsideSearchEverywhere
 import training.dsl.LessonUtil.showWarningIfSearchPopupClosed
+import training.dsl.firstLessonCompletedMessage
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson

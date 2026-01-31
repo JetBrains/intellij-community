@@ -12,7 +12,14 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isConvertableToExpressionBody
 import org.jetbrains.kotlin.idea.codeinsight.utils.replaceWithExpressionBodyPreservingComments
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MergeIfsUtils
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtWhenEntry
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class JoinBlockIntoSingleStatementHandler : JoinLinesHandlerDelegate {

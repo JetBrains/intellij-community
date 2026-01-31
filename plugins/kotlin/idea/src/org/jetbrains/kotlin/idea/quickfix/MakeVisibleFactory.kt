@@ -8,7 +8,11 @@ import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
-import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.*
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.INTERNAL
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.INVISIBLE_FAKE
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.PRIVATE
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.PROTECTED
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.PUBLIC
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory3
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor

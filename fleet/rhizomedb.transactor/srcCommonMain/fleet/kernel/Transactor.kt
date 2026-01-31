@@ -7,12 +7,12 @@ import fleet.multiplatform.shims.DispatcherPriority
 import fleet.multiplatform.shims.newSingleThreadCoroutineDispatcher
 import fleet.reporting.shared.runtime.currentSpan
 import fleet.reporting.shared.tracing.completeWithResult
+import fleet.reporting.shared.tracing.span
+import fleet.reporting.shared.tracing.spannedScope
 import fleet.rpc.client.RpcClientDisconnectedException
 import fleet.tracing.*
 import fleet.tracing.runtime.Span
 import fleet.tracing.runtime.SpanInfo
-import fleet.reporting.shared.tracing.span
-import fleet.reporting.shared.tracing.spannedScope
 import fleet.util.*
 import fleet.util.async.use
 import fleet.util.channels.channels

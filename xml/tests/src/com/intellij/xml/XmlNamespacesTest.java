@@ -23,8 +23,8 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.PerformanceUnitTest;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
 
 /**

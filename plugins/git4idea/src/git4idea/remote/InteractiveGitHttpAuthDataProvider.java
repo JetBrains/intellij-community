@@ -6,7 +6,7 @@ import com.intellij.util.AuthData;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 
 /**
  * Provides authentication information to the {@link git4idea.commands.GitHttpAuthenticator} for a single run.

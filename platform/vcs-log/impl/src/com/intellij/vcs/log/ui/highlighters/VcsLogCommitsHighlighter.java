@@ -2,7 +2,15 @@
 package com.intellij.vcs.log.ui.highlighters;
 
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.VcsCommitStyleFactory;
+import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.VcsLogDataPack;
+import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogHighlighter;
+import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.VcsLogUserFilter;
+import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogUserResolver;

@@ -8,8 +8,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
-import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin
 import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin
 
 class ReportingEvaluationCallback(
   val project: Project,

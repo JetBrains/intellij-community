@@ -5,7 +5,12 @@ import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PlatformPatterns.psiFile
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.psi.PsiElement
-import org.toml.lang.psi.*
+import org.toml.lang.psi.TomlInlineTable
+import org.toml.lang.psi.TomlKey
+import org.toml.lang.psi.TomlKeyValue
+import org.toml.lang.psi.TomlLiteral
+import org.toml.lang.psi.TomlTable
+import org.toml.lang.psi.TomlTableHeader
 
 internal const val DEFAULT_VERSION_CATALOG_NAME: String = "libs.versions.toml"
 internal const val LIBRARIES_HEADER = "[libraries]"

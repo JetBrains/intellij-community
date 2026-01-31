@@ -2,7 +2,10 @@
 package com.intellij.python.junit5Tests.framework.env
 
 import com.intellij.python.test.env.common.PredefinedPyEnvironments
-import com.intellij.python.test.env.junit5.*
+import com.intellij.python.test.env.junit5.EnvTestPythonProviderExtension
+import com.intellij.python.test.env.junit5.PythonBinaryPathExtension
+import com.intellij.python.test.env.junit5.PythonFactoryExtension
+import com.intellij.python.test.env.junit5.PythonSdkExtension
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.extension.ExtendWith
 

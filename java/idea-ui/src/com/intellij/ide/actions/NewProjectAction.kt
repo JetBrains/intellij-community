@@ -21,7 +21,11 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen
 import com.intellij.platform.ProjectGeneratorManager
 import com.intellij.ui.ExperimentalUI
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Service
 private class NewProjectActionService(private val coroutineScope: CoroutineScope) {

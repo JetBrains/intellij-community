@@ -3,11 +3,17 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiCompiledElement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.j2k.DocCommentConverter
+import org.jetbrains.kotlin.j2k.CodeBuilder.Companion.plus
 import org.jetbrains.kotlin.j2k.ast.CommentsAndSpacesInheritance
 import org.jetbrains.kotlin.j2k.ast.Element
 import org.jetbrains.kotlin.j2k.ast.SpacesInheritance

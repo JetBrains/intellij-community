@@ -3,7 +3,11 @@ package com.intellij.openapi.util.text;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.KeyEvent;
 import java.util.regex.Matcher;

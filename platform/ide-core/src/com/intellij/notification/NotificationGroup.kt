@@ -7,7 +7,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.util.NlsContexts.*
+import com.intellij.openapi.util.NlsContexts.NotificationContent
+import com.intellij.openapi.util.NlsContexts.NotificationSubtitle
+import com.intellij.openapi.util.NlsContexts.NotificationTitle
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon

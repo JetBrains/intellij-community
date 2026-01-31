@@ -2,10 +2,13 @@
 
 package org.jetbrains.kotlin.idea.liveTemplates.macro
 
-import com.intellij.codeInsight.template.*
+import com.intellij.codeInsight.template.Expression
+import com.intellij.codeInsight.template.ExpressionContext
+import com.intellij.codeInsight.template.ListResult
+import com.intellij.codeInsight.template.Result
+import com.intellij.codeInsight.template.TextResult
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.psi.KtFunction
-import java.util.*
 
 class FunctionParametersMacro : KotlinMacro() {
     override fun getName() = "functionParameters"

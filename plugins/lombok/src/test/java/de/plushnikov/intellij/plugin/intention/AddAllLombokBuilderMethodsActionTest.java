@@ -1,19 +1,6 @@
 package de.plushnikov.intellij.plugin.intention;
 
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Predicates;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.intellij.plugin.processor.handler.BuilderHelper;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * Tests for {@link AddAllLombokBuilderMethodsAction}

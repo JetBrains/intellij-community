@@ -5,7 +5,16 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.beans.PropertyKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +35,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.GrCodeReferenceResolver;
 
 import java.util.Collection;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.doGetKind;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.getDiamondTypes;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.shouldInferTypeArguments;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.getAccessorName;
 
 /**

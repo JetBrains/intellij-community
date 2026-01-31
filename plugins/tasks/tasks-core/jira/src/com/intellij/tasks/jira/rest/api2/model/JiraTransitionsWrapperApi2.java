@@ -8,7 +8,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.tasks.CustomTaskState;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Mikhail Golubev

@@ -5,7 +5,7 @@ import com.intellij.execution.configurations.ParametersList
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Properties
 
 @ApiStatus.Internal
 interface DebuggerAgentParametersModifier {

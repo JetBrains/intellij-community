@@ -4,7 +4,7 @@ package com.intellij.uiDesigner.lw;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.Rectangle;
 
 final class XYLayoutSerializer extends LayoutSerializer {
   static XYLayoutSerializer INSTANCE = new XYLayoutSerializer();

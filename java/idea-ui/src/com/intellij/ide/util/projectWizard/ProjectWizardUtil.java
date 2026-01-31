@@ -21,7 +21,7 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.ComboBoxModel;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

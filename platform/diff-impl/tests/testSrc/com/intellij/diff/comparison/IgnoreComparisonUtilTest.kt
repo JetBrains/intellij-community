@@ -12,7 +12,7 @@ import com.intellij.diff.util.Range
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.IntPair
-import java.util.*
+import java.util.BitSet
 
 class IgnoreComparisonUtilTest : DiffTestCase() {
   fun testSimple() {

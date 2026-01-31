@@ -1,10 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge
 
-import com.intellij.diff.merge.MergeTestBase.SidesState.*
+import com.intellij.diff.merge.MergeTestBase.SidesState.BOTH
+import com.intellij.diff.merge.MergeTestBase.SidesState.LEFT
+import com.intellij.diff.merge.MergeTestBase.SidesState.NONE
+import com.intellij.diff.merge.MergeTestBase.SidesState.RIGHT
 import com.intellij.diff.tools.util.base.IgnorePolicy
 import com.intellij.diff.util.Side
-import com.intellij.diff.util.TextDiffType.*
+import com.intellij.diff.util.TextDiffType.CONFLICT
+import com.intellij.diff.util.TextDiffType.DELETED
+import com.intellij.diff.util.TextDiffType.INSERTED
+import com.intellij.diff.util.TextDiffType.MODIFIED
 import com.intellij.diff.util.ThreeSide
 import com.intellij.util.ui.UIUtil
 

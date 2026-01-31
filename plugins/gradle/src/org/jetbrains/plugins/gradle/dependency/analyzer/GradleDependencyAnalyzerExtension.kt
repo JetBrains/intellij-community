@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.gradle.dependency.analyzer
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerExtension
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerExtension
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gradle.util.GradleConstants

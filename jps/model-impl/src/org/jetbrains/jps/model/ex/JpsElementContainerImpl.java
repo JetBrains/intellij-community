@@ -4,7 +4,11 @@ package org.jetbrains.jps.model.ex;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementChildRole;
+import org.jetbrains.jps.model.JpsElementContainer;
+import org.jetbrains.jps.model.JpsElementCreator;
+import org.jetbrains.jps.model.JpsElementParameterizedCreator;
 
 import java.util.Map;
 import java.util.function.Supplier;

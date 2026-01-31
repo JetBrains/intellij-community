@@ -5,7 +5,11 @@
  */
 package com.intellij.psi.impl.source.parsing.xml;
 
-import com.intellij.lang.*;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.Comparing;

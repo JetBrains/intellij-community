@@ -3,10 +3,13 @@ package com.intellij.python.junit5Tests.env.tests.interpreters
 
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
-import com.intellij.python.community.interpreters.*
+import com.intellij.python.community.interpreters.InterpreterService
+import com.intellij.python.community.interpreters.InvalidInterpreter
+import com.intellij.python.community.interpreters.ValidInterpreter
+import com.intellij.python.community.interpreters.executeGetStdout
+import com.intellij.python.community.interpreters.executeHelper
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.test.env.junit5.pyVenvFixture
@@ -23,7 +26,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
-import java.util.*
+import java.util.UUID
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.pathString
 import kotlin.io.path.writeText

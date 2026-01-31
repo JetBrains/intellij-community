@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.codeInspection.bytecodeAnalysis.asm.*;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.DFSTree;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.LeakingParameters;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.OriginsAnalysis;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.RichControlFlow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -13,10 +18,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
-import com.intellij.util.gist.VirtualFileGist;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
-
+import com.intellij.util.gist.VirtualFileGist;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.UnsyncByteArrayOutputStream;
 import one.util.streamex.StreamEx;
@@ -24,7 +28,14 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.AnnotationVisitor;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.FieldVisitor;
+import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.FieldInsnNode;
 import org.jetbrains.org.objectweb.asm.tree.InsnList;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
@@ -33,14 +44,29 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.In;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.InOut;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.InThrow;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.NullableOut;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.Out;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.Pure;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.Throw;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.Volatile;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.fromInt;
 import static com.intellij.codeInspection.bytecodeAnalysis.Effects.VOLATILE_EFFECTS;
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 

@@ -5,7 +5,11 @@ import com.intellij.ide.IconProvider;
 import com.intellij.ide.TypePresentationService;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.*;
+import com.intellij.pom.PomIconProvider;
+import com.intellij.pom.PomNamedTarget;
+import com.intellij.pom.PomRenameableTarget;
+import com.intellij.pom.PomTarget;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiTarget;
@@ -14,7 +18,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements PomTargetPsiElement {
   private final PomTarget myTarget;

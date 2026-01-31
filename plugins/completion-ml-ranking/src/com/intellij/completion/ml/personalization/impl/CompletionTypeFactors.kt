@@ -17,7 +17,11 @@
 package com.intellij.completion.ml.personalization.impl
 
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.completion.ml.personalization.*
+import com.intellij.completion.ml.personalization.FactorReader
+import com.intellij.completion.ml.personalization.FactorUpdater
+import com.intellij.completion.ml.personalization.UserFactor
+import com.intellij.completion.ml.personalization.UserFactorDescriptions
+import com.intellij.completion.ml.personalization.UserFactorStorage
 
 /**
  * @author Vitaliy.Bibaev

@@ -4,8 +4,6 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EDT;

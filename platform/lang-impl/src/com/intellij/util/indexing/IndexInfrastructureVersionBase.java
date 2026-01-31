@@ -6,14 +6,25 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.BinaryFileStubBuilder;
+import com.intellij.psi.stubs.BinaryFileStubBuilders;
+import com.intellij.psi.stubs.LanguageStubDescriptor;
+import com.intellij.psi.stubs.StubElementRegistryService;
+import com.intellij.psi.stubs.StubIndexExtension;
+import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TemplateLanguageStubBaseVersion;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.SortedMap;
 import java.util.stream.Collectors;
 
 public class IndexInfrastructureVersionBase {

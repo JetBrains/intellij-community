@@ -5,7 +5,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class MarkdownBasePresentation implements ItemPresentation {
 

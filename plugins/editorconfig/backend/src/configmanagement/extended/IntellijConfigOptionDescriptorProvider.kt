@@ -2,12 +2,24 @@
 package org.editorconfig.configmanagement.extended
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.application.options.codeStyle.properties.*
+import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper
+import com.intellij.application.options.codeStyle.properties.CodeStyleChoiceList
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil
+import com.intellij.application.options.codeStyle.properties.ExternalStringAccessor
+import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper
+import com.intellij.application.options.codeStyle.properties.IntegerAccessor
+import com.intellij.application.options.codeStyle.properties.ValueListPropertyAccessor
+import com.intellij.application.options.codeStyle.properties.VisualGuidesAccessor
 import com.intellij.openapi.project.Project
 import org.editorconfig.Utils
 import org.editorconfig.language.extensions.EditorConfigOptionDescriptorProvider
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor
-import org.editorconfig.language.schema.descriptors.impl.*
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigConstantDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigListDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigNumberDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigStringDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigUnionDescriptor
 
 private const val EXCEPT_NONE_REGEXP = "(^(?!none).*|.{4}.+)"
 

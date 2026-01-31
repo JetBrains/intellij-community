@@ -6,7 +6,8 @@ package com.intellij.ide.plugins
 import com.intellij.ide.plugins.PluginManagerCore.JAVA_PLUGIN_ALIAS_ID
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.containers.Java11Shim
-import java.util.*
+import java.util.Collections
+import java.util.IdentityHashMap
 
 private val PLATFORM_PLUGIN_ALIAS_ID = PluginId.getId("com.intellij.modules.platform")
 private val LANG_PLUGIN_ALIAS_ID = PluginId.getId("com.intellij.modules.lang")

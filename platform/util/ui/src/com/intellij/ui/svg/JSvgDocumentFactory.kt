@@ -7,7 +7,12 @@ import com.github.weisj.jsvg.attributes.AttributeParser
 import com.github.weisj.jsvg.attributes.paint.DefaultPaintParser
 import com.github.weisj.jsvg.nodes.SVG
 import com.github.weisj.jsvg.nodes.Style
-import com.github.weisj.jsvg.parser.*
+import com.github.weisj.jsvg.parser.AttributeNode
+import com.github.weisj.jsvg.parser.LoadHelper
+import com.github.weisj.jsvg.parser.NodeMap
+import com.github.weisj.jsvg.parser.ParsedElement
+import com.github.weisj.jsvg.parser.ResourceLoader
+import com.github.weisj.jsvg.parser.ValueUIFuture
 import com.github.weisj.jsvg.parser.css.StyleSheet
 import com.github.weisj.jsvg.parser.css.impl.SimpleCssParser
 import com.github.weisj.jsvg.util.ResourceUtil

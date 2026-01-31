@@ -19,7 +19,7 @@ import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 class ModuleConfigurableWrapper implements ModuleConfigurationEditor {
   private final Configurable myModuleConfigurable;

@@ -23,7 +23,12 @@ import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.jvmDecompiler.KotlinBytecodeDecompiler
 import org.jetbrains.kotlin.idea.jvmDecompiler.KotlinBytecodeDecompilerTask
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.TagsTestDataUtil
+import org.jetbrains.kotlin.idea.test.addRoot
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.runner.RunWith

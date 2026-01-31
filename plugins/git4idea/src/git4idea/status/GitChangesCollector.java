@@ -20,7 +20,11 @@ import git4idea.index.GitFileStatus;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * <p>

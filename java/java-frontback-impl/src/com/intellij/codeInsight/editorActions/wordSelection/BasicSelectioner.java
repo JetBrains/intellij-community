@@ -4,7 +4,17 @@ package com.intellij.codeInsight.editorActions.wordSelection;
 import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.javadoc.PsiDocTag;
 import org.jetbrains.annotations.NotNull;
 

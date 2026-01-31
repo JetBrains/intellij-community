@@ -22,7 +22,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.CONSTANT;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.KEYWORD;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.STRING;
 import static com.intellij.openapi.editor.HighlighterColors.BAD_CHARACTER;
 import static com.intellij.openapi.editor.HighlighterColors.TEXT;
 

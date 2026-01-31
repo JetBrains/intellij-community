@@ -6,7 +6,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.annotations.ApiStatus
-import kotlin.time.*
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
+import kotlin.time.toDuration
 
 @ApiStatus.Internal
 inline fun getByKeyMaxDuration(): Duration =

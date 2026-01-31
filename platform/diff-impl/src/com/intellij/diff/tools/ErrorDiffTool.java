@@ -7,7 +7,13 @@ import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileContent;
-import com.intellij.diff.requests.*;
+import com.intellij.diff.requests.ComponentDiffRequest;
+import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.ErrorDiffRequest;
+import com.intellij.diff.requests.MessageDiffRequest;
+import com.intellij.diff.requests.NoDiffRequest;
+import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -30,8 +36,9 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
+import java.awt.Color;
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;

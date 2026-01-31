@@ -39,8 +39,18 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
-import org.jetbrains.kotlin.idea.base.platforms.*
-import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmJsLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmWasiLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
+import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
+import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootMap
+import org.jetbrains.kotlin.idea.base.projectStructure.exclude
+import org.jetbrains.kotlin.idea.base.projectStructure.hasKotlinJvmRuntime
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.base.util.GRADLE_SYSTEM_ID
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.projectScope
@@ -64,7 +74,7 @@ import org.jetbrains.kotlin.platform.isWasm
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
 import java.nio.file.Path
-import java.util.*
+import java.util.EnumSet
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 

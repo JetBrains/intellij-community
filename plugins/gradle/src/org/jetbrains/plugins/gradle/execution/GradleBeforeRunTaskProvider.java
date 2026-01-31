@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Vladislav.Soroka

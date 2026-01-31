@@ -13,11 +13,24 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.util.*;
+import com.intellij.util.CollectConsumer;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.ThrowablePairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
@@ -27,7 +40,12 @@ import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Utility class, that contains various methods for testing

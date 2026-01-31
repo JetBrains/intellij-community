@@ -11,7 +11,13 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.add.v2.*
+import com.jetbrains.python.sdk.add.v2.CustomExistingEnvironmentSelector
+import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.ToolValidator
+import com.jetbrains.python.sdk.add.v2.ValidatedPath
+import com.jetbrains.python.sdk.add.v2.savePathForEelOnly
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.impl.resolvePythonBinary

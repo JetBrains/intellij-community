@@ -3,9 +3,6 @@ package com.intellij.util.indexing
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.checkCanceled
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbServiceGuiExecutor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -15,11 +12,18 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.flow.mapStateIn
 import com.intellij.platform.util.progress.reportRawProgress
-import com.intellij.util.application
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Consumer
 

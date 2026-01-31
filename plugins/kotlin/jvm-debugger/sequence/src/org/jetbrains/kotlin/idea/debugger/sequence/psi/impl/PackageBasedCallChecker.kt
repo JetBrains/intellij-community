@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.debugger.sequence.psi.impl
 
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.K1Deprecation
-import org.jetbrains.kotlin.idea.debugger.sequence.psi.KotlinPsiUtil
-import org.jetbrains.kotlin.idea.debugger.sequence.psi.StreamCallChecker
 import org.jetbrains.kotlin.idea.core.receiverType
 import org.jetbrains.kotlin.idea.core.resolveType
+import org.jetbrains.kotlin.idea.debugger.sequence.psi.KotlinPsiUtil
+import org.jetbrains.kotlin.idea.debugger.sequence.psi.StreamCallChecker
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.types.KotlinType
 

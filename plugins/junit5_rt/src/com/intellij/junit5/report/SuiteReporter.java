@@ -6,10 +6,23 @@ import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.TestIdentifier;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import static com.intellij.rt.execution.TestListenerProtocol.CLASS_CONFIGURATION;
-import static com.intellij.rt.execution.junit.MapSerializerUtil.*;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.SUITE_TREE_ENDED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.SUITE_TREE_STARTED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.TEST_FAILED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.TEST_FINISHED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.TEST_IGNORED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.TEST_STARTED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.TEST_SUITE_FINISHED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.TEST_SUITE_STARTED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.asString;
 
 public class SuiteReporter extends AbstractTestReporter {
   public SuiteReporter(TestIdentifier identifier, ExecutionState state) {

@@ -4,7 +4,7 @@ package com.intellij.util.ui;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.event.ActionListener;
 
 public final class TimerUtil {

@@ -3,10 +3,10 @@ package com.intellij.python.test.env.plain
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.python.community.execService.asBinToExec
-import com.intellij.python.venv.createVenv
 import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.core.PyEnvironmentProvider
 import com.intellij.python.test.env.core.installPipPackages
+import com.intellij.python.venv.createVenv
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.venvReader.VirtualEnvReader

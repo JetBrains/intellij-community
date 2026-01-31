@@ -6,7 +6,6 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 
 abstract class AbstractFlowAsyncStackTraceTest : AbstractAsyncStackTraceTest() {

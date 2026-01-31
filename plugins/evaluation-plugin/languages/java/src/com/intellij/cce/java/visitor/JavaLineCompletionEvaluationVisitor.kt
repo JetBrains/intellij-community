@@ -7,7 +7,20 @@ import com.intellij.cce.evaluable.golf.CompletionGolfMode
 import com.intellij.cce.visitor.LineCompletionEvaluationVisitor
 import com.intellij.cce.visitor.LineCompletionVisitorFactory
 import com.intellij.cce.visitor.LineCompletionVisitorHelper
-import com.intellij.psi.*
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiImportStatement
+import com.intellij.psi.PsiImportStaticStatement
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiKeyword
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodReferenceExpression
+import com.intellij.psi.PsiPackageStatement
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.PsiVariable
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 
 class JavaLineCompletionVisitorFactory : LineCompletionVisitorFactory {

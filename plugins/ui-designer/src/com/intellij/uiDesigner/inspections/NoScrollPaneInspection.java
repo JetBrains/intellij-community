@@ -14,7 +14,9 @@ import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.Scrollable;
 import java.util.ArrayList;
 import java.util.Collections;
 

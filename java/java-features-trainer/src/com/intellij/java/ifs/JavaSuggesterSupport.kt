@@ -1,7 +1,22 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.ifs
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiDeclarationStatement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiExpressionStatement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiForStatement
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiIfStatement
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiWhileStatement
 import com.intellij.psi.impl.source.PsiJavaFileImpl
 import com.intellij.psi.util.descendantsOfType
 import training.featuresSuggester.SuggesterSupport

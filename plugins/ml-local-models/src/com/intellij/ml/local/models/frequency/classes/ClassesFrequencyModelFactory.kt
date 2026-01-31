@@ -1,9 +1,9 @@
 package com.intellij.ml.local.models.frequency.classes
 
+import com.intellij.lang.Language
 import com.intellij.ml.local.models.api.LocalModelBuilder
 import com.intellij.ml.local.models.frequency.FrequencyModelFactory
 import com.intellij.ml.local.util.StorageUtil
-import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 

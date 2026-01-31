@@ -37,13 +37,15 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.templateLanguages.TemplateLanguage
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
-import java.lang.Runnable
-import java.lang.System
-import java.lang.Thread
 import java.util.concurrent.TimeoutException
 import kotlin.streams.asSequence
 

@@ -14,15 +14,36 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.*;
-import com.intellij.util.xml.reflect.*;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.DummyEvaluatedXmlName;
+import com.intellij.util.xml.EvaluatedXmlName;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.XmlName;
+import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
+import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.util.xml.reflect.DomExtender;
+import com.intellij.util.xml.reflect.DomExtension;
+import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
+import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev

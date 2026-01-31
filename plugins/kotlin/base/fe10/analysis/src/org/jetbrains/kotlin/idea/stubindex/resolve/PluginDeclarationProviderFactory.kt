@@ -20,7 +20,12 @@ import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationList
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.lazy.data.KtClassLikeInfo
-import org.jetbrains.kotlin.resolve.lazy.declarations.*
+import org.jetbrains.kotlin.resolve.lazy.declarations.AbstractDeclarationProviderFactory
+import org.jetbrains.kotlin.resolve.lazy.declarations.ClassMemberDeclarationProvider
+import org.jetbrains.kotlin.resolve.lazy.declarations.CombinedPackageMemberDeclarationProvider
+import org.jetbrains.kotlin.resolve.lazy.declarations.FileBasedDeclarationProviderFactory
+import org.jetbrains.kotlin.resolve.lazy.declarations.PackageMemberDeclarationProvider
+import org.jetbrains.kotlin.resolve.lazy.declarations.PsiBasedClassMemberDeclarationProvider
 import org.jetbrains.kotlin.storage.StorageManager
 
 @K1Deprecation

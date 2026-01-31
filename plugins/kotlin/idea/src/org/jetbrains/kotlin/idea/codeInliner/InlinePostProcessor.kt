@@ -37,15 +37,6 @@ import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.model.isReallySuccess
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.utils.addIfNotNull
-import java.util.ArrayList
-import java.util.LinkedHashSet
-import kotlin.collections.asReversed
-import kotlin.collections.dropWhile
-import kotlin.collections.isNotEmpty
-import kotlin.collections.mapNotNull
-import kotlin.collections.orEmpty
-import kotlin.let
-import kotlin.to
 
 @K1Deprecation
 object InlinePostProcessor: AbstractInlinePostProcessor() {

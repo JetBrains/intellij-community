@@ -34,7 +34,7 @@ import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
 import com.intellij.spellchecker.SpellCheckerManager
 import com.intellij.spellchecker.engine.DictionaryModificationTracker
 import com.intellij.spellchecker.inspections.IdentifierSplitter.MINIMAL_TYPO_LENGTH
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 
 private val spellingKey = Key.create<CachedResults>("grazie.text.spell.problems")

@@ -9,7 +9,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiReference
+import com.intellij.psi.createSmartPointer
 import com.intellij.ui.NonFocusableCheckBox
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.K1Deprecation

@@ -3,7 +3,14 @@ package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.openapi.util.text.StringUtil;
-import com.sun.jdi.*;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.ClassNotPreparedException;
+import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.InconsistentDebugInfoException;
+import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.InvocationException;
+import com.sun.jdi.ObjectCollectedException;
 
 public final class EvaluateExceptionUtil {
   public static final EvaluateException INCONSISTEND_DEBUG_INFO = createEvaluateException(

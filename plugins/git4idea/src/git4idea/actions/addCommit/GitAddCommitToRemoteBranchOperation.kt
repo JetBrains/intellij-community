@@ -3,7 +3,6 @@ package git4idea.actions.addCommit
 
 import com.intellij.dvcs.push.ui.VcsPushDialog
 import com.intellij.openapi.application.EDT
-import git4idea.DialogManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
@@ -12,6 +11,7 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportProgressScope
 import com.intellij.vcs.log.VcsFullCommitDetails
+import git4idea.DialogManager
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitRemoteBranch
 import git4idea.commands.Git

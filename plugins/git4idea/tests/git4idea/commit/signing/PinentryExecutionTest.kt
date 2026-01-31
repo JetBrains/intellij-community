@@ -3,7 +3,11 @@ package git4idea.commit.signing
 
 import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.*
+import com.intellij.execution.process.CapturingProcessAdapter
+import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessOutput
+import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project

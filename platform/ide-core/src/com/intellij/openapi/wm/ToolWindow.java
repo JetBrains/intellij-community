@@ -16,8 +16,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.function.Supplier;

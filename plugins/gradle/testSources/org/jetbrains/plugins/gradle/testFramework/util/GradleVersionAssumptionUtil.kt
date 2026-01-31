@@ -3,7 +3,16 @@ package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.*
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isConfigurationCacheSupported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGroovy5Supported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isIsolatedProjectsSupported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJavaConventionsBlockSupported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJunit5Supported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isKotlinDslScriptsModelImportSupported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isKotlinSupported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSpockSupported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isTopLevelJavaConventionsSupported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isVersionCatalogsSupported
 import org.junit.jupiter.api.Assumptions
 
 

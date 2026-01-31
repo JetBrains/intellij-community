@@ -35,7 +35,7 @@ import org.jetbrains.plugins.gradle.model.data.AnnotationProcessingData
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
-import java.util.*
+import java.util.Arrays
 
 @Order(ExternalSystemConstants.UNORDERED)
 class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationProcessingData, ProcessorConfigProfile>() {

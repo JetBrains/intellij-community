@@ -10,7 +10,11 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomReferenceInjector;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.SubTag;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;

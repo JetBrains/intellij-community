@@ -6,10 +6,15 @@ package com.intellij.util
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.svg.*
+import com.intellij.ui.svg.SvgAttributePatcher
+import com.intellij.ui.svg.createJSvgDocument
+import com.intellij.ui.svg.getSvgDocumentSize
+import com.intellij.ui.svg.loadSvg
+import com.intellij.ui.svg.renderSvgWithSize
 import com.intellij.util.ui.ImageUtil
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.GraphicsEnvironment
+import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.IOException
 import java.io.InputStream

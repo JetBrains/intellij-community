@@ -6,7 +6,7 @@ import com.intellij.ui.IconManager;
 import icons.KotlinBaseResourcesIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public interface KotlinIcons {
     /** 16x16 */ @NotNull Icon SMALL_LOGO = KotlinBaseResourcesIcons.Kotlin;

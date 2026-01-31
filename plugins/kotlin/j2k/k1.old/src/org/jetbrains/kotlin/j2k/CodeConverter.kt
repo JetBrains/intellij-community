@@ -2,9 +2,44 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.psi.*
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiBinaryExpression
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiExpressionList
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiPrefixExpression
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import org.jetbrains.kotlin.K1Deprecation
-import org.jetbrains.kotlin.j2k.ast.*
+import org.jetbrains.kotlin.j2k.ast.ArgumentList
+import org.jetbrains.kotlin.j2k.ast.BangBangExpression
+import org.jetbrains.kotlin.j2k.ast.Block
+import org.jetbrains.kotlin.j2k.ast.CommentsAndSpacesInheritance
+import org.jetbrains.kotlin.j2k.ast.ErrorType
+import org.jetbrains.kotlin.j2k.ast.Expression
+import org.jetbrains.kotlin.j2k.ast.Identifier
+import org.jetbrains.kotlin.j2k.ast.LBrace
+import org.jetbrains.kotlin.j2k.ast.LPar
+import org.jetbrains.kotlin.j2k.ast.LiteralExpression
+import org.jetbrains.kotlin.j2k.ast.LocalVariable
+import org.jetbrains.kotlin.j2k.ast.MethodCallExpression
+import org.jetbrains.kotlin.j2k.ast.Operator
+import org.jetbrains.kotlin.j2k.ast.ParenthesizedExpression
+import org.jetbrains.kotlin.j2k.ast.PrefixExpression
+import org.jetbrains.kotlin.j2k.ast.RBrace
+import org.jetbrains.kotlin.j2k.ast.RPar
+import org.jetbrains.kotlin.j2k.ast.Statement
+import org.jetbrains.kotlin.j2k.ast.Type
+import org.jetbrains.kotlin.j2k.ast.assignNoPrototype
+import org.jetbrains.kotlin.j2k.ast.assignPrototype
+import org.jetbrains.kotlin.j2k.ast.canonicalCode
+import org.jetbrains.kotlin.j2k.ast.declarationIdentifier
 
 @K1Deprecation
 class CodeConverter(

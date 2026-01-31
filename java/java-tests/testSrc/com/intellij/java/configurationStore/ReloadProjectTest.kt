@@ -23,8 +23,13 @@ import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsE
 import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.DummyParentEntitySource
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.configurationStore.copyFilesAndReloadProject
+import com.intellij.testFramework.loadProjectAndCheckResults
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat

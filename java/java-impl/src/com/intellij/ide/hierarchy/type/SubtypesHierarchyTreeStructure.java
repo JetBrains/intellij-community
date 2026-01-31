@@ -16,7 +16,11 @@ import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
   private final String myCurrentScopeType;

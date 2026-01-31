@@ -19,7 +19,13 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isCallingAnyOf
 import org.jetbrains.kotlin.idea.codeinsight.utils.isLetCallRedundant
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantLetCall
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 
 internal sealed class RedundantLetInspection :

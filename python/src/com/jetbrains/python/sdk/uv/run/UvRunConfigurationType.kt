@@ -5,7 +5,6 @@ import com.intellij.execution.configurations.ConfigurationTypeBase
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.python.community.impl.uv.common.icons.PythonCommunityImplUVCommonIcons
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.icons.PythonIcons
 
 internal const val UV_CONFIGURATION_ID: String = "UvRunConfigurationType"
 

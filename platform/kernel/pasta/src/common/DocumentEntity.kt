@@ -1,7 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.pasta.common
 
-import andel.editor.*
+import andel.editor.AnchorId
+import andel.editor.DocumentComponent
+import andel.editor.DocumentMeta
+import andel.editor.MutableDocument
+import andel.editor.RangeMarkerId
 import andel.intervals.AnchorStorage
 import andel.operation.EditLog
 import andel.operation.Operation
@@ -9,7 +13,12 @@ import andel.operation.isNotIdentity
 import andel.text.Text
 import andel.text.TextRange
 import com.intellij.openapi.diagnostic.logger
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.ChangeScope
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.RefFlags
+import com.jetbrains.rhizomedb.entities
+import com.jetbrains.rhizomedb.requireChangeScope
 import fleet.kernel.Durable
 import fleet.kernel.DurableEntityType
 import fleet.kernel.deprecatedUid

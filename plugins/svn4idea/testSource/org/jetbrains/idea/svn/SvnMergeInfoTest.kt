@@ -20,7 +20,9 @@ import org.jetbrains.idea.svn.integrate.MergeContext
 import org.jetbrains.idea.svn.mergeinfo.BranchInfo
 import org.jetbrains.idea.svn.mergeinfo.MergeCheckResult
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper
-import org.junit.Assert.*
+import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Test
 import java.io.File
 

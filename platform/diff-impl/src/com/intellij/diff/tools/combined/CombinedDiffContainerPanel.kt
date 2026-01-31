@@ -3,7 +3,12 @@ package com.intellij.diff.tools.combined
 
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
-import java.awt.*
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.LayoutManager
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.geom.Path2D
 import java.awt.geom.Rectangle2D
 import javax.swing.JPanel

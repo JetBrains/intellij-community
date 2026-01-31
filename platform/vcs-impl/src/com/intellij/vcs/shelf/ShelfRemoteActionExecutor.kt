@@ -10,7 +10,15 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor
-import com.intellij.openapi.vcs.changes.shelf.*
+import com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider
+import com.intellij.openapi.vcs.changes.shelf.ImportIntoShelfAction
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
+import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChange
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
+import com.intellij.openapi.vcs.changes.shelf.ShelvedWrapper
+import com.intellij.openapi.vcs.changes.shelf.UnshelveWithDialogAction
 import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeListRpc
 import com.intellij.pom.NavigatableAdapter
@@ -20,7 +28,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.*
+import java.util.Date
 
 @Service(Service.Level.PROJECT)
 internal class ShelfRemoteActionExecutor(private val project: Project, private val cs: CoroutineScope) {

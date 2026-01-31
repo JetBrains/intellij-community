@@ -4,7 +4,7 @@ package org.jetbrains.tools.model.updater
 import org.jetbrains.tools.model.updater.GeneratorPreferences.ApplicationMode
 import org.jetbrains.tools.model.updater.impl.Preferences
 import java.nio.file.Path
-import java.util.*
+import java.util.Properties
 import kotlin.io.path.isRegularFile
 
 class GeneratorPreferences(properties: Properties) : Preferences(properties) {

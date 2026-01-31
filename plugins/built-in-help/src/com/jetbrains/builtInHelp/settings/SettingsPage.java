@@ -10,7 +10,11 @@ import com.jetbrains.builtInHelp.BuiltInHelpBundle;
 import com.jetbrains.builtInHelp.Utils;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.event.ActionEvent;

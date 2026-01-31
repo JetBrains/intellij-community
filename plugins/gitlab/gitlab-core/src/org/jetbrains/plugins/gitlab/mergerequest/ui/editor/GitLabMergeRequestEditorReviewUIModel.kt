@@ -1,9 +1,25 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
-import com.intellij.collaboration.async.*
-import com.intellij.collaboration.ui.codereview.editor.*
-import com.intellij.collaboration.util.*
+import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapStatefulToStateful
+import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.async.transformConsecutiveSuccesses
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
+import com.intellij.collaboration.ui.codereview.editor.MutableCodeReviewEditorGutterChangesModel
+import com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
+import com.intellij.collaboration.ui.codereview.editor.asLst
+import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
+import com.intellij.collaboration.util.Hideable
+import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.collaboration.util.getOrNull
+import com.intellij.collaboration.util.syncOrToggleAll
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.openapi.Disposable

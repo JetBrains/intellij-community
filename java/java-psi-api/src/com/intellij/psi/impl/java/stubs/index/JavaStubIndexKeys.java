@@ -1,7 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.index;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.stubs.StubIndexKey;
 
 public final class JavaStubIndexKeys {

@@ -4,7 +4,13 @@ package org.jetbrains.jps.model.impl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsEncodingConfigurationService;
+import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
+import org.jetbrains.jps.model.JpsGlobal;
+import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 
 import java.util.Map;

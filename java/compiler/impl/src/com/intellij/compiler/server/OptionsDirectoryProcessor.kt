@@ -13,7 +13,13 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.CopyActionContext
+import kotlin.io.path.CopyActionResult
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyTo
+import kotlin.io.path.copyToRecursively
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.name
 
 private val ENVIRONMENT_ASSOCIATED_FILENAMES = setOf("jdk.table.xml", "applicationLibraries.xml")
 

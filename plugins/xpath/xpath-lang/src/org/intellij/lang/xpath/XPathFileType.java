@@ -21,7 +21,7 @@ import com.intellij.openapi.util.NlsSafe;
 import icons.XpathIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Locale;
 
 public final class XPathFileType extends LanguageFileType {

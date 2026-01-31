@@ -1,6 +1,15 @@
 package com.intellij.database.editor;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.DataGridListener;
+import com.intellij.database.datagrid.DataGridPomTarget;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridHelper;
+import com.intellij.database.datagrid.GridModel;
+import com.intellij.database.datagrid.GridRequestSource;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.HierarchicalColumnsCollapseManager;
+import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.structureView.FileEditorPositionListener;
@@ -24,7 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;

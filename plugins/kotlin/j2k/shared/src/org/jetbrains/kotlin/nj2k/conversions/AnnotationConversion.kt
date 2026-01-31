@@ -9,7 +9,15 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.primaryConstructor
 import org.jetbrains.kotlin.nj2k.toExpression
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotation
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotationNameParameter
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotationParameterImpl
+import org.jetbrains.kotlin.nj2k.tree.JKClass
+import org.jetbrains.kotlin.nj2k.tree.JKKtAnnotationArrayInitializerExpression
+import org.jetbrains.kotlin.nj2k.tree.JKNameIdentifier
+import org.jetbrains.kotlin.nj2k.tree.JKParameter
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.detached
 import org.jetbrains.kotlin.nj2k.types.isArrayType
 
 class AnnotationConversion(context: ConverterContext) : RecursiveConversion(context) {

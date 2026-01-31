@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindExclude
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.types.TypeSubstitutor
-import java.util.*
 
 @K1Deprecation
 interface ContextVariablesProvider {

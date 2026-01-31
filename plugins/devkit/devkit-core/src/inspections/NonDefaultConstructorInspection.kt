@@ -25,7 +25,7 @@ import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.convertOpt
-import java.util.*
+import java.util.Locale
 
 private const val serviceBeanFqn = "com.intellij.openapi.components.ServiceDescriptor"
 

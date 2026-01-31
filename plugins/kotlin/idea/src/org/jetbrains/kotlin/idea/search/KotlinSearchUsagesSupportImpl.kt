@@ -4,7 +4,12 @@ package org.jetbrains.kotlin.idea.search
 
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.search.GlobalSearchScope
@@ -20,8 +25,19 @@ import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.scriptDefinitionExists
-import org.jetbrains.kotlin.idea.search.usagesSearch.*
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.search.usagesSearch.JavaConstructorCallLazyDescriptorHandle
+import org.jetbrains.kotlin.idea.search.usagesSearch.KotlinConstructorCallLazyDescriptorHandle
+import org.jetbrains.kotlin.idea.search.usagesSearch.forceResolveReferences
+import org.jetbrains.kotlin.idea.search.usagesSearch.getDefaultImports
+import org.jetbrains.kotlin.idea.search.usagesSearch.getReceiverTypeSearcherInfo
+import org.jetbrains.kotlin.idea.search.usagesSearch.isCallableOverrideUsage
+import org.jetbrains.kotlin.idea.search.usagesSearch.isExtensionOfDeclarationClassUsage
+import org.jetbrains.kotlin.idea.search.usagesSearch.isUsageInContainingDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition

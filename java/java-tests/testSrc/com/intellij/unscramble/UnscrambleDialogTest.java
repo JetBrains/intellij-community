@@ -7,9 +7,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;

@@ -3,7 +3,16 @@ package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperBaseProcessor;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperClassProcessor;

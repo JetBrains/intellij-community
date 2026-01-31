@@ -3,7 +3,14 @@ package com.siyeh.ig.style;
 
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDoWhileStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiWhileStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.Contract;

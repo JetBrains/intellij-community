@@ -12,7 +12,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.io.File
-import java.util.*
+import java.util.UUID
 
 class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
 

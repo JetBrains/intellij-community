@@ -4,8 +4,13 @@ package org.jetbrains.kotlin.idea.refactoring.introduce
 
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.util.ElementKind
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 @K1Deprecation
 fun findStringTemplateFragment(file: KtFile, startOffset: Int, endOffset: Int, kind: ElementKind): KtExpression? {

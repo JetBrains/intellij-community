@@ -27,7 +27,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.json.ShellJsonComman
 import org.jetbrains.plugins.terminal.block.completion.spec.json.ShellJsonCommandSpecsUtil.loadAndParseJson
 import org.jetbrains.terminal.completion.ShellCommand
 import java.time.Duration
-import java.util.*
+import java.util.Locale
 
 /**
  * Manages the [ShellCommandSpec]'s provided by [ShellCommandSpecsProvider]'s.

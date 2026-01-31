@@ -8,8 +8,15 @@ import com.intellij.platform.project.projectId
 import com.intellij.vcs.git.rpc.GitOperationsApi
 import git4idea.GitStandardLocalBranch
 import git4idea.repo.GitRepository
-import git4idea.test.*
 import git4idea.test.GitScenarios.unmergedFiles
+import git4idea.test.assertCurrentBranch
+import git4idea.test.assertCurrentRevision
+import git4idea.test.assertLatestSubjects
+import git4idea.test.checkout
+import git4idea.test.git
+import git4idea.test.last
+import git4idea.test.resolveConflicts
+import git4idea.test.tac
 import git4idea.update.GitMultiRepoUpdateBaseTest
 import kotlinx.coroutines.runBlocking
 

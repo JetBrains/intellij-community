@@ -5,8 +5,14 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.util.text.Strings
 import com.intellij.ui.HyperlinkLabel
 import org.jetbrains.annotations.Nls
-import training.dsl.*
+import training.dsl.LearningDslBase
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskRuntimeContext
+import training.dsl.TaskTestContext
+import training.dsl.defaultRestoreDelay
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.util.isToStringContains

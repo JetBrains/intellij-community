@@ -18,12 +18,16 @@ import com.jetbrains.cloudconfig.exception.UnauthorizedException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.TestScope
 import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlinx.coroutines.test.TestScope
-import org.junit.jupiter.api.BeforeEach
-import org.mockito.Mockito.*
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.spy
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
 import java.util.Date
 
 @RunWith(JUnit4::class)

@@ -22,7 +22,9 @@ import java.io.File;
 import java.util.Objects;
 
 import static com.jetbrains.python.sdk.PySdkUtil.getLanguageLevelForSdk;
-import static com.jetbrains.python.sdk.legacy.PythonSdkUtil.*;
+import static com.jetbrains.python.sdk.legacy.PythonSdkUtil.findSkeletonsDir;
+import static com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote;
+import static com.jetbrains.python.sdk.legacy.PythonSdkUtil.isVirtualEnv;
 
 /**
  * Skeleton logic from the original [com.jetbrains.python.sdk.PythonSdkUtil]

@@ -19,7 +19,11 @@ import org.jetbrains.kotlin.idea.refactoring.suggested.KotlinSignatureAdditional
 import org.jetbrains.kotlin.idea.refactoring.suggested.modifiers
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtTypeReference
 
 class KotlinSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringChangeCollectorTest<KtNamedFunction>(), ExpectedPluginModeProvider {
     override val fileType: FileType

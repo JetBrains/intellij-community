@@ -1,7 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel
 
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.Attribute
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.EntityType
+import com.jetbrains.rhizomedb.Indexing
+import com.jetbrains.rhizomedb.Mixin
+import com.jetbrains.rhizomedb.Version
+import com.jetbrains.rhizomedb.entity
+import com.jetbrains.rhizomedb.entityModule
+import com.jetbrains.rhizomedb.get
 import fleet.util.UID
 import kotlinx.serialization.Serializable
 import kotlin.reflect.KClass

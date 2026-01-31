@@ -3,7 +3,11 @@ package com.intellij.tools.ide.metrics.benchmark
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.tools.ide.metrics.collector.MetricsCollector
-import com.intellij.tools.ide.metrics.collector.metrics.*
+import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
+import com.intellij.tools.ide.metrics.collector.metrics.madValue
+import com.intellij.tools.ide.metrics.collector.metrics.medianValue
+import com.intellij.tools.ide.metrics.collector.metrics.rangeValue
+import com.intellij.tools.ide.metrics.collector.metrics.standardDeviationValue
 import com.intellij.tools.ide.metrics.collector.telemetry.OpentelemetrySpanJsonParser
 import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
 import java.nio.file.Path

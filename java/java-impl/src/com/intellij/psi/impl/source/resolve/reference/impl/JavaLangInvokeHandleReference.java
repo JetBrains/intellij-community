@@ -6,7 +6,17 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.reference.PsiMemberReference;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -17,10 +27,36 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 
-import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_GETTER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_SETTER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_SPECIAL;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_STATIC;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_STATIC_GETTER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_STATIC_SETTER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_STATIC_VAR_HANDLE;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_VAR_HANDLE;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FIND_VIRTUAL;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveClass;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveSignature;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.composeMethodSignature;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getMemberType;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getMethodSignature;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getMethodSortOrder;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getMethodTypeExpressionText;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getReflectiveClass;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getTypeText;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.isPublic;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.isRegularMethod;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.lookupMethod;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.replaceText;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.withPriority;
 
 public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralExpression>
   implements InsertHandler<LookupElement>, PsiMemberReference {

@@ -17,7 +17,14 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.yaml.YAMLBundle
 import org.jetbrains.yaml.meta.model.YamlMetaType
 import org.jetbrains.yaml.meta.model.YamlStringType
-import org.jetbrains.yaml.psi.*
+import org.jetbrains.yaml.psi.YAMLQuotedText
+import org.jetbrains.yaml.psi.YAMLScalar
+import org.jetbrains.yaml.psi.YAMLSequence
+import org.jetbrains.yaml.psi.YAMLValue
+import org.jetbrains.yaml.psi.YamlPsiElementVisitor
+import org.jetbrains.yaml.psi.estimatedType
+import org.jetbrains.yaml.psi.findStructuralSiblings
+import org.jetbrains.yaml.psi.getKeysInBetween
 
 internal class YAMLIncompatibleTypesInspection : LocalInspectionTool() {
 

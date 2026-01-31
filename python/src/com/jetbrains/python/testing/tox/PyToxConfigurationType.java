@@ -7,7 +7,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Ilya.Kazakevich

@@ -2,7 +2,13 @@
 
 package org.jetbrains.kotlin.j2k.usageProcessing
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiVariable
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeConverter
 import org.jetbrains.kotlin.j2k.SpecialExpressionConverter

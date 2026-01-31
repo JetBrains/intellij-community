@@ -5,7 +5,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.roots.OrderRootType;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class OrderRootTypeElement extends LibraryTableTreeContentElement<OrderRootTypeElement> {
   private final OrderRootType myRootType;

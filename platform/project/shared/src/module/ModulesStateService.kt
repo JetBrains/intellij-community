@@ -7,7 +7,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.platform.project.module.ModuleUpdatedEvent.*
+import com.intellij.platform.project.module.ModuleUpdatedEvent.ModuleRemovedEvent
+import com.intellij.platform.project.module.ModuleUpdatedEvent.ModulesAddedEvent
+import com.intellij.platform.project.module.ModuleUpdatedEvent.ModulesRenamedEvent
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope

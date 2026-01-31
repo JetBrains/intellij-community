@@ -7,7 +7,7 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
-import java.util.*
+import java.util.EnumSet
 
 
 @TestDataPath($$"$CONTENT_ROOT/testData/threadingModelHelper/")

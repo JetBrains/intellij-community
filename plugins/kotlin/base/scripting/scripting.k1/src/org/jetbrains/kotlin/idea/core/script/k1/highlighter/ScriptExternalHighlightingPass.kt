@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k1.highlighter
 
-import com.intellij.codeHighlighting.*
+import com.intellij.codeHighlighting.Pass
+import com.intellij.codeHighlighting.TextEditorHighlightingPass
+import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
+import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.lang.annotation.HighlightSeverity
@@ -11,8 +15,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.core.script.shared.getScriptReports
 import org.jetbrains.kotlin.idea.core.script.shared.ScriptDiagnosticFixProvider
+import org.jetbrains.kotlin.idea.core.script.shared.getScriptReports
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.script.experimental.api.ScriptDiagnostic

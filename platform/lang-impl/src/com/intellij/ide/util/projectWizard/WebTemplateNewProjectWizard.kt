@@ -2,8 +2,12 @@
 package com.intellij.ide.util.projectWizard
 
 import com.intellij.ide.util.projectWizard.WebTemplateProjectWizardData.Companion.webTemplateData
-import com.intellij.ide.wizard.*
+import com.intellij.ide.wizard.AbstractNewProjectWizardMultiStepBase
+import com.intellij.ide.wizard.GeneratorNewProjectWizard
+import com.intellij.ide.wizard.NewProjectWizardBaseStep
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
+import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.RootNewProjectWizardStep
 import com.intellij.openapi.module.WebModuleBuilder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.ProjectGeneratorPeer

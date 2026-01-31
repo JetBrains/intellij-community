@@ -8,7 +8,9 @@ import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.Executor.append
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.update.FileGroup
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.testFramework.UsefulTestCase
@@ -18,18 +20,30 @@ import git4idea.actions.tag.GitPushTagAction
 import git4idea.branch.GitBranchUtil
 import git4idea.config.GitVersionSpecialty
 import git4idea.config.UpdateMethod
-import git4idea.push.GitPushRepoResult.Type.*
+import git4idea.push.GitPushRepoResult.Type.FORCED
+import git4idea.push.GitPushRepoResult.Type.NEW_BRANCH
+import git4idea.push.GitPushRepoResult.Type.REJECTED_NO_FF
+import git4idea.push.GitPushRepoResult.Type.REJECTED_OTHER
+import git4idea.push.GitPushRepoResult.Type.REJECTED_STALE_INFO
+import git4idea.push.GitPushRepoResult.Type.SUCCESS
+import git4idea.push.GitPushRepoResult.Type.UP_TO_DATE
 import git4idea.push.GitRejectedPushUpdateDialog.Companion.PushRejectedExitCode
 import git4idea.repo.GitRepository
-import git4idea.test.*
+import git4idea.test.addCommit
+import git4idea.test.cd
+import git4idea.test.git
+import git4idea.test.last
+import git4idea.test.log
+import git4idea.test.makeCommit
+import git4idea.test.makePushSpec
 import git4idea.update.GitUpdateResult
 import org.junit.After
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import java.io.File
 import java.nio.file.Path
-import java.util.Locale
 import java.util.Collections.singletonMap
+import java.util.Locale
 
 class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   private lateinit var repository: GitRepository

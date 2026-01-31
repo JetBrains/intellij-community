@@ -9,7 +9,7 @@ import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import org.intellij.lang.annotations.MagicConstant;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class VisibilityIcons {
   private VisibilityIcons() { }

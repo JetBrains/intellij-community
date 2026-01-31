@@ -4,7 +4,9 @@ package org.jetbrains.plugins.groovy.debugger;
 import com.intellij.openapi.options.ConfigurableUi;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 class GroovySteppingConfigurableUi implements ConfigurableUi<GroovyDebuggerSettings> {
   private JCheckBox ignoreGroovyMethods;

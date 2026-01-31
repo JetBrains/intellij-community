@@ -4,8 +4,8 @@ import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
-import com.intellij.cce.evaluable.REFERENCE_CODE_COMMENT_RANGE_PROPERTY
 import com.intellij.cce.evaluable.PREDICTED_CODE_COMMENT_RANGE_PROPERTY
+import com.intellij.cce.evaluable.REFERENCE_CODE_COMMENT_RANGE_PROPERTY
 import com.intellij.cce.evaluation.data.CodeCommentRange
 import com.intellij.cce.metric.util.CloudSemanticSimilarityCalculator
 import com.intellij.cce.metric.util.Sample
@@ -16,7 +16,6 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import kotlinx.coroutines.async
-import kotlin.collections.forEach
 
 
 abstract class RangeMetricBase(protected val filters: Map<String, String>) : ConfidenceIntervalMetric<Double>(), RangeFilter {

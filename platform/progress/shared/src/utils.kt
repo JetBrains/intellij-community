@@ -4,8 +4,19 @@ package com.intellij.platform.ide.progress
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.util.progress.ProgressState
 import fleet.kernel.onDispose
-import fleet.kernel.rete.*
-import kotlinx.coroutines.flow.*
+import fleet.kernel.rete.Many
+import fleet.kernel.rete.Query
+import fleet.kernel.rete.Rete
+import fleet.kernel.rete.StateQuery
+import fleet.kernel.rete.asQuery
+import fleet.kernel.rete.each
+import fleet.kernel.rete.get
+import fleet.kernel.rete.matchesFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.takeWhile
 import org.jetbrains.annotations.ApiStatus
 
 /**

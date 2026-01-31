@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ignore
 
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.Ignored
+import com.intellij.openapi.vcs.IgnoredCheckResult
+import com.intellij.openapi.vcs.NotIgnored
+import com.intellij.openapi.vcs.VcsIgnoreChecker
+import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtil.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile

@@ -11,7 +11,13 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.readBytes
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 import kotlin.jvm.optionals.getOrNull
 
 object KotlinTestsDependenciesUtil {

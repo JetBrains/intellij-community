@@ -16,7 +16,7 @@ import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.Optional
 import java.util.concurrent.Callable
 import java.util.function.Consumer
 import kotlin.math.max

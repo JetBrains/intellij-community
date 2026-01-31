@@ -8,7 +8,7 @@ import org.xml.sax.InputSource
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.nio.file.Path
-import java.util.*
+import java.util.Optional
 import java.util.stream.IntStream
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.transform.OutputKeys

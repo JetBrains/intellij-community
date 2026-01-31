@@ -12,7 +12,11 @@ import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.structuralsearch.resolveDeclType
 import org.jetbrains.kotlin.idea.structuralsearch.resolveExprType
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtStringTemplateEntry
 import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.types.KotlinType

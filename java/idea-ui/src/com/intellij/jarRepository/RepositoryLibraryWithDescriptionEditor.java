@@ -31,7 +31,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 
-import static org.jetbrains.idea.maven.utils.library.RepositoryUtils.*;
+import static org.jetbrains.idea.maven.utils.library.RepositoryUtils.deleteAndReloadDependencies;
+import static org.jetbrains.idea.maven.utils.library.RepositoryUtils.getStorageRoot;
+import static org.jetbrains.idea.maven.utils.library.RepositoryUtils.libraryHasExternalAnnotations;
+import static org.jetbrains.idea.maven.utils.library.RepositoryUtils.libraryHasJavaDocs;
+import static org.jetbrains.idea.maven.utils.library.RepositoryUtils.libraryHasSources;
 
 public class RepositoryLibraryWithDescriptionEditor
   extends LibraryPropertiesEditorBase<RepositoryLibraryProperties, RepositoryLibraryType> {

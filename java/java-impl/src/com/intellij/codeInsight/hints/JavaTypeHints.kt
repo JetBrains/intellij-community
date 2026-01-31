@@ -4,7 +4,17 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.SequencePresentation
-import com.intellij.psi.*
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiCapturedWildcardType
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiDisjunctionType
+import com.intellij.psi.PsiIntersectionType
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiWildcardType
+import com.intellij.psi.SmartPointerManager
 
 /**
  * Creates InlayPresentation for given PsiType.

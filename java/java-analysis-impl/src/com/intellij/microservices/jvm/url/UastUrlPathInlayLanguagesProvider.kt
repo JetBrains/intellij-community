@@ -5,8 +5,24 @@ import com.intellij.lang.Language
 import com.intellij.microservices.url.inlay.UrlPathInlayLanguagesProvider
 import com.intellij.psi.PsiElement
 import com.intellij.uast.UastMetaLanguage
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallableReferenceExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UClassLiteralExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UIfExpression
+import org.jetbrains.uast.UJumpExpression
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.ULoopExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UTypeReferenceExpression
 import org.jetbrains.uast.UastFacade.getPossiblePsiSourceTypes
+import org.jetbrains.uast.getUCallExpression
+import org.jetbrains.uast.toUElementOfExpectedTypes
+import org.jetbrains.uast.toUElementOfType
 
 private const val SEARCH_LIMIT = 3
 

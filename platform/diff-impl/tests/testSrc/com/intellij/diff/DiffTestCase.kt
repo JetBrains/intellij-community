@@ -16,7 +16,8 @@ import com.intellij.util.text.CharSequenceSubSequence
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.junit.Assert
-import java.util.*
+import java.util.BitSet
+import java.util.Random
 import java.util.concurrent.atomic.AtomicLong
 
 abstract class DiffTestCase : TestCase() {

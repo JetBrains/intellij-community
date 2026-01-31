@@ -7,7 +7,10 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.j2k.ConverterContext
-import org.jetbrains.kotlin.nj2k.*
+import org.jetbrains.kotlin.nj2k.ExternalSuperFunctionInfo
+import org.jetbrains.kotlin.nj2k.FunctionInfo
+import org.jetbrains.kotlin.nj2k.InternalSuperFunctionInfo
+import org.jetbrains.kotlin.nj2k.JKElementInfoLabel
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType

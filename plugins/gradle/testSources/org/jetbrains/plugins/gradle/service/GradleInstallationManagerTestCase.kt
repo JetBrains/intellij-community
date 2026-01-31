@@ -13,7 +13,8 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import java.io.File
 import java.net.URI
 import java.nio.file.Path
-import java.util.*
+import java.util.Properties
+import java.util.UUID
 
 abstract class GradleInstallationManagerTestCase : GradleImportingTestCase() {
 

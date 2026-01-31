@@ -19,7 +19,21 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider
 import com.jetbrains.python.PythonLanguage
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyElsePart
+import com.jetbrains.python.psi.PyExceptPart
+import com.jetbrains.python.psi.PyFinallyPart
+import com.jetbrains.python.psi.PyForPart
+import com.jetbrains.python.psi.PyForStatement
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyIfPart
+import com.jetbrains.python.psi.PyKeyValueExpression
+import com.jetbrains.python.psi.PyLambdaExpression
+import com.jetbrains.python.psi.PyTryPart
+import com.jetbrains.python.psi.PyWhilePart
+import com.jetbrains.python.psi.PyWithItem
+import com.jetbrains.python.psi.PyWithStatement
 
 class PyBreadcrumbsInfoProvider : BreadcrumbsProvider {
 

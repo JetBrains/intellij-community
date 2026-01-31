@@ -21,9 +21,12 @@ import com.intellij.openapi.ui.popup.ListItemDescriptor
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.*
+import com.intellij.ui.JBColor
+import com.intellij.ui.SearchTextField
+import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
 import com.intellij.ui.SingleSelectionModel
+import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
@@ -41,7 +44,12 @@ import java.awt.BorderLayout
 import java.awt.Graphics
 import java.util.function.Consumer
 import java.util.function.Function
-import javax.swing.*
+import javax.swing.AbstractListModel
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListSelectionModel
 
 internal class ProjectTypeList(
   private val context: WizardContext

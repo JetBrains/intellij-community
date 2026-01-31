@@ -18,7 +18,10 @@ import java.io.File;
 import java.util.function.BiConsumer;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class SvnTreeConflictDataTest extends SvnTestCase {
   private VirtualFile myTheirs;

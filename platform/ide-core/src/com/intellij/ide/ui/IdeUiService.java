@@ -19,8 +19,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.URL;

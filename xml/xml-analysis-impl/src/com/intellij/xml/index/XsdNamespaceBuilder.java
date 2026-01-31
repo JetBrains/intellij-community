@@ -14,7 +14,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public final class XsdNamespaceBuilder implements Comparable<XsdNamespaceBuilder> {
   public static String computeNamespace(@NotNull InputStream is) {

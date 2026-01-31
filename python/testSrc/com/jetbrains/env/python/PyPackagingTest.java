@@ -28,7 +28,9 @@ import java.util.Set;
 
 import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
 import static com.jetbrains.python.SdkUiUtilKt.isVirtualEnv;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class PyPackagingTest extends PyEnvTestCase {
   @Override

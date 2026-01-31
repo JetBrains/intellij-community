@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.GlobalSearchScope
-import java.util.*
+import java.util.EnumSet
 
 enum class ConstraintType { READ, WRITE, WRITE_INTENT, EDT, BGT, NO_READ }
 

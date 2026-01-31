@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Iconable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public interface IconLayerProvider {
   ExtensionPointName<IconLayerProvider> EP_NAME = new ExtensionPointName<>("com.intellij.iconLayerProvider");

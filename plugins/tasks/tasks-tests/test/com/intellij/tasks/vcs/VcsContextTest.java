@@ -19,7 +19,6 @@ import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.util.ui.EDT;
-import com.intellij.util.ui.UIUtil;
 import git4idea.repo.GitRepository;
 
 import java.io.IOException;

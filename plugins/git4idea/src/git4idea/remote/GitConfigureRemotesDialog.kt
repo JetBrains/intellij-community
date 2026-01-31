@@ -11,7 +11,10 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IdeModalityType.IDE
-import com.intellij.openapi.ui.Messages.*
+import com.intellij.openapi.ui.Messages.YES
+import com.intellij.openapi.ui.Messages.getQuestionIcon
+import com.intellij.openapi.ui.Messages.showErrorDialog
+import com.intellij.openapi.ui.Messages.showYesNoDialog
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.SimpleTextAttributes
@@ -31,7 +34,13 @@ import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.DefaultListSelectionModel
+import javax.swing.JComponent
+import javax.swing.JTable
+import javax.swing.ListSelectionModel
+import javax.swing.SwingConstants
+import javax.swing.UIManager
 import javax.swing.table.AbstractTableModel
 import kotlin.math.min
 

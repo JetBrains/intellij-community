@@ -3,7 +3,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.NlsSafe;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * The validator for input dialogs.

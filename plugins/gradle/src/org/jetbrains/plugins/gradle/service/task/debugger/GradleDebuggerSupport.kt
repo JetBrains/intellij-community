@@ -3,7 +3,9 @@ package org.jetbrains.plugins.gradle.service.task.debugger
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DEBUGGER_AGENT_SINK_PORT_SYS_PROP
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.*
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.BUILD_PROCESS_DEBUGGER_PORT_KEY
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.DEBUGGER_DISPATCH_ADDR_KEY
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.DEBUGGER_DISPATCH_PORT_KEY
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.eel.provider.LocalEelDescriptor

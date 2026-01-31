@@ -25,7 +25,8 @@ import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyReferenceOwner
-import com.jetbrains.python.psi.resolve.*
+import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil

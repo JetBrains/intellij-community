@@ -3,8 +3,11 @@ package com.intellij.util.ui;
 
 import org.intellij.lang.annotations.JdkConstants;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GraphicsEnvironment;
 
 /**
  * Flow layout calculates necessary size assuming that all components are laid out within a single row.

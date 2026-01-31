@@ -15,7 +15,7 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JList;
 import java.awt.event.ActionListener;
 import java.util.function.Consumer;
 import java.util.function.Supplier;

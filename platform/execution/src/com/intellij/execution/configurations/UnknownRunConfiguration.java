@@ -7,8 +7,8 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.plugins.PluginFeatureService;
-import com.intellij.ide.plugins.UltimateDependencyChecker;
 import com.intellij.ide.plugins.PluginManagerConfigurableService;
+import com.intellij.ide.plugins.UltimateDependencyChecker;
 import com.intellij.ide.plugins.advertiser.FeaturePluginData;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -22,7 +22,12 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class UnknownRunConfiguration implements RunConfiguration, WithoutOwnBeforeRunSteps {

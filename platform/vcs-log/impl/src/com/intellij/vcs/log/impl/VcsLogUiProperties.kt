@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.EventListener
 
 interface VcsLogUiProperties {
   @RequiresEdt

@@ -9,7 +9,12 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.merge.*;
+import com.intellij.openapi.vcs.merge.MergeData;
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
+import com.intellij.openapi.vcs.merge.MergeProvider;
+import com.intellij.openapi.vcs.merge.MergeProvider2;
+import com.intellij.openapi.vcs.merge.MergeSession;
+import com.intellij.openapi.vcs.merge.MergeSessionEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -29,9 +34,21 @@ import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static git4idea.merge.GitMergeUtil.*;
+import static git4idea.merge.GitMergeUtil.ORIGINAL_REVISION_NUM;
+import static git4idea.merge.GitMergeUtil.THEIRS_REVISION_NUM;
+import static git4idea.merge.GitMergeUtil.YOURS_REVISION_NUM;
+import static git4idea.merge.GitMergeUtil.acceptOneVersion;
+import static git4idea.merge.GitMergeUtil.isReverseRoot;
+import static git4idea.merge.GitMergeUtil.loadMergeData;
+import static git4idea.merge.GitMergeUtil.markConflictResolved;
 
 /**
  * Merge-changes provider for Git, used by IDEA internal 3-way merge tool

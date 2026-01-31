@@ -9,7 +9,7 @@ import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.function.BiFunction;

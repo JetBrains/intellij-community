@@ -15,7 +15,7 @@ import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.run.collectPythonPath
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.tools.sdkTools.SdkCreationType
-import junit.framework.TestCase.*
+import junit.framework.TestCase.assertNotNull
 import org.junit.Test
 
 class PyPathGeneratorTest : PyEnvTestCase() {

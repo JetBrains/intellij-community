@@ -7,8 +7,15 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.Language
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
 import com.intellij.psi.CommonClassNames.JAVA_LANG_VOID
+import com.intellij.psi.GenericsUtil
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiType
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastHintedVisitorAdapter
@@ -24,7 +31,13 @@ import com.siyeh.ig.testFrameworks.UAssertHint.Companion.createAssertNotEqualsHi
 import com.siyeh.ig.testFrameworks.UAssertHint.Companion.createAssertNotSameHint
 import com.siyeh.ig.testFrameworks.UAssertHint.Companion.createAssertSameHint
 import org.jetbrains.annotations.Nls
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UastErrorType
+import org.jetbrains.uast.getOutermostQualified
+import org.jetbrains.uast.getParameterForArgument
+import org.jetbrains.uast.getQualifiedChain
+import org.jetbrains.uast.isNullLiteral
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class AssertBetweenInconvertibleTypesInspection : AbstractBaseUastLocalInspectionTool() {

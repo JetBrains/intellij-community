@@ -36,10 +36,20 @@ import org.testng.xml.Parser;
 import org.testng.xml.SuiteGenerator;
 import org.testng.xml.XmlSuite;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 public class SearchingForTestsTask extends SearchForTestsTask {
   private static final Logger LOG = Logger.getInstance(SearchingForTestsTask.class);

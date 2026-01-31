@@ -17,8 +17,8 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.ui.treeStructure.SimpleNode;
 import org.jetbrains.annotations.NotNull;
 

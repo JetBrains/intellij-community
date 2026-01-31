@@ -4,7 +4,15 @@ package com.jetbrains.python.sdk.add.collector
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.statistics.*
+import com.jetbrains.python.statistics.EXECUTION_TYPE
+import com.jetbrains.python.statistics.INTERPRETER_TYPE
+import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.statistics.InterpreterType
+import com.jetbrains.python.statistics.PREVIOUSLY_CONFIGURED
+import com.jetbrains.python.statistics.PYTHON_VERSION
+import com.jetbrains.python.statistics.executionType
+import com.jetbrains.python.statistics.interpreterType
+import com.jetbrains.python.statistics.version
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

@@ -4,7 +4,11 @@ package org.intellij.plugins.relaxNG.model.annotation;
 import com.intellij.psi.xml.XmlFile;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.intellij.plugins.relaxNG.model.*;
+import org.intellij.plugins.relaxNG.model.CommonElement;
+import org.intellij.plugins.relaxNG.model.Define;
+import org.intellij.plugins.relaxNG.model.Div;
+import org.intellij.plugins.relaxNG.model.Grammar;
+import org.intellij.plugins.relaxNG.model.Include;
 
 import java.util.List;
 

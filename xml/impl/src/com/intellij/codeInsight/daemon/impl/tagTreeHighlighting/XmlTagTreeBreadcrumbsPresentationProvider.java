@@ -11,7 +11,7 @@ import com.intellij.xml.breadcrumbs.DefaultCrumbsPresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 public class XmlTagTreeBreadcrumbsPresentationProvider extends BreadcrumbsPresentationProvider {
   private static boolean isMyContext(@NotNull PsiElement deepestElement) {

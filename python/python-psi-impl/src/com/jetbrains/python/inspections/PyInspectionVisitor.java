@@ -15,7 +15,12 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.diagnostic.PluginException;

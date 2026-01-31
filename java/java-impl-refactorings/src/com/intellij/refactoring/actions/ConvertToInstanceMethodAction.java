@@ -3,7 +3,11 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodHandler;
 import org.jetbrains.annotations.NotNull;

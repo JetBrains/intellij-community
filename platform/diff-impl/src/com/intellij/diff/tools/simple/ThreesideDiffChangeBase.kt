@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.simple
 
-import com.intellij.diff.util.*
+import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.MergeConflictType
+import com.intellij.diff.util.Side
+import com.intellij.diff.util.TextDiffType
+import com.intellij.diff.util.ThreeSide
 
 abstract class ThreesideDiffChangeBase(val conflictType: MergeConflictType) {
   abstract fun getStartLine(side: ThreeSide): Int

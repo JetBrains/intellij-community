@@ -11,7 +11,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Window;
 
 
 public class EditComponentAction extends AnAction {

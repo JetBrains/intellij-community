@@ -4,7 +4,11 @@ package org.jetbrains.uast
 import com.intellij.lang.Language
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassInitializer
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiVariable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
 import org.jetbrains.uast.util.ClassSet

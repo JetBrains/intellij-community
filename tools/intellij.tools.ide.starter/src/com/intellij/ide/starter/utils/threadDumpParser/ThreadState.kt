@@ -5,7 +5,6 @@ import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.NonNls
-import java.util.HashSet
 
 open class ThreadState(name: String?, state: String) {
   private val myName: String?

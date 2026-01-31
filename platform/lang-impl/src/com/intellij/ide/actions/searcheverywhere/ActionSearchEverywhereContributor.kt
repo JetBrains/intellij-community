@@ -15,7 +15,15 @@ import com.intellij.ide.util.gotoByName.ActionAsyncProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.GotoActionListCellRenderer
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
@@ -42,7 +50,7 @@ import java.awt.Component
 import java.awt.KeyboardFocusManager
 import java.awt.event.InputEvent
 import java.lang.ref.WeakReference
-import java.util.*
+import java.util.Optional
 import javax.swing.ListCellRenderer
 
 private val LOG = logger<ActionSearchEverywhereContributor>()

@@ -5,7 +5,13 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.feedback.dialog.COMBOBOX_COLUMN_SIZE
 import com.intellij.platform.feedback.dialog.createBoldJBLabel
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.toMutableProperty
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.put
 

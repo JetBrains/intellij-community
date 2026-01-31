@@ -19,7 +19,8 @@ import com.intellij.openapi.util.NlsContexts.ColumnName;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.util.xml.GenericDomValue;
 
-import javax.swing.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JCheckBox;
 import javax.swing.table.TableCellEditor;
 
 public class BooleanColumnInfo extends DomColumnInfo<GenericDomValue<Boolean>, Boolean> {

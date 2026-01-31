@@ -7,7 +7,13 @@ import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.DataIndexer
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
+import com.intellij.util.indexing.DumbModeAccessType
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileContent
+import com.intellij.util.indexing.ID
+import com.intellij.util.indexing.ScalarIndexExtension
 import com.intellij.util.io.IOUtil
 import com.intellij.util.io.KeyDescriptor
 import org.jetbrains.annotations.ApiStatus
@@ -19,7 +25,8 @@ import org.jetbrains.lang.manifest.ManifestFileType
 import java.io.ByteArrayInputStream
 import java.io.DataInput
 import java.io.DataOutput
-import java.util.*
+import java.util.Collections
+import java.util.Properties
 import java.util.jar.Manifest
 
 fun hasSomethingInPackage(indexId: ID<FqName, Void>, fqName: FqName, scope: GlobalSearchScope): Boolean {

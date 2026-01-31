@@ -1,6 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.apiDump.lang
 
+import com.intellij.devkit.apiDump.lang.elementTypes.ADFileNodeType
+import com.intellij.devkit.apiDump.lang.lexer.ADLexer
+import com.intellij.devkit.apiDump.lang.parser.ADParser
+import com.intellij.devkit.apiDump.lang.psi.ADElementTypes
+import com.intellij.devkit.apiDump.lang.psi.impl.ADFileImpl
 import com.intellij.lang.ASTFactory
 import com.intellij.lang.ASTNode
 import com.intellij.lang.ParserDefinition
@@ -15,11 +20,6 @@ import com.intellij.psi.impl.source.tree.CompositeElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
-import com.intellij.devkit.apiDump.lang.elementTypes.ADFileNodeType
-import com.intellij.devkit.apiDump.lang.lexer.ADLexer
-import com.intellij.devkit.apiDump.lang.parser.ADParser
-import com.intellij.devkit.apiDump.lang.psi.ADElementTypes
-import com.intellij.devkit.apiDump.lang.psi.impl.ADFileImpl
 
 internal class ADParserDefinition : ParserDefinition, ASTFactory() {
   override fun createLexer(project: Project?): Lexer = ADLexer()

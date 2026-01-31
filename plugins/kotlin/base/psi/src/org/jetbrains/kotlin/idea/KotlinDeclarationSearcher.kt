@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addIfNotNull
-import kotlin.collections.addAll
 
 class KotlinDeclarationSearcher : JvmDeclarationSearcher {
     override fun findDeclarations(declaringElement: PsiElement): Collection<JvmElement> =

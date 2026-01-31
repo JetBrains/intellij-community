@@ -3,8 +3,8 @@ package com.intellij.platform.syntax.impl.builder
 
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.tree.ASTMarkersImpl
-import com.intellij.platform.syntax.tree.newChameleonRef
 import com.intellij.platform.syntax.tree.MarkerKind
+import com.intellij.platform.syntax.tree.newChameleonRef
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

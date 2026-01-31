@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.ex
 
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 /**
  * Listener for [LineStatusTrackerI]'s state

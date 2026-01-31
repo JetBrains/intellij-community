@@ -9,7 +9,7 @@ import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.signature.SignatureReader
 import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 import kotlin.io.path.exists
 import kotlin.io.path.readBytes
 

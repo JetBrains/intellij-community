@@ -5,8 +5,12 @@ package org.jetbrains.kotlin.idea.util
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.annotations.BuiltInAnnotationDescriptor
-import org.jetbrains.kotlin.renderer.*
+import org.jetbrains.kotlin.renderer.AnnotationArgumentsRenderingPolicy
+import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
+import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.renderer.DescriptorRenderer.Companion.FQ_NAMES_IN_TYPES
+import org.jetbrains.kotlin.renderer.DescriptorRendererModifier
+import org.jetbrains.kotlin.renderer.OverrideRenderingPolicy
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.NewCapturedTypeConstructor
 import org.jetbrains.kotlin.types.isDynamic

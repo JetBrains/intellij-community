@@ -10,9 +10,12 @@ import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmen
 import com.intellij.execution.configurations.ParameterTargetValuePart
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
-import com.intellij.execution.target.*
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
 import com.intellij.execution.target.LanguageRuntimeType.VolumeType
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.java.JavaLanguageRuntimeTypeConstants
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
@@ -49,7 +52,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.charset.UnsupportedCharsetException
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.Random
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeoutException
 import java.util.jar.Manifest

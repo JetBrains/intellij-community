@@ -18,7 +18,7 @@ import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.Executor
 import kotlin.io.path.name
 import kotlin.time.Duration

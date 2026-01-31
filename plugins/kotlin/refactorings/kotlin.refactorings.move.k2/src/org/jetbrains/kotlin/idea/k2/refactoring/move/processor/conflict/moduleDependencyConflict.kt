@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.willNotBeMoved
 import org.jetbrains.kotlin.idea.refactoring.getContainer
 import org.jetbrains.kotlin.idea.refactoring.pullUp.willBeMoved
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
 private fun PsiElement.createAccessibilityConflictInternal(

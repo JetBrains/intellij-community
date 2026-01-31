@@ -18,7 +18,8 @@ package org.intellij.images.options;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 
 /**
  * Options for zooming feature.

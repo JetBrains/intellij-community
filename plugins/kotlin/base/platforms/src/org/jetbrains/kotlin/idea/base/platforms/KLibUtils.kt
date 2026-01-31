@@ -9,16 +9,23 @@ import com.intellij.openapi.vfs.InvalidVirtualFileAccessException
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion.Companion.klibManifestProperties
-import org.jetbrains.kotlin.library.*
+import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION_WITH_DOT
+import org.jetbrains.kotlin.library.KLIB_PROPERTY_BUILTINS_PLATFORM
+import org.jetbrains.kotlin.library.KLIB_PROPERTY_UNIQUE_NAME
+import org.jetbrains.kotlin.library.KLIB_PROPERTY_WASM_TARGETS
 import org.jetbrains.kotlin.library.components.KlibIrConstants.KLIB_IR_FOLDER_NAME
 import org.jetbrains.kotlin.library.impl.BuiltInsPlatform
-import org.jetbrains.kotlin.platform.*
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.WasmPlatform
+import org.jetbrains.kotlin.platform.isCommon
+import org.jetbrains.kotlin.platform.isJs
+import org.jetbrains.kotlin.platform.isWasm
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.platform.wasm.WasmPlatformUnspecifiedTarget
 import org.jetbrains.kotlin.platform.wasm.WasmPlatformWithTarget
 import org.jetbrains.kotlin.platform.wasm.WasmTarget
-import java.util.*
+import java.util.Properties
 
 @ApiStatus.Internal
 internal fun VirtualFile.isKLibRootCandidate(): Boolean {

@@ -22,7 +22,11 @@ import org.jetbrains.kotlin.idea.base.facet.isKpmModule
 import org.jetbrains.kotlin.idea.base.facet.refinesFragmentIds
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.facet.*
+import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.facet.applyCompilerArgumentsToFacetSettings
+import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
+import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
+import org.jetbrains.kotlin.idea.facet.noVersionAutoAdvance
 import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
 import org.jetbrains.kotlin.idea.gradleJava.findKotlinPluginVersion
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform

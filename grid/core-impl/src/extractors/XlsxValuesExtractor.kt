@@ -9,7 +9,13 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.TestOnly
-import java.io.*
+import java.io.BufferedReader
+import java.io.BufferedWriter
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.InputStreamReader
+import java.io.OutputStream
+import java.io.OutputStreamWriter
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets

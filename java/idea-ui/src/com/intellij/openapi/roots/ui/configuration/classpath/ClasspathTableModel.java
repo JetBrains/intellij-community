@@ -14,7 +14,8 @@ import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;

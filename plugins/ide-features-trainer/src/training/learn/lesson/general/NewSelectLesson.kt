@@ -1,9 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.general
 
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.checkPositionOfEditor
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskContext
+import training.dsl.TaskRuntimeContext
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 

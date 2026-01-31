@@ -5,7 +5,18 @@ import com.intellij.debugger.streams.core.lib.ResolverFactory
 import com.intellij.debugger.streams.core.psi.DebuggerPositionResolver
 import com.intellij.debugger.streams.core.resolve.ResolvedStreamCall
 import com.intellij.debugger.streams.core.resolve.ResolvedStreamChain
-import com.intellij.debugger.streams.core.trace.*
+import com.intellij.debugger.streams.core.trace.EvaluateExpressionTracer
+import com.intellij.debugger.streams.core.trace.NextAwareState
+import com.intellij.debugger.streams.core.trace.PrevAwareState
+import com.intellij.debugger.streams.core.trace.ResolvedTracingResult
+import com.intellij.debugger.streams.core.trace.StreamTracer
+import com.intellij.debugger.streams.core.trace.TraceElement
+import com.intellij.debugger.streams.core.trace.TraceExpressionBuilder
+import com.intellij.debugger.streams.core.trace.TraceInfo
+import com.intellij.debugger.streams.core.trace.TraceResultInterpreter
+import com.intellij.debugger.streams.core.trace.TracingResult
+import com.intellij.debugger.streams.core.trace.Value
+import com.intellij.debugger.streams.core.trace.XValueInterpreter
 import com.intellij.debugger.streams.core.trace.impl.TraceResultInterpreterImpl
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.core.wrapper.StreamChainBuilder
@@ -16,7 +27,14 @@ import com.intellij.openapi.util.Key
 import com.intellij.xdebugger.XDebugSession
 import one.util.streamex.StreamEx
 import java.util.function.Function
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
+import kotlin.test.fail
 
 abstract class TraceExecutionTestHelper(
   private val session: XDebugSession,

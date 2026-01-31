@@ -2,7 +2,13 @@
 
 package org.jetbrains.kotlin.idea.kdoc
 
-import com.intellij.lang.documentation.DocumentationMarkup.*
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_BOTTOM
+import com.intellij.lang.documentation.DocumentationMarkup.CONTENT_END
+import com.intellij.lang.documentation.DocumentationMarkup.CONTENT_START
+import com.intellij.lang.documentation.DocumentationMarkup.DEFINITION_END
+import com.intellij.lang.documentation.DocumentationMarkup.DEFINITION_START
+import com.intellij.lang.documentation.DocumentationMarkup.SECTIONS_END
+import com.intellij.lang.documentation.DocumentationMarkup.SECTIONS_START
 
 open class KDocTemplate : Template<StringBuilder> {
     val definition = Placeholder<StringBuilder>()

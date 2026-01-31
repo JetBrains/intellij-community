@@ -1,6 +1,10 @@
 package com.intellij.cce.visitor
 
-import com.intellij.cce.evaluable.*
+import com.intellij.cce.evaluable.EXTERNAL_API_CALLS_PROPERTY
+import com.intellij.cce.evaluable.INTERNAL_API_CALLS_PROPERTY
+import com.intellij.cce.evaluable.INTERNAL_RELEVANT_FILES_PROPERTY
+import com.intellij.cce.evaluable.METHOD_NAME_PROPERTY
+import com.intellij.cce.evaluable.METHOD_QUALIFIED_NAME_PROPERTY
 import com.intellij.cce.java.visitor.JavaChatCodeGenerationVisitor
 import com.intellij.cce.util.extractAdditionalProperties
 import com.intellij.openapi.application.readAction

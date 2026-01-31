@@ -6,7 +6,11 @@ import com.intellij.ide.starter.runner.targets.TargetIdentifier
 import com.intellij.ide.starter.utils.FileSystem
 import com.intellij.ide.starter.utils.HttpClient
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.isArm64
+import com.intellij.platform.eel.isLinux
+import com.intellij.platform.eel.isMac
+import com.intellij.platform.eel.isWindows
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.withRetryBlocking
 import com.intellij.util.system.CpuArch

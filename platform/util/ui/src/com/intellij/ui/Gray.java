@@ -5,7 +5,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ui.PresentableColor;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * @author Konstantin Bulenkov

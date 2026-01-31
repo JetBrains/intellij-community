@@ -5,7 +5,13 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -18,7 +24,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext.*;
+import static com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext.IncompatibleTypesTooltipComposer;
+import static com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext.createRequiredProvidedTypeMessage;
+import static com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext.redIfNotMatch;
+import static com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext.showShortType;
 
 /**
  * Context for mismatched call error

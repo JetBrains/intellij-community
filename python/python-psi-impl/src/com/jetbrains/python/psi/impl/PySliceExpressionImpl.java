@@ -19,7 +19,12 @@ import com.intellij.lang.ASTNode;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PySliceExpression;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyCollectionType;
+import com.jetbrains.python.psi.types.PyTupleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -4,7 +4,7 @@ import ai.grazie.nlp.langs.Language
 import com.intellij.grazie.rule.ParsedSentence
 import com.intellij.grazie.text.TreeRuleChecker.TreeProblem
 import com.intellij.grazie.utils.shouldCheckGrammarStyle
-import java.util.*
+import java.util.Locale
 
 class AsyncTreeRuleChecker : ExternalTextChecker() {
   override fun getRules(locale: Locale): Collection<Rule> {

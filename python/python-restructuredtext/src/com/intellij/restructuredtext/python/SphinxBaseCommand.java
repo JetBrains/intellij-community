@@ -31,8 +31,9 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Dimension;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;

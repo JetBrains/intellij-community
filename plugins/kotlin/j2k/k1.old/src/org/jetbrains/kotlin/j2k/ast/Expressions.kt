@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.j2k.append
 import org.jetbrains.kotlin.lexer.KtTokens
-import java.util.*
+import java.util.Locale
 
 @K1Deprecation
 class ArrayAccessExpression(val expression: Expression, val index: Expression, private val lvalue: Boolean) : Expression() {

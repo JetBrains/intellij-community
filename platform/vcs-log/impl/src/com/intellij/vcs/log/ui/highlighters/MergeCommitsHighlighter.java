@@ -3,7 +3,12 @@ package com.intellij.vcs.log.ui.highlighters;
 
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.VcsCommitStyleFactory;
+import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.VcsLogDataPack;
+import com.intellij.vcs.log.VcsLogHighlighter;
+import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;

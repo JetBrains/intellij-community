@@ -5,7 +5,10 @@ import com.intellij.codeInsight.completion.CompletionLocation
 import com.intellij.codeInsight.completion.JavaIncorrectElements
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiKeyword
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifierListOwner
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.Locale
 

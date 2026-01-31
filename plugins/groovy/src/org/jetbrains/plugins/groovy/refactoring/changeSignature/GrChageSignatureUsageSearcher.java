@@ -1,13 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.changeSignature.*;
+import com.intellij.refactoring.changeSignature.ChangeSignatureParameterUsageInfo;
+import com.intellij.refactoring.changeSignature.ChangeSignatureUsageProvider;
+import com.intellij.refactoring.changeSignature.ChangeSignatureUsageProviders;
+import com.intellij.refactoring.changeSignature.JavaChangeInfo;
+import com.intellij.refactoring.changeSignature.NewParameterCollidesWithLocalUsageInfo;
+import com.intellij.refactoring.changeSignature.OverriderUsageInfo;
+import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;

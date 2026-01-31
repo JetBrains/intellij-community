@@ -34,7 +34,10 @@ import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import static org.jetbrains.plugins.terminal.TerminalStartupKt.*;
+import static org.jetbrains.plugins.terminal.TerminalStartupKt.findEelDescriptor;
+import static org.jetbrains.plugins.terminal.TerminalStartupKt.shouldUseEelApi;
+import static org.jetbrains.plugins.terminal.TerminalStartupKt.startLocalProcess;
+import static org.jetbrains.plugins.terminal.TerminalStartupKt.startProcess;
 
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);

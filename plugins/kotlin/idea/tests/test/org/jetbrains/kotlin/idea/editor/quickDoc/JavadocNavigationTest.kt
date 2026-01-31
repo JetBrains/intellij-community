@@ -5,10 +5,10 @@ package org.jetbrains.kotlin.idea.editor.quickDoc
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
 import com.intellij.psi.PsiJavaFile
 import com.intellij.testFramework.UsefulTestCase
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith

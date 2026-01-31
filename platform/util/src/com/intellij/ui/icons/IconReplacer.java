@@ -3,7 +3,7 @@ package com.intellij.ui.icons;
 
 import org.jetbrains.annotations.Contract;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public interface IconReplacer {
   @Contract("null -> null; !null -> !null")

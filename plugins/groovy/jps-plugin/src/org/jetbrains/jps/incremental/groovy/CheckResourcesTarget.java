@@ -4,7 +4,12 @@ package org.jetbrains.jps.incremental.groovy;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetLoader;
+import org.jetbrains.jps.builders.BuildTargetRegistry;
+import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.TargetOutputIndex;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.ResourceRootDescriptor;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
@@ -19,7 +24,11 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class CheckResourcesTarget extends BuildTarget<GroovyResourceRootDescriptor> {
   private final @NotNull JpsModule myModule;

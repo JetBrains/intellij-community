@@ -8,7 +8,12 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UResolvable
+import org.jetbrains.uast.UastFacade
 
 fun UFile.resolvableWithTargets(
     renderLightElementDifferently: (PsiElement?) -> String = { it.toString() },

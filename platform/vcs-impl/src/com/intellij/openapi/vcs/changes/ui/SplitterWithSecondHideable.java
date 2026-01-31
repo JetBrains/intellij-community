@@ -13,8 +13,11 @@ import com.intellij.util.ui.MouseEventHandler;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JSeparator;
+import java.awt.Cursor;
+import java.awt.GridBagConstraints;
 import java.awt.event.MouseEvent;
 import java.util.Objects;
 

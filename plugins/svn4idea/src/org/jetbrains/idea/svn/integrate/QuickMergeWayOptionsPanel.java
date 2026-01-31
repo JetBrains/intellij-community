@@ -6,7 +6,9 @@ import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import java.awt.event.ActionListener;
 
 public class QuickMergeWayOptionsPanel {

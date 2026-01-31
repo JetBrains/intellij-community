@@ -4,7 +4,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.idea.svn.api.Depth;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 

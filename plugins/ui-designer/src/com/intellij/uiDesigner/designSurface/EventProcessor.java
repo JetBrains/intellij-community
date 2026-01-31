@@ -3,7 +3,7 @@ package com.intellij.uiDesigner.designSurface;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Cursor;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 

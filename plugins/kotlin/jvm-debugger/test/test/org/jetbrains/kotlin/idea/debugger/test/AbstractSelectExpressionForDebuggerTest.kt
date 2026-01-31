@@ -8,7 +8,10 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.debugger.core.KotlinEditorTextProvider
 import org.jetbrains.kotlin.idea.debugger.core.withCustomConfiguration
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
 import org.junit.Assert
 
 /**

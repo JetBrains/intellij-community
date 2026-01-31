@@ -8,7 +8,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class UserFileType<T extends UserFileType<T>> implements FileType, Cloneable {
   private @NotNull String myName = "";

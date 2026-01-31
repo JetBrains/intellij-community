@@ -3,7 +3,11 @@ package com.intellij.python.junit5Tests.env
 
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.testFramework.junit5.eel.params.api.*
+import com.intellij.platform.testFramework.junit5.eel.params.api.DockerTest
+import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
+import com.intellij.platform.testFramework.junit5.eel.params.api.EelSource
+import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
+import com.intellij.platform.testFramework.junit5.eel.params.api.WslTest
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.asBinToExec
 import com.intellij.python.community.execService.python.executeHelper

@@ -14,7 +14,13 @@ import java.io.BufferedInputStream
 import java.io.FileOutputStream
 import java.net.URL
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.bufferedReader
+import kotlin.io.path.bufferedWriter
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createFile
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.name
+import kotlin.io.path.walk
 import kotlin.time.Duration.Companion.minutes
 
 open class MavenBuildTool(testContext: IDETestContext) : BuildTool(BuildToolType.MAVEN, testContext) {

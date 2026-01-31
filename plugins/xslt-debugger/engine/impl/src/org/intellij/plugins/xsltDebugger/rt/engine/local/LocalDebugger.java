@@ -15,7 +15,12 @@
  */
 package org.intellij.plugins.xsltDebugger.rt.engine.local;
 
-import org.intellij.plugins.xsltDebugger.rt.engine.*;
+import org.intellij.plugins.xsltDebugger.rt.engine.Breakpoint;
+import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManager;
+import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManagerImpl;
+import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
+import org.intellij.plugins.xsltDebugger.rt.engine.DebuggerStoppedException;
+import org.intellij.plugins.xsltDebugger.rt.engine.Value;
 import org.intellij.plugins.xsltDebugger.rt.engine.local.saxon.SaxonSupport;
 import org.intellij.plugins.xsltDebugger.rt.engine.local.saxon9.Saxon9Support;
 import org.intellij.plugins.xsltDebugger.rt.engine.local.xalan.XalanSupport;

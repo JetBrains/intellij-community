@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.GradleProject;
-import org.gradle.tooling.model.UnsupportedMethodException;
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
 import org.jetbrains.annotations.ApiStatus;
 

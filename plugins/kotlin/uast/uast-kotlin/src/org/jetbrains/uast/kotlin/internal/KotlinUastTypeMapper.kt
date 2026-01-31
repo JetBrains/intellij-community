@@ -11,16 +11,30 @@ import org.jetbrains.kotlin.codegen.signature.AsmTypeFactory
 import org.jetbrains.kotlin.codegen.signature.JvmSignatureWriter
 import org.jetbrains.kotlin.codegen.state.isMostPreciseContravariantArgument
 import org.jetbrains.kotlin.codegen.state.isMostPreciseCovariantArgument
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
+import org.jetbrains.kotlin.descriptors.PossiblyInnerType
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
+import org.jetbrains.kotlin.descriptors.buildPossiblyInnerType
 import org.jetbrains.kotlin.load.kotlin.TypeMappingConfiguration
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.load.kotlin.mapType
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.CommonSupertypes
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeProjection
+import org.jetbrains.kotlin.types.TypeSystemCommonBackendContext
+import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext
 import org.jetbrains.kotlin.types.checker.convertVariance
-import org.jetbrains.kotlin.types.model.*
+import org.jetbrains.kotlin.types.getEffectiveVariance
+import org.jetbrains.kotlin.types.model.KotlinTypeMarker
+import org.jetbrains.kotlin.types.model.TypeArgumentMarker
+import org.jetbrains.kotlin.types.model.TypeParameterMarker
+import org.jetbrains.kotlin.types.model.TypeSystemContext
+import org.jetbrains.kotlin.types.model.TypeVariance
+import org.jetbrains.kotlin.types.updateArgumentModeFromAnnotations
 import org.jetbrains.org.objectweb.asm.Type
 
 object KotlinUastTypeMapper {

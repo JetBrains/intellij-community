@@ -22,7 +22,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static com.jetbrains.python.psi.PyKnownDecorator.*;
+import static com.jetbrains.python.psi.PyKnownDecorator.FUNCTOOLS_LRU_CACHE;
+import static com.jetbrains.python.psi.PyKnownDecorator.FUNCTOOLS_SINGLEDISPATCH;
+import static com.jetbrains.python.psi.PyKnownDecorator.TYPING_OVERLOAD;
+import static com.jetbrains.python.psi.PyKnownDecorator.UNITTEST_MOCK_PATCH;
 
 /**
  * Contains list of well-behaved decorators from Pythons standard library, that don't change

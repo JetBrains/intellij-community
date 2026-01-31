@@ -7,14 +7,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vfs.findDirectory
+import com.intellij.performanceTesting.vcs.VcsTestUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.psi.PsiManager
-import com.intellij.psi.impl.PsiManagerImpl
+import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.file.PsiDirectoryImpl
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
-import com.intellij.performanceTesting.vcs.VcsTestUtil
-import com.intellij.psi.impl.PsiManagerEx
 import io.opentelemetry.context.Context
 import org.jetbrains.kotlin.idea.actions.createKotlinFileFromTemplate
 

@@ -20,8 +20,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 /**
  * Assorted UI-related utility methods for Python.

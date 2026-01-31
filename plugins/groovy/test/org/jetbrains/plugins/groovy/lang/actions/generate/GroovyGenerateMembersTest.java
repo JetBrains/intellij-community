@@ -1,7 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.actions.generate;
 
-import com.intellij.codeInsight.generation.*;
+import com.intellij.codeInsight.generation.ClassMember;
+import com.intellij.codeInsight.generation.GenerateConstructorHandler;
+import com.intellij.codeInsight.generation.GenerateGetterHandler;
+import com.intellij.codeInsight.generation.GenerateMembersHandlerBase;
+import com.intellij.codeInsight.generation.GenerateSetterHandler;
+import com.intellij.codeInsight.generation.PsiFieldMember;
+import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;

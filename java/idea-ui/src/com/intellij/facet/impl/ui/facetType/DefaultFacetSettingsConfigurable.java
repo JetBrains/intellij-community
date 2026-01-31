@@ -25,7 +25,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class DefaultFacetSettingsConfigurable<C extends FacetConfiguration> implements Configurable {
   private final FacetType<?, ? super C> myFacetType;

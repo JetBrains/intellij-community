@@ -7,7 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.stats.completion.logger.ClientSessionValidator
 import com.intellij.stats.completion.logger.EventLoggerWithValidation
 import com.intellij.stats.completion.logger.LogFileManager
-import java.util.*
+import java.util.UUID
 
 class CompletionFileLoggerProvider : Disposable, CompletionLoggerProvider() {
   private val eventLogger = EventLoggerWithValidation(LogFileManager(service()), ClientSessionValidator())

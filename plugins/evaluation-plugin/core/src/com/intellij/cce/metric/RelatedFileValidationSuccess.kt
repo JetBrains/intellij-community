@@ -1,7 +1,6 @@
 package com.intellij.cce.metric
 
 import com.intellij.cce.core.Session
-import com.intellij.cce.evaluable.AIA_FAILED_FILE_VALIDATIONS
 import com.intellij.cce.evaluable.AIA_FAILED_RELATED_FILE_VALIDATIONS
 import com.intellij.cce.metric.util.Sample
 
