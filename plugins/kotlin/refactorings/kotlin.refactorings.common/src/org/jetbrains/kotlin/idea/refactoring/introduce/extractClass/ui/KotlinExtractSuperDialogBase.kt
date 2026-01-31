@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ui
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
@@ -63,14 +64,14 @@ abstract class KotlinExtractSuperDialogBase(
         false,
         interfaceContainmentVerifier
     ) {
-        override fun isMemberEnabled(member: KotlinMemberInfo): Boolean {
-            val declaration = member.member ?: return false
-            return !declaration.hasModifier(KtTokens.CONST_KEYWORD)
+        override fun isMemberEnabled(member: KotlinMemberInfo): Boolean = runReadAction {
+            val declaration = member.member ?: return@runReadAction false
+            !declaration.hasModifier(KtTokens.CONST_KEYWORD)
         }
 
-        override fun isAbstractEnabled(memberInfo: KotlinMemberInfo): Boolean {
+        override fun isAbstractEnabled(memberInfo: KotlinMemberInfo): Boolean = runReadAction {
             val member = memberInfo.member
-            return !(member.hasModifier(KtTokens.INLINE_KEYWORD) ||
+            !(member.hasModifier(KtTokens.INLINE_KEYWORD) ||
                     member.hasModifier(KtTokens.EXTERNAL_KEYWORD) ||
                     member.hasModifier(KtTokens.LATEINIT_KEYWORD))
         }
