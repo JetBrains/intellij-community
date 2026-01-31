@@ -80,7 +80,8 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
     }
   }
 
-  private @Nullable String getQualifiedName() {
+  @Override
+  public @Nullable String getQualifiedName() {
     PsiJavaCodeReferenceElement reference = getImportReference();
     if (reference == null) return null;
     return reference.getCanonicalText();
