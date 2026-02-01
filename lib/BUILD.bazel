@@ -10124,6 +10124,73 @@ jvm_import(
 )
 
 copy_file(
+  name = "androidx.collection/collection-1.6.0-beta01.jar_copy",
+  src = "@androidx_collection-collection-1_6_0-beta01_http//file",
+  out = "androidx.collection/collection-1.6.0-beta01.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "androidx.annotation/annotation-1.9.1.jar_copy",
+  src = "@androidx_annotation-annotation-1_9_1_http//file",
+  out = "androidx.annotation/annotation-1.9.1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "androidx.annotation/annotation-jvm-1.9.1.jar_copy",
+  src = "@androidx_annotation-annotation-jvm-1_9_1_http//file",
+  out = "androidx.annotation/annotation-jvm-1.9.1.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "androidx.collection/collection-jvm-1.6.0-beta01.jar_copy",
+  src = "@androidx_collection-collection-jvm-1_6_0-beta01_http//file",
+  out = "androidx.collection/collection-jvm-1.6.0-beta01.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-androidx-collections-androidx-collection",
+  exports = [
+    ":androidx_collection-collection-1_6_0-beta01_http_import",
+    ":androidx_annotation-annotation-1_9_1_http_import",
+    ":androidx_annotation-annotation-jvm-1_9_1_http_import",
+    ":androidx_collection-collection-jvm-1_6_0-beta01_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "androidx_collection-collection-1_6_0-beta01_http_import",
+  jar = "@androidx_collection-collection-1_6_0-beta01_http//file",
+  source_jar = "@androidx_collection-collection-1_6_0-beta01-sources_http//file"
+)
+
+jvm_import(
+  name = "androidx_annotation-annotation-1_9_1_http_import",
+  jar = "@androidx_annotation-annotation-1_9_1_http//file",
+  source_jar = "@androidx_annotation-annotation-1_9_1-sources_http//file"
+)
+
+jvm_import(
+  name = "androidx_annotation-annotation-jvm-1_9_1_http_import",
+  jar = "@androidx_annotation-annotation-jvm-1_9_1_http//file",
+  source_jar = "@androidx_annotation-annotation-jvm-1_9_1-sources_http//file"
+)
+
+jvm_import(
+  name = "androidx_collection-collection-jvm-1_6_0-beta01_http_import",
+  jar = "@androidx_collection-collection-jvm-1_6_0-beta01_http//file",
+  source_jar = "@androidx_collection-collection-jvm-1_6_0-beta01-sources_http//file"
+)
+
+copy_file(
   name = "org.jetbrains.intellij.deps/asm-all-9.6.1.jar_copy",
   src = "@org_jetbrains_intellij_deps-asm-all-9_6_1_http//file",
   out = "org.jetbrains.intellij.deps/asm-all-9.6.1.jar",
@@ -10745,14 +10812,6 @@ copy_file(
 )
 
 copy_file(
-  name = "androidx.annotation/annotation-jvm-1.9.1.jar_copy",
-  src = "@androidx_annotation-annotation-jvm-1_9_1_http//file",
-  out = "androidx.annotation/annotation-jvm-1.9.1.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "androidx.compose.runtime/runtime-annotation-jvm-1.10.0.jar_copy",
   src = "@androidx_compose_runtime-runtime-annotation-jvm-1_10_0_http//file",
   out = "androidx.compose.runtime/runtime-annotation-jvm-1.10.0.jar",
@@ -10781,12 +10840,6 @@ jvm_import(
   name = "androidx_collection-collection-jvm-1_5_0_http_import",
   jar = "@androidx_collection-collection-jvm-1_5_0_http//file",
   source_jar = "@androidx_collection-collection-jvm-1_5_0-sources_http//file"
-)
-
-jvm_import(
-  name = "androidx_annotation-annotation-jvm-1_9_1_http_import",
-  jar = "@androidx_annotation-annotation-jvm-1_9_1_http//file",
-  source_jar = "@androidx_annotation-annotation-jvm-1_9_1-sources_http//file"
 )
 
 jvm_import(

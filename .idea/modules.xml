@@ -829,6 +829,7 @@
       <module fileurl="file://$PROJECT_DIR$/tools/intellij.lambda.testFramework/intellij.lambda.testFramework.iml" filepath="$PROJECT_DIR$/tools/intellij.lambda.testFramework/intellij.lambda.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/aalto-xml/intellij.libraries.aalto.xml.iml" filepath="$PROJECT_DIR$/libraries/aalto-xml/intellij.libraries.aalto.xml.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/ai.grazie.spell.gec.engine.local/intellij.libraries.ai.grazie.spell.gec.engine.local.iml" filepath="$PROJECT_DIR$/libraries/ai.grazie.spell.gec.engine.local/intellij.libraries.ai.grazie.spell.gec.engine.local.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/androidx-collections/intellij.libraries.androidx.collections.iml" filepath="$PROJECT_DIR$/libraries/androidx-collections/intellij.libraries.androidx.collections.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/asm/intellij.libraries.asm.iml" filepath="$PROJECT_DIR$/libraries/asm/intellij.libraries.asm.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/asm-tools/intellij.libraries.asm.tools.iml" filepath="$PROJECT_DIR$/libraries/asm-tools/intellij.libraries.asm.tools.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/assertj-core/intellij.libraries.assertj.core.iml" filepath="$PROJECT_DIR$/libraries/assertj-core/intellij.libraries.assertj.core.iml" />
@@ -1246,6 +1247,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.annotations.iml" filepath="$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.annotations.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.tests.iml" filepath="$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/kernel/pasta/intellij.platform.pasta.iml" filepath="$PROJECT_DIR$/platform/kernel/pasta/intellij.platform.pasta.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/build-scripts/product-dsl/plugin-graph/intellij.platform.pluginGraph.iml" filepath="$PROJECT_DIR$/platform/build-scripts/product-dsl/plugin-graph/intellij.platform.pluginGraph.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/pluginManager/backend/intellij.platform.pluginManager.backend.iml" filepath="$PROJECT_DIR$/platform/pluginManager/backend/intellij.platform.pluginManager.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/pluginManager/frontend/intellij.platform.pluginManager.frontend.iml" filepath="$PROJECT_DIR$/platform/pluginManager/frontend/intellij.platform.pluginManager.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/pluginManager/shared/intellij.platform.pluginManager.shared.iml" filepath="$PROJECT_DIR$/platform/pluginManager/shared/intellij.platform.pluginManager.shared.iml" />

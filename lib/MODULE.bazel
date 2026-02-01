@@ -7973,6 +7973,62 @@ http_file(
 )
 
 http_file(
+  name = "androidx_collection-collection-1_6_0-beta01_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/collection/collection/1.6.0-beta01/collection-1.6.0-beta01.jar",
+  sha256 = "9a273f0f95e9bec012a4bbe5090c08f80b67c28ff40d6a212b401eff99316a09",
+  downloaded_file_path = "collection-1.6.0-beta01.jar"
+)
+
+http_file(
+  name = "androidx_annotation-annotation-1_9_1_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/annotation/annotation/1.9.1/annotation-1.9.1.jar",
+  sha256 = "38322afa7345c37e29c65ec8852178ae1c26e23096a0634d07a4a3893931f58c",
+  downloaded_file_path = "annotation-1.9.1.jar"
+)
+
+http_file(
+  name = "androidx_annotation-annotation-jvm-1_9_1_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/annotation/annotation-jvm/1.9.1/annotation-jvm-1.9.1.jar",
+  sha256 = "1e343917ebf27ba96fe4dc52b1cad7fd32b738fbc6355bb6cd5b3b305d7212d0",
+  downloaded_file_path = "annotation-jvm-1.9.1.jar"
+)
+
+http_file(
+  name = "androidx_collection-collection-jvm-1_6_0-beta01_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/collection/collection-jvm/1.6.0-beta01/collection-jvm-1.6.0-beta01.jar",
+  sha256 = "74e128077ba26f4f0ca6c5490ef86f8e931f811cd7aadf182830753a108aace9",
+  downloaded_file_path = "collection-jvm-1.6.0-beta01.jar"
+)
+
+http_file(
+  name = "androidx_collection-collection-1_6_0-beta01-sources_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/collection/collection/1.6.0-beta01/collection-1.6.0-beta01-sources.jar",
+  sha256 = "22caf0ab3a7b667ae2e3a4fed5c3647fe005170d8c3d5e667fe386532862ca3c",
+  downloaded_file_path = "collection-1.6.0-beta01-sources.jar"
+)
+
+http_file(
+  name = "androidx_annotation-annotation-1_9_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/annotation/annotation/1.9.1/annotation-1.9.1-sources.jar",
+  sha256 = "4560d6790c5174f4a6f1170fd8bd4c38ad918608fedd624fb67a35cd1a0f4e3a",
+  downloaded_file_path = "annotation-1.9.1-sources.jar"
+)
+
+http_file(
+  name = "androidx_annotation-annotation-jvm-1_9_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/annotation/annotation-jvm/1.9.1/annotation-jvm-1.9.1-sources.jar",
+  sha256 = "c6ae897fbfb73ca09d4ae31a24bfff85c652097ad10644cdbb738488728cb39b",
+  downloaded_file_path = "annotation-jvm-1.9.1-sources.jar"
+)
+
+http_file(
+  name = "androidx_collection-collection-jvm-1_6_0-beta01-sources_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/collection/collection-jvm/1.6.0-beta01/collection-jvm-1.6.0-beta01-sources.jar",
+  sha256 = "6cbe955cd2f5f71c416d4bdf67efcd42916dfaf681c8cb59e256e8cece87eaa8",
+  downloaded_file_path = "collection-jvm-1.6.0-beta01-sources.jar"
+)
+
+http_file(
   name = "org_jetbrains_intellij_deps-asm-all-9_6_1_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/asm-all/9.6.1/asm-all-9.6.1.jar",
   sha256 = "a72e84efb1406a7ab326e0b28c4376e9e1ebfc08c09f23edff5e6e7249588df7",
@@ -8519,13 +8575,6 @@ http_file(
 )
 
 http_file(
-  name = "androidx_annotation-annotation-jvm-1_9_1_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/annotation/annotation-jvm/1.9.1/annotation-jvm-1.9.1.jar",
-  sha256 = "1e343917ebf27ba96fe4dc52b1cad7fd32b738fbc6355bb6cd5b3b305d7212d0",
-  downloaded_file_path = "annotation-jvm-1.9.1.jar"
-)
-
-http_file(
   name = "androidx_compose_runtime-runtime-annotation-jvm-1_10_0_http",
   url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/compose/runtime/runtime-annotation-jvm/1.10.0/runtime-annotation-jvm-1.10.0.jar",
   sha256 = "f89dda8bcd73876d0fc16568844b2bd79443ee7ca62810874d25c7dcaa394bd6",
@@ -8544,13 +8593,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/collection/collection-jvm/1.5.0/collection-jvm-1.5.0-sources.jar",
   sha256 = "bcc6197ec5fb349e86ae3ba6c94b164d3a9ac5a03d9f9c235d7c4eb24e5878b3",
   downloaded_file_path = "collection-jvm-1.5.0-sources.jar"
-)
-
-http_file(
-  name = "androidx_annotation-annotation-jvm-1_9_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/annotation/annotation-jvm/1.9.1/annotation-jvm-1.9.1-sources.jar",
-  sha256 = "c6ae897fbfb73ca09d4ae31a24bfff85c652097ad10644cdbb738488728cb39b",
-  downloaded_file_path = "annotation-jvm-1.9.1-sources.jar"
 )
 
 http_file(
