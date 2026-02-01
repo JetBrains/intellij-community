@@ -137,6 +137,7 @@ class ChooseModulePanel(
                         val comboBox = comboBox(modules.naturalSorted() as List<Module?>, textListCellRenderer { it?.name })
                             .bindItem(selectedModule)
                             .align(AlignX.FILL)
+                        comboBox.component.isSwingPopup = false
                         comboBox.enabledIf(singleModuleButton.selected)
                     }
                 )
