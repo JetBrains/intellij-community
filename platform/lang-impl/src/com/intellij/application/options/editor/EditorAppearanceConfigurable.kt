@@ -81,7 +81,7 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
           renderer = textListCellRenderer {
             when (it) {
               EditorSettings.CaretEasing.NINJA -> "Snappy"
-              EditorSettings.CaretEasing.EASE -> "Smooth"
+              EditorSettings.CaretEasing.EASE -> "Gliding"
               null -> ""
             }
           }
