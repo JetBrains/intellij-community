@@ -12,10 +12,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertStringAndInvokeCompletion
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.insertStringAndInvokeCompletion
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
-import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeConstraintNameInWhereClausePositionContext
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.renderer.render

@@ -1,6 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.completion.lookups.factories
+package org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories
 
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
@@ -19,7 +19,15 @@ import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.AnonymousObjectInsertHandler
-import org.jetbrains.kotlin.idea.completion.lookups.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionOptions
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionStrategy
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CompletionShortNamesRenderer
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.KotlinLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.QuotedNamesAwareInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TailTextProvider
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.addImportIfRequired
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.withClassifierSymbolInfo
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render

@@ -107,48 +107,15 @@
 
     <!-- shared completion -->
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.completion.implCommon.LookupCancelService"/>
-    <!-- k2 completion -->
-    <lookup.charFilter implementation="org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionCharFilter"/>
-    <completion.contributor language="kotlin"
-                            id="KotlinCompletionContributor"
-                            order="first"
-                            implementationClass="org.jetbrains.kotlin.idea.completion.KotlinFirCompletionContributor"/>
-
-    <completion.contributor language="kotlin"
-                            order="last, before default"
-                            implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.KotlinChainCompletionContributor"/>
-
-    <registryKey key="kotlin.k2.chain.completion.enabled"
-                 description="Allow chained completion items in Kotlin"
-                 defaultValue="true"
-                 restartRequired="true"/>
 
     <registryKey key="kotlin.k2.dot.add.enabled"
                  description="Allow adding '.' to completion lookup"
                  defaultValue="true"
                  restartRequired="false"/>
 
-    <registryKey key="kotlin.k2.smart.completion.enabled"
-                 description="Enable smart completion for Kotlin in K2 mode"
-                 defaultValue="true"
-                 restartRequired="true"/>
-
-    <registryKey key="kotlin.k2.parallel.completion.enabled"
-                 description="Allow Kotlin contributors to run in parallel"
-                 defaultValue="true"
-                 restartRequired="false"/>
-
-    <registryKey key="kotlin.k2.complete.top.level.packages"
-                 description="Allows completion of top level packages"
-                 defaultValue="true"
-                 restartRequired="false"/>
-
     <weigher key="proximity" implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinxLibrariesWeigher"
              id="kotlin.preferKotlinx"
              order="after sameModule, before knownElement"/>
-
-    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.completion.FirCompletionDummyIdentifierProviderService"
-                        serviceInterface="org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService"/>
 
     <!-- -->
     <codeInsight.typeInfo language="kotlin"
@@ -276,6 +243,8 @@
     <module name="intellij.kotlin.codeInsight.liveTemplates"/>
     <module name="intellij.kotlin.codeInsight.postfixTemplates"/>
     <module name="intellij.kotlin.codeInsight.structuralSearch"/>
+
+    <module name="intellij.kotlin.completion.impl"/>
 
     <module name="intellij.kotlin.jvm.debugger.evaluation"/>
 

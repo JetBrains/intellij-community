@@ -9,8 +9,7 @@ import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.NameWithTypeLookupElementDecoratorInsertHandler
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableLookupObject
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallInsertionHandler
-import org.jetbrains.kotlin.idea.completion.contributors.keywords.SuperKeywordLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.keywords.SuperKeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.handlers.KeywordConstructLookupObject
 import org.jetbrains.kotlin.idea.completion.handlers.KeywordConstructorInsertionHandler
 import org.jetbrains.kotlin.idea.completion.handlers.LineAdjusterInsertionHandler
@@ -23,6 +22,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.TypeParameterIn
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.TypeParameterInWhenClauseInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.WhenConditionInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.WhenConditionLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.SuperCallInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.AdaptToExplicitReceiverInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.AnonymousObjectInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.BracketOperatorInsertionHandler
@@ -38,21 +38,22 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeLookup
 import org.jetbrains.kotlin.idea.completion.implCommon.handlers.CompletionCharInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.handlers.NamedArgumentInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.InsertStringTemplateBracesInsertHandler
-import org.jetbrains.kotlin.idea.completion.lookups.QuotedNamesAwareInsertionHandler
-import org.jetbrains.kotlin.idea.completion.lookups.UniqueLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.UpdateLookupElementBuilderToInsertTypeQualifierOnSuperInsertionHandler
-import org.jetbrains.kotlin.idea.completion.lookups.factories.AsIdentifierCustomInsertionHandler
-import org.jetbrains.kotlin.idea.completion.lookups.factories.CallableIdentifierInsertionHandler
-import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierInsertionHandler
-import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionInsertionHandler
-import org.jetbrains.kotlin.idea.completion.lookups.factories.OperatorNameLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.factories.PackagePartInsertionHandler
-import org.jetbrains.kotlin.idea.completion.lookups.factories.PackagePartLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.factories.VariableInsertionHandler
-import org.jetbrains.kotlin.idea.completion.lookups.factories.VariableLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.factories.WithCallArgsInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.QuotedNamesAwareInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.UniqueLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.UpdateLookupElementBuilderToInsertTypeQualifierOnSuperInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.AnonymousObjectLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.AsIdentifierCustomInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.CallableIdentifierInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.ClassifierInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.ClassifierLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.FunctionCallLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.FunctionInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.OperatorNameLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.PackagePartInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.PackagePartLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.VariableInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.VariableLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.WithCallArgsInsertionHandler
 
 @ApiStatus.Internal
 val serializableInsertionHandlerSerializersModule: SerializersModule = SerializersModule {

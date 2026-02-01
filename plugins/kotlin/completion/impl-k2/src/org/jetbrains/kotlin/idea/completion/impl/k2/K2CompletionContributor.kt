@@ -16,8 +16,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.evaluateRuntimeKaType
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WrapSingleStringTemplateEntryWithBracesInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.addSmartCompletionTailInsertHandler
@@ -25,8 +24,8 @@ import org.jetbrains.kotlin.idea.completion.implCommon.handlers.CompletionCharIn
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.InsertStringTemplateBracesInsertHandler
 import org.jetbrains.kotlin.idea.completion.isAtFunctionLiteralStart
 import org.jetbrains.kotlin.idea.completion.suppressItemSelectionByCharsOnTyping
-import org.jetbrains.kotlin.idea.completion.weighers.CompletionContributorGroupWeigher.groupPriority
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.CompletionContributorGroupWeigher.groupPriority
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
 import java.util.Optional
@@ -269,7 +268,7 @@ internal abstract class K2CompletionContributor<P : KotlinRawPositionContext>(
 
     /**
      * Returns the group priority of the completion section that will be applied as weight to the [LookupElement]s
-     * from within the [org.jetbrains.kotlin.idea.completion.weighers.CompletionContributorGroupWeigher].
+     * from within the [org.jetbrains.kotlin.idea.completion.impl.k2.weighers.CompletionContributorGroupWeigher].
      *
      * Note: this priority only affects the order of the elements displayed to the user.
      *  It does not affect the order in which the sections are executed.

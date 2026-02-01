@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.completion.weighers
+package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.lookup.LookupElement
@@ -35,19 +35,13 @@ import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getDefaultImportPaths
 import org.jetbrains.kotlin.idea.base.util.ImportableFqNameClassifier
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.languageVersionSettings
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.useSiteModule
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters.Companion.languageVersionSettings
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters.Companion.useSiteModule
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
-import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.DurationPreferringWeigher
-import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.K2SoftDeprecationWeigher
-import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.PreferAbstractForOverrideWeigher
-import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.PreferredSubtypeWeigher
-import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaParameterNameWeigher
-import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaWeigher
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.CallableMetadataProvider
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinClassesWeigher
 import org.jetbrains.kotlin.idea.completion.isPositionInsideImportOrPackageDirective
 import org.jetbrains.kotlin.idea.completion.isPositionSuitableForNull

@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.completion.lookups.factories
+package org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories
 
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
@@ -20,17 +20,10 @@ import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
-import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
-import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderVariable
-import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.KotlinCallableLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.QuotedNamesAwareInsertionHandler
-import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
-import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailTextForVariableCall
-import org.jetbrains.kotlin.idea.completion.lookups.addImportIfRequired
-import org.jetbrains.kotlin.idea.completion.lookups.updateLookupElementBuilderToInsertTypeQualifierOnSuper
-import org.jetbrains.kotlin.idea.completion.lookups.withCallableSignatureInfo
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CompletionShortNamesRenderer.renderVariable
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TailTextProvider.getTailText
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TailTextProvider.getTailTextForVariableCall
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render

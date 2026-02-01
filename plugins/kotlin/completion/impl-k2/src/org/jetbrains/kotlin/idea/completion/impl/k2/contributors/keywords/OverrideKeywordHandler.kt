@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.completion.contributors.keywords
+package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.keywords
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
@@ -32,15 +32,15 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.OverridesCompletionLookupElementDecorator
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.renderVerbose
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.withAllowedResolve
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.PreferAbstractForOverrideWeigher
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
-import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
-import org.jetbrains.kotlin.idea.completion.lookups.renderVerbose
-import org.jetbrains.kotlin.idea.completion.lookups.withAllowedResolve
 import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
 import org.jetbrains.kotlin.idea.core.overrideImplement.ContextParametersListRenderer
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember

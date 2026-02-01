@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.completion.contributors.helpers
+package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers
 
 import com.intellij.openapi.util.Ref
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -19,12 +19,13 @@ import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.ApplicableExtension
-import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
-import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionOptions
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionStrategy
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.ImportStrategy
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import kotlin.collections.get
 
 internal class ShadowedCallablesFilter {
 

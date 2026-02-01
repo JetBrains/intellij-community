@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.completion.weighers
+package org.jetbrains.kotlin.idea.completion.impl.k2.weighers
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
@@ -9,12 +9,12 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
-import org.jetbrains.kotlin.idea.completion.contributors.keywords.ReturnKeywordHandler.isReturnAtHighlyLikelyPosition
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.keywords.ReturnKeywordHandler.isReturnAtHighlyLikelyPosition
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.KotlinCallableLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.FunctionCallLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.KotlinCallableLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.factories.OperatorNameLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.factories.PackagePartLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.OperatorNameLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.PackagePartLookupObject
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 

@@ -1,6 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.completion.lookups.factories
+package org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.InsertionContext
@@ -40,25 +40,25 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.insertString
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.insertStringAndInvokeCompletion
 import org.jetbrains.kotlin.idea.completion.acceptOpeningBrace
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertStringAndInvokeCompletion
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.TrailingLambdaInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionOptions
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionStrategy
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CompletionShortNamesRenderer
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.KotlinCallableLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.QuotedNamesAwareInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TailTextProvider
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.addImportIfRequired
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaWeigher.hasTrailingLambda
-import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
-import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer
-import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.KotlinCallableLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.QuotedNamesAwareInsertionHandler
-import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider
-import org.jetbrains.kotlin.idea.completion.lookups.addImportIfRequired
-import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject.Companion.hasReceiver
-import org.jetbrains.kotlin.idea.completion.lookups.indexOfSkippingSpace
-import org.jetbrains.kotlin.idea.completion.lookups.skipSpaces
-import org.jetbrains.kotlin.idea.completion.lookups.updateLookupElementBuilderToInsertTypeQualifierOnSuper
-import org.jetbrains.kotlin.idea.completion.lookups.withCallableSignatureInfo
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.FunctionCallLookupObject.Companion.hasReceiver
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.indexOfSkippingSpace
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.skipSpaces
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.updateLookupElementBuilderToInsertTypeQualifierOnSuper
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.withCallableSignatureInfo
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile

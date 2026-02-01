@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.completion.checkers
+package org.jetbrains.kotlin.idea.completion.impl.k2.checkers
 
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.PsiClass
@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.util.isJavaClassNotToBeUsedInKotlin
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.useSiteModule
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters.Companion.useSiteModule
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
