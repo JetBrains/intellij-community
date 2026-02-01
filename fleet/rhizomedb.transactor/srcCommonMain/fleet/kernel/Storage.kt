@@ -2,6 +2,7 @@
 package fleet.kernel
 
 import com.jetbrains.rhizomedb.Attribute
+import com.jetbrains.rhizomedb.DB
 import com.jetbrains.rhizomedb.Datom
 import com.jetbrains.rhizomedb.DbContext
 import com.jetbrains.rhizomedb.DeserializationProblem
@@ -53,7 +54,6 @@ private object Storage {
 
 const val DbSnapshotVersion: String = "11"
 
-@OptIn(FlowPreview::class)
 suspend fun <T> withStorage(
   storageKey: StorageKey,
   autoSaveDebounceMs: Long,
@@ -61,19 +61,52 @@ suspend fun <T> withStorage(
   saveSnapshot: suspend CoroutineScope.(DurableSnapshotWithPartitions) -> Unit, // writes snapshot to file
   serializationRestrictions: Set<KClass<*>> = emptySet(),
   body: suspend CoroutineScope.() -> T,
+): T {
+  val isFailFast = currentCoroutineContext().shouldFailFast
+  return withStorage(
+    storageKey,
+    autoSaveDebounceMs,
+    loadSnapshot,
+    applySnapshot = { snapshotWithPartitions: DurableSnapshotWithPartitions ->
+      applyDurableSnapshotWithPartitions(snapshotWithPartitions, isFailFast)
+    },
+    saveSnapshot = { db: DB ->
+      val (snapshot, snapshotBuildDuration) = measureTimedValue {
+        asOf(db) {
+          durableSnapshotWithPartitions(storageKey, serializationRestrictions)
+        }
+      }
+      val entitiesCount = snapshot.snapshot.entities.size
+      Storage.logger.debug { "snapshot for $storageKey built with $entitiesCount entities, took $snapshotBuildDuration" }
+      val savingDuration = measureTime {
+        coroutineScope { saveSnapshot(snapshot) }
+      }
+      Storage.logger.debug { "successfully saved snapshot for $storageKey, written in $savingDuration" }
+    },
+    body,
+  )
+}
+
+@OptIn(FlowPreview::class)
+suspend fun <T, S:Any> withStorage(
+  storageKey: StorageKey,
+  autoSaveDebounceMs: Long,
+  loadSnapshot: suspend CoroutineScope.() -> S?, // reads snapshot from file
+  applySnapshot: DbContext<Mut>.(S) -> Unit, // applies snapshot to the database
+  saveSnapshot: suspend (DB) -> Unit, // writes snapshot to file
+  body: suspend CoroutineScope.() -> T,
 ): T =
   coroutineScope {
     catching {
       Storage.logger.info { "loading snapshot $storageKey" }
       val snapshot = spannedScope("loadSnapshot") { loadSnapshot() }
       spannedScope("transact snapshot") {
-        if (snapshot != DurableSnapshotWithPartitions.Empty) {
+        if (snapshot != null) {
           Storage.logger.info { "applying non-empty snapshot $storageKey" }
-          val isFailFast = currentCoroutineContext().shouldFailFast
           change {
             span("apply snapshot") {
               DbContext.threadBound.ensureMutable {
-                applyDurableSnapshotWithPartitions(snapshotWithPartitions = snapshot, isFailFast = isFailFast)
+                applySnapshot(snapshot)
               }
             }
           }
@@ -124,25 +157,13 @@ suspend fun <T> withStorage(
         .debounce(autoSaveDebounceMs)
         .collectLatest { db ->
           Storage.logger.debug { "saving snapshot $storageKey" }
-          val (snapshot, snapshotBuildDuration) = measureTimedValue {
-            asOf(db) {
-              durableSnapshotWithPartitions(storageKey, serializationRestrictions)
-            }
-          }
-          val entitiesCount = snapshot.snapshot.entities.size
-          Storage.logger.debug { "snapshot for $storageKey built with $entitiesCount entities, took $snapshotBuildDuration" }
-          val savingDuration = measureTime {
-            coroutineScope { saveSnapshot(snapshot) }
-          }
-          Storage.logger.debug { "successfully saved snapshot for $storageKey, written in $savingDuration" }
+          saveSnapshot(db)
         }
     }.use {
       body()
     }.also {
       Storage.logger.info { "last save for $storageKey " }
-      saveSnapshot(asOf(transactor().lastKnownDb) {
-        durableSnapshotWithPartitions(storageKey, serializationRestrictions)
-      })
+      saveSnapshot(transactor().lastKnownDb)
     }
   }
 
