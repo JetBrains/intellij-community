@@ -30,10 +30,10 @@ import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.impl.createBuildContext
 import org.jetbrains.intellij.build.impl.createCompilationContext
 import org.jetbrains.intellij.build.productLayout.discovery.GenerationResult
-import org.jetbrains.intellij.build.productLayout.validation.FileDiff
-import org.jetbrains.intellij.build.productLayout.validation.XIncludeResolutionError
-import org.jetbrains.intellij.build.productLayout.validation.formatValidationError
-import org.jetbrains.intellij.build.productLayout.validation.getErrorId
+import org.jetbrains.intellij.build.productLayout.model.error.FileDiff
+import org.jetbrains.intellij.build.productLayout.model.error.XIncludeResolutionError
+import org.jetbrains.intellij.build.productLayout.model.error.errorId
+import org.jetbrains.intellij.build.productLayout.stats.AnsiStyle
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.jupiter.api.DynamicTest
@@ -120,18 +120,30 @@ fun createContentCheckTests(
       // Check for xi-include errors first - they may cause cascading failures
       val xiIncludeErrors = validationIssues.filterIsInstance<XIncludeResolutionError>()
       for (issue in xiIncludeErrors.ifEmpty { validationIssues }) {
-        val testId = if (issue is FileDiff) "file-out-of-sync:${homePath.relativize(issue.path)}" else "model-validation:${getErrorId(issue)}"
+        val testId = if (issue is FileDiff) "file-out-of-sync:${homePath.relativize(issue.path)}" else "model-validation:${issue.errorId()}"
         yield(DynamicTest.dynamicTest(testId) {
           if (issue is FileDiff) {
+            val relativePath = homePath.relativize(issue.path).toString()
+            val patchText = buildUnifiedDiffText(
+              fileName = relativePath,
+              originalLines = issue.actualContent.lines(),
+              revisedLines = issue.expectedContent.lines(),
+            )
+            val message = buildString {
+              appendLine(issue.context)
+              appendLine()
+              appendLine("Patch:")
+              appendLine(patchText)
+            }
             throw FileComparisonFailedError(
-              message = issue.context,
+              message = message,
               expected = issue.expectedContent,
               actual = issue.actualContent,
               actualFilePath = issue.path.toString(),
             )
           }
           else {
-            throw AssertionError("Model validation error:\n${formatValidationError(error = issue, useAnsi = false)}")
+            throw AssertionError("Model validation error:\n${issue.format(AnsiStyle(useAnsi = false))}")
           }
         })
       }

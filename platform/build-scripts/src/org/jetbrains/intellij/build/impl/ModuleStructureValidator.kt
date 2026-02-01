@@ -200,8 +200,9 @@ class ModuleStructureValidator(
         outputProvider = context.outputProvider,
         inlineXmlIncludes = true,
         inlineModuleSets = true,
-        productPropertiesClass = context.productProperties.javaClass.name,
-        generatorCommand = "ModuleStructureValidator",
+        metadataBuilder = { sb ->
+          sb.append("  <id>com.intellij</id>\n")
+        },
         isUltimateBuild = context.productProperties.platformPrefix != "Idea",
       )
 
