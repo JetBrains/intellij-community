@@ -509,6 +509,9 @@
         <separator/>
         <group id="FileMainSettingsGroup">
           <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction"/>
+          <action id="ShowPlugins" class="com.intellij.ide.actions.ShowPluginManagerAction">
+            <synonym key="action.ShowPlugins.Extensions.text"/>
+          </action>
         </group>
 
         <group id="FilePropertiesGroup" popup="true">
@@ -1184,7 +1187,7 @@
     <group id="NonModalWelcomeScreen.RemoteDevelopmentActions">
     </group>
 
-    <group id="WelcomeScreen.QuickStart">
+    <group id="WelcomeScreen.QuickStart" searchable="false">
       <group id="WelcomeScreen.QuickStart.Platform"/>
       <add-to-group group-id="WelcomeScreen.QuickStart.EmptyState"/>
       <add-to-group group-id="WelcomeScreen.QuickStart.ProjectsState"/>
@@ -1192,18 +1195,16 @@
 
     <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.ide.actions.OpenFileAction$OnWelcomeScreen"/>
 
-    <group id="WelcomeScreen.Documentation">
+    <group id="WelcomeScreen.Documentation" searchable="false">
       <reference ref="HelpTopics"/>
       <reference ref="About"/>
       <reference ref="Help.JetBrainsTV"/>
       <reference ref="Help.KeymapReference"/>
     </group>
 
-    <group id="WelcomeScreen.Configure">
-      <action id="WelcomeScreen.Settings" class="com.intellij.ide.actions.ShowSettingsAction" icon="AllIcons.General.Settings"/>
-      <action id="WelcomeScreen.Plugins" class="com.intellij.ide.actions.ShowPluginManagerAction">
-        <synonym key="action.WelcomeScreen.Plugins.Extensions.text"/>
-      </action>
+    <group id="WelcomeScreen.Configure" searchable="false">
+      <reference ref="ShowSettings"/>
+      <reference ref="ShowPlugins"/>
 
       <action id="WelcomeScreen.Configure.Import" class="com.intellij.configurationStore.ImportSettingsAction"
               icon="AllIcons.ToolbarDecorator.Import"/>
@@ -1220,8 +1221,8 @@
       <reference ref="CheckForUpdate"/>
     </group>
 
-    <group id="WelcomeScreen.Options">
-      <reference ref="WelcomeScreen.Settings"/>
+    <group id="WelcomeScreen.Options" searchable="false">
+      <reference ref="ShowSettings"/>
       <reference ref="CheckForUpdate"/>
       <reference ref="About"/>
       <separator/>
@@ -1233,7 +1234,7 @@
       <reference ref="CreateDesktopEntry"/>
     </group>
 
-    <group id="WelcomeScreen.LearnIdeHelp">
+    <group id="WelcomeScreen.LearnIdeHelp" searchable="false">
       <reference ref="WhatsNewAction"/>
       <reference ref="HelpTopics"/>
       <reference ref="OnlineDocAction"/>
@@ -1241,7 +1242,7 @@
       <reference ref="Help.KeymapReference"/>
     </group>
 
-    <group id="WelcomeScreenRecentProjectActionGroup">
+    <group id="WelcomeScreenRecentProjectActionGroup" searchable="false">
       <action id="WelcomeScreen.OpenSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.OpenSelectedProjectsAction"/>
       <action id="WelcomeScreen.RevealIn" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RevealProjectDirAction"/>
       <action id="WelcomeScreen.CopyProjectPath" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.CopyProjectPathAction"
@@ -1262,6 +1263,7 @@
               class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjectsAction"
               use-shortcut-of="$Delete"/>
     </group>
+
     <group id="WelcomeScreen.KeymapGroup" searchable="false">
       <reference ref="WelcomeScreen.Options"/>
       <reference ref="WelcomeScreenRecentProjectActionGroup"/>
@@ -1454,7 +1456,7 @@
                 class="com.intellij.openapi.editor.actions.RemoveCustomWrapsAtCaretAction"/>
       </group>
       <group id="Internal.UI" popup="true">
-        <group id="Internal.UI.Demos" popup="true">
+        <group id="Internal.UI.Demos" popup="true" internal="true">
           <action id="LabelSizeDemoAction" internal="true" class="com.intellij.internal.LabelSizeDemoAction"/>
           <action id="JEditorPaneDemoAction" internal="true" class="com.intellij.internal.ui.JEditorPaneDemoAction"/>
           <action id="WebBrowser" class="com.intellij.internal.jcef.JBCefBrowserDemo"/>
@@ -1819,7 +1821,7 @@
       <reference ref="RunAnything"/>
       <separator/>
       <reference ref="ShowSettings"/>
-      <reference ref="WelcomeScreen.Plugins"/>
+      <reference ref="ShowPlugins"/>
       <separator/>
       <reference ref="ChangeLaf"/>
       <reference ref="ChangeKeymap"/>

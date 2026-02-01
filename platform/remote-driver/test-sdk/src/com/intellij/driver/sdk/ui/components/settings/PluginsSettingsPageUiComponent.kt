@@ -48,7 +48,7 @@ fun WelcomeScreenUI.pluginsPage(action: PluginsSettingsPageUiComponent.() -> Uni
 
 fun Driver.openPluginsSettings() {
   step("Open the Plugin Manager by invoking the action") {
-    invokeAction("WelcomeScreen.Plugins", now = false)
+    invokeAction("ShowPlugins", now = false)
   }
 }
 

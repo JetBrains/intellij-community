@@ -656,7 +656,7 @@
         <keyboard-shortcut first-keystroke="shift alt f5" />
     </action>
     <action id="ViewSource" />
-    <action id="WelcomeScreen.Plugins">
+    <action id="ShowPlugins">
         <keyboard-shortcut first-keystroke="shift meta x" />
     </action>
     <action id="XDebugger.EditWatch" />

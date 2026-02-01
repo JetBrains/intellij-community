@@ -17,7 +17,7 @@ internal class SettingsPopupStep : NewUiOnboardingStep {
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
     val popup = NewUiOnboardingUtil.createSettingsEntryPointPopup(project, disposable) ?: return null
     val actionsList = UIUtil.findComponentOfType(popup.content, JBList::class.java) ?: return null
-    val pluginsActionBounds = NewUiOnboardingUtil.findActionItemBounds(actionsList, "WelcomeScreen.Plugins") ?: return null
+    val pluginsActionBounds = NewUiOnboardingUtil.findActionItemBounds(actionsList, "ShowPlugins") ?: return null
     val builder = GotItComponentBuilder(NewUsersOnboardingBundle.message("settings.popup.step.text"))
       .withHeader(NewUsersOnboardingBundle.message("settings.popup.step.header"))
 

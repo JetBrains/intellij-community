@@ -13,11 +13,16 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.ide.actions.ShowSettingsUtilImplKt.scheduleDoShowSettingsDialogWithACheckThatProjectIsInitialized;
 
-public final class ShowSettingsAction extends AnAction implements DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
+/**
+ * @see com.intellij.openapi.options.ShowSettingsUtil to show the Settings dialog programmatically
+ */
+@ApiStatus.Internal
+public class ShowSettingsAction extends AnAction implements DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
   public ShowSettingsAction() {
     super(CommonBundle.settingsAction(), CommonBundle.settingsActionDescription(), AllIcons.General.Settings);
   }
@@ -25,8 +30,9 @@ public final class ShowSettingsAction extends AnAction implements DumbAware, Lig
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(!ActionPlaces.isMacSystemMenuAction(e));
-    if (e.getPlace().equals(ActionPlaces.WELCOME_SCREEN)) {
+    if (ActionPlaces.WELCOME_SCREEN.equals(e.getPlace())) {
       e.getPresentation().setText(CommonBundle.settingsTitle());
+      e.getPresentation().setIcon(AllIcons.General.Settings);
     }
     else if (SystemInfo.isMacOSVentura) {
       e.getPresentation().setText(CommonBundle.settingsAction());
@@ -34,12 +40,12 @@ public final class ShowSettingsAction extends AnAction implements DumbAware, Lig
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
+  public final @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     perform(project != null ? project : ProjectManager.getInstance().getDefaultProject());
   }

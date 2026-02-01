@@ -91,7 +91,7 @@ object KeyBindingsMappings {
     "workbench.action.zoomReset" -> "EditorResetFontSize"
     "workbench.view.debug" -> "ActivateDebugToolWindow"
     "workbench.view.explorer" -> "ActivateProjectToolWindow"
-    "workbench.view.extensions" -> "WelcomeScreen.Plugins"
+    "workbench.view.extensions" -> "ShowPlugins"
     "workbench.view.scm" -> "ActivateVersionControlToolWindow"
     else -> null
   }

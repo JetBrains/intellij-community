@@ -1755,15 +1755,6 @@ c:com.intellij.ide.actions.ShowPluginsWithSearchOptionAction
 - <init>(java.lang.String,java.lang.String):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-f:com.intellij.ide.actions.ShowSettingsAction
-- com.intellij.ide.lightEdit.LightEditCompatible
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- s:perform(com.intellij.openapi.project.Project):V
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.ShowSettingsUtilImpl
 - com.intellij.openapi.options.ShowSettingsUtil
 - sf:Companion:com.intellij.ide.actions.ShowSettingsUtilImpl$Companion
