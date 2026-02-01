@@ -226,50 +226,57 @@ fun DbContext<Mut>.applyDurableSnapshotWithPartitions(
   }
 }
 
+data class EntityDatoms(val eid: EID, val datoms: List<Datom>)
+
+fun DbContext<Q>.selectEntityDatomsToStore(
+  storageKey: StorageKey,
+): Iterator<EntityDatoms> {
+  val storageKeyAttr = storageKeyAttr()
+  val skippedEids = IntOpenHashSet()
+  val datomsToStore = Int2ObjectOpenHashMap<EntityDatoms>()
+  val visitedEids = IntOpenHashSet()
+  fun dfs(eid: EID): Boolean =
+    when {
+      skippedEids.contains(eid) -> false
+      datomsToStore.containsKey(eid) -> true
+      !visitedEids.add(eid) -> true
+      queryIndex(IndexQuery.Contains(eid, storageKeyAttr, storageKey)) == null -> {
+        skippedEids.add(eid)
+        false
+      }
+      else -> {
+        val entityDatoms = queryIndex(IndexQuery.Entity(eid))
+        val refDatoms = entityDatoms.filter { it.attr.schema.isRef && it.attr != Entity.Type.attr }
+        val shouldBeSaved = refDatoms.fold(true) { acc, refDatom ->
+          acc && (dfs(refDatom.value as EID) || !refDatom.attr.schema.required)
+        }
+        if (shouldBeSaved) {
+          val datoms = entityDatoms.filterNot { datom ->
+            datom.attr.schema.isRef && skippedEids.contains(datom.value as EID)
+          }
+          datomsToStore[eid] = EntityDatoms(eid, datoms)
+        }
+        else {
+          Storage.logger.warn {
+            "Entity ${entity(eid)} is skipped from durable serialization " +
+            "because it have required property that is not to be saved with the same storageKey"
+          }
+          skippedEids.add(eid)
+        }
+        shouldBeSaved
+      }
+    }
+  queryIndex(IndexQuery.LookupMany(storageKeyAttr, storageKey)).forEach { datom -> dfs(datom.eid) }
+  return datomsToStore.values
+}
+
 private fun durableSnapshotWithPartitions(
   storageKey: StorageKey,
   serializationRestrictions: Set<KClass<*>>,
 ): DurableSnapshotWithPartitions {
   return with(DbContext.threadBound) {
-    val storageKeyAttr = storageKeyAttr()
     val uidAttribute = uidAttribute()
-
-    val skippedEids = IntOpenHashSet()
-    val datomsToStore = Int2ObjectOpenHashMap<List<Datom>>()
-    val visitedEids = IntOpenHashSet()
-    fun dfs(eid: EID): Boolean =
-      when {
-        skippedEids.contains(eid) -> false
-        datomsToStore.containsKey(eid) -> true
-        !visitedEids.add(eid) -> true
-        queryIndex(IndexQuery.Contains(eid, storageKeyAttr, storageKey)) == null -> {
-          skippedEids.add(eid)
-          false
-        }
-        else -> {
-          val entityDatoms = queryIndex(IndexQuery.Entity(eid))
-          val refDatoms = entityDatoms.filter { it.attr.schema.isRef && it.attr != Entity.Type.attr }
-          val shouldBeSaved = refDatoms.fold(true) { acc, refDatom ->
-            acc && (dfs(refDatom.value as EID) || !refDatom.attr.schema.required)
-          }
-          if (shouldBeSaved) {
-            datomsToStore[eid] = entityDatoms.filterNot { datom ->
-              datom.attr.schema.isRef && skippedEids.contains(datom.value as EID)
-            }
-          }
-          else {
-            Storage.logger.warn {
-              "Entity ${entity(eid)} is skipped from durable serialization " +
-              "because it have required property that is not to be saved with the same storageKey"
-            }
-            skippedEids.add(eid)
-          }
-          shouldBeSaved
-        }
-      }
-
-    queryIndex(IndexQuery.LookupMany(storageKeyAttr, storageKey)).forEach { datom -> dfs(datom.eid) }
-    val datoms = datomsToStore.values.asSequence().toList().flatten()
+    val datoms = selectEntityDatomsToStore(storageKey).asSequence().map { it.datoms }.toList().flatten()
     val snapshot = buildDurableSnapshot(datoms.asSequence(), serializationRestrictions)
     DurableSnapshotWithPartitions(snapshot = snapshot,
                                   partitions = datoms.mapNotNull { (e, a, v) ->
