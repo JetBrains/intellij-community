@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitWorkingTree
+import git4idea.actions.workingTree.GitCreateWorkingTreeService
 import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys
 import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys.SELECTED_WORKING_TREES
 import git4idea.commands.Git
@@ -45,7 +46,9 @@ internal class RemoveWorkingTreeAction : DumbAwareAction() {
   }
 
   private fun isEnabledFor(trees: List<GitWorkingTree>?, project: Project?, repository: GitRepository?): Boolean {
-    return project != null && repository != null && !trees.isNullOrEmpty() && trees.all { !it.isCurrent && !it.isMain }
+    return project != null && repository != null && !trees.isNullOrEmpty() && trees.all {
+      !it.isCurrent && !it.isMain && !GitCreateWorkingTreeService.getInstance().isWorkingTreeCreationInProgress(it)
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {

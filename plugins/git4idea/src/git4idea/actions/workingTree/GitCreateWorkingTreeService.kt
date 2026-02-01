@@ -11,12 +11,15 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.containers.ContainerUtil
 import git4idea.GitBranch
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitOperationsCollector
+import git4idea.GitWorkingTree
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.workingTrees.GitWorkingTreesService
@@ -31,6 +34,12 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
   companion object {
     @JvmStatic
     fun getInstance(): GitCreateWorkingTreeService = service()
+  }
+
+  private val rootsUnderCreation = ContainerUtil.newConcurrentSet<FilePath>()
+
+  internal fun isWorkingTreeCreationInProgress(workingTree: GitWorkingTree): Boolean {
+    return rootsUnderCreation.contains(workingTree.path)
   }
 
   internal fun collectDataAndCreateWorkingTree(
@@ -90,7 +99,13 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
       return
     }
 
-    val result = GitWorkingTreesService.getInstance(project).createWorkingTree(repository, workingTreeData)
+    rootsUnderCreation.add(workingTreeData.workingTreePath)
+    val result = try {
+      GitWorkingTreesService.getInstance(project).createWorkingTree(repository, workingTreeData)
+    }
+    finally {
+      rootsUnderCreation.remove(workingTreeData.workingTreePath)
+    }
 
     if (!result.success) {
       VcsNotifier.getInstance(project).notifyError(GitNotificationIdsHolder.WORKTREE_ADD_FAILED,
