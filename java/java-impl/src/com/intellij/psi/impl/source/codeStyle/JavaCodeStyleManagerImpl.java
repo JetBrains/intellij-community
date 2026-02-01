@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -73,6 +73,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.search.MethodDeepestSuperSearcher;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.jsp.jspJava.JspxImportList;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.util.FileTypeUtils;
@@ -177,7 +178,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       PsiImportList newList = prepareOptimizeImportsResult(javaFile);
       if (newList != null) {
         final PsiImportList importList = javaFile.getImportList();
-        if (importList != null) {
+        if (importList instanceof JspxImportList) {
+          importList.replace(newList);
+        }
+        else if (importList != null) {
           importList.getParent().addRangeAfter(newList.getParent().getFirstChild(), newList.getParent().getLastChild(), importList);
           importList.delete();
         }
