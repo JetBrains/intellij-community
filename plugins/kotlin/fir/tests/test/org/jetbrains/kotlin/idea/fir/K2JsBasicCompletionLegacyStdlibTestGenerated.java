@@ -778,11 +778,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
             public void testSingleConstructor() throws Exception {
                 runTest("../../completion/testData/basic/common/constructor/SingleConstructor.kt");
             }
-
-            @TestMetadata("SubclassConstructor.kt")
-            public void testSubclassConstructor() throws Exception {
-                runTest("../../completion/testData/basic/common/constructor/SubclassConstructor.kt");
-            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

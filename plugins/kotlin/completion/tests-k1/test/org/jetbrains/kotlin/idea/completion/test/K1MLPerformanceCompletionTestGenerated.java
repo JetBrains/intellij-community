@@ -787,11 +787,6 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             public void testSingleConstructor() throws Exception {
                 runTest("../testData/basic/common/constructor/SingleConstructor.kt");
             }
-
-            @TestMetadata("SubclassConstructor.kt")
-            public void testSubclassConstructor() throws Exception {
-                runTest("../testData/basic/common/constructor/SubclassConstructor.kt");
-            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

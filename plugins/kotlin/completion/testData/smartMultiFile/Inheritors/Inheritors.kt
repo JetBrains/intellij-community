@@ -13,5 +13,3 @@ fun foo(): p2.KotlinInterface {
 // EXIST: { lookupString: "JavaInheritor2", itemText: "JavaInheritor2", tailText: "(...) (<root>)" }
 // ABSENT: JavaInheritor3
 // EXIST: { lookupString: "ObjectInheritor", itemText: "ObjectInheritor", tailText: " (p2)" }
-
-// IGNORE_K2

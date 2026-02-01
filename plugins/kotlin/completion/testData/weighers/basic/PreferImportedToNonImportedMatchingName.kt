@@ -15,5 +15,6 @@ fun foo() {
 // We want the local modifier to be preferred even though it is a worse match
 // ORDER: otherModifier =
 // ORDER: MatchingClass
+// ORDER: object
 // ORDER: LocalModifier
 // IGNORE_K1

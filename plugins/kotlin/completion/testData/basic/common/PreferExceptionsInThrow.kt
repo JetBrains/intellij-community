@@ -13,7 +13,6 @@ fun test(
 
 // WITH_ORDER
 // EXIST: SomePrefixBExceptionValue
-// EXIST: { itemText: "SomePrefixBException", tailText: "() (<root>)" }
 // EXIST: { itemText: "SomePrefixBException", tailText: " (<root>)" }
 // EXIST: SomePrefixANotException
 // EXIST: SomePrefixCNotException

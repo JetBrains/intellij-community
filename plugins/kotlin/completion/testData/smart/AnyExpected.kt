@@ -8,5 +8,3 @@ val v: Any = <caret>
 // ABSENT: ::C
 // ABSENT: ::Runnable
 // ABSENT: C
-
-// IGNORE_K2

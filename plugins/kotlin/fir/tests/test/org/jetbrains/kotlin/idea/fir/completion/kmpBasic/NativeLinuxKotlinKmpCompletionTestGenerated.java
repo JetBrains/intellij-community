@@ -812,11 +812,6 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
         public void testSingleConstructor() throws Exception {
             runTest("../../completion/testData/basic/common/constructor/SingleConstructor.kt");
         }
-
-        @TestMetadata("SubclassConstructor.kt")
-        public void testSubclassConstructor() throws Exception {
-            runTest("../../completion/testData/basic/common/constructor/SubclassConstructor.kt");
-        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

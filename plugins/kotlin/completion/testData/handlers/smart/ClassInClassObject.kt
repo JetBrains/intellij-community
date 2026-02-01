@@ -7,5 +7,3 @@ class A {
 val v: A.Companion.Inner = <caret>
 
 // ELEMENT: Inner
-
-// IGNORE_K2

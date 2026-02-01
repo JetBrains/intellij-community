@@ -3,5 +3,5 @@ import test.Foo as Zoo
 fun foo(): Zoo = Zoo()<caret>
 
 // ELEMENT: Zoo
-// TAIL_TEXT: "() (test)"
+// TAIL_TEXT: "() (test.Foo)"
 // IGNORE_K1

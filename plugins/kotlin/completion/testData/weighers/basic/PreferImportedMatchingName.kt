@@ -15,6 +15,7 @@ fun foo() {
 
 // ORDER: otherModifier =
 // ORDER: MatchingClass
+// ORDER: object
 // ORDER: OtherModifier
 // ORDER: LocalModifier
 // IGNORE_K1
