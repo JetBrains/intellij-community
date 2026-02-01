@@ -14,8 +14,10 @@ import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
@@ -32,9 +34,11 @@ import git4idea.actions.workingTree.GitCreateWorkingTreeService
 import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.launch
 import java.awt.Component
+import java.awt.ComponentOrientation
 import java.awt.Point
 import java.util.function.Predicate
 import javax.swing.DefaultListModel
@@ -184,8 +188,16 @@ internal class GitWorkingTreesContentPreloader(val project: Project) : ChangesVi
   override fun preloadTabContent(content: Content) {
     content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY, ChangesViewContentManager.TabOrderWeight.WORKING_TREES.weight)
 
-    content.isCloseable = true
-    content.displayName = GitBundle.message("toolwindow.working.trees.tab.name")
+    content.apply {
+      isCloseable = true
+      displayName = GitBundle.message("toolwindow.working.trees.tab.name")
+      if (GitWorkingTreesNewBadgeUtil.shouldShowBadgeNew()) {
+        icon = AllIcons.General.New_badge
+        putUserData(ToolWindow.SHOW_CONTENT_ICON, true)
+        putUserData(ToolWindowContentUi.NOT_SELECTED_TAB_ICON_TRANSPARENT, false)
+        putUserData(Content.TAB_LABEL_ORIENTATION_KEY, ComponentOrientation.RIGHT_TO_LEFT)
+      }
+    }
     // content.manager is not yet initialized here
     ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)?.contentManager?.addContentManagerListener(object : ContentManagerListener {
       override fun contentRemoved(event: ContentManagerEvent) {

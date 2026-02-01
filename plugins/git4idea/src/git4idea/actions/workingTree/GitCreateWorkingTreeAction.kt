@@ -11,6 +11,7 @@ import git4idea.GitBranch
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
 import git4idea.workingTrees.ui.GitWorkingTreesContentProvider
 import javax.swing.Icon
@@ -28,6 +29,7 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
     }
 
     e.presentation.isEnabledAndVisible = true
+    GitWorkingTreesNewBadgeUtil.addLabelNewIfNeeded(e.presentation)
     e.presentation.icon = computeIcon(e)
     val localBranchFromContext = getBranchFromContext(e, singleRepository)
     if (localBranchFromContext == null) {
@@ -51,6 +53,7 @@ internal class GitCreateWorkingTreeAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
+    GitWorkingTreesNewBadgeUtil.workingTreesFeatureWasUsed()
     val project = e.project ?: return
     val repository = GitWorkingTreesService.getRepoForWorkingTreesSupport(project) ?: return
     val branchFromContext = getBranchFromContext(e, repository)

@@ -24,6 +24,7 @@ import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys.SELECTED_WO
 import git4idea.commands.Git
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import git4idea.workingTrees.GitWorkingTreesNewBadgeUtil
 import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -48,6 +49,7 @@ internal class RemoveWorkingTreeAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
+    GitWorkingTreesNewBadgeUtil.workingTreesFeatureWasUsed()
     val project = e.project ?: return
     val data = e.getData(SELECTED_WORKING_TREES)
     val repository = e.getData(GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY)

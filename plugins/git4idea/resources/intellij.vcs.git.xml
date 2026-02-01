@@ -909,6 +909,7 @@
                         preloaderClassName="git4idea.workingTrees.ui.GitWorkingTreesContentPreloader"
                         isInCommitToolWindow="false"/>
     <statistics.actionCustomPlaceAllowlist places="GitWorkingTreeToolWindowTabToolbar;GitWorkingTreeToolWindowTabEmptyList"/>
+    <backgroundPostStartupActivity implementation="git4idea.workingTrees.GitWorkingTreeStartupActivity"/>
 
     <projectService serviceInterface="git4idea.commands.GitCommandOutputPrinter"
                     serviceImplementation="git4idea.commands.GitCommandOutputConsolePrinter"/>
