@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("GrazieInspection")
 
 package org.jetbrains.intellij.build.productLayout
@@ -26,8 +26,10 @@ import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcBackend
  * - IDE: Run configuration "Generate Product Layouts"
  * - Bazel: `bazel run //platform/buildScripts:plugin-model-tool`
  *
+ * For comprehensive documentation:
+ * - [Module Sets](../product-dsl/docs/module-sets.md) - How module sets work and best practices
+ *
  * @see CoreModuleSets for platform infrastructure (libraries, corePlatform, coreIde, coreLang, rpc, fleet)
- * @see <a href="../product-dsl/module-sets.md">Module Sets Documentation</a>
  */
 object CommunityModuleSets {
   // region Essential and Debugger
@@ -331,38 +333,31 @@ object CommunityModuleSets {
   }
 
   /**
-   * Test framework libraries (JUnit 4, JUnit 5, Hamcrest).
-   * Standalone module set for test dependencies.
+   * Core platform test framework modules.
+   * These are commonly needed by test plugins and are duplicated across products.
    */
-  @Suppress("unused")
-  fun librariesTestFrameworks(): ModuleSet = moduleSet("libraries.testFrameworks") {
-    module("intellij.libraries.assertj.core")
-
-    module("intellij.libraries.hamcrest")
-
-    module("intellij.libraries.junit4")
-    module("intellij.libraries.kotlinTest")
-
-    module("intellij.libraries.junit5")
-    module("intellij.libraries.junit5.jupiter")
-    module("intellij.libraries.junit5.launcher")
-    module("intellij.libraries.junit5.vintage")
+  fun platformTestFrameworksCore(): ModuleSet = moduleSet("platform.testFrameworks.core") {
+    module("intellij.platform.testFramework", allowedMissingPluginIds = listOf("com.intellij.java"))
+    module("intellij.platform.testFramework.common")
+    module("intellij.platform.testFramework.core")
+    module("intellij.platform.testFramework.impl")
+    module("intellij.platform.testFramework.teamCity")
   }
 
   /**
-   * Platform test framework modules (Java test framework, JUnit 5 support, IDE starter).
-   * Standalone module set for platform test dependencies.
+   * JUnit 5 test framework modules for test plugins.
+   * Includes the base JUnit 5 integration plus project structure, EEL, and WSL support.
    */
-  @Suppress("unused")
-  fun platformTestFrameworks(): ModuleSet = moduleSet("platform.testFrameworks") {
-    module("intellij.java.testFramework")
-    module("intellij.java.testFramework.backend")
-    module("intellij.java.testFramework.shared")
+  fun platformTestFrameworksJunit5(): ModuleSet = moduleSet("platform.testFrameworks.junit5") {
     module("intellij.platform.testFramework.junit5")
+    module("intellij.platform.testFramework.junit5.projectStructure")
     module("intellij.platform.testFramework.junit5.codeInsight")
-    module("intellij.tools.ide.starter")
-    module("intellij.tools.ide.util.common")
+    module("intellij.platform.testFramework.junit5._test")
+    module("intellij.platform.testFramework.junit5.eel._test")
+    module("intellij.platform.testFramework.junit5.wsl._test")
   }
+
+  // endregion
 
   /**
    * Remote development common modules.
