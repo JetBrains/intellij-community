@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.checkers
 
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -67,6 +68,8 @@ internal class CompletionVisibilityChecker(
             } else {
                 return true
             }
+        } else if (declaration is PsiClass) {
+            return declaration.hasModifier(JvmModifier.PUBLIC) && declaration.containingClass?.hasModifier(JvmModifier.PUBLIC) != false
         } else if (declaration is PsiMember) {
             return declaration.hasModifier(JvmModifier.PUBLIC) && declaration.containingClass?.hasModifier(JvmModifier.PUBLIC) == true
         } else {
