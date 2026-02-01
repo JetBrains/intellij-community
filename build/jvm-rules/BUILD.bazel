@@ -32,7 +32,7 @@ bool_flag(
 # used by _jvm_builder_launcher attribute in jvm_library rule
 exports_files(
     ["rules/impl/MemoryLauncher.java"],
-    visibility = ["//visibility:private"],
+    visibility = ["//visibility:public"],
 )
 
 # --@rules_jvm//:koltin_inc_threshold=100

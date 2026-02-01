@@ -1,3 +1,5 @@
+load("//fleet/build/rules:haven_cli.bzl", "HAVEN_CLI_ATTR", "run_haven_cli")
+
 visibility("private")
 
 def _fleet_module(ctx):
@@ -8,7 +10,7 @@ def _fleet_module(ctx):
     ]
 
 fleet_module = rule(
-    attrs = {
+    attrs = HAVEN_CLI_ATTR | {
         "module_name": attr.string(
             doc = """The Fleet module name""",
         ),
@@ -17,13 +19,6 @@ fleet_module = rule(
                 [JavaInfo],
             ],
             allow_files = False,
-        ),
-        "_haven_cli": attr.label(
-            default = "//fleet/build/cli:haven",
-            executable = True,
-            #             allow_single_file = True,
-            cfg = "exec",
-            # cfg = scrubbed_host_platform_transition,
         ),
     },
     provides = [],
