@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.pycharm
 
 import kotlinx.collections.immutable.persistentListOf
@@ -79,7 +79,7 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
     deprecatedInclude("intellij.pycharm.community", "META-INF/pycharm-core-customization.xml")
 
     allowMissingDependencies(knownMissingModuleDependencies)
-    bundledPlugins(productLayout.bundledPluginModules.toList())
+    bundledPlugins(productLayout.bundledPluginModules)
   }
 
   override suspend fun copyAdditionalFiles(targetDir: Path, context: BuildContext) {
