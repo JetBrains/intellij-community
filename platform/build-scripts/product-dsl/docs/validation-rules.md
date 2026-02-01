@@ -12,12 +12,13 @@ Validation ensures module and plugin dependencies are resolvable at runtime and 
 | 4 | Plugin content dependencies | Plugin | [plugin-content-dependency.md](validators/plugin-content-dependency.md) |
 | 5 | Plugin-to-plugin dependencies | Plugin | [plugin-plugin-dependency.md](validators/plugin-plugin-dependency.md) |
 | 6 | Plugin dependency declaration duplicates | Plugin | [plugin-dependency-declaration.md](validators/plugin-dependency-declaration.md) |
-| 7 | Duplicate plugin content modules | Product | [plugin-content-duplicates.md](validators/plugin-content-duplicates.md) |
-| 8 | Test plugin descriptor ID conflicts | Product | [plugin-descriptor-id-conflicts.md](validators/plugin-descriptor-id-conflicts.md) |
-| 9 | Library module replacement | Module | [library-module.md](validators/library-module.md) |
-| 10 | Test library scope | Module | [test-library-scope.md](validators/test-library-scope.md) |
-| 11 | Suppression config keys | Config | [suppression-config.md](validators/suppression-config.md) |
-| 12 | Plugin content structural validation | Plugin | [plugin-content-structure.md](validators/plugin-content-structure.md) |
+| 7 | Test plugin plugin dependencies | Test plugin | [test-plugin-plugin-dependency.md](validators/test-plugin-plugin-dependency.md) |
+| 8 | Duplicate plugin content modules | Product | [plugin-content-duplicates.md](validators/plugin-content-duplicates.md) |
+| 9 | Test plugin descriptor ID conflicts | Product | [plugin-descriptor-id-conflicts.md](validators/plugin-descriptor-id-conflicts.md) |
+| 10 | Library module replacement | Module | [library-module.md](validators/library-module.md) |
+| 11 | Test library scope | Module | [test-library-scope.md](validators/test-library-scope.md) |
+| 12 | Suppression config keys | Config | [suppression-config.md](validators/suppression-config.md) |
+| 13 | Plugin content structural validation | Plugin | [plugin-content-structure.md](validators/plugin-content-structure.md) |
 
 ## When Validation Runs
 

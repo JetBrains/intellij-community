@@ -16,6 +16,7 @@ Complete reference of validation errors, their causes, and fixes.
 | [MissingModuleSetsError](#missing-module-sets) | Error | No | Referenced module set not found |
 | [Structural Violations](#structural-loading-violations) | Error | Yes* | Loading mode constraint violations |
 | [MissingContentModulePluginDep](#missing-content-module-plugin-dependency) | Error | No | Content module missing plugin dep |
+| [MissingTestPluginPluginDep](#missing-test-plugin-plugin-dependency) | Error | No | Test plugin missing plugin dep |
 | [DSL Constraint Errors](#dsl-constraint-errors) | Error | No | Invalid DSL usage |
 | [Suppressible Errors](#suppressible-errors) | Warning | Yes | Errors detected during generation |
 
@@ -371,6 +372,32 @@ Or suppress temporarily: Add to contentModuleAllowedMissingPluginDeps in ModuleS
 3. **Suppress temporarily**: Add to `contentModuleAllowedMissingPluginDeps` config
 
 **Note**: The error message includes copy-paste Kotlin code for the suppression config.
+
+---
+
+## Missing Test Plugin Plugin Dependency
+
+```
+❌ Test plugin 'intellij.rider.tests' is missing plugin dependencies required by its content modules
+
+  ✗ Missing: com.jetbrains.codeWithMe
+    Needed by: intellij.rider.test.cases.rdct.distributed._test
+
+💡 Fix: Add <plugin id="com.jetbrains.codeWithMe"/> to the test plugin's plugin.xml
+```
+
+**Cause**: A DSL-defined test plugin has content modules whose JPS dependencies include modules
+owned by production plugins that are resolvable in test scope, but the test plugin's plugin.xml
+doesn't declare the required `<plugin id="..."/>` dependency.
+
+**Runtime impact**: `NoClassDefFoundError` in tests because classes from the owning plugin are
+missing from the test classpath.
+
+**Fixes**:
+1. **Declare plugin dependency** (preferred): Ensure the test plugin generator emits `<plugin id="..."/>`.
+2. **Adjust JPS deps**: Remove the JPS dependency if it shouldn't be required at runtime.
+3. **Suppress intentionally**: Add the plugin ID to `allowedMissingPluginIds` in the test plugin spec
+   (or module-level `allowedMissingPluginIds` for a narrower scope).
 
 ---
 

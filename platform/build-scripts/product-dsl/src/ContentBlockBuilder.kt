@@ -1,18 +1,40 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+/**
+ * Builds content blocks and module-to-set chain mappings from product specifications.
+ *
+ * This file provides the core traversal logic for processing [ProductModulesContentSpec] into
+ * structured content blocks used for XML generation and validation. It performs a single
+ * hierarchical traversal that simultaneously:
+ * - Builds [ContentBlock] list for each module set
+ * - Creates module-to-set chain mapping for tracing module origins
+ * - Collects module aliases from module sets
+ * - Tracks `includeDependencies` flags
+ * - Validates for duplicate modules and invalid overrides
+ *
+ * **Key function**: [buildContentBlocksAndChainMapping] - the main entry point that processes
+ * a product spec and returns all computed mappings in [ContentBuildData].
+ *
+ * @see ProductModulesContentSpec for the input specification
+ * @see ContentBlock for the output structure
+ * @see validation.logic.DslConstraints for validation rules applied during traversal
+ */
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.productLayout
 
+import com.intellij.platform.pluginGraph.ContentModuleName
+import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
-import org.jetbrains.intellij.build.productLayout.validation.rules.validateAndRecordAlias
-import org.jetbrains.intellij.build.productLayout.validation.rules.validateModuleSetOverrides
-import org.jetbrains.intellij.build.productLayout.validation.rules.validateNoDuplicateModules
+import org.jetbrains.intellij.build.productLayout.validator.rule.validateAndRecordAlias
+import org.jetbrains.intellij.build.productLayout.validator.rule.validateModuleSetOverrides
+import org.jetbrains.intellij.build.productLayout.validator.rule.validateNoDuplicateModules
 
 internal data class ContentBuildData(
   @JvmField val contentBlocks: List<ContentBlock>,
-  @JvmField val moduleToSetChainMapping: Map<String, List<String>>,
+  @JvmField val moduleToSetChainMapping: Map<ContentModuleName, List<String>>,
   @JvmField val aliasToSource: Map<String, String>,
-  @JvmField val moduleToIncludeDependencies: Map<String, Boolean>,
+  @JvmField val moduleToIncludeDependencies: Map<ContentModuleName, Boolean>,
 )
 
 /**
@@ -28,14 +50,14 @@ internal fun buildContentBlocksAndChainMapping(
   collectModuleSetAliases: Boolean = false
 ): ContentBuildData {
   val contentBlocks = mutableListOf<ContentBlock>()
-  val moduleToChain = mutableMapOf<String, List<String>>()
-  val moduleToSets = mutableMapOf<String, MutableList<String>>()
-  val moduleToIncludeDeps = mutableMapOf<String, Boolean>()
-  val aliasToSource = if (collectModuleSetAliases) mutableMapOf<String, String>() else null
+  val moduleToChain = LinkedHashMap<ContentModuleName, List<String>>()
+  val moduleToSets = LinkedHashMap<String, MutableList<String>>()  // String keys for validateNoDuplicateModules
+  val moduleToIncludeDeps = LinkedHashMap<ContentModuleName, Boolean>()
+  val aliasToSource = if (collectModuleSetAliases) LinkedHashMap<String, String>() else null
   val processedSets = HashSet<String>()
   val contentBlockByName = HashMap<String, ContentBlock>()
 
-  fun traverse(moduleSet: ModuleSet, chain: List<String>, overrides: Map<String, ModuleLoadingRuleValue>) {
+  fun traverse(moduleSet: ModuleSet, chain: List<String>, overrides: Map<ContentModuleName, ModuleLoadingRuleValue>) {
     val setName = "$MODULE_SET_PREFIX${moduleSet.name}"
     
     // Check if already processed
@@ -43,16 +65,23 @@ internal fun buildContentBlocksAndChainMapping(
     if (alreadyProcessed) {
       // If already processed, but now we have overrides, update the existing content block
       if (overrides.isNotEmpty()) {
-        val existingBlock = contentBlockByName[moduleSet.name]
+        val existingBlock = contentBlockByName.get(moduleSet.name)
         if (existingBlock != null) {
-          // Check if existing block has any loading attributes
-          val hasExistingOverrides = existingBlock.modules.any { it.loading != null }
+          // Check if existing block has any non-default loading attributes (OPTIONAL is the default)
+          val hasExistingOverrides = existingBlock.modules.any { it.loading != ModuleLoadingRuleValue.OPTIONAL }
           if (!hasExistingOverrides) {
             // Reuse the filtered module list from existing block (already filtered by first pass)
             val updatedModules = mutableListOf<ContentModule>()
             for (existingModule in existingBlock.modules) {
-              val effectiveLoading = overrides[existingModule.name] ?: existingModule.loading
-              updatedModules.add(ContentModule(existingModule.name, effectiveLoading, existingModule.includeDependencies))
+              val effectiveLoading = overrides.get(existingModule.name) ?: existingModule.loading
+              updatedModules.add(
+                ContentModule(
+                  existingModule.name,
+                  effectiveLoading,
+                  existingModule.includeDependencies,
+                  existingModule.allowedMissingPluginIds,
+                )
+              )
             }
             
             // Create new content block with overrides and replace the old one
@@ -60,7 +89,7 @@ internal fun buildContentBlocksAndChainMapping(
             val oldBlockIndex = contentBlocks.indexOf(existingBlock)
             if (oldBlockIndex >= 0) {
               contentBlocks[oldBlockIndex] = updatedBlock
-              contentBlockByName[moduleSet.name] = updatedBlock
+              contentBlockByName.put(moduleSet.name, updatedBlock)
             }
             // Don't re-add to moduleToSets or moduleToChain - already there from first pass
           }
@@ -83,23 +112,30 @@ internal fun buildContentBlocksAndChainMapping(
     // Build content block and track chains/duplicates in single pass
     val modulesWithLoading = mutableListOf<ContentModule>()
     for (module in moduleSet.modules) {
-      // Track for duplicate detection
-      moduleToSets.computeIfAbsent(module.name) { mutableListOf() }.add(moduleSet.name)
+      // Track for duplicate detection (String keys for validateNoDuplicateModules)
+      moduleToSets.computeIfAbsent(module.name.value) { mutableListOf() }.add(moduleSet.name)
       // Track chain
-      moduleToChain[module.name] = currentChain
+      moduleToChain.put(module.name, currentChain)
       // Track includeDependencies flag
       if (module.includeDependencies) {
-        moduleToIncludeDeps[module.name] = true
+        moduleToIncludeDeps.put(module.name, true)
       }
       // Build loading info - apply overrides from module set
-      val effectiveLoading = overrides[module.name] ?: module.loading
-      modulesWithLoading.add(ContentModule(module.name, effectiveLoading, module.includeDependencies))
+      val effectiveLoading = overrides.get(module.name) ?: module.loading
+      modulesWithLoading.add(
+        ContentModule(
+          module.name,
+          effectiveLoading,
+          module.includeDependencies,
+          module.allowedMissingPluginIds,
+        )
+      )
     }
 
     if (modulesWithLoading.isNotEmpty()) {
       val block = ContentBlock(moduleSet.name, modulesWithLoading)
       contentBlocks.add(block)
-      contentBlockByName[moduleSet.name] = block
+      contentBlockByName.put(moduleSet.name, block)
     }
 
     // Recursively process nested sets (no override cascading - each set must be referenced directly for overrides)
@@ -118,22 +154,31 @@ internal fun buildContentBlocksAndChainMapping(
     validateModuleSetOverrides(moduleSetWithOverrides)
   }
 
-  // Check for duplicates and FAIL if found
-  validateNoDuplicateModules(moduleToSets)
-
   // Add additional modules if any
   val additionalModulesWithLoading = mutableListOf<ContentModule>()
   for (module in spec.additionalModules) {
-    additionalModulesWithLoading.add(ContentModule(module.name, module.loading, module.includeDependencies))
+    additionalModulesWithLoading.add(
+      ContentModule(
+        module.name,
+        module.loading,
+        module.includeDependencies,
+        module.allowedMissingPluginIds,
+      )
+    )
     // Track includeDependencies flag
     if (module.includeDependencies) {
-      moduleToIncludeDeps[module.name] = true
+      moduleToIncludeDeps.put(module.name, true)
     }
+    // Track for duplicate detection - mark as from "additionalModules" block (String keys for validateNoDuplicateModules)
+    moduleToSets.computeIfAbsent(module.name.value) { mutableListOf() }.add(ADDITIONAL_MODULES_BLOCK)
   }
 
   if (additionalModulesWithLoading.isNotEmpty()) {
     contentBlocks.add(ContentBlock(ADDITIONAL_MODULES_BLOCK, additionalModulesWithLoading))
   }
+
+  // Check for duplicates and FAIL if found (after ALL modules are collected, including additionalModules)
+  validateNoDuplicateModules(moduleToSets)
 
   return ContentBuildData(
     contentBlocks = contentBlocks,
@@ -149,12 +194,12 @@ internal fun buildContentBlocksAndChainMapping(
  *
  * @param spec The product modules specification
  * @param moduleSetAliases Aliases collected from module sets during traversal
- * @return List of validated unique aliases
+ * @return List of validated unique aliases as PluginId
  */
 internal fun collectAndValidateAliases(
   spec: ProductModulesContentSpec,
   moduleSetAliases: Map<String, String>
-): List<String> {
+): List<PluginId> {
   val allAliases = HashMap(moduleSetAliases)
 
   // Collect product-level aliases and check for conflicts with module set aliases
@@ -166,5 +211,5 @@ internal fun collectAndValidateAliases(
     )
   }
 
-  return allAliases.keys.sorted()
+  return allAliases.keys.sorted().map { PluginId(it) }
 }

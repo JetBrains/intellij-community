@@ -70,5 +70,18 @@ class AsyncCache<K : Any, V>(private val scope: CoroutineScope) {
     }
   }
 
+  /**
+   * Iterates over all completed cache entries (key-value pairs).
+   * Skips entries that are still computing (Deferred not yet completed).
+   */
+  @Suppress("UNCHECKED_CAST")
+  fun forEachCompleted(action: (key: K, value: V) -> Unit) {
+    for ((key, entry) in cache) {
+      if (entry is CachedValue<*>) {
+        action(key, entry.value as V)
+      }
+    }
+  }
+
   private class CachedValue<V>(@JvmField val value: V)
 }

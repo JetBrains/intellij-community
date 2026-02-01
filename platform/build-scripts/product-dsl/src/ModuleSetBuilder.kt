@@ -1,17 +1,58 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+/**
+ * DSL builder for creating reusable module sets.
+ *
+ * This file provides the core types and DSL for defining module sets - reusable collections
+ * of modules that can be referenced in product configurations. Module sets are the primary
+ * building blocks for product composition.
+ *
+ * **Key types**:
+ * - [ModuleSet] - Immutable representation of a module collection
+ * - [ContentModule] - Module with optional loading mode and dependency flags
+ * - [ModuleSetBuilder] - DSL builder for constructing module sets
+ *
+ * **DSL entry point**: [moduleSet] function creates a module set using builder syntax:
+ * ```kotlin
+ * fun vcs() = moduleSet("vcs") {
+ *   embeddedModule("intellij.platform.vcs")
+ *   module("intellij.platform.vcs.impl")
+ *   moduleSet(vcsShared())  // Nest another set
+ * }
+ * ```
+ *
+ * **Builder functions**:
+ * - [ModuleSetBuilder.module] - Add regular module
+ * - [ModuleSetBuilder.embeddedModule] - Add module with EMBEDDED loading
+ * - [ModuleSetBuilder.requiredModule] - Add module with REQUIRED loading
+ * - [ModuleSetBuilder.moduleSet] - Include nested module set
+ *
+ * For comprehensive documentation:
+ * - [Module Sets](../docs/module-sets.md) - How module sets work and best practices
+ * - [DSL API Reference](../docs/dsl-api-reference.md) - Complete function reference
+ *
+ * @see ModuleSet
+ * @see ContentModule
+ */
 package org.jetbrains.intellij.build.productLayout
 
+import com.intellij.platform.pluginGraph.ContentModuleName
+import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.discovery.discoverModuleSets
 import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetFileResult
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetGenerationResult
 import org.jetbrains.intellij.build.productLayout.util.FileUpdateStrategy
+import org.jetbrains.intellij.build.productLayout.xml.buildModuleAliasesXml
+import org.jetbrains.intellij.build.productLayout.xml.collectAllAliases
+import org.jetbrains.intellij.build.productLayout.xml.withEditorFold
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import java.nio.file.Files
 import java.nio.file.Path
@@ -19,14 +60,15 @@ import java.nio.file.Path
 /**
  * Represents a content module with optional loading attribute.
  *
- * @param name Module name
+ * @param name JPS module name (e.g., "intellij.platform.vcs.impl")
  * @param loading Optional loading mode (e.g., ModuleLoadingRule.EMBEDDED)
  */
 @Serializable
 data class ContentModule(
-  @JvmField val name: String,
-  @JvmField val loading: ModuleLoadingRuleValue? = null,
+  val name: ContentModuleName,
+  @JvmField val loading: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL,
   @JvmField val includeDependencies: Boolean = false,
+  @Transient @JvmField val allowedMissingPluginIds: List<PluginId> = emptyList(),
 )
 
 /**
@@ -36,8 +78,9 @@ data class ContentModule(
  * @param name Identifier for the module set (e.g., "essential", "vcs", "ssh")
  * @param modules List of content modules in this set
  * @param nestedSets List of nested module sets (for xi:include generation)
- * @param alias Optional module alias for `<module value="..."/>` declaration (e.g., "com.intellij.modules.xml")
- * @param outputModule Optional module name whose resources directory should be used for generating this module set's XML
+ * @param alias Optional plugin alias for `<module value="..."/>` declaration (e.g., "com.intellij.modules.xml").
+ *   This declares a plugin alias that can be used in `<depends>` or `<dependencies><plugin id="..."/>`.
+ * @param outputModule Optional JPS module name whose resources directory should be used for generating this module set's XML
  * @param selfContained If true, this module set will be validated in isolation to ensure all dependencies are resolvable within the set itself. Use for module sets that are designed to be standalone (e.g., `core.platform`). Default: false.
  */
 @Serializable
@@ -45,8 +88,8 @@ data class ModuleSet(
   @JvmField val name: String,
   @JvmField val modules: List<ContentModule>,
   @JvmField val nestedSets: List<ModuleSet> = emptyList(),
-  @JvmField val alias: String? = null,
-  @JvmField @kotlinx.serialization.Transient val outputModule: String? = null,
+  val alias: PluginId? = null,
+  @kotlinx.serialization.Transient val outputModule: ContentModuleName? = null,
   @JvmField val selfContained: Boolean = false,
 )
 
@@ -61,15 +104,47 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
   /**
    * Add a single module.
    */
-  fun module(name: String, loading: ModuleLoadingRuleValue? = null) {
-    modules.add(ContentModule(name, loading))
+  fun module(
+    name: String,
+    loading: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL,
+    allowedMissingPluginIds: List<String> = emptyList(),
+  ) {
+    modules.add(
+      ContentModule(
+        ContentModuleName(name),
+        loading,
+        defaultIncludeDependencies,
+        allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
+      )
+    )
   }
 
   /**
    * Add a single module with EMBEDDED loading.
    */
-  fun embeddedModule(name: String) {
-    modules.add(ContentModule(name, ModuleLoadingRuleValue.EMBEDDED, defaultIncludeDependencies))
+  fun embeddedModule(name: String, allowedMissingPluginIds: List<String> = emptyList()) {
+    modules.add(
+      ContentModule(
+        ContentModuleName(name),
+        ModuleLoadingRuleValue.EMBEDDED,
+        defaultIncludeDependencies,
+        allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
+      )
+    )
+  }
+
+  /**
+   * Add a single module with REQUIRED loading.
+   */
+  fun requiredModule(name: String, allowedMissingPluginIds: List<String> = emptyList()) {
+    modules.add(
+      ContentModule(
+        ContentModuleName(name),
+        ModuleLoadingRuleValue.REQUIRED,
+        defaultIncludeDependencies,
+        allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
+      )
+    )
   }
 
   /**
@@ -127,14 +202,21 @@ inline fun moduleSet(
   block: ModuleSetBuilder.() -> Unit,
 ): ModuleSet {
   val (modules, nestedSets) = ModuleSetBuilder(defaultIncludeDependencies = includeDependencies).apply(block).build()
-  return ModuleSet(name = name, modules = modules, nestedSets = nestedSets, alias = alias, outputModule = outputModule, selfContained = selfContained)
+  return ModuleSet(
+    name = name,
+    modules = modules,
+    nestedSets = nestedSets,
+    alias = alias?.let { PluginId(it) },
+    outputModule = outputModule?.let { ContentModuleName(it) },
+    selfContained = selfContained,
+  )
 }
 
 /**
  * Appends a single module XML element to the StringBuilder.
  */
 private fun appendModuleXml(sb: StringBuilder, module: ContentModule) {
-  sb.append("    <module name=\"${module.name}\"")
+  sb.append("    <module name=\"${module.name.value}\"")
   if (module.loading == ModuleLoadingRuleValue.EMBEDDED) {
     sb.append(" loading=\"embedded\"")
   }
@@ -291,7 +373,7 @@ private fun resolveOutputDir(moduleSet: ModuleSet, defaultOutputDir: Path, outpu
     require(outputProvider != null) {
       "ModuleOutputProvider is required when module set '${moduleSet.name}' specifies outputModule='$outputModuleName'"
     }
-    val module = outputProvider.findRequiredModule(outputModuleName)
+    val module = outputProvider.findRequiredModule(outputModuleName.value)
     val resourceRoot = module.sourceRoots.firstOrNull { it.rootType == JavaResourceRootType.RESOURCE }
       ?: error("No resource root found for module '$outputModuleName' (required by module set '${moduleSet.name}')")
     return resourceRoot.path.resolve("META-INF")
@@ -312,26 +394,28 @@ internal suspend fun doGenerateAllModuleSetsInternal(
   label: String,
   outputProvider: ModuleOutputProvider? = null,
   strategy: FileUpdateStrategy,
-): ModuleSetGenerationResult = coroutineScope {
-  Files.createDirectories(outputDir)
+): ModuleSetGenerationResult {
+  return coroutineScope {
+    Files.createDirectories(outputDir)
 
-  val moduleSets = discoverModuleSets(obj)
+    val moduleSets = discoverModuleSets(obj)
 
-  // Generate all module set XML files first (in parallel)
-  val fileResults = moduleSets.map { moduleSet ->
-    async {
+    // Generate all module set XML files first (in parallel)
+    val fileResults = moduleSets.map { moduleSet ->
+      async {
+        val targetOutputDir = resolveOutputDir(moduleSet, outputDir, outputProvider)
+        generateModuleSetXml(moduleSet = moduleSet, outputDir = targetOutputDir, label = label, strategy = strategy)
+      }
+    }.awaitAll()
+
+    // Build map of output directory -> generated file names (for cleanup aggregation)
+    val outputDirToGeneratedFiles = HashMap<Path, MutableSet<String>>()
+    for ((moduleSet, fileResult) in moduleSets.zip(fileResults)) {
       val targetOutputDir = resolveOutputDir(moduleSet, outputDir, outputProvider)
-      generateModuleSetXml(moduleSet = moduleSet, outputDir = targetOutputDir, label = label, strategy = strategy)
+      outputDirToGeneratedFiles.computeIfAbsent(targetOutputDir) { HashSet() }.add(fileResult.fileName)
     }
-  }.awaitAll()
 
-  // Build map of output directory -> generated file names (for cleanup aggregation)
-  val outputDirToGeneratedFiles = HashMap<Path, MutableSet<String>>()
-  for ((moduleSet, fileResult) in moduleSets.zip(fileResults)) {
-    val targetOutputDir = resolveOutputDir(moduleSet, outputDir, outputProvider)
-    outputDirToGeneratedFiles.computeIfAbsent(targetOutputDir) { HashSet() }.add(fileResult.fileName)
+    // Return results with tracking map (cleanup will be done after aggregating all labels)
+    ModuleSetGenerationResult(label = label, outputDir = outputDir, files = fileResults, trackingMap = outputDirToGeneratedFiles)
   }
-
-  // Return results with tracking map (cleanup will be done after aggregating all labels)
-  ModuleSetGenerationResult(label = label, outputDir = outputDir, files = fileResults, trackingMap = outputDirToGeneratedFiles)
 }

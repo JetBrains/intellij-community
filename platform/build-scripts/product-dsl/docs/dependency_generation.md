@@ -36,10 +36,15 @@ The graph is still *incomplete* when `computePluginContentFromDslSpec` runs:
 - It already contains products, module sets, and plugin.xml content from extracted plugins.
 - It does **not** yet contain JPS-only dependencies discovered during the DSL test plugin auto-add BFS.
 
-Because of this, `hasDescriptorInGraph` alone is insufficient for auto-add decisions. The code uses
-`ModuleDescriptorCache` as a discovery fallback to detect `{moduleName}.xml` on disk and decide whether
-the dependency should be auto-added as a content module. These modules are registered in the graph later
-when the DSL test plugin content is added via `addPluginWithContent`.
+To keep auto-add decisions graph-driven, model building pre-marks all JPS targets that have
+`{moduleName}.xml` descriptors on disk. This descriptor-presence flag is stored on content module nodes
+and used by DSL test plugin expansion to decide which JPS deps are eligible for auto-add, without
+additional disk I/O during generation. These modules are registered in the graph later when the DSL test
+plugin content is added via `addPluginWithContent`.
+
+**Invariant:** `markDescriptorModules()` must run after the last graph mutation before
+`computePluginContentFromDslSpec` executes. The graph snapshot carries a `descriptorFlagsComplete` flag,
+and DSL test plugin expansion fails fast if the flag is not set.
 
 Validation behavior is specified in [docs/validators/README.md](validators/README.md).
 

@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.productLayout.json
 
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.pluginGraph.PluginGraph
 import org.jetbrains.intellij.build.productLayout.tooling.CommunityProductViolation
 import org.jetbrains.intellij.build.productLayout.tooling.ModuleLocation
 import org.jetbrains.intellij.build.productLayout.tooling.ModuleLocationInfo
@@ -11,7 +12,9 @@ import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetLocationViola
 import org.jetbrains.intellij.build.productLayout.tooling.ModuleSetMetadata
 import org.jetbrains.intellij.build.productLayout.tooling.ParseResult
 import org.jetbrains.intellij.build.productLayout.tooling.ProductSpec
-import org.jetbrains.intellij.build.productLayout.traversal.ModuleSetTraversalCache
+import org.jetbrains.intellij.build.productLayout.traversal.collectModuleSetDirectModuleNames
+import org.jetbrains.intellij.build.productLayout.traversal.collectModuleSetModuleNames
+import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleSetNames
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -85,7 +88,7 @@ internal fun validateCommunityProducts(
   allModuleSets: List<ModuleSetMetadata>,
   moduleLocations: Map<String, ModuleLocationInfo>,
   projectRoot: Path,
-  cache: ModuleSetTraversalCache,
+  pluginGraph: PluginGraph,
 ): List<CommunityProductViolation> {
   val violations = mutableListOf<CommunityProductViolation>()
   // O(1) lookup for metadata by name
@@ -100,12 +103,12 @@ internal fun validateCommunityProducts(
     
     if (isCommunityProduct) {
       // Check each module set used by this product
-      for (msRef in product.contentSpec.moduleSets) {
-        val setName = msRef.moduleSet.name
+      val topLevelSets = collectProductModuleSetNames(pluginGraph, product.name)
+      for (setName in topLevelSets) {
         val msEntry = metadataByName.get(setName) ?: continue
         
-        // Get ALL modules including those from nested sets (using cache)
-        val allModules = cache.getModuleNames(setName)
+        // Get ALL modules including those from nested sets
+        val allModules = collectModuleSetModuleNames(pluginGraph, setName)
         
         // Find ultimate modules
         val ultimateModules = mutableListOf<String>()
@@ -113,9 +116,10 @@ internal fun validateCommunityProducts(
         var unknownModulesCount = 0
         
         for (moduleName in allModules) {
-          val locationInfo = moduleLocations.get(moduleName)
+          val moduleNameValue = moduleName.value
+          val locationInfo = moduleLocations.get(moduleNameValue)
           when (locationInfo?.location) {
-            ModuleLocation.ULTIMATE -> ultimateModules.add(moduleName)
+            ModuleLocation.ULTIMATE -> ultimateModules.add(moduleNameValue)
             ModuleLocation.COMMUNITY -> communityModulesCount++
             ModuleLocation.UNKNOWN, null -> unknownModulesCount++
           }
@@ -154,7 +158,8 @@ internal fun validateCommunityProducts(
 internal fun validateModuleSetLocations(
   allModuleSets: List<ModuleSetMetadata>,
   moduleLocations: Map<String, ModuleLocationInfo>,
-  projectRoot: Path
+  projectRoot: Path,
+  pluginGraph: PluginGraph
 ): List<ModuleSetLocationViolation> {
   val violations = mutableListOf<ModuleSetLocationViolation>()
   
@@ -168,12 +173,13 @@ internal fun validateModuleSetLocations(
     val ultimateModules = mutableListOf<String>()
     val communityModules = mutableListOf<String>()
     var unknownCount = 0
-    
-    for (module in ms.modules) {
-      val locationInfo = moduleLocations.get(module.name)
+
+    for (moduleName in collectModuleSetDirectModuleNames(pluginGraph, ms.name)) {
+      val moduleNameValue = moduleName.value
+      val locationInfo = moduleLocations.get(moduleNameValue)
       when (locationInfo?.location) {
-        ModuleLocation.ULTIMATE -> ultimateModules.add(module.name)
-        ModuleLocation.COMMUNITY -> communityModules.add(module.name)
+        ModuleLocation.ULTIMATE -> ultimateModules.add(moduleNameValue)
+        ModuleLocation.COMMUNITY -> communityModules.add(moduleNameValue)
         ModuleLocation.UNKNOWN, null -> unknownCount++
       }
     }

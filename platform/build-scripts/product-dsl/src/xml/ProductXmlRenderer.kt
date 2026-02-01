@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.productLayout.xml
@@ -9,10 +9,9 @@ import org.jetbrains.intellij.build.findFileInModuleLibraryDependencies
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.isModuleNameLikeFilename
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
-import org.jetbrains.intellij.build.productLayout.withEditorFold
 
 /**
- * Appends XML header comments.
+ * Appends XML header comments (placed BEFORE the opening tag, outside <idea-plugin>).
  */
 internal fun StringBuilder.appendXmlHeader(generatorCommand: String, productPropertiesClass: String) {
   append("<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->\n")
@@ -22,6 +21,7 @@ internal fun StringBuilder.appendXmlHeader(generatorCommand: String, productProp
 
 /**
  * Appends the opening <idea-plugin> tag with optional xi:include namespace.
+ * Only handles the tag itself - id/name/vendor are handled by metadataBuilder.
  */
 internal fun StringBuilder.appendOpeningTag(
   spec: ProductModulesContentSpec,
@@ -31,28 +31,25 @@ internal fun StringBuilder.appendOpeningTag(
   // Determine if xi:include namespace is needed
   val hasXmlIncludes = !inlineXmlIncludes && spec.deprecatedXmlIncludes.isNotEmpty()
   val hasModuleSetIncludes = !inlineModuleSets && spec.moduleSets.isNotEmpty()
-  // when we inline another some xi-include file, it can in turn have own xi-includes
-  val needsXiNamespace = inlineXmlIncludes || hasXmlIncludes || hasModuleSetIncludes
+  // When inlining xi-include files, those files might have their own xi-includes that need the namespace
+  val needsXiNamespaceForInlining = inlineXmlIncludes && spec.deprecatedXmlIncludes.isNotEmpty()
+  val needsXiNamespace = needsXiNamespaceForInlining || hasXmlIncludes || hasModuleSetIncludes
   if (needsXiNamespace) {
     append("<idea-plugin xmlns:xi=\"http://www.w3.org/2001/XInclude\">\n")
   }
   else {
     append("<idea-plugin>\n")
   }
+}
 
-  // Add id and name as child tags if PlatformLangPlugin.xml is not included
-  val includesPlatformLang = spec.deprecatedXmlIncludes.any {
+/**
+ * Checks if the spec includes a platform lang plugin that provides id/name.
+ */
+internal fun ProductModulesContentSpec.includesPlatformLangPlugin(): Boolean {
+  return deprecatedXmlIncludes.any {
     it.resourcePath == "META-INF/PlatformLangPlugin.xml" ||
     it.resourcePath == "META-INF/JavaIdePlugin.xml" ||
     it.resourcePath == "META-INF/pycharm-core.xml"
-  }
-
-  if (!includesPlatformLang) {
-    append("  <id>com.intellij</id>\n")
-    append("  <name>IDEA CORE</name>\n")
-    if (spec.vendor != null) {
-      append("  <vendor>${spec.vendor}</vendor>\n")
-    }
   }
 }
 
@@ -73,13 +70,13 @@ internal fun generateXIncludes(
     }
 
     // Find the module and file
-    val module = outputProvider.findModule(include.moduleName)
+    val module = outputProvider.findModule(include.contentModuleName.value)
     val resourcePath = include.resourcePath
     if (module == null) {
       if (include.ultimateOnly) {
-        error("Ultimate-only module '${include.moduleName}' not found in Ultimate build - this is a configuration error (referenced in xi:include for '$resourcePath')")
+        error("Ultimate-only module '${include.contentModuleName.value}' not found in Ultimate build - this is a configuration error (referenced in xi:include for '$resourcePath')")
       }
-      error("Module '${include.moduleName}' not found (referenced in xi:include for '$resourcePath')")
+      error("Module '${include.contentModuleName.value}' not found (referenced in xi:include for '$resourcePath')")
     }
 
     val data = findFileInModuleSources(module, resourcePath)?.let { JDOMUtil.load(it) }
@@ -88,7 +85,7 @@ internal fun generateXIncludes(
                ?: error("Resource '$resourcePath' not found in module '${module.name}' sources or libraries (referenced in xi:include)")
 
     if (inlineXmlIncludes && !include.optional) {
-      withEditorFold(sb, "  ", "Inlined from ${include.moduleName}/$resourcePath") {
+      withEditorFold(sb, "  ", "Inlined from ${include.contentModuleName}/$resourcePath") {
         // Inline the actual XML content
         for (element in data.children) {
           sb.append(JDOMUtil.write(element).prependIndent("  "))

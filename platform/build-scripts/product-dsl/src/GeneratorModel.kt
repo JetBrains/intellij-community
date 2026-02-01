@@ -1,7 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.productLayout
+
+import com.intellij.platform.pluginGraph.ContentModuleName
 
 const val LIB_MODULE_PREFIX: String = "intellij.libraries."
 
@@ -41,9 +43,9 @@ data class ProductContentBuildResult(
   /** List of content blocks generated from the spec */
   @JvmField val contentBlocks: List<ContentBlock>,
   /** Mapping from module name to its module set chain as list (e.g., ["parent", "child"]) */
-  @JvmField val moduleToSetChainMapping: Map<String, List<String>>,
+  @JvmField val moduleToSetChainMapping: Map<ContentModuleName, List<String>>,
   /** Mapping from module name to includeDependencies flag */
-  @JvmField val moduleToIncludeDependenciesMapping: Map<String, Boolean>,
+  @JvmField val moduleToIncludeDependenciesMapping: Map<ContentModuleName, Boolean>,
 )
 
 /**
