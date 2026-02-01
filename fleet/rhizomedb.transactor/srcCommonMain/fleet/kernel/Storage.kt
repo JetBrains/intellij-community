@@ -68,7 +68,9 @@ suspend fun <T> withStorage(
     autoSaveDebounceMs,
     loadSnapshot,
     applySnapshot = { snapshotWithPartitions: DurableSnapshotWithPartitions ->
-      applyDurableSnapshotWithPartitions(snapshotWithPartitions, isFailFast)
+      applyDurableSnapshotWithPartitions(snapshot = snapshotWithPartitions.snapshot, isFailFast = isFailFast) { uid ->
+        snapshotWithPartitions.partitions[uid]!!
+      }
     },
     saveSnapshot = { db: DB ->
       val (snapshot, snapshotBuildDuration) = measureTimedValue {
@@ -182,22 +184,26 @@ data class DurableSnapshotWithPartitions(
   }
 }
 
-private fun DbContext<Mut>.applyDurableSnapshotWithPartitions(snapshotWithPartitions: DurableSnapshotWithPartitions, isFailFast: Boolean) {
+fun DbContext<Mut>.applyDurableSnapshotWithPartitions(
+  snapshot: DurableSnapshot,
+  isFailFast: Boolean = false,
+  partition: (UID) -> Int,
+) {
   span("applyDurableSnapshotWithPartitions") {
     val memoizedEIDs = HashMap<UID, EID>()
-    applySnapshotNew(snapshotWithPartitions.snapshot) { uid ->
-      val partition = snapshotWithPartitions.partitions[uid]!!
+    applySnapshotNew(snapshot) { uid ->
+      val partition = partition(uid)
       memoizedEIDs.computeIfAbsentShim(uid) { EidGen.freshEID(partition) }
     }
 
-    val attrIdents = snapshotWithPartitions.snapshot.entities.flatMapTo(HashSet()) { e -> e.attrs.keys }
+    val attrIdents = snapshot.entities.flatMapTo(HashSet()) { e -> e.attrs.keys }
     val deserializationProblems = deserializationProblems(attrIdents.mapNotNull { k -> attributeByIdent(k.ident) })
     if (isFailFast) {
       check(deserializationProblems.isEmpty()) { deserializationProblems.joinToString(separator = "\n") }
     }
 
     val schemaProblems = uidAttribute().let { uidAttr ->
-      snapshotWithPartitions.snapshot.entities.flatMap { durableEntity ->
+      snapshot.entities.flatMap { durableEntity ->
         lookupOne(uidAttr, durableEntity.uid)?.let { entityEID ->
           entityType(entityEID)?.let { entityTypeEID ->
             missingRequiredAttrs(entityEID, entityTypeEID)
