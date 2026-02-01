@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlReader")
 @file:Suppress("ReplacePutWithAssignment")
 
@@ -1044,6 +1044,10 @@ class ContentParseResult(
   @JvmField val xIncludePaths: List<String>,
   /** Module dependencies from <dependencies><module name="..."/> elements */
   @JvmField val moduleDependencies: List<String> = emptyList(),
+  /** Plugin dependencies from <dependencies><plugin id="..."/> elements */
+  @JvmField val pluginDependencies: List<String> = emptyList(),
+  /** Plugin aliases from <module value="..."/> elements at root level */
+  @JvmField val pluginAliases: List<String> = emptyList(),
 )
 
 /**
@@ -1078,6 +1082,8 @@ private fun parseElementForContentAndIncludes(reader: XMLStreamReader2): Content
   val xIncludePaths = ArrayList<String>()
   val contentModules = ArrayList<ContentModuleElement>()
   val moduleDependencies = ArrayList<String>()
+  val pluginDependencies = ArrayList<String>()
+  val pluginAliases = ArrayList<String>()
   consumeChildElements(reader) { localName ->
     when (localName) {
       PluginXmlConst.INCLUDE_ELEM if reader.namespaceURI == PluginXmlConst.XINCLUDE_NAMESPACE_URI -> {
@@ -1100,16 +1106,31 @@ private fun parseElementForContentAndIncludes(reader: XMLStreamReader2): Content
         }
       }
       PluginXmlConst.DEPENDENCIES_ELEM -> {
-        // Parse module dependencies
+        // Parse module and plugin dependencies
         consumeChildElements(reader) { childName ->
-          if (childName == PluginXmlConst.DEPENDENCIES_MODULE_ELEM) {
-            val name = XmlReadUtils.findAttributeValue(reader, PluginXmlConst.DEPENDENCIES_MODULE_NAME_ATTR)
-            if (name != null) {
-              moduleDependencies.add(name)
+          when (childName) {
+            PluginXmlConst.DEPENDENCIES_MODULE_ELEM -> {
+              val name = XmlReadUtils.findAttributeValue(reader, PluginXmlConst.DEPENDENCIES_MODULE_NAME_ATTR)
+              if (name != null) {
+                moduleDependencies.add(name)
+              }
+            }
+            PluginXmlConst.DEPENDENCIES_PLUGIN_ELEM -> {
+              val id = XmlReadUtils.findAttributeValue(reader, PluginXmlConst.DEPENDENCIES_PLUGIN_ID_ATTR)
+              if (id != null) {
+                pluginDependencies.add(id)
+              }
             }
           }
           reader.skipElement()
         }
+      }
+      PluginXmlConst.MODULE_ELEM -> {
+        val value = XmlReadUtils.findAttributeValue(reader, PluginXmlConst.MODULE_VALUE_ATTR)
+        if (value != null) {
+          pluginAliases.add(value)
+        }
+        reader.skipElement()
       }
       else -> {
         // Recursively check nested elements for xi:includes (they can appear at root level only,
@@ -1121,7 +1142,7 @@ private fun parseElementForContentAndIncludes(reader: XMLStreamReader2): Content
       }
     }
   }
-  return ContentParseResult(contentModules, xIncludePaths, moduleDependencies)
+  return ContentParseResult(contentModules, xIncludePaths, moduleDependencies, pluginDependencies, pluginAliases)
 }
 
 private fun readContentModuleElement(reader: XMLStreamReader2): ContentModuleElement {
