@@ -14,6 +14,9 @@ string_list_flag(
         # Library graphs cache size in tests enough for one test
         "-Djvm-inc-builder.library.graph.cache.size=10",
 
+        # Whether to track changes in mock annotations used in tests
+        "-Djvm-inc-builder.test.track.mock.annotations=true",
+
         # Uncomment to enable Debug configuration that attaches to the listening debugger
         #"-agentlib:jdwp=transport=dt_socket,server=n,address=127.0.0.1:5008,suspend=y",
     ]),
