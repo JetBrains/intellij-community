@@ -60,7 +60,6 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.common.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.common.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.kotlin.base.facet.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.injection.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.scripting.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.onboarding" scope="RUNTIME" />
@@ -70,7 +69,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.junit.kotlin.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.kotlin.tests.k1" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.tests" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea-base.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="RUNTIME" />
   </component>

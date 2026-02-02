@@ -1,16 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.facets
 
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
-import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
@@ -36,12 +36,14 @@ class ModulePlatformCacheTest : KotlinLightCodeInsightFixtureTestCase() {
         module.createFacetWithAdditionalSetup(JvmPlatforms.defaultJvmPlatform, false) {}
     }
 
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+
     fun `test target platform cache invalidation on change of jvmTarget - default initial with non-null args`() {
         with(module.kotlinFacet) {
             configuration.settings.targetPlatform = JvmPlatforms.defaultJvmPlatform
             fireFacetChangedEvent(this)
 
-            TestCase.assertNotNull(configuration.settings.compilerArguments)
+            assertNotNull(configuration.settings.compilerArguments)
 
             updateCompilerArgumentsAndCheck("17")
             updateCompilerArgumentsAndCheck("1.8")
@@ -54,7 +56,7 @@ class ModulePlatformCacheTest : KotlinLightCodeInsightFixtureTestCase() {
             configuration.settings.targetPlatform = JvmPlatforms.jvm17
             fireFacetChangedEvent(this)
 
-            TestCase.assertNotNull(configuration.settings.compilerArguments)
+            assertNotNull(configuration.settings.compilerArguments)
 
             updateCompilerArgumentsAndCheck("17")
             updateCompilerArgumentsAndCheck("1.8")
@@ -67,7 +69,7 @@ class ModulePlatformCacheTest : KotlinLightCodeInsightFixtureTestCase() {
             configuration.settings.targetPlatform = JvmPlatforms.jvm11
             fireFacetChangedEvent(this)
 
-            TestCase.assertNotNull(configuration.settings.compilerArguments)
+            assertNotNull(configuration.settings.compilerArguments)
 
             updateCompilerArgumentsAndCheck("17")
             updateCompilerArgumentsAndCheck("1.8")
@@ -81,7 +83,7 @@ class ModulePlatformCacheTest : KotlinLightCodeInsightFixtureTestCase() {
             configuration.settings.compilerArguments = null
             fireFacetChangedEvent(this)
 
-            TestCase.assertNull(configuration.settings.compilerArguments)
+            assertNull(configuration.settings.compilerArguments)
 
             configuration.settings.targetPlatform = JvmPlatforms.defaultJvmPlatform
             fireFacetChangedEvent(this)
@@ -99,7 +101,7 @@ class ModulePlatformCacheTest : KotlinLightCodeInsightFixtureTestCase() {
             configuration.settings.compilerArguments = null
             fireFacetChangedEvent(this)
 
-            TestCase.assertNull(configuration.settings.compilerArguments)
+            assertNull(configuration.settings.compilerArguments)
 
             configuration.settings.targetPlatform = JvmPlatforms.defaultJvmPlatform
             fireFacetChangedEvent(this)
@@ -113,8 +115,8 @@ class ModulePlatformCacheTest : KotlinLightCodeInsightFixtureTestCase() {
 
     private fun fireFacetChangedEvent(mainFacet: KotlinFacet) {
         val allFacets = FacetManager.getInstance(myModule).allFacets
-        UsefulTestCase.assertSize(1, allFacets)
-        TestCase.assertSame(mainFacet, allFacets[0])
+        assertSize(1, allFacets)
+        assertSame(mainFacet, allFacets[0])
 
         allFacets.forEach { facet -> FacetManager.getInstance(myModule).facetConfigurationChanged(facet) }
     }

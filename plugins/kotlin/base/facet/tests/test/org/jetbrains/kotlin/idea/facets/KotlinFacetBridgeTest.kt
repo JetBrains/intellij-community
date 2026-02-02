@@ -1,6 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea
+package org.jetbrains.kotlin.idea.facets
 
 import com.intellij.facet.FacetManager
 import com.intellij.facet.impl.ui.FacetEditorImpl
@@ -13,16 +13,11 @@ import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
 import org.jetbrains.kotlin.idea.workspaceModel.deserializeExternalSystemTestRunTask
 
 class KotlinFacetBridgeTest : KotlinFacetTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
-
-    override fun setUp() {
-        setUpWithKotlinPlugin {  super.setUp() }
-    }
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun testSimpleKotlinFacetCreate() {
         getKotlinFacet()

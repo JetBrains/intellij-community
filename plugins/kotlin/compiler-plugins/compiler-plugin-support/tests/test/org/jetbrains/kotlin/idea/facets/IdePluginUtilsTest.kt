@@ -1,8 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.compilerPlugin
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.facets
 
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
-import org.jetbrains.kotlin.idea.KotlinFacetTestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup
+import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPlugin
 import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.junit.jupiter.api.Assertions
 
@@ -14,6 +16,8 @@ class IdePluginUtilsTest : KotlinFacetTestCase() {
     val compilerPluginId = "pluginId"
     val otherCompilerPluginId = "pluginId2"
     val pluginName = "pluginName"
+
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
     fun `test modify empty compiler arguments for plugin with new classpath and new options`() {
         val compilerPluginSetup = CompilerPluginSetup(

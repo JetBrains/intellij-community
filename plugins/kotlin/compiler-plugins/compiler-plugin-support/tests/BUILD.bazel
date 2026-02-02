@@ -1,5 +1,5 @@
-### auto-generated section `build kotlin.compiler-plugins.compiler-plugin-support.tests` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+### auto-generated section `build intellij.kotlin.compilerPlugins.support.tests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 jvm_library(
   name = "tests",
@@ -13,9 +13,14 @@ jvm_library(
   ]
 )
 
+jvm_provided_library(
+  name = "plugins_kotlin_plugin_k2_provided",
+  lib = "//plugins/kotlin/plugin/k2"
+)
+
 jvm_library(
   name = "tests_test_lib",
-  module_name = "kotlin.compiler-plugins.compiler-plugin-support.tests",
+  module_name = "intellij.kotlin.compilerPlugins.support.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
@@ -33,16 +38,17 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
+    ":plugins_kotlin_plugin_k2_provided",
   ],
   runtime_deps = [":tests"]
 )
-### auto-generated section `build kotlin.compiler-plugins.compiler-plugin-support.tests` end
+### auto-generated section `build intellij.kotlin.compilerPlugins.support.tests` end
 
-### auto-generated section `test kotlin.compiler-plugins.compiler-plugin-support.tests` start
+### auto-generated section `test intellij.kotlin.compilerPlugins.support.tests` start
 load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `test kotlin.compiler-plugins.compiler-plugin-support.tests` end
+### auto-generated section `test intellij.kotlin.compilerPlugins.support.tests` end

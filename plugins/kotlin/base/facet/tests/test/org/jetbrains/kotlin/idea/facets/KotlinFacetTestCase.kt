@@ -1,18 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea
+package org.jetbrains.kotlin.idea.facets
 
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TestFixtureBuilder
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
@@ -20,8 +19,7 @@ import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetBridgeFactory
 import org.junit.Assume
 import java.io.File
 
-abstract class KotlinFacetTestCase : UsefulTestCase(), ExpectedPluginModeProvider {
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+abstract class KotlinFacetTestCase : BasePlatformTestCase(), ExpectedPluginModeProvider {
 
     private lateinit var myTestFixture: JavaCodeInsightTestFixture
     lateinit var myProject: Project
@@ -30,7 +28,7 @@ abstract class KotlinFacetTestCase : UsefulTestCase(), ExpectedPluginModeProvide
     val myModule: Module
         get() = myTestFixture.module
 
-    private fun getTestDataPath(): String {
+    override fun getTestDataPath(): String {
         return PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') /*+ getBasePath()*/
     }
 

@@ -60,7 +60,6 @@ jvm_library(
     "//plugins/kotlin/uast/uast-kotlin-base/tests",
     "//plugins/kotlin/compiler-plugins/parcelize/tests",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common.tests:kotlin-refactorings-common-tests",
-    "//plugins/kotlin/base/facet/tests",
     "//plugins/kotlin/injection/k1/tests",
     "//plugins/kotlin/base/scripting/scripting.k1",
     "//plugins/kotlin/onboarding",
@@ -70,7 +69,6 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//plugins/junit/kotlin-tests-k1",
     "//jvm/jvm-analysis-kotlin-tests-k1:analysis-kotlin-tests-k1",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/tests",
     "//plugins/kotlin/uast/uast-kotlin-idea-base/tests",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test",
   ]
