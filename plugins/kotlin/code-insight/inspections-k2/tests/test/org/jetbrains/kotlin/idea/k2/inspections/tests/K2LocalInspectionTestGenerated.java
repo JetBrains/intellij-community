@@ -13415,6 +13415,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("backTicksAsName.kt")
+            public void testBackTicksAsName() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/backTicksAsName.kt");
+            }
+
             @TestMetadata("backingFieldTypeIsASubtype.kt")
             public void testBackingFieldTypeIsASubtype() throws Exception {
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/backingFieldTypeIsASubtype.kt");
