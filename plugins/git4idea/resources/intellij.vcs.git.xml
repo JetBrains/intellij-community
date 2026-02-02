@@ -841,7 +841,7 @@
                  description="Show notification about modal commit deprecation if the version is specified"
                  restartRequired="false"/>
 
-    <registryKey key="git.log.provider.experimental.refs.collection" defaultValue="false"
+    <registryKey key="git.log.provider.experimental.refs.collection" defaultValue="true"
                  description="Reuse refs from GitRepository instead of relying on log command"
                  restartRequired="false"/>
 

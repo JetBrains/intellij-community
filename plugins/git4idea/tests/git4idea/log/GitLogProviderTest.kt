@@ -46,14 +46,9 @@ import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Assume
 
-class GitReadRecentCommitsTest : GitReadRecentCommitsTestBase()
+class GitReadRecentCommitsTest : GitReadRecentCommitsTestBase(collectRefsFromLog = true)
 
-class GitExperimentalReadRecentCommitsTestBase : GitReadRecentCommitsTestBase() {
-  override fun setUp() {
-    super.setUp()
-    setRegistryPropertyForTest("git.log.provider.experimental.refs.collection", true.toString())
-  }
-}
+class GitExperimentalReadRecentCommitsTestBase : GitReadRecentCommitsTestBase(collectRefsFromLog = false)
 
 class GitLogProviderTest : GitLogProviderTestBase() {
   fun test_all_log_with_tagged_branch() {
@@ -289,7 +284,12 @@ class GitLogProviderTest : GitLogProviderTestBase() {
 
 }
 
-abstract class GitReadRecentCommitsTestBase : GitLogProviderTestBase() {
+abstract class GitReadRecentCommitsTestBase(val collectRefsFromLog: Boolean) : GitLogProviderTestBase() {
+  override fun setUp() {
+    super.setUp()
+    setRegistryPropertyForTest("git.log.provider.experimental.refs.collection", (!collectRefsFromLog).toString())
+  }
+
   fun test_init_with_tagged_branch() {
     prepareSomeHistory()
     val expectedLogWithoutTaggedBranch = readCommitsFromGit()
