@@ -2,6 +2,7 @@
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -14,6 +15,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -38,10 +40,13 @@ import com.intellij.usages.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.io.PlatformNioHelper;
+import com.intellij.util.io.TrashBin;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.*;
 
 import static com.intellij.openapi.util.NlsContexts.Command;
@@ -378,17 +383,18 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
   @Override
   protected void performRefactoring(UsageInfo @NotNull [] usages) {
     try {
-      SmartPointerManager pointerManager = SmartPointerManager.getInstance(myProject);
-      List<SmartPsiElementPointer<PsiElement>> pointers = ContainerUtil.map(myElements, pointerManager::createSmartPsiElementPointer);
+      var pointerManager = SmartPointerManager.getInstance(myProject);
+      var pointers = ContainerUtil.map(myElements, pointerManager::createSmartPsiElementPointer);
+      var toBin = TrashBin.isSupported() && GeneralSettings.getInstance().isDeletingToBin();
 
-      for (UsageInfo usage : usages) {
+      for (var usage : usages) {
         if (usage instanceof SafeDeleteCustomUsageInfo info) {
           info.performRefactoring();
         }
       }
 
-      for (PsiElement element : myElements) {
-        for (SafeDeleteProcessorDelegate delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
+      for (var element : myElements) {
+        for (var delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
           if (delegate.handlesElement(element)) {
             delegate.prepareForDeletion(element);
             break;
@@ -396,15 +402,53 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      for (SmartPsiElementPointer<PsiElement> pointer : pointers) {
-        PsiElement element = pointer.getElement();
+      for (var pointer : pointers) {
+        var element = pointer.getElement();
         if (element != null) {
-          element.delete();
+          var file = (PsiFile)null;
+          try {
+            if (toBin) {
+              file = installTrashHandler(element);
+            }
+            element.delete();
+          }
+          finally {
+            if (file != null) {
+              PsiFileImplUtil.setCustomFileDeleteHandler(file, null);
+            }
+          }
         }
       }
+
       if (myAfterRefactoringCallback != null) myAfterRefactoringCallback.run();
-    } catch (IncorrectOperationException e) {
+    }
+    catch (IncorrectOperationException e) {
       RefactoringUIUtil.processIncorrectOperation(myProject, e);
+    }
+  }
+
+  private static @Nullable PsiFile installTrashHandler(PsiElement element) {
+    try {
+      var psiFile = element.getContainingFile();
+      if (psiFile != null && psiFile.isPhysical()) {
+        var virtualFile = psiFile.getVirtualFile();
+        if (PlatformNioHelper.isLocal(virtualFile)) {
+          PsiFileImplUtil.setCustomFileDeleteHandler(psiFile, SafeDeleteProcessor::moveToTrash);
+          return psiFile;
+        }
+      }
+    }
+    catch (PsiInvalidElementAccessException ignored) { }
+    return null;
+  }
+
+  private static void moveToTrash(PsiFile psiFile) {
+    var virtualFile = psiFile.getVirtualFile();
+    try {
+      TrashBin.moveToTrash(virtualFile.toNioPath());
+    }
+    catch (IOException e) {
+      throw new IncorrectOperationException(e);
     }
   }
 
