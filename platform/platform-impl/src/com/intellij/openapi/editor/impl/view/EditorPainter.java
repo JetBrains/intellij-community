@@ -373,22 +373,25 @@ public final class EditorPainter implements TextDrawingCallback {
 
     private SelectionLinePainter mySelectionLinePainter = null;
 
-    private float selectionExtensionWidth(TextAttributes attributes) {
+    private float selectionExtensionWidth() {
       // We need a singular width since otherwise end-of-line selections don't align
       // Choose `M` as it is generally considered the widest letter of the font
       // https://en.wikipedia.org/wiki/Em_(typography)
       return FontLayoutService.getInstance().charWidth2D(
-        myEditor.getFontMetrics(attributes.getFontType()),
+        myEditor.getFontMetrics(Font.PLAIN),
         'M'
       );
     }
 
     private void paintBackground() {
+      float selectionExtensionWidth = selectionExtensionWidth();
+
       mySelectionLinePainter = new SelectionLinePainter(
         myGraphics,
         myLineHeight,
         myYShift,
-        myEditor
+        myEditor,
+        selectionExtensionWidth
       );
 
       int lineCount = myView.getVisibleLineCount();
@@ -444,7 +447,7 @@ public final class EditorPainter implements TextDrawingCallback {
           if (!isSelection || Registry.is("editor.disable.new.selection")) {
             paintBackground(attributes.getBackgroundColor(), startX, prevY, endX - startX, y - prevY);
           } else {
-            mySelectionLinePainter.paintAllBlockInlaysAbove(visualLine, selectionExtensionWidth(attributes));
+            mySelectionLinePainter.paintAllBlockInlaysAbove(visualLine);
           }
         }
         boolean dryRun = visualLine > myEndVisualLine;
@@ -461,8 +464,10 @@ public final class EditorPainter implements TextDrawingCallback {
             if (!Registry.is("editor.disable.new.selection")
                 && it.isInSelection()
                 && myEditor.isRightAligned()) {
-              mySelectionLinePainter.paintSelection(new Rectangle2D.Float(startX, y, 0.0f, myLineHeight));
-              mySelectionLinePainter.extendLine(selectionExtensionWidth(attributes));
+              mySelectionLinePainter.paintSelection(new Rectangle2D.Float(
+                startX - selectionExtensionWidth, y,
+                selectionExtensionWidth, myLineHeight
+              ));
             }
             if (!hasSoftWrap) return;
             paintSelectionOnSecondSoftWrapLineIfNecessary(visualLine, columnEnd, xEnd, y, primarySelectionStart, primarySelectionEnd);
@@ -541,12 +546,14 @@ public final class EditorPainter implements TextDrawingCallback {
                   myEditor.getColorsScheme()
                     .getColor(EditorColors.SELECTION_BACKGROUND_COLOR)
                 );
+
+                float start = startX - (myEditor.isRightAligned() ? selectionExtensionWidth : 0.0f);
+                float end = start + paintWidth + (myEditor.isRightAligned() ? 0.0f : selectionExtensionWidth);
                 mySelectionLinePainter.paintSelection(
                   new Rectangle2D.Float(
-                    startX, y, paintWidth, cfr.getHeightInPixels()
+                    start, y, end - start, cfr.getHeightInPixels()
                   )
                 );
-                mySelectionLinePainter.extendLine(selectionExtensionWidth(backgroundAttributes));
               } else {
                 paintBackground(backgroundAttributes, startX, y, paintWidth, cfr.getHeightInPixels());
               }
@@ -557,14 +564,10 @@ public final class EditorPainter implements TextDrawingCallback {
               return;
             }
             paintBackground(backgroundAttributes.getBackgroundColor(), x, y, endX - x, myLineHeight);
-            if (it.isInSelection() && !Registry.is("editor.disable.new.selection")) {
-              var extensionWidth = selectionExtensionWidth(backgroundAttributes);
+            if (it.isInSelection() && !Registry.is("editor.disable.new.selection") && !myEditor.isRightAligned()) {
               mySelectionLinePainter.paintSelection(
-                new Rectangle2D.Float(x, y, 0.0f, myLineHeight)
+                new Rectangle2D.Float(x, y, selectionExtensionWidth, myLineHeight)
               );
-              if (!myEditor.isRightAligned()) {
-                mySelectionLinePainter.extendLine(extensionWidth);
-              }
             }
             int offset = it.getEndOffset();
             SoftWrap softWrap = mySoftWrapModel.getSoftWrap(offset);
