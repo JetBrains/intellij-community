@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.KeyStroke;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
 
@@ -24,11 +24,9 @@ import java.util.Collection;
 @ApiStatus.Internal
 public final class TerminalEscapeKeyListener {
   private final @NotNull JBTerminalPanel myTerminalPanel;
-  private final @Nullable AnAction myTerminalSwitchFocusToEditorAction;
 
   public TerminalEscapeKeyListener(@NotNull JBTerminalPanel terminalPanel) {
     myTerminalPanel = terminalPanel;
-    myTerminalSwitchFocusToEditorAction = ActionManager.getInstance().getAction("Terminal.SwitchFocusToEditor");
   }
 
   public void handleKeyEvent(@NotNull KeyEvent e) {
@@ -43,12 +41,13 @@ public final class TerminalEscapeKeyListener {
 
   private boolean shouldSwitchFocusToEditor(@NotNull KeyEvent e) {
     ToolWindow toolWindow = myTerminalPanel.getContextToolWindow();
+    AnAction terminalSwitchFocusToEditorAction = getTerminalSwitchFocusToEditorAction();
     if (toolWindow == null) {
       // We are not in the tool window, so where we are? Maybe in the editor already.
       return false;
     }
-    else if (myTerminalSwitchFocusToEditorAction != null) {
-      Collection<KeyStroke> strokes = KeymapUtil.getKeyStrokes(myTerminalSwitchFocusToEditorAction.getShortcutSet());
+    else if (terminalSwitchFocusToEditorAction != null) {
+      Collection<KeyStroke> strokes = KeymapUtil.getKeyStrokes(terminalSwitchFocusToEditorAction.getShortcutSet());
       if (JBTerminalWidget.isTerminalToolWindow(toolWindow)) {
         // If we are in the terminal tool window, allow moving focus only if it matches the defined shortcut.
         return isMatched(e, strokes);
@@ -73,6 +72,10 @@ public final class TerminalEscapeKeyListener {
       //noinspection MagicConstant
       return stroke.getKeyCode() == e.getKeyCode() && stroke.getModifiers() == UIUtil.getAllModifiers(e);
     });
+  }
+
+  private static @Nullable AnAction getTerminalSwitchFocusToEditorAction() {
+    return ActionManager.getInstance().getAction("Terminal.SwitchFocusToEditor");
   }
 
   private static boolean isEscape(@NotNull KeyEvent e) {
