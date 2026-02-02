@@ -10,11 +10,17 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.ColorIcon;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Field;
+import com.sun.jdi.IntegerValue;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
 import java.util.Collections;
 
 final class ColorObjectRenderer extends CompoundRendererProvider {

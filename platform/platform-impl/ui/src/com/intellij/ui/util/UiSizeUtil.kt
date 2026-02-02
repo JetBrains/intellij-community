@@ -20,13 +20,9 @@ var JBPopup.width: Int
   set(newValue) {
     size = Dimension(newValue, size.height)
   }
-var JBPopup.height: Int
+
+val JBPopup.height: Int
   get() = size.height
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Prefer using [JBPopup.setSize] explicitly")
-  set(newValue) {
-    size = Dimension(size.width, newValue)
-  }
 
 /**
  * WARNING: prefer overriding [JComponent.getPreferredSize], [JComponent.getMinimumSize], [JComponent.getMaximumSize] instead.

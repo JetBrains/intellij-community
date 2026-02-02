@@ -3,7 +3,7 @@ package com.intellij.devkit.threading.threadingModelHelper
 
 import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
 import org.jetbrains.idea.devkit.threadingModelHelper.THREAD_REQUIREMENTS
-import java.util.*
+import java.util.EnumSet
 
 internal class ThreadingReqAction: BaseReqSearchAction() {
   override val requirements: EnumSet<ConstraintType> = THREAD_REQUIREMENTS

@@ -10,5 +10,5 @@ internal class ArchiveBackendImpl : ArchiveBackend {
   @OptIn(EelDelicateApi::class)
   override fun isWindows(path: Path): Boolean =
     // If app isn't loaded we are called from some low-level thing and can't access eel without app anyway
-    path.getEelDescriptor().osFamily.isWindows
+    path.osFamily.isWindows
 }

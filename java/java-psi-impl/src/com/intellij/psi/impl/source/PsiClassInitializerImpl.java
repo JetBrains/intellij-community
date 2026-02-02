@@ -2,7 +2,15 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiSyntheticClass;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassInitializerStub;
@@ -15,7 +23,7 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class PsiClassInitializerImpl extends JavaStubPsiElement<PsiClassInitializerStub> implements PsiClassInitializer {
   public PsiClassInitializerImpl(PsiClassInitializerStub stub) {

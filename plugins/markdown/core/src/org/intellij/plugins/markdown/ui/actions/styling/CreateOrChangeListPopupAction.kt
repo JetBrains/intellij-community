@@ -2,7 +2,12 @@ package org.intellij.plugins.markdown.ui.actions.styling
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.client.currentSessionOrNull
 import com.intellij.ui.awt.RelativePoint

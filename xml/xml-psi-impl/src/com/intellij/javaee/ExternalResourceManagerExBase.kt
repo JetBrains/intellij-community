@@ -7,7 +7,12 @@ import com.intellij.application.options.PathMacrosImpl
 import com.intellij.application.options.ReplacePathToMacroMap
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ExpandMacroToPathMap
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
@@ -30,7 +35,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.File
-import java.util.*
+import java.util.Collections
+import java.util.LinkedList
+import java.util.TreeSet
 
 private val LOG = logger<ExternalResourceManagerExBase>()
 private const val DEFAULT_VERSION = ""

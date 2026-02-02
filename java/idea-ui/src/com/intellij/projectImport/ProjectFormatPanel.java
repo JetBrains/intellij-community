@@ -10,7 +10,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JPanel;
 
 public class ProjectFormatPanel {
   private static final String STORAGE_FORMAT_PROPERTY = "default.storage.format";

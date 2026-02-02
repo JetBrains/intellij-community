@@ -9,7 +9,9 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.project.module.ModuleStateApi
 import com.intellij.platform.project.module.ModuleUpdatedEvent
-import com.intellij.platform.project.module.ModuleUpdatedEvent.*
+import com.intellij.platform.project.module.ModuleUpdatedEvent.ModuleRemovedEvent
+import com.intellij.platform.project.module.ModuleUpdatedEvent.ModulesAddedEvent
+import com.intellij.platform.project.module.ModuleUpdatedEvent.ModulesRenamedEvent
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.util.Function
 import fleet.rpc.remoteApiDescriptor

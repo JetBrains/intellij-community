@@ -3,9 +3,11 @@
 package org.jetbrains.kotlin.idea.core.script.k1.configuration.loader
 
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.cache.ScriptConfigurationFileAttributeCache
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.cache.ScriptConfigurationSnapshot
 
+@K1Deprecation
 interface ScriptConfigurationLoadingContext {
     fun getCachedConfiguration(file: VirtualFile): ScriptConfigurationSnapshot?
 

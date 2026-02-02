@@ -2,11 +2,34 @@
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UBinaryExpression;
+import org.jetbrains.uast.UBlockExpression;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UCallableReferenceExpression;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UField;
+import org.jetbrains.uast.UFile;
+import org.jetbrains.uast.UIdentifier;
+import org.jetbrains.uast.ULambdaExpression;
+import org.jetbrains.uast.ULocalVariable;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UQualifiedReferenceExpression;
+import org.jetbrains.uast.UReferenceExpression;
+import org.jetbrains.uast.UReturnExpression;
+import org.jetbrains.uast.UThisExpression;
+import org.jetbrains.uast.UastContextKt;
 
 @ApiStatus.Internal
 public final class AnalysisUastUtil {

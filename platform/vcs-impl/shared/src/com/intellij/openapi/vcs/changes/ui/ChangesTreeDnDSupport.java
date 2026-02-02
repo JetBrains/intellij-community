@@ -1,7 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.ide.dnd.*;
+import com.intellij.ide.dnd.DnDAction;
+import com.intellij.ide.dnd.DnDActionInfo;
+import com.intellij.ide.dnd.DnDDragStartBean;
+import com.intellij.ide.dnd.DnDDropHandler;
+import com.intellij.ide.dnd.DnDEvent;
+import com.intellij.ide.dnd.DnDImage;
+import com.intellij.ide.dnd.DnDSupport;
+import com.intellij.ide.dnd.DnDTargetChecker;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -15,9 +22,12 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.dnd.DnDConstants;
 import java.util.ArrayList;
 import java.util.List;

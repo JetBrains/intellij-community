@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * A factory for creating some commonly used project wizards steps

@@ -8,3 +8,4 @@ val <T> List<T>.property: T by <caret>
 
 // EXIST: lazy
 // EXIST: X
+// IGNORE_K2

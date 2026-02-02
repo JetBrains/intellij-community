@@ -3,10 +3,12 @@
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeElement
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 
+@K1Deprecation
 class DebugPrinter(private val inferenceContext: InferenceContext) {
     private val namer = Namer(inferenceContext)
 

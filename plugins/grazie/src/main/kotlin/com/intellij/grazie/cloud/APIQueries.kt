@@ -30,7 +30,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.io.computeDetached
 import io.ktor.client.plugins.HttpRequestTimeoutException
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import com.intellij.openapi.util.TextRange as IJTextRange

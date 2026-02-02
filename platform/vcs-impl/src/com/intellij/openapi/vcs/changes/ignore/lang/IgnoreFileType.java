@@ -27,7 +27,7 @@ package com.intellij.openapi.vcs.changes.ignore.lang;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * Describes Ignore file type.

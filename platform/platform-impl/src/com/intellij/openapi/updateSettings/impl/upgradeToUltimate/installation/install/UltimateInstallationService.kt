@@ -63,7 +63,7 @@ internal class UltimateInstallationService(
       try {
         installerLock.withLock {
           withBackgroundProgress(project, IdeBundle.message("plugins.advertiser.try.ultimate.upgrade", suggestedIde.name), true) {
-            val productData = service<UpdateCheckerFacade>().loadProductData(null)
+            val productData = UpdateCheckerFacade.getInstance().loadProductData(null)
             val status = if (Registry.`is`("ide.try.ultimate.use.eap")) ChannelStatus.EAP else ChannelStatus.RELEASE
             val build = productData?.channels?.firstOrNull { it.status == status }?.builds?.first() ?: return@withBackgroundProgress
 

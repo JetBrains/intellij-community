@@ -3,7 +3,13 @@ package com.intellij.dvcs.actions;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.UpdateSession;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;

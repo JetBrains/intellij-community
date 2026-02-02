@@ -14,7 +14,12 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.sun.jdi.*;
+import com.sun.jdi.BooleanValue;
+import com.sun.jdi.CharValue;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 public class TypeCastEvaluator implements Evaluator {

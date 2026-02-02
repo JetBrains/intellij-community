@@ -8,8 +8,8 @@ import com.intellij.uiDesigner.propertyInspector.properties.IntroIconProperty;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import java.awt.Color;
 
 public class IconRenderer extends LabelPropertyRenderer<IconDescriptor> {
   @Override

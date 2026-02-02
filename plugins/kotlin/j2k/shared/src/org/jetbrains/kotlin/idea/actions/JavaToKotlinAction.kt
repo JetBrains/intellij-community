@@ -5,32 +5,41 @@ import com.intellij.codeInsight.navigation.activateFileWithPsiElement
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
-import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ActionPlaces.PROJECT_VIEW_POPUP
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.CommandProcessorEx
+import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ex.MessagesEx
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.file.PsiDirectoryFactory
 import com.intellij.psi.util.PsiTreeUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.codeInsight.pathBeforeJavaToKotlinConversion
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
@@ -41,135 +50,107 @@ import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
-import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
-import org.jetbrains.kotlin.j2k.*
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.*
+import org.jetbrains.kotlin.j2k.ConverterSettings
+import org.jetbrains.kotlin.j2k.J2kConverterExtension
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
+import org.jetbrains.kotlin.j2k.J2kPostprocessorExtension
+import org.jetbrains.kotlin.j2k.J2kPreprocessorExtension
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import java.io.IOException
 import kotlin.io.path.notExists
-import kotlin.system.measureTimeMillis
+import kotlin.time.measureTimedValue
 
 class JavaToKotlinAction : AnAction() {
     object Handler {
         val title: String = KotlinBundle.message("action.j2k.name")
 
-        @OptIn(KaAllowAnalysisOnEdt::class)
-        fun convertFiles(
+        suspend fun convertFiles(
             files: List<PsiJavaFile>,
             project: Project,
             module: Module,
             enableExternalCodeProcessing: Boolean = true,
             askExternalCodeProcessing: Boolean = true,
-            forceUsingOldJ2k: Boolean = false,
-            settings: ConverterSettings = ConverterSettings.Companion.defaultSettings
-        ): List<KtFile> {
-            val javaFiles = files.filter { it.virtualFile.isWritable }.ifEmpty { return emptyList() }
-            var converterResult: FilesResult? = null
+            bodyFilter: ((PsiElement) -> Boolean)? = null,
+            settings: ConverterSettings = ConverterSettings.defaultSettings,
+            preprocessorExtensions: List<J2kPreprocessorExtension> = J2kPreprocessorExtension.EP_NAME.extensionList,
+            postprocessorExtensions: List<J2kPostprocessorExtension> = J2kPostprocessorExtension.EP_NAME.extensionList
+        ) {
+            val javaFiles = files.filter { it.virtualFile.isWritable }.ifEmpty { return }
 
-            fun convertWithStatistics() {
-                val j2kKind = getJ2kKind(forceUsingOldJ2k)
-                val converter = J2kConverterExtension.extension(j2kKind).createJavaToKotlinConverter(project, module, settings)
-                val postProcessor = J2kConverterExtension.extension(j2kKind).createPostProcessor()
-                val progressIndicator = ProgressManager.getInstance().progressIndicator!!
+            val j2kKind = getJ2kKind()
+            val converter = J2kConverterExtension.extension(j2kKind).createJavaToKotlinConverter(project, module, settings)
+            val postProcessor = J2kConverterExtension.extension(j2kKind).createPostProcessor()
 
-                val conversionTime = measureTimeMillis {
-                    converterResult = converter.filesToKotlin(
-                        javaFiles,
-                        postProcessor,
-                        progressIndicator,
-                        preprocessorExtensions = J2kPreprocessorExtension.EP_NAME.extensionList,
-                        postprocessorExtensions = J2kPostprocessorExtension.EP_NAME.extensionList
-                    )
-                }
-                val linesCount = runReadAction {
-                    javaFiles.sumOf { StringUtil.getLineBreakCount(it.text) }
-                }
-
-                // TODO: Support K2 J2K in FUS
-                J2KFusCollector.log(ConversionType.FILES, j2kKind == J2kConverterExtension.Kind.K1_NEW, conversionTime, linesCount, javaFiles.size)
+            val (result, conversionTime) = measureTimedValue {
+                converter.filesToKotlin(
+                    javaFiles,
+                    postProcessor,
+                    bodyFilter = bodyFilter,
+                    preprocessorExtensions = preprocessorExtensions,
+                    postprocessorExtensions = postprocessorExtensions
+                )
             }
 
-            // Perform user interaction first to avoid interrupting J2K in the middle of conversion and breaking "undo"
-            val question = KotlinBundle.message("action.j2k.correction.required")
-            val shouldProcessExternalCode = enableExternalCodeProcessing &&
-                    (!askExternalCodeProcessing ||
-                            Messages.showYesNoDialog(project, question, title, Messages.getQuestionIcon()) == Messages.YES)
+            // TODO: Support K2 J2K in FUS
+            J2KFusCollector.log(
+                ConversionType.FILES,
+                j2kKind == K1_NEW,
+                conversionTime.inWholeMilliseconds,
+                result.javaLines,
+                javaFiles.size
+            )
 
-            var newFiles: List<KtFile> = emptyList()
+            val externalCodeProcessing = result.externalCodeProcessing
+            val externalCodeUpdate = if (enableExternalCodeProcessing && externalCodeProcessing != null) readAction {
+                externalCodeProcessing.prepareWriteOperation(null)
+            } else null
 
-            // We execute a single command with the following steps:
-            //
-            // * Run Java to Kotlin converter, including the post-processings
-            // * Find external usages that may need to be updated (part 1)
-            // * Create new Kotlin files in a transparent global write action
-            // * Prepare external code processing in a read action (part 2)
-            // * Update external usages in a transparent global write action
-            //
-            // "Transparent" means that it will not be considered as a separate step for undo/redo purposes,
-            // so when you undo a J2K conversion, it undoes the whole outermost command at once.
-            //
-            // "Global" means that you can undo it from any changed file: the converted files,
-            // or the external files that were updated.
-            project.executeCommand(KotlinBundle.message("action.j2k.task.name")) {
-                if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
-                        { convertWithStatistics() },
-                        title, /* canBeCanceled = */ true,
-                        project
-                    )) return@executeCommand
+            val userConfirmed = !askExternalCodeProcessing || withContext(Dispatchers.EDT) {
+                Messages.showYesNoDialog(
+                    project,
+                    KotlinBundle.message("action.j2k.correction.required"),
+                    title,
+                    Messages.getQuestionIcon()
+                ) == Messages.YES
+            }
 
-                val result = converterResult ?: return@executeCommand
-                val externalCodeProcessing = result.externalCodeProcessing
-                val externalCodeUpdate = prepareExternalCodeUpdate(project, externalCodeProcessing, shouldProcessExternalCode)
-
-                newFiles = project.runUndoTransparentGlobalWriteAction {
-                    saveResults(javaFiles, result.results)
+            withCommandOnEdt(project) {
+                val newFiles = edtWriteAction {
+                    saveResults(result.kotlinCodeByJavaFile)
                         .map { it.toPsiFile(project) as KtFile }
                         .onEach { it.commitAndUnblockDocument() }
                 }
 
-                val contextElement = newFiles.firstOrNull() ?: return@executeCommand
-                allowAnalysisOnEdt {
-                    analyze(contextElement) {
-                        externalCodeProcessing?.bindJavaDeclarationsToConvertedKotlinOnes(newFiles)
+                if (externalCodeProcessing != null) {
+                    val contextElement = newFiles.firstOrNull()
+                    if (contextElement != null) {
+                        readAction {
+                            analyze(contextElement) {
+                                externalCodeProcessing.bindJavaDeclarationsToConvertedKotlinOnes(newFiles)
+                            }
+                        }
+                    }
+
+                    if (userConfirmed) {
+                        edtWriteAction {
+                            externalCodeUpdate?.invoke()
+                        }
                     }
                 }
 
-                project.runUndoTransparentGlobalWriteAction {
-                    externalCodeUpdate?.invoke()
+                edtWriteAction {
                     PsiDocumentManager.getInstance(project).commitAllDocuments()
                     newFiles.singleOrNull()?.let {
-                        FileEditorManager.getInstance(project).openFile(it.virtualFile, /* focusEditor = */ true)
+                        FileEditorManager.getInstance(project).openFile(it.virtualFile, true)
                     }
                 }
             }
-
-            return newFiles
         }
 
-        private fun prepareExternalCodeUpdate(project: Project, processing: ExternalCodeProcessing?, isEnabled: Boolean): (() -> Unit)? {
-            if (!isEnabled || processing == null) return null
-
-            var result: (() -> Unit)? = null
-            ProgressManager.getInstance().runProcessWithProgressSynchronously({
-                runReadAction {
-                    result = processing.prepareWriteOperation(ProgressManager.getInstance().progressIndicator!!)
-                }
-            }, title, /* canBeCanceled = */ true, project)
-
-            return result
-        }
-
-        private fun <T> Project.runUndoTransparentGlobalWriteAction(command: () -> T): T =
-            CommandProcessor.getInstance().withUndoTransparentAction().use {
-                CommandProcessor.getInstance().markCurrentCommandAsGlobal(this)
-                runWriteAction {
-                    command()
-                }
-            }
-
-        private fun saveResults(javaFiles: List<PsiJavaFile>, convertedTexts: List<String>): List<VirtualFile> {
+        private fun saveResults(kotlinCodeByJavaFile: Map<PsiJavaFile, String>): List<VirtualFile> {
             fun uniqueKotlinFileName(javaFile: VirtualFile): String {
                 val nioFile = javaFile.fileSystem.getNioPath(javaFile)
 
@@ -182,7 +163,7 @@ class JavaToKotlinAction : AnAction() {
             }
 
             val result = ArrayList<VirtualFile>()
-            for ((psiFile, text) in javaFiles.zip(convertedTexts)) {
+            for ((psiFile, text) in kotlinCodeByJavaFile) {
                 try {
                     val document = PsiDocumentManager.getInstance(psiFile.project).getDocument(psiFile)
                     val errorMessage = when {
@@ -214,28 +195,6 @@ class JavaToKotlinAction : AnAction() {
             }
             return result
         }
-
-        /**
-         * For binary compatibility with third-party plugins.
-         */
-        fun convertFiles(
-            files: List<PsiJavaFile>,
-            project: Project,
-            module: Module,
-            enableExternalCodeProcessing: Boolean = true,
-            askExternalCodeProcessing: Boolean = true,
-            forceUsingOldJ2k: Boolean = false
-        ): List<KtFile> {
-            return convertFiles(
-                files,
-                project,
-                module,
-                enableExternalCodeProcessing,
-                askExternalCodeProcessing,
-                forceUsingOldJ2k,
-                ConverterSettings.Companion.defaultSettings
-            )
-        }
     }
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -250,9 +209,23 @@ class JavaToKotlinAction : AnAction() {
         val j2kConverterExtension = J2kConverterExtension.extension(j2kKind)
         if (shouldSkipConversionOfErroneousCode(javaFiles, project)) return
         if (j2kConverterExtension.doCheckBeforeConversion(project, module)) {
-            Handler.convertFiles(javaFiles, project, module)
+            currentThreadCoroutineScope().launch {
+                Handler.convertFiles(
+                    files = javaFiles,
+                    project = project,
+                    module = module,
+                )
+            }
         } else {
-            j2kConverterExtension.setUpAndConvert(project, module, javaFiles, Handler::convertFiles)
+            j2kConverterExtension.setUpAndConvert(project, module, javaFiles) { files, project, module ->
+                currentThreadCoroutineScope().launch {
+                    Handler.convertFiles(
+                        files = files,
+                        project = project,
+                        module = module,
+                    )
+                }
+            }
         }
     }
 
@@ -331,8 +304,36 @@ class JavaToKotlinAction : AnAction() {
     }
 }
 
-private fun getJ2kKind(forceUsingOldJ2k: Boolean = false): J2kConverterExtension.Kind = when {
+private fun getJ2kKind(): J2kConverterExtension.Kind = when {
     isK2Mode() -> K2
-    forceUsingOldJ2k -> K1_OLD
     else -> K1_NEW
+}
+
+suspend inline fun <T> withCommandOnEdt(project: Project, action: () -> T): T {
+    val commandProcessor = CommandProcessor.getInstance() as CommandProcessorEx
+    val token = withContext(Dispatchers.EDT) {
+        writeIntentReadAction {
+            commandProcessor.startCommand(
+                project,
+                KotlinBundle.message("action.j2k.name"),
+                null,
+                UndoConfirmationPolicy.REQUEST_CONFIRMATION
+            )
+        }
+    }
+    var throwable: Throwable? = null
+    return try {
+        action()
+    } catch (e: Throwable) {
+        throwable = e
+        throw e
+    } finally {
+        if (token != null) {
+            withContext(Dispatchers.EDT) {
+                writeIntentReadAction {
+                    commandProcessor.finishCommand(token, throwable)
+                }
+            }
+        }
+    }
 }

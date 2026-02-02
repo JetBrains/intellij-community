@@ -6,20 +6,34 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
-import org.jetbrains.kotlin.idea.refactoring.pullUp.*
+import org.jetbrains.kotlin.idea.refactoring.pullUp.addMemberToTarget
+import org.jetbrains.kotlin.idea.refactoring.pullUp.addSuperTypeEntry
+import org.jetbrains.kotlin.idea.refactoring.pullUp.applyMarking
+import org.jetbrains.kotlin.idea.refactoring.pullUp.clearMarking
+import org.jetbrains.kotlin.idea.refactoring.pullUp.getSuperTypeEntryByDescriptor
+import org.jetbrains.kotlin.idea.refactoring.pullUp.makeAbstract
+import org.jetbrains.kotlin.idea.refactoring.pullUp.markElements
+import org.jetbrains.kotlin.idea.refactoring.pullUp.renderForConflicts
 import org.jetbrains.kotlin.idea.util.getTypeSubstitution
 import org.jetbrains.kotlin.idea.util.orEmpty
 import org.jetbrains.kotlin.idea.util.toSubstitutor
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.types.TypeSubstitutor
 
+@K1Deprecation
 class K1PushDownProcessor(
     project: Project,
     sourceClass: KtClass,

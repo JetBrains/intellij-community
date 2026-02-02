@@ -4,15 +4,27 @@ package org.jetbrains.plugins.javaFX.fxml.refs
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.*
-import com.intellij.psi.*
+import com.intellij.lang.jvm.actions.AnnotationRequest
+import com.intellij.lang.jvm.actions.CreateMethodRequest
+import com.intellij.lang.jvm.actions.ExpectedParameter
+import com.intellij.lang.jvm.actions.ExpectedType
+import com.intellij.lang.jvm.actions.annotationRequest
+import com.intellij.lang.jvm.actions.createMethodActions
+import com.intellij.lang.jvm.actions.expectedParameter
+import com.intellij.lang.jvm.actions.expectedType
+import com.intellij.psi.PsiJvmSubstitutor
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.VisibilityUtil
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil
-import java.util.*
+import java.util.Locale
 
 internal class JavaFxEventHandlerReferenceQuickFixProvider : UnresolvedReferenceQuickFixProvider<JavaFxEventHandlerReference>() {
 

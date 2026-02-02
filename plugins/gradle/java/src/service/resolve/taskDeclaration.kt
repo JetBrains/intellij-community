@@ -4,7 +4,9 @@ package org.jetbrains.plugins.gradle.service.resolve
 import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
 import com.intellij.psi.PsiType
 import groovy.lang.Closure
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK_CONTAINER
 import org.jetbrains.plugins.groovy.lang.GroovyElementFilter
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression

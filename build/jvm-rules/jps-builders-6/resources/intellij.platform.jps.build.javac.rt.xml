@@ -1,0 +1,8 @@
+<idea-plugin>
+
+  <dependencies>
+    <module name="intellij.libraries.protobuf" />
+  </dependencies>
+
+</idea-plugin>
+

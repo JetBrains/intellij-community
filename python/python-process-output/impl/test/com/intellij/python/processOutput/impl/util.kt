@@ -15,16 +15,16 @@ import com.intellij.python.community.execService.impl.LoggedProcessLine
 import com.intellij.python.community.execService.impl.LoggingLimits
 import com.intellij.python.processOutput.impl.ui.toggle
 import com.jetbrains.python.TraceContext
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 import io.mockk.spyk
 import java.util.UUID
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
+import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 import org.jetbrains.jewel.foundation.lazy.tree.ChildrenGeneratorScope
 import org.jetbrains.jewel.foundation.lazy.tree.TreeBuilder
 import org.jetbrains.jewel.foundation.lazy.tree.TreeGeneratorScope
@@ -35,17 +35,19 @@ import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.junit.Rule
 
 internal abstract class ProcessOutputTest {
-    private val processTree = MutableStateFlow(buildTree<TreeNode> {})
-    private val processTreeFilters: SnapshotStateSet<TreeFilter> = mutableStateSetOf(
+    protected val processTree = MutableStateFlow(buildTree<TreeNode> {})
+    protected val processTreeFilters: SnapshotStateSet<TreeFilter> = mutableStateSetOf(
         TreeFilter.ShowTime,
     )
 
-    private val processOutputFilters: SnapshotStateSet<OutputFilter> = mutableStateSetOf()
-    private val processOutputInfoExpanded = MutableStateFlow(false)
-    private val processOutputOutputExpanded = MutableStateFlow(true)
+    protected val processOutputFilters: SnapshotStateSet<OutputFilter> = mutableStateSetOf(
+        OutputFilter.ShowTags,
+    )
+    protected val processOutputInfoExpanded = MutableStateFlow(false)
+    protected val processOutputOutputExpanded = MutableStateFlow(true)
 
-    private val testSelectedProcess: MutableStateFlow<LoggedProcess?> = MutableStateFlow(null)
-    private val testProcessTreeUiState: TreeUiState = run {
+    protected val testSelectedProcess: MutableStateFlow<LoggedProcess?> = MutableStateFlow(null)
+    protected val testProcessTreeUiState: TreeUiState = run {
         val selectableLazyListState = SelectableLazyListState(LazyListState())
         TreeUiState(
             filters = processTreeFilters,
@@ -55,7 +57,7 @@ internal abstract class ProcessOutputTest {
             tree = processTree,
         )
     }
-    private val testProcessOutputUiState: OutputUiState = OutputUiState(
+    protected val testProcessOutputUiState: OutputUiState = OutputUiState(
         filters = processOutputFilters,
         isInfoExpanded = processOutputInfoExpanded,
         isOutputExpanded = processOutputOutputExpanded,

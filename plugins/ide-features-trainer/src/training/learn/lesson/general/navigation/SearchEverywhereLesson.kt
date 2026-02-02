@@ -14,9 +14,15 @@ import com.intellij.psi.search.ProjectScope
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.searchComponents.ExtendableSearchTextField
 import com.intellij.util.ui.UIUtil
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
+import training.dsl.TaskRuntimeContext
+import training.dsl.TaskTestContext
+import training.dsl.restoreAfterStateBecomeFalse
+import training.dsl.sdkConfigurationTasks
+import training.dsl.triggerOnQuickDocumentationPopup
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.learn.course.LessonType

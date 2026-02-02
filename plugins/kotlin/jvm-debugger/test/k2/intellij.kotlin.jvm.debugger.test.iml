@@ -20,7 +20,6 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jb-jdi" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-cli" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-ir" level="project" />
@@ -30,8 +29,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.fe10.analysis" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.core" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />

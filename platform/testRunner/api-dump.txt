@@ -463,12 +463,10 @@ c:com.intellij.execution.testframework.ui.TestStatusLine
 - <init>():V
 - formatTestMessage(I,I,I,I,java.lang.Long,J):V
 - getStateText():java.lang.String
-- getStatusColor():java.awt.Color
 - onTestsDone(java.util.function.Supplier):V
 - setFraction(D):V
 - setIndeterminate(Z):V
 - setStatus(java.lang.String):V
-- setStatusColor(java.awt.Color):V
 - setText(java.lang.String):V
 c:com.intellij.execution.testframework.ui.TestsConsoleBuilderImpl
 - com.intellij.execution.filters.TextConsoleBuilderImpl

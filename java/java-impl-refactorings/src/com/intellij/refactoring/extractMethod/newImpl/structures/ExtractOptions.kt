@@ -2,7 +2,12 @@
 package com.intellij.refactoring.extractMethod.newImpl.structures
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiVariable
 
 data class ExtractOptions(
   val targetClass: PsiClass,

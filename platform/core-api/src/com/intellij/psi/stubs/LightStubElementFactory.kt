@@ -1,10 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs
 
 import com.intellij.lang.LighterAST
 import com.intellij.lang.LighterASTNode
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Factory for creating [Stub] by [Psi] and vice versa for a given [com.intellij.psi.tree.IElementType].
@@ -13,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus
  *
  * @see [LightLanguageStubDefinition]
  */
-@ApiStatus.Experimental
 interface LightStubElementFactory<Stub : StubElement<*>, Psi : PsiElement> : StubElementFactory<Stub, Psi> {
 
   /**

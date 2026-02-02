@@ -8,7 +8,12 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.VariableDescriptorWithAccessors
+import org.jetbrains.kotlin.descriptors.accessors
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.KotlinBaseFe10HighlightingBundle
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
@@ -16,15 +21,28 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.highlighter.markers.LineMarkerInfos
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.BindingContext.*
+import org.jetbrains.kotlin.resolve.BindingContext.DECLARATION_TO_DESCRIPTOR
+import org.jetbrains.kotlin.resolve.BindingContext.DELEGATED_PROPERTY_RESOLVED_CALL
+import org.jetbrains.kotlin.resolve.BindingContext.LOOP_RANGE_HAS_NEXT_RESOLVED_CALL
+import org.jetbrains.kotlin.resolve.BindingContext.LOOP_RANGE_ITERATOR_RESOLVED_CALL
+import org.jetbrains.kotlin.resolve.BindingContext.LOOP_RANGE_NEXT_RESOLVED_CALL
 import org.jetbrains.kotlin.resolve.calls.checkers.isBuiltInCoroutineContext
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@K1Deprecation
 class KotlinSuspendCallLineMarkerProvider : LineMarkerProviderDescriptor() {
     private class SuspendCallMarkerInfo(callElement: PsiElement, message: String) : LineMarkerInfo<PsiElement>(
         callElement,
@@ -71,6 +89,7 @@ class KotlinSuspendCallLineMarkerProvider : LineMarkerProviderDescriptor() {
     }
 }
 
+@K1Deprecation
 sealed class SuspendCallKind<T : KtExpression>(val element: T) {
     class Iteration(element: KtForExpression) : SuspendCallKind<KtForExpression>(element) {
         override val anchor get() = element.loopRange
@@ -96,6 +115,7 @@ sealed class SuspendCallKind<T : KtExpression>(val element: T) {
     abstract val description: String
 }
 
+@K1Deprecation
 fun getSuspendCallKind(expression: KtExpression, bindingContext: BindingContext): SuspendCallKind<*>? {
     fun isSuspend(descriptor: CallableDescriptor): Boolean = when (descriptor) {
         is FunctionDescriptor -> descriptor.isSuspend

@@ -9,13 +9,24 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.options.JavaClassValidator
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
+import com.intellij.codeInspection.IntentionWrapper
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.flattenedAttributeValues
+import com.intellij.codeInspection.isAnonymousOrLocal
+import com.intellij.codeInspection.isInheritorOf
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.codeInspection.options.OptPane.stringList
+import com.intellij.codeInspection.registerUProblem
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.execution.JUnitBundle
-import com.intellij.execution.junit.*
+import com.intellij.execution.junit.JUnitVersion
+import com.intellij.execution.junit.getUJUnitVersion
+import com.intellij.execution.junit.isJUnit3InScope
+import com.intellij.execution.junit.isJUnit4InScope
+import com.intellij.execution.junit.isJUnit5Or6InScope
 import com.intellij.execution.junit.references.FieldSourceReference
 import com.intellij.execution.junit.references.MethodSourceReference
 import com.intellij.execution.junit.references.PsiSourceResolveResult
@@ -25,7 +36,22 @@ import com.intellij.lang.Language
 import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
-import com.intellij.lang.jvm.actions.*
+import com.intellij.lang.jvm.actions.annotationRequest
+import com.intellij.lang.jvm.actions.classAttribute
+import com.intellij.lang.jvm.actions.constantAttribute
+import com.intellij.lang.jvm.actions.createAddAnnotationActions
+import com.intellij.lang.jvm.actions.createAddFieldActions
+import com.intellij.lang.jvm.actions.createChangeAnnotationAttributeActions
+import com.intellij.lang.jvm.actions.createChangeParametersActions
+import com.intellij.lang.jvm.actions.createChangeTypeActions
+import com.intellij.lang.jvm.actions.createMethodActions
+import com.intellij.lang.jvm.actions.createModifierActions
+import com.intellij.lang.jvm.actions.expectedTypes
+import com.intellij.lang.jvm.actions.fieldRequest
+import com.intellij.lang.jvm.actions.methodRequest
+import com.intellij.lang.jvm.actions.modifierRequest
+import com.intellij.lang.jvm.actions.setMethodParametersRequest
+import com.intellij.lang.jvm.actions.typeRequest
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.modcommand.ModPsiUpdater
@@ -34,8 +60,47 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
-import com.intellij.psi.CommonClassNames.*
+import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
+import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_ITERATOR
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_LIST
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_NAVIGABLE_MAP
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_NAVIGABLE_SET
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_SET
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_SORTED_MAP
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_SORTED_SET
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_STREAM
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiAnnotationMemberValue
+import com.intellij.psi.PsiArrayInitializerMemberValue
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassObjectAccessExpression
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJvmSubstitutor
+import com.intellij.psi.PsiLiteral
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.PsiVariable
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.impl.source.tree.java.PsiNameValuePairImpl
 import com.intellij.psi.search.searches.ClassInheritorsSearch
@@ -45,10 +110,78 @@ import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.asSafely
-import com.siyeh.ig.junit.JUnitCommonClassNames.*
+import com.siyeh.ig.junit.JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_AFTER
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_AFTER_CLASS
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_BEFORE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_BEFORE_CLASS
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_CLASS_RULE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_EXPERIMENTAL_RUNNERS_ENCLOSED
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_EXPERIMENTAL_THEORIES_DATAPOINT
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_EXPERIMENTAL_THEORIES_DATAPOINTS
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_AFTER_ALL
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_AFTER_EACH
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_BEFORE_ALL
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_BEFORE_EACH
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_AFTER_ALL_CALLBACK
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_BEFORE_ALL_CALLBACK
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTENSION
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTENSIONS
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_REPEATED_TEST
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_REPETITION_INFO
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_FACTORY
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INFO
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INSTANCE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_REPORTER
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_CONVERTER_CONVERT_WITH
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETER
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_CLASS
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCES
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_EMPTY_SOURCE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ENUM_SOURCE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_FIELD_SOURCE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_NULL_AND_EMPTY_SOURCE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_NULL_ENUM
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_NULL_SOURCE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_VALUE_SOURCE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_PLATFORM_SUITE_API_AFTERSUITE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_PLATFORM_SUITE_API_BEFORESUITE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_PLATFORM_SUITE_API_SUITE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_RULE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_RULES_METHOD_RULE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_RULES_TEST_RULE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_RUNNER_RUN_WITH
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_TEST
+import com.siyeh.ig.junit.JUnitCommonClassNames.SOURCE_ANNOTATIONS
+import com.siyeh.ig.junit.JUnitCommonClassNames.SUITE_SELECTOR_ANNOTATIONS
 import com.siyeh.ig.psiutils.TestUtils
 import com.siyeh.ig.psiutils.TypeUtils
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UClassLiteralExpression
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UastFacade
+import org.jetbrains.uast.UastVisibility
+import org.jetbrains.uast.getContainingUClass
+import org.jetbrains.uast.getUParentForIdentifier
+import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import kotlin.streams.asSequence
 
@@ -226,7 +359,8 @@ private class JUnitMalformedSignatureVisitor(
     validVisibility = ::notPrivate,
     validParameters = { method ->
       if (method.uastParameters.isEmpty()) emptyList()
-      else if (MetaAnnotationUtil.isMetaAnnotated(method.javaPsi, listOf(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE))) null // handled in parameterized test check
+      else if (MetaAnnotationUtil.isMetaAnnotated(method.javaPsi,
+                                                  listOf(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE))) null // handled in parameterized test check
       else if (method.inParameterResolverContext()) method.uastParameters
       else method.uastParameters.filterIndexed { index, parameter -> isValidJupiterParameter(method, parameter, index) }
     }
@@ -237,7 +371,8 @@ private class JUnitMalformedSignatureVisitor(
   private fun notPrivate(method: UDeclaration): UastVisibility? =
     if (method.visibility == UastVisibility.PRIVATE) UastVisibility.PUBLIC else null
 
-  private fun UParameter.inParameterResolverContext(): Boolean = uAnnotations.any { ann -> ann.resolve()?.inParameterResolverContext() == true }
+  private fun UParameter.inParameterResolverContext(): Boolean =
+    uAnnotations.any { ann -> ann.resolve()?.inParameterResolverContext() == true }
 
   private fun UMethod.inParameterResolverContext(): Boolean {
     val sourcePsi = this.sourcePsi ?: return false
@@ -525,15 +660,16 @@ private class JUnitMalformedSignatureVisitor(
     if (javaClass.hasModifierProperty(PsiModifier.ABSTRACT)) return
     if (javaClass.isInterface) return
     val suiteAnnotation = javaClass.getAnnotation(ORG_JUNIT_PLATFORM_SUITE_API_SUITE) ?: return
-    val failIfNoTestsValue = suiteAnnotation.findAttributeValue(SuiteHelper.SUITE_ATTRIBUTE_NAME)
+    val failIfNoTestsValue = suiteAnnotation.findAttributeValue(SUITE_ATTRIBUTE_NAME)
     if (failIfNoTestsValue != null && failIfNoTestsValue.asSafely<PsiLiteralExpression>()?.value == false) return
     if (MetaAnnotationUtil.isMetaAnnotatedInHierarchy(javaClass, SUITE_SELECTOR_ANNOTATIONS)) return
 
-    if (SuiteHelper.hasFailIfNoTestsAttribute(suiteAnnotation)) {
+    if (suiteAnnotation.hasSuiteFailIfNoTestsAttribute()) {
       holder.registerUProblem(aClass,
                               JUnitBundle.message("jvm.inspections.junit.malformed.suite.no.selectors.descriptor"),
                               AddFailIfNoTestsAttributeFix())
-    }  else {
+    }
+    else {
       holder.registerUProblem(aClass,
                               JUnitBundle.message("jvm.inspections.junit.malformed.suite.no.selectors.descriptor"))
     }
@@ -859,7 +995,8 @@ private class JUnitMalformedSignatureVisitor(
       holder.registerProblem(anchor.navigationElement, message, *quickFixes)
     }
     else {
-      val componentType = getComponentType(sourceProvider.type, method.javaPsi)
+      val type = PsiUtil.substituteTypeParameter(sourceProvider.type, JAVA_UTIL_FUNCTION_SUPPLIER, 0, true) ?: sourceProvider.type
+      val componentType = getComponentType(type, method.javaPsi)
       if (componentType == null) {
         val message = JUnitBundle.message(
           "jvm.inspections.junit.malformed.param.field.source.return.type.descriptor", providerName
@@ -942,7 +1079,9 @@ private class JUnitMalformedSignatureVisitor(
     }
     if (declaration.providedParameters().isEmpty()) {
       val message = when (declaration) {
-        is UClass -> JUnitBundle.message("jvm.inspections.junit.malformed.source.without.constructor", annotation.shortName, declaration.javaPsi.name)
+        is UClass -> JUnitBundle.message("jvm.inspections.junit.malformed.source.without.constructor",
+                                         annotation.shortName,
+                                         declaration.javaPsi.name)
         is UMethod -> JUnitBundle.message("jvm.inspections.junit.malformed.source.without.params.descriptor", annotation.shortName)
         else -> return
       }
@@ -958,7 +1097,9 @@ private class JUnitMalformedSignatureVisitor(
     val providedParameters = declaration.providedParameters()
     if (providedParameters.isEmpty()) {
       val message = when (declaration) {
-        is UClass -> JUnitBundle.message("jvm.inspections.junit.malformed.source.without.constructor", annotation.shortName, declaration.javaPsi.name)
+        is UClass -> JUnitBundle.message("jvm.inspections.junit.malformed.source.without.constructor",
+                                         annotation.shortName,
+                                         declaration.javaPsi.name)
         is UMethod -> JUnitBundle.message("jvm.inspections.junit.malformed.source.without.params.descriptor", annotation.shortName)
         else -> return
       }
@@ -997,7 +1138,11 @@ private class JUnitMalformedSignatureVisitor(
     checkEnumConstants(enumSource, enumType, declaration)
   }
 
-  private fun checkSourceTypeAndParameterTypeAgree(declaration: UDeclaration, attributeValue: PsiAnnotationMemberValue, componentType: PsiType) {
+  private fun checkSourceTypeAndParameterTypeAgree(
+    declaration: UDeclaration,
+    attributeValue: PsiAnnotationMemberValue,
+    componentType: PsiType,
+  ) {
     val parameters = declaration.providedParameters()
     val param = parameters.singleOrNull() ?: return
     val paramType = param.type
@@ -1230,18 +1375,18 @@ private class JUnitMalformedSignatureVisitor(
       val annotation = annotations
                          .firstOrNull { AnnotationUtil.isAnnotated(javaPsi, it, CHECK_HIERARCHY) }
                          ?.substringAfterLast('.') ?: return
-      
+
       if (requiredClassAnnotation != null) {
         val containingClass = getContainingClass(element)
         if (containingClass != null && !AnnotationUtil.isAnnotated(containingClass, requiredClassAnnotation, CHECK_HIERARCHY)) {
-          val message = JUnitBundle.message("jvm.inspections.junit.malformed.requires.class.annotation.descriptor", 
+          val message = JUnitBundle.message("jvm.inspections.junit.malformed.requires.class.annotation.descriptor",
                                             annotation, requiredClassAnnotation.substringAfterLast('.'))
           val actions = createAddAnnotationActions(containingClass, annotationRequest(requiredClassAnnotation))
           val quickFixes = IntentionWrapper.wrapToQuickFixes(actions, element.javaPsi.containingFile).toTypedArray()
           return holder.registerUProblem(element, message, *quickFixes)
         }
       }
-      
+
       val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
       val elementIsStatic = alternatives.any { it.isStatic }
       val visibility = validVisibility?.invoke(element)
@@ -1299,7 +1444,11 @@ private class JUnitMalformedSignatureVisitor(
         )
         problems.size == 2 && invalidParams.size > 1 -> JUnitBundle.message(
           "jvm.inspections.junit.malformed.annotated.method.double.param.double.descriptor",
-          annotation, problems.first(), problems.last(), invalidParams.dropLast(1).joinToString { "'${it.name}'" }, invalidParams.last().name
+          annotation,
+          problems.first(),
+          problems.last(),
+          invalidParams.dropLast(1).joinToString { "'${it.name}'" },
+          invalidParams.last().name
         )
         else -> error("Non valid problem.")
       }
@@ -1334,7 +1483,12 @@ private class JUnitMalformedSignatureVisitor(
         )
         problems.size == 2 && invalidParams.size > 1 -> JUnitBundle.message(
           "jvm.inspections.junit.malformed.annotated.method.double.typed.param.double.descriptor",
-          annotation, problems.first(), problems.last(), type, invalidParams.dropLast(1).joinToString { "'${it.name}'" }, invalidParams.last().name
+          annotation,
+          problems.first(),
+          problems.last(),
+          type,
+          invalidParams.dropLast(1).joinToString { "'${it.name}'" },
+          invalidParams.last().name
         )
         else -> error("Non valid problem.")
       }
@@ -1489,13 +1643,6 @@ private class JUnitMalformedSignatureVisitor(
     }
   }
 
-  private class SuiteHelper {
-    companion object {
-      const val SUITE_ATTRIBUTE_NAME = "failIfNoTests"
-      fun hasFailIfNoTestsAttribute(annotation: PsiAnnotation) = annotation.resolveAnnotationType()?.findMethodsByName(SUITE_ATTRIBUTE_NAME) != null
-    }
-  }
-
   private class AddFailIfNoTestsAttributeFix : CompositeModCommandQuickFix() {
     override fun getFamilyName(): String = JUnitBundle.message("jvm.inspections.junit.malformed.suite.no.selectors.quickfix")
 
@@ -1510,8 +1657,8 @@ private class JUnitMalformedSignatureVisitor(
       return listOf({ jvmClass ->
                       if (jvmClass !is PsiClass) return@listOf emptyList()
                       val annotation = jvmClass.getAnnotation(ORG_JUNIT_PLATFORM_SUITE_API_SUITE) ?: return@listOf emptyList()
-                      if (!SuiteHelper.hasFailIfNoTestsAttribute(annotation)) return@listOf emptyList()
-                      val value = constantAttribute(SuiteHelper.SUITE_ATTRIBUTE_NAME, "false")
+                      if (!annotation.hasSuiteFailIfNoTestsAttribute()) return@listOf emptyList()
+                      val value = constantAttribute(SUITE_ATTRIBUTE_NAME, "false")
                       return@listOf createChangeAnnotationAttributeActions(annotation, 0, value, name, familyName)
                     })
     }
@@ -1599,5 +1746,9 @@ private class JUnitMalformedSignatureVisitor(
       ORG_JUNIT_JUPITER_PARAMS_PROVIDER_EMPTY_SOURCE,
       ORG_JUNIT_JUPITER_PARAMS_PROVIDER_NULL_AND_EMPTY_SOURCE
     )
+
+    private const val SUITE_ATTRIBUTE_NAME = "failIfNoTests"
+    private fun PsiAnnotation.hasSuiteFailIfNoTestsAttribute() =
+      resolveAnnotationType()?.findMethodsByName(SUITE_ATTRIBUTE_NAME) != null
   }
 }

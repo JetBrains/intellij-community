@@ -8,7 +8,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.RandomAccess;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
@@ -24,11 +34,12 @@ public final class ContainerUtilRt {
   /**
    * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newArrayList(Object[])} instead
    */
+  @SafeVarargs
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   @NotNull
   @Contract(value = "_ -> new", pure = true)
-  public static <T> ArrayList<T> newArrayList(T... elements) {
+  public static <T> ArrayList<T> newArrayList(T @NotNull ... elements) {
     ArrayList<T> list = new ArrayList<>(elements.length);
     Collections.addAll(list, elements);
     return list;
@@ -37,6 +48,7 @@ public final class ContainerUtilRt {
   /**
    * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newLinkedHashSet(Object[])}
    */
+  @SafeVarargs
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   @NotNull
@@ -52,7 +64,7 @@ public final class ContainerUtilRt {
   private static final class EmptyList<T> extends AbstractList<T> implements RandomAccess, Serializable {
     private static final long serialVersionUID = 1L;
 
-    private static final EmptyList<?> INSTANCE = new EmptyList<Object>();
+    private static final EmptyList<?> INSTANCE = new EmptyList<>();
 
     @Override
     public int size() {
@@ -85,13 +97,13 @@ public final class ContainerUtilRt {
     @NotNull
     @Override
     public Iterator<T> iterator() {
-      return EmptyIterator.getInstance();
+      return Collections.emptyIterator();
     }
 
     @NotNull
     @Override
     public ListIterator<T> listIterator() {
-      return EmptyListIterator.getInstance();
+      return Collections.emptyListIterator();
     }
 
     @Override

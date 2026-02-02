@@ -42,6 +42,7 @@
     <statistics.validation.customValidationRule implementation="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector$McpToolNameValidator"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.mcpserver.statistics.McpServerApplicationUsagesCollector"/>
 
+    <appStarter id="mcpServer" implementation="com.intellij.mcpserver.McpServerHeadlessStarter"/>
     <postStartupActivity implementation="com.intellij.mcpserver.impl.McpServerService$MyProjectListener" />
     <postStartupActivity implementation="com.intellij.mcpserver.impl.McpClientDetectionActivity" />
     <notificationGroup id="MCP Server" displayType="BALLOON" bundle="messages.McpServerBundle" key="notification.group.mcp.server"

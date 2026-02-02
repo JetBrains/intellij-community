@@ -1,13 +1,42 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.AddedLast
+import com.intellij.collaboration.async.Change
+import com.intellij.collaboration.async.Deleted
+import com.intellij.collaboration.async.childScope
+import com.intellij.collaboration.async.mapDataToModel
+import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.util.CodeReviewDomainEntity
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.jetbrains.plugins.gitlab.api.*
+import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.gitlab.api.GitLabApi
+import org.jetbrains.plugins.gitlab.api.GitLabId
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.GitLabRestId
+import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
+import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteRestDTO
@@ -15,7 +44,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.addDraftReplyNote
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.changeMergeRequestDiscussionResolve
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.createReplyNote
-import java.util.*
+import java.util.Date
 
 @CodeReviewDomainEntity
 interface GitLabDiscussion {

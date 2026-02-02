@@ -2,11 +2,17 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.collections
 
-import com.intellij.debugger.streams.core.trace.dsl.*
+import com.intellij.debugger.streams.core.trace.dsl.CodeBlock
+import com.intellij.debugger.streams.core.trace.dsl.Dsl
+import com.intellij.debugger.streams.core.trace.dsl.Expression
+import com.intellij.debugger.streams.core.trace.dsl.Variable
+import com.intellij.debugger.streams.core.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.core.wrapper.StreamCall
 import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 interface BothSemanticsHandler {
     fun variablesDeclaration(call: StreamCall, order: Int, dsl: Dsl): List<VariableDeclaration>
 

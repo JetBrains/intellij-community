@@ -16,7 +16,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind.*
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind.IN_PLACE_ONCE
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind.IN_PLACE_UNKNOWN
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind.UNKNOWN
 import org.jetbrains.plugins.groovy.lang.psi.util.skipParenthesesDownOrNull
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments

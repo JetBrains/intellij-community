@@ -9,7 +9,7 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Collections
 
 /**
  * The unsafe union type is different from the regular "safe" `PyUnionType` in that it's considered a subtype of another type if

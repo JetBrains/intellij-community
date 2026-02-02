@@ -9,7 +9,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

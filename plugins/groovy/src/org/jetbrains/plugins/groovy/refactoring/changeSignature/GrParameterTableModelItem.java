@@ -2,7 +2,12 @@
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCodeFragment;
 import com.intellij.refactoring.changeSignature.ParameterTableModelItemBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

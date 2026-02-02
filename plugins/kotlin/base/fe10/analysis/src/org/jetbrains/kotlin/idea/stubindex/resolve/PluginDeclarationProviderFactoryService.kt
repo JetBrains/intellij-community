@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.stubindex.resolve
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactory
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService
 import org.jetbrains.kotlin.storage.StorageManager
 
+@K1Deprecation
 class PluginDeclarationProviderFactoryService : DeclarationProviderFactoryService() {
     override fun create(
       project: Project,

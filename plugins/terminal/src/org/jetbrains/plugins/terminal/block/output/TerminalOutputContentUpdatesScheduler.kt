@@ -7,7 +7,11 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.model.TerminalTextBuffer
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.ui.withLock
 import org.jetbrains.plugins.terminal.block.util.ActionCoordinator
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector

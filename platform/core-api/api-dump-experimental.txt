@@ -300,6 +300,12 @@ a:com.intellij.openapi.progress.Task
 - *:getId():java.lang.Object
 f:com.intellij.openapi.project.DumbKt
 - *sf:waitForSmartMode(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.openapi.project.DumbModeListenerBackgroundable
+- *sf:Companion:com.intellij.openapi.project.DumbModeListenerBackgroundable$Companion
+- *sf:TOPIC:com.intellij.util.messages.Topic
+- enteredDumbMode():V
+- exitDumbMode():V
+*f:com.intellij.openapi.project.DumbModeListenerBackgroundable$Companion
 a:com.intellij.openapi.project.DumbService
 - *a:getState():kotlinx.coroutines.flow.StateFlow
 - *a:suspendIndexingAndRun(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
@@ -450,9 +456,6 @@ a:com.intellij.psi.PsiManager
 - getPresentationName():java.lang.String
 *:com.intellij.psi.PsiReferencesWrapper
 - a:getReferences():java.util.List
-com.intellij.psi.StubBasedPsiElement
-- com.intellij.psi.PsiElement
-- *:getIElementType():com.intellij.psi.tree.IElementType
 com.intellij.psi.SyntheticElement
 - *:findSameElementInCopy(com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
 *:com.intellij.psi.search.ActualCodeInsightContextInfo
@@ -502,35 +505,6 @@ f:com.intellij.psi.search.PsiSearchScopeUtil
 - hashCode():I
 com.intellij.psi.stubs.BinaryFileStubBuilder
 - *:getFileFilter():com.intellij.openapi.vfs.VirtualFileFilter
-*:com.intellij.psi.stubs.LanguageStubDefinition
-- a:getBuilder():com.intellij.psi.StubBuilder
-- a:getStubVersion():I
-- shouldBuildStubFor(com.intellij.openapi.vfs.VirtualFile):Z
-*:com.intellij.psi.stubs.LanguageStubDescriptor
-- a:getFileElementSerializer():com.intellij.psi.stubs.ObjectStubSerializer
-- a:getFileElementType():com.intellij.psi.tree.IFileElementType
-- a:getLanguage():com.intellij.lang.Language
-- a:getStubDefinition():com.intellij.psi.stubs.LanguageStubDefinition
-*:com.intellij.psi.stubs.LightLanguageStubDefinition
-- com.intellij.psi.stubs.LanguageStubDefinition
-- a:parseContentsLight(com.intellij.lang.ASTNode):com.intellij.util.diff.FlyweightCapableTreeStructure
-*:com.intellij.psi.stubs.LightStubElementFactory
-- com.intellij.psi.stubs.StubElementFactory
-- a:createStub(com.intellij.lang.LighterAST,com.intellij.lang.LighterASTNode,com.intellij.psi.stubs.StubElement):com.intellij.psi.stubs.StubElement
-- shouldCreateStub(com.intellij.lang.LighterAST,com.intellij.lang.LighterASTNode,com.intellij.psi.stubs.StubElement):Z
-com.intellij.psi.stubs.PsiFileStub
-- com.intellij.openapi.util.UserDataHolder
-- com.intellij.psi.stubs.StubElement
-- *:getFileElementType():com.intellij.psi.tree.IElementType
-com.intellij.psi.stubs.Stub
-- *:getStubSerializer():com.intellij.psi.stubs.ObjectStubSerializer
-a:com.intellij.psi.stubs.StubBase
-- com.intellij.psi.stubs.ObjectStubBase
-- com.intellij.psi.stubs.StubElement
-- *p:<init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.tree.IElementType):V
-- *f:findChildStubByElementType(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.StubElement
-- *:getElementType():com.intellij.psi.tree.IElementType
-- *:getStubSerializer():com.intellij.psi.stubs.ObjectStubSerializer
 *f:com.intellij.psi.stubs.StubBuildCachedValuesManager
 - sf:INSTANCE:com.intellij.psi.stubs.StubBuildCachedValuesManager
 - sf:getCachedValueIfBuildingStubs(com.intellij.psi.PsiElement,com.intellij.openapi.util.Key,java.lang.Object,java.util.function.Function):java.lang.Object
@@ -544,33 +518,6 @@ a:com.intellij.psi.stubs.StubBase
 - f:getParametrizedCacheKey():com.intellij.openapi.util.Key
 - f:getParametrizedCachedValueProvider():com.intellij.psi.util.ParameterizedCachedValueProvider
 - f:getStubCacheKey():com.intellij.openapi.util.Key
-com.intellij.psi.stubs.StubElement
-- com.intellij.psi.stubs.Stub
-- *:findChildStubByElementType(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.StubElement
-- *a:getElementType():com.intellij.psi.tree.IElementType
-*:com.intellij.psi.stubs.StubElementFactory
-- a:createPsi(com.intellij.psi.stubs.StubElement):com.intellij.psi.PsiElement
-- a:createStub(com.intellij.psi.PsiElement,com.intellij.psi.stubs.StubElement):com.intellij.psi.stubs.StubElement
-- shouldCreateStub(com.intellij.lang.ASTNode):Z
-*:com.intellij.psi.stubs.StubElementRegistryService
-- *sf:Companion:com.intellij.psi.stubs.StubElementRegistryService$Companion
-- s:getInstance():com.intellij.psi.stubs.StubElementRegistryService
-- a:getLightStubFactory(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.LightStubElementFactory
-- a:getStubDescriptor(com.intellij.lang.Language):com.intellij.psi.stubs.LanguageStubDescriptor
-- a:getStubFactory(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.StubElementFactory
-- a:getStubSerializer(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.ObjectStubSerializer
-*f:com.intellij.psi.stubs.StubElementRegistryService$Companion
-- f:getInstance():com.intellij.psi.stubs.StubElementRegistryService
-*:com.intellij.psi.stubs.StubRegistry
-- a:registerLightStubFactory(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.LightStubElementFactory):V
-- a:registerStubFactory(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.StubElementFactory):V
-- a:registerStubSerializer(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.ObjectStubSerializer):V
-- registerStubSerializingFactory(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.StubSerializingElementFactory):V
-*:com.intellij.psi.stubs.StubRegistryExtension
-- a:register(com.intellij.psi.stubs.StubRegistry):V
-*:com.intellij.psi.stubs.StubSerializingElementFactory
-- com.intellij.psi.stubs.StubElementFactory
-- com.intellij.psi.stubs.StubSerializer
 com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider
 - com.intellij.psi.FileViewProvider
 - *:getContentElementType(com.intellij.lang.Language):com.intellij.psi.tree.IElementType

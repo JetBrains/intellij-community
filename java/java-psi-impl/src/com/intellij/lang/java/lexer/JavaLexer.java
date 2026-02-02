@@ -2,12 +2,9 @@
 package com.intellij.lang.java.lexer;
 
 import com.intellij.platform.syntax.psi.lexer.LexerAdapter;
-import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.java.syntax.JavaElementTypeConverterKt.getJavaElementTypeConverter;
 
@@ -38,16 +35,5 @@ public final class JavaLexer extends LexerAdapter {
   @Deprecated
   public static boolean isSoftKeyword(@NotNull CharSequence id, @NotNull LanguageLevel level) {
     return PsiUtil.isSoftKeyword(id, level);
-  }
-
-  /**
-   * @param keyword soft keyword
-   * @return JavaFeature, which introduced a given keyword; null if the supplied string is not a soft keyword
-   * @deprecated use {@link PsiUtil#softKeywordFeature(CharSequence)}
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static @Nullable JavaFeature softKeywordFeature(@NotNull CharSequence keyword) {
-    return PsiUtil.softKeywordFeature(keyword);
   }
 }

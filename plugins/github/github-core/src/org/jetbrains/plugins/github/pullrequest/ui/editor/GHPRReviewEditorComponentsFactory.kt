@@ -20,7 +20,11 @@ import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFiel
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTrackableItemViewModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
-import com.intellij.collaboration.ui.util.*
+import com.intellij.collaboration.ui.util.bindChildIn
+import com.intellij.collaboration.ui.util.bindEnabledIn
+import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
+import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.MessageDialogBuilder

@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitRevisionNumber
-import java.util.*
+import java.util.Collections
 
 internal class GitBranchComparisonResultImpl(
   private val project: Project,

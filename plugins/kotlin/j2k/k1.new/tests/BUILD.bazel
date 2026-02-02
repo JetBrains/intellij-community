@@ -4,6 +4,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom_tests",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ],
   x_context_parameters = True
 )
 

@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.psi.PsiElement
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtElement
 
+@K1Deprecation
 abstract class AbstractProcessableUsageInfo<out T : PsiElement, in D : Any>(element: T) : UsageInfo(element) {
     @Suppress("UNCHECKED_CAST")
     override fun getElement() = super.getElement() as T?

@@ -3,7 +3,12 @@ package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.completion.command.commands.AbstractGoToImplementationCompletionCommandProvider
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.LambdaUtil
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil

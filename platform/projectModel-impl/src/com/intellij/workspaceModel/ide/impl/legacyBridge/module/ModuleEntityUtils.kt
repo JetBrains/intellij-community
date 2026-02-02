@@ -25,26 +25,3 @@ fun ModuleEntity.findModule(snapshot: EntityStorage): ModuleBridge? {
 fun ModuleEntity.getModuleLevelLibraries(snapshot: EntityStorage): Sequence<LibraryEntity> {
   return snapshot.referrers(symbolicId, LibraryEntity::class.java)
 }
-
-/**
- * Return all [ModuleEntity] that has this module as dependency.
- * If [recursive] is true computes dependency graph for this module
- */
-@ApiStatus.Internal
-fun ModuleEntity.getDependantModules(snapshot: EntityStorage, recursive: Boolean): Collection<ModuleEntity> {
-  val firstLevelDependant = snapshot.referrers(symbolicId, ModuleEntity::class.java)
-  if (!recursive) {
-    return firstLevelDependant.toList()
-  }
-  val queue = ArrayDeque<ModuleEntity>()
-  val result = HashSet<ModuleEntity>()
-  firstLevelDependant.toCollection(queue)
-  while (queue.isNotEmpty()) {
-    val module = queue.removeFirst()
-    if (!result.add(module)) {
-      continue
-    }
-    snapshot.referrers(module.symbolicId, ModuleEntity::class.java).toCollection(queue)
-  }
-  return result
-}

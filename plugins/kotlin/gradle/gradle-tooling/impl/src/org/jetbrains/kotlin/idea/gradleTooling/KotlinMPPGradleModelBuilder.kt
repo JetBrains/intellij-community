@@ -5,7 +5,8 @@ package org.jetbrains.kotlin.idea.gradleTooling
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry
 import org.gradle.api.Project
 import org.gradle.api.logging.Logging
-import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.*
+import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.COERCE_ROOT_SOURCE_SETS_TO_COMMON
+import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.IMPORT_ORPHAN_SOURCE_SETS
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel.Companion.NO_KOTLIN_NATIVE_HOME
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinSourceSetBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinTargetBuilder

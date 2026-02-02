@@ -7,9 +7,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil

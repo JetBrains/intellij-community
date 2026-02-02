@@ -45,6 +45,9 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     HighlightingPanel panel = getSelectedHighlightingPanel(contentManager.getSelectedContent());
     ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl) ToolWindowManager.getInstance(project);
     if (virtualFile == null || document == null || panel == null || !panel.isShowing()) {
+      if (virtualFile != null && document != null && panel != null && !panel.isShowing()) {
+        panel.setCurrentFile(virtualFile, document);
+      }
       ProblemsViewToolWindowUtils.INSTANCE.selectContent(contentManager, HighlightingPanel.ID);
       window.setAvailable(true, null);
       toolWindowManager.activateToolWindow(window.getId(), null, true, ToolWindowEventSource.InspectionsWidget);

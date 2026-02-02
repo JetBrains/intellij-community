@@ -9,7 +9,7 @@ import com.intellij.testFramework.LightVirtualFileBase;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;

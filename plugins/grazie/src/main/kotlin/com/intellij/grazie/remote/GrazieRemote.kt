@@ -45,7 +45,7 @@ object GrazieRemote {
    * @param lang Language to download
    * @return true if download was successful, false otherwise
    */
-  fun downloadWithoutLicenseCheck(lang: Lang): Boolean = LanguageDownloader.download(lang)
+  fun downloadWithoutLicenseCheck(lang: Lang): Boolean = LanguageDownloader.download(listOf(lang))
 
   /** Downloads [languages] asynchronously to local storage */
   fun downloadAsync(languages: Collection<Lang>, project: Project): Unit = LanguageDownloader.downloadAsync(languages, project)
@@ -77,10 +77,17 @@ object GrazieRemote {
     return languages.filter { it.hunspellRemote?.isGplLicensed != true }
   }
 
+  @Deprecated("Use isValidBundleForLanguage(descriptor, file) instead")
   fun isValidBundleForLanguage(language: Lang, file: Path): Boolean {
     val remote = language.ltRemote ?: return false
     val actualChecksum = checksum(file)
     return remote.checksum == actualChecksum
+  }
+
+  fun isValidBundleForLanguage(descriptor: RemoteLangDescriptor?, file: Path): Boolean {
+    if (descriptor == null) return false
+    val actualChecksum = checksum(file)
+    return descriptor.checksum == actualChecksum
   }
 
   @ApiStatus.Internal

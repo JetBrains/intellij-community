@@ -24,7 +24,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Python-specific stuff each SDK must have. Use ``PySdkExt.getOrCreateAdditionalData`` to obtain it.

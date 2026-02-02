@@ -10,7 +10,6 @@ import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequireme
 import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor.Companion.parseTree
 import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractorProvider
 import com.jetbrains.python.sdk.uv.UvSdkAdditionalData
-import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import com.jetbrains.python.sdk.uv.isUv
 import java.nio.file.Path

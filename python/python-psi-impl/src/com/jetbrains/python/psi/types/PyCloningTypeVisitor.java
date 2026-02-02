@@ -1,13 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
+import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,7 +38,8 @@ import java.util.stream.Collectors;
 @ApiStatus.Experimental
 public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   private final @NotNull TypeEvalContext myTypeEvalContext;
-  private final @NotNull Set<@Nullable PyType> cloning = new HashSet<>();
+  private final @NotNull Set<@Nullable PyType> cloning = Sets.newIdentityHashSet();
+  private final @NotNull Map<@Nullable PyType, @Nullable PyType> cloned = new IdentityHashMap<>();
 
   public static @Nullable PyType clone(@Nullable PyType type, @NotNull PyCloningTypeVisitor visitor) {
     return visitor.clone(type);
@@ -49,13 +51,25 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
 
   // Intentionally not marked as @Nullable to avoid false positives. 
   // A recursive type is an exceptional case.
-  protected <T extends PyType> T clone(@Nullable PyType type) {
+  protected final <T extends PyType> T clone(@Nullable PyType type) {
+    final @Nullable PyType result;
+    if (cloned.containsKey(type)) {
+      result = cloned.get(type);
+    }
+    else {
+      result = doClone(type);
+      cloned.put(type, result);
+    }
+    //noinspection unchecked
+    return (T)result;
+  }
+
+  private @Nullable PyType doClone(@Nullable PyType type) {
     if (!cloning.add(type)) {
       return null;
     }
     try {
-      //noinspection unchecked
-      return (T)visit(type, this);
+      return visit(type, this);
     }
     finally {
       cloning.remove(type);
@@ -136,6 +150,11 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   @Override
   public PyType visitPyUnsafeUnionType(@NotNull PyUnsafeUnionType unsafeUnionType) {
     return PyUnsafeUnionType.unsafeUnion(ContainerUtil.map(unsafeUnionType.getMembers(), type -> clone(type)));
+  }
+
+  @Override
+  public PyType visitPyIntersectionType(@NotNull PyIntersectionType intersectionType) {
+    return PyIntersectionType.intersection(ContainerUtil.map(intersectionType.getMembers(), type -> clone(type)));
   }
 
   @Override

@@ -2,7 +2,15 @@ package com.intellij.database.run.ui.grid.renderers;
 
 import com.intellij.codeInsight.daemon.impl.HintRenderer;
 import com.intellij.database.DataGridBundle;
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.CoreGrid;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridHelper;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.GridUtil;
+import com.intellij.database.datagrid.GridUtilCore;
+import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.editor.DataGridColors;
 import com.intellij.database.extractors.ImageInfo;
 import com.intellij.database.remote.jdbc.LobInfo;
@@ -32,9 +40,9 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Font;
 import java.util.Map;
 import java.util.Objects;
 

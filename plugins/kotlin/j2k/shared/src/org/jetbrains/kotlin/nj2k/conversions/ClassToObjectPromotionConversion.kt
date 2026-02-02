@@ -8,8 +8,20 @@ import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.declarationList
 import org.jetbrains.kotlin.nj2k.getCompanion
 import org.jetbrains.kotlin.nj2k.psi
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKClass
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.CLASS
+import org.jetbrains.kotlin.nj2k.tree.JKClassBody
+import org.jetbrains.kotlin.nj2k.tree.JKDeclarationStatement
+import org.jetbrains.kotlin.nj2k.tree.JKKtInitDeclaration
+import org.jetbrains.kotlin.nj2k.tree.JKKtPrimaryConstructor
+import org.jetbrains.kotlin.nj2k.tree.JKModalityModifierElement
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.JKVisibilityOwner
+import org.jetbrains.kotlin.nj2k.tree.Modality
+import org.jetbrains.kotlin.nj2k.tree.Visibility
+import org.jetbrains.kotlin.nj2k.tree.detached
+import org.jetbrains.kotlin.nj2k.tree.visibility
+import org.jetbrains.kotlin.nj2k.tree.withFormattingFrom
 
 class ClassToObjectPromotionConversion(context: ConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

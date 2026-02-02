@@ -10,8 +10,12 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.highlighting.RemoveDomElementQuickFix
 import org.jetbrains.annotations.ApiStatus

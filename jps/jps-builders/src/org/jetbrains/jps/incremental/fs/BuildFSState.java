@@ -12,8 +12,18 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.builders.*;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetLoader;
+import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.CompileScope;
+import org.jetbrains.jps.incremental.FSOperations;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.TargetTypeRegistry;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.StampsStorage;
 import org.jetbrains.jps.model.JpsModel;
 
@@ -22,7 +32,13 @@ import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class BuildFSState {
   public static final int VERSION = 3;

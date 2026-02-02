@@ -20,8 +20,19 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.*
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.IssueNavigationConfiguration
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsRoot
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListChange
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.CurrentContentRevision
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment
 import com.intellij.openapi.vcs.checkin.PostCommitChangeConverter
@@ -65,7 +76,7 @@ import java.io.IOException
 import java.io.OutputStreamWriter
 import java.nio.file.Files
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 

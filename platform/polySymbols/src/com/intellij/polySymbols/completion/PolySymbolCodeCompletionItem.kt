@@ -8,7 +8,9 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.model.Pointer
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
+import com.intellij.polySymbols.completion.impl.CodeCompletionPolySymbolWithDocumentation
 import com.intellij.polySymbols.completion.impl.PolySymbolCodeCompletionItemImpl
+import com.intellij.polySymbols.completion.impl.PsiSourcedCodeCompletionPolySymbolWithDocumentation
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus.NonExtendable
@@ -120,10 +122,22 @@ interface PolySymbolCodeCompletionItem {
       PolySymbolCodeCompletionItemImpl.BuilderImpl(name, offset, symbol)
 
     @JvmStatic
+    fun getPolySymbol(lookupElement: LookupElement): PolySymbol? =
+      (lookupElement.`object` as? Pointer<*>)
+        ?.dereference()
+        ?.let {
+          when (it) {
+            is CodeCompletionPolySymbolWithDocumentation -> it.delegate
+            is PsiSourcedCodeCompletionPolySymbolWithDocumentation -> it.delegate
+            is PolySymbol -> it
+            else -> null
+          }
+        }
+
+    @JvmStatic
     fun getPsiElement(lookupElement: LookupElement): PsiElement? =
       lookupElement.psiElement
-      ?: (lookupElement.`object` as? Pointer<*>)
-        ?.dereference()
+      ?: getPolySymbol(lookupElement)
         ?.let { it as? PsiSourcedPolySymbol }
         ?.source
 

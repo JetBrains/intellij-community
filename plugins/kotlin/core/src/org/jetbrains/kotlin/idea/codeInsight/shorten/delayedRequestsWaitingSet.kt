@@ -7,8 +7,14 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMember
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.KotlinBaseFe10CodeInsightBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
@@ -16,14 +22,21 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.ShortenReferences.Options
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
+import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import java.util.*
 
+@K1Deprecation
 interface DelayedRefactoringRequest
 
+@K1Deprecation
 class ShorteningRequest(val pointer: SmartPsiElementPointer<KtElement>, val options: Options) : DelayedRefactoringRequest
+@K1Deprecation
 class ImportRequest(
     val elementToImportPointer: SmartPsiElementPointer<PsiElement>,
     val filePointer: SmartPsiElementPointer<KtFile>
@@ -36,9 +49,11 @@ private var Project.delayedRefactoringRequests: MutableSet<DelayedRefactoringReq
  * When one refactoring invokes another this value must be set to false so that shortening wait-set is not cleared
  * and previously collected references are processed correctly. Afterwards it must be reset to original value
  */
+@K1Deprecation
 var Project.ensureNoRefactoringRequestsBeforeRefactoring: Boolean
         by NotNullableUserDataProperty(Key.create("ENSURE_NO_REFACTORING_REQUESTS_BEFORE_REFACTORING"), true)
 
+@K1Deprecation
 fun Project.runRefactoringAndKeepDelayedRequests(action: () -> Unit) {
     val ensureNoRefactoringRequests = ensureNoRefactoringRequestsBeforeRefactoring
 
@@ -52,6 +67,7 @@ fun Project.runRefactoringAndKeepDelayedRequests(action: () -> Unit) {
 
 // We need this function so that we can modify the options of the ShorteningRequest before shortening.
 // For example, it is used to enable fully shortening references to the same as their original references when copying and pasting.
+@K1Deprecation
 @ApiStatus.Internal
 fun Project.modifyExistingShorteningRequests(action: (ShorteningRequest) -> ShorteningRequest) {
     val newRequests = delayedRefactoringRequests?.mapTo(mutableSetOf()) {
@@ -72,6 +88,7 @@ private fun Project.getOrCreateRefactoringRequests(): MutableSet<DelayedRefactor
     return requests
 }
 
+@K1Deprecation
 fun KtElement.addToShorteningWaitSet(options: Options = Options.DEFAULT) {
     assert(ApplicationManager.getApplication()!!.isWriteAccessAllowed) { "Write access needed" }
     val project = project
@@ -79,11 +96,13 @@ fun KtElement.addToShorteningWaitSet(options: Options = Options.DEFAULT) {
     project.getOrCreateRefactoringRequests().add(ShorteningRequest(elementPointer, options))
 }
 
+@K1Deprecation
 fun addDelayedImportRequest(elementToImport: PsiElement, file: KtFile) {
     assert(ApplicationManager.getApplication()!!.isWriteAccessAllowed) { "Write access needed" }
     file.project.getOrCreateRefactoringRequests() += ImportRequest(elementToImport.createSmartPointer(), file.createSmartPointer())
 }
 
+@K1Deprecation
 fun performDelayedRefactoringRequests(project: Project, defaultOptions: Options = Options.DEFAULT) {
     project.delayedRefactoringRequests?.let { requests ->
         project.delayedRefactoringRequests = null
@@ -129,6 +148,7 @@ fun performDelayedRefactoringRequests(project: Project, defaultOptions: Options 
 
 private val LOG = Logger.getInstance(Project::class.java.canonicalName)
 
+@K1Deprecation
 fun prepareDelayedRequests(project: Project) {
     val requests = project.delayedRefactoringRequests
     if (project.ensureNoRefactoringRequestsBeforeRefactoring && !requests.isNullOrEmpty()) {
@@ -137,8 +157,10 @@ fun prepareDelayedRequests(project: Project) {
     }
 }
 
+@K1Deprecation
 var KtElement.isToBeShortened: Boolean? by CopyablePsiUserDataProperty(Key.create("IS_TO_BE_SHORTENED"))
 
+@K1Deprecation
 fun KtElement.addToBeShortenedDescendantsToWaitingSet() {
     forEachDescendantOfType<KtElement> {
         if (it.isToBeShortened == true) {

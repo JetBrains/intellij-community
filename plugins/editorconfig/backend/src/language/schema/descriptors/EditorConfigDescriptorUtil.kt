@@ -1,7 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.schema.descriptors
 
-import com.intellij.editorconfig.common.syntax.psi.*
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigDescribableElement
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigFlatOptionKey
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOption
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOptionValueIdentifier
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOptionValueList
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOptionValuePair
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigQualifiedKeyPart
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigQualifiedOptionKey
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
 import com.intellij.openapi.util.Key
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider

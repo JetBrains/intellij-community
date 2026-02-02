@@ -9,7 +9,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyParameterList
+import com.jetbrains.python.psi.PyParenthesizedExpression
+import com.jetbrains.python.psi.PySequenceExpression
+import com.jetbrains.python.psi.PyTupleExpression
 
 class PyListSplitJoinContext : CommaListSplitJoinContext() {
   override fun extractData(context: PsiElement): ListWithElements? {

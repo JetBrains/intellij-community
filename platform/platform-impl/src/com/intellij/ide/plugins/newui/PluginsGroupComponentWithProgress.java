@@ -15,15 +15,15 @@ import java.awt.*;
 public abstract class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
   private static final Logger LOG = Logger.getInstance(PluginsGroupComponentWithProgress.class);
 
-  private AsyncProcessIcon myIcon = new AsyncProcessIcon.BigCentered(IdeBundle.message("progress.text.loading"));
-  private @Nullable Runnable myVisibleRunnable;
+  private AsyncProcessIcon myLoadingIcon = new AsyncProcessIcon.BigCentered(IdeBundle.message("progress.text.loading"));
+  private @Nullable Runnable myOnBecomingVisibleCallback;
 
   public PluginsGroupComponentWithProgress(@NotNull EventHandler eventHandler) {
     super(eventHandler);
-    myIcon.setOpaque(false);
-    myIcon.setPaintPassiveIcon(false);
-    add(myIcon);
-    myIcon.resume();
+    myLoadingIcon.setOpaque(false);
+    myLoadingIcon.setPaintPassiveIcon(false);
+    add(myLoadingIcon);
+    myLoadingIcon.resume();
   }
 
   @Override
@@ -39,25 +39,25 @@ public abstract class PluginsGroupComponentWithProgress extends PluginsGroupComp
   }
 
   private void updateIconLocation() {
-    if (myIcon != null && myIcon.isVisible()) {
-      myIcon.updateLocation(this);
+    if (myLoadingIcon != null && myLoadingIcon.isVisible()) {
+      myLoadingIcon.updateLocation(this);
     }
   }
 
-  public void startLoading() {
+  public void showLoadingIcon() {
     LOG.debug("Marketplace tab: loading started");
-    if (myIcon != null) {
-      myIcon.setVisible(true);
-      myIcon.resume();
+    if (myLoadingIcon != null) {
+      myLoadingIcon.setVisible(true);
+      myLoadingIcon.resume();
       fullRepaint();
     }
   }
 
-  public void stopLoading() {
+  public void hideLoadingIcon() {
     LOG.debug("Marketplace tab: loading stopped");
-    if (myIcon != null) {
-      myIcon.suspend();
-      myIcon.setVisible(false);
+    if (myLoadingIcon != null) {
+      myLoadingIcon.suspend();
+      myLoadingIcon.setVisible(false);
       fullRepaint();
     }
   }
@@ -69,31 +69,31 @@ public abstract class PluginsGroupComponentWithProgress extends PluginsGroupComp
   }
 
   public void dispose() {
-    if (myIcon != null) {
-      remove(myIcon);
-      Disposer.dispose(myIcon);
-      myIcon = null;
+    if (myLoadingIcon != null) {
+      remove(myLoadingIcon);
+      Disposer.dispose(myLoadingIcon);
+      myLoadingIcon = null;
     }
   }
 
   @Override
   public void clear() {
     super.clear();
-    if (myIcon != null) {
-      add(myIcon);
+    if (myLoadingIcon != null) {
+      add(myLoadingIcon);
     }
   }
 
-  public void setVisibleRunnable(@NotNull Runnable visibleRunnable) {
-    myVisibleRunnable = visibleRunnable;
+  public void setOnBecomingVisibleCallback(@NotNull Runnable onVisibilityChangeCallbackOnce) {
+    myOnBecomingVisibleCallback = onVisibilityChangeCallbackOnce;
   }
 
   @Override
-  public void setVisible(boolean aFlag) {
-    super.setVisible(aFlag);
-    if (aFlag && myVisibleRunnable != null) {
-      Runnable runnable = myVisibleRunnable;
-      myVisibleRunnable = null;
+  public void setVisible(boolean visible) {
+    super.setVisible(visible);
+    if (visible && myOnBecomingVisibleCallback != null) {
+      Runnable runnable = myOnBecomingVisibleCallback;
+      myOnBecomingVisibleCallback = null;
       runnable.run();
     }
   }

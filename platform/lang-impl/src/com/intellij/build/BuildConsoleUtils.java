@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
+import java.awt.Component;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;

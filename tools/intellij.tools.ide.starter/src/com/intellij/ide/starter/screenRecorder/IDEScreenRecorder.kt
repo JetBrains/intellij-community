@@ -17,7 +17,16 @@ import kotlinx.coroutines.launch
 import org.monte.media.Format
 import org.monte.media.FormatKeys.MediaType
 import org.monte.media.Registry
-import org.monte.media.VideoFormatKeys.*
+import org.monte.media.VideoFormatKeys.CompressorNameKey
+import org.monte.media.VideoFormatKeys.DepthKey
+import org.monte.media.VideoFormatKeys.ENCODING_AVI_TECHSMITH_SCREEN_CAPTURE
+import org.monte.media.VideoFormatKeys.EncodingKey
+import org.monte.media.VideoFormatKeys.FrameRateKey
+import org.monte.media.VideoFormatKeys.KeyFrameIntervalKey
+import org.monte.media.VideoFormatKeys.MIME_AVI
+import org.monte.media.VideoFormatKeys.MediaTypeKey
+import org.monte.media.VideoFormatKeys.MimeTypeKey
+import org.monte.media.VideoFormatKeys.QualityKey
 import org.monte.media.math.Rational
 import org.monte.screenrecorder.ScreenRecorder
 import java.awt.GraphicsEnvironment
@@ -27,7 +36,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.Date
 import kotlin.io.path.createFile
 import kotlin.io.path.div
 import kotlin.io.path.pathString

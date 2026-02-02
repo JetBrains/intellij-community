@@ -10,6 +10,8 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.modification.createProjectWideLibraryModificationTracker
 import org.jetbrains.kotlin.analysis.api.platform.modification.createProjectWideSourceModificationTracker
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory
@@ -28,12 +30,21 @@ import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.PlatformModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
 import org.jetbrains.kotlin.idea.caches.project.getPlatformModuleInfo
-import org.jetbrains.kotlin.idea.stubindex.*
+import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeClassByPackageIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinMultiFileClassPartIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinScriptFqnIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelClassByPackageIndex
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -42,6 +53,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 
+@K1Deprecation
 class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaModuleInfo>(project) {
     override fun findClassOrObjectDeclarations(fqName: FqName, searchScope: GlobalSearchScope): Collection<KtClassOrObject> {
         val scope = KotlinSourceFilterScope.projectSourcesAndLibraryClasses(searchScope, project)
@@ -89,7 +101,10 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
         else -> false
     }
 
+    @OptIn(KaPlatformInterface::class)
     override fun projectWideOutOfBlockModificationTracker(): ModificationTracker = project.createProjectWideSourceModificationTracker()
+
+    @OptIn(KaPlatformInterface::class)
     override fun librariesTracker(element: PsiElement): ModificationTracker = project.createProjectWideLibraryModificationTracker()
 
     override fun getSubPackages(fqn: FqName, scope: GlobalSearchScope): Collection<FqName> =

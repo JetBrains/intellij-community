@@ -4,11 +4,11 @@ package com.intellij.polySymbols.html
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.HtmlCompletionContributor
+import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.polySymbols.html.attributeValues.HtmlAttributeValueSymbolsCompletionProvider
 import com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolsCompletionProvider
-import com.intellij.polySymbols.html.elements.HtmlElementSymbolsCompletionProvider
 import com.intellij.polySymbols.html.elements.HtmlElementNameSymbolsInTextCompletionProvider
-import com.intellij.patterns.PlatformPatterns.psiElement
+import com.intellij.polySymbols.html.elements.HtmlElementSymbolsCompletionProvider
 import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.xml.XmlAttribute

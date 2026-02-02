@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.impl.Utils.isModalContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.progress.ProgressManager
@@ -43,6 +44,7 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.coroutines.CancellationException
 import java.awt.Component
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
@@ -426,6 +428,9 @@ private fun runSnapshotRules(sink: MySink, component: Component?, data: CachedDa
     try {
       rule.uiDataSnapshot(sink, snapshot)
     }
+    catch (e: Throwable) {
+      handleDataProviderException(e)
+    }
     finally {
       sink.uiComputed = null
       sink.source = prev
@@ -522,6 +527,9 @@ private class MySink : DataSink {
     try {
       provider.uiDataSnapshot(this)
     }
+    catch (e: Throwable) {
+      handleDataProviderException(e)
+    }
     finally {
       source = prev
     }
@@ -532,6 +540,9 @@ private class MySink : DataSink {
     source = provider
     try {
       provider.dataSnapshot(this)
+    }
+    catch (e: Throwable) {
+      handleDataProviderException(e)
     }
     finally {
       source = prev
@@ -550,6 +561,9 @@ private class MySink : DataSink {
           set(key as DataKey<Any>, data)
         }
       }
+    }
+    catch (e: Throwable) {
+      handleDataProviderException(e)
     }
     finally {
       source = prev
@@ -668,5 +682,22 @@ private class ComponentRef(component: Component?) {
     val supply = (component as? JComponent)?.let { SpeedSearchSupply.getSupply(it) }
     speedSearchText = supply?.enteredPrefix
     speedSearchRef = (supply as? SpeedSearchBase<*>)?.getSearchField()?.let { WeakReference(it) }
+  }
+}
+
+private fun handleDataProviderException(e: Throwable) {
+  when (e) {
+    is CancellationException -> {
+      // Do not rethrow a rogue 'throw new ProcessCanceledException()' in non-cancelled contexts
+      ProgressManager.checkCanceled()
+      LOG.error(Throwable("Unexpected cancellation exception", e))
+    }
+    is ControlFlowException -> {
+      // We do rethrow other types of ControlFlowException.
+      throw e
+    }
+    else -> {
+      LOG.error(e)
+    }
   }
 }

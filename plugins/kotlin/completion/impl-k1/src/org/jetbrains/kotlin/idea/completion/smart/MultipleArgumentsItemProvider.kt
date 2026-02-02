@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.ui.LayeredIcon
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
@@ -28,8 +29,8 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
-import java.util.*
 
+@K1Deprecation
 class MultipleArgumentsItemProvider(
     private val bindingContext: BindingContext,
     private val smartCastCalculator: SmartCastCalculator,

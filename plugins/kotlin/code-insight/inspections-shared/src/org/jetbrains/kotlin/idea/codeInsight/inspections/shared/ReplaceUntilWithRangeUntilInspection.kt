@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -10,32 +9,35 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.utils.RangeKtExpressionType
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractRangeInspection.Companion.rangeExpressionByPsi
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.utils.canUseRangeUntil
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.DeprecationCollectingInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.RangeKtExpressionType
 import org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector
-import org.jetbrains.kotlin.idea.statistics.NewAndDeprecatedFeaturesInspectionData
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 
-class ReplaceUntilWithRangeUntilInspection : DeprecationCollectingInspection<NewAndDeprecatedFeaturesInspectionData>(
-    collector = KotlinLanguageFeaturesFUSCollector.rangeUntilCollector,
-    defaultDeprecationData = NewAndDeprecatedFeaturesInspectionData()
-) {
-
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): KtVisitorVoid =
+class ReplaceUntilWithRangeUntilInspection : AbstractKotlinInspection() {
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ): KtVisitorVoid =
         object : KtVisitorVoid() {
             override fun visitBinaryExpression(binaryExpression: KtBinaryExpression) {
-                visitRange(binaryExpression, holder, session)
+                visitRange(binaryExpression, holder)
             }
 
             override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
-                visitRange(expression, holder, session)
+                visitRange(expression, holder)
             }
         }
 
-    private fun visitRange(expression: KtExpression, holder: ProblemsHolder, session: LocalInspectionToolSession) {
+    private fun visitRange(expression: KtExpression, holder: ProblemsHolder) {
         val rangeExpression = rangeExpressionByPsi(expression) ?: return
 
         analyze(expression) {
@@ -46,13 +48,6 @@ class ReplaceUntilWithRangeUntilInspection : DeprecationCollectingInspection<New
         }
 
         val rangeKtExpressionType = rangeExpression.type
-        session.updateDeprecationData {
-            when (rangeKtExpressionType) {
-                RangeKtExpressionType.UNTIL -> it.withDeprecatedFeature()
-                RangeKtExpressionType.RANGE_UNTIL -> it.withNewFeature()
-                else -> it
-            }
-        }
         if (rangeKtExpressionType != RangeKtExpressionType.UNTIL) return
 
         holder.registerProblem(

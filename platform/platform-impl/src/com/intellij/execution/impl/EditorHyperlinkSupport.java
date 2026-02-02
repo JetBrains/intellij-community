@@ -28,10 +28,8 @@ import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
@@ -80,7 +78,10 @@ public final class EditorHyperlinkSupport {
         MouseEvent initialMouseEvent = myInitialMouseEvent;
         myInitialMouseEvent = null;
         MouseEvent mouseEvent = e.getMouseEvent();
-        if (mouseEvent.getButton() == MouseEvent.BUTTON1 && !mouseEvent.isPopupTrigger()) {
+        if (mouseEvent.getButton() == MouseEvent.BUTTON1 &&
+            !mouseEvent.isPopupTrigger() &&
+            e.getCollapsedFoldRegion() == null) {
+
           if (initialMouseEvent != null && (mouseEvent.getComponent() != initialMouseEvent.getComponent() ||
                                        !mouseEvent.getPoint().equals(initialMouseEvent.getPoint()))) {
             return;
@@ -248,12 +249,24 @@ public final class EditorHyperlinkSupport {
   }
 
   private @Nullable RangeHighlighter findLinkRangeAt(int offset) {
-    Ref<RangeHighlighter> ref = Ref.create();
-    processHyperlinksAndHighlightings(offset, offset, myEditor, true, false, range -> {
-      ref.set(range);
-      return false;
+    // It should be synced with c.i.o.editor.impl.view.IterationState.LayerComparator.compare()
+    Ref<RangeHighlighter> minHighlighter = new Ref<>();
+    processHyperlinksAndHighlightings(offset, offset, myEditor, true, false, highlighter -> {
+      if (minHighlighter.isNull()) {
+        minHighlighter.set(highlighter);
+      }
+      else {
+        var minRange = minHighlighter.get().getTextRange();
+        var newRange = highlighter.getTextRange();
+        // Choose the smaller one. In case of equal sizes, prefer the left one. That's how IterationState works de facto.
+        if (newRange.getLength() < minRange.getLength() ||
+            newRange.getLength() == minRange.getLength() && newRange.getStartOffset() < minRange.getStartOffset()) {
+          minHighlighter.set(highlighter);
+        }
+      }
+      return true;
     });
-    return ref.get();
+    return minHighlighter.get();
   }
 
   public @Nullable HyperlinkInfo getHyperlinkAt(int offset) {

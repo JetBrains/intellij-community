@@ -3193,20 +3193,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @ApiStatus.Internal
-  final ConcurrentHashMap<Caret, Point2D> lastPosMap = new ConcurrentHashMap<>();
+  final ConcurrentHashMap<Caret, kotlin.Pair<Point2D, @Nullable LogicalPosition>> lastPosMap = new ConcurrentHashMap<>();
 
   @ApiStatus.Internal
   @Nullable
   Job caretAnimationJob = null;
 
-  @ApiStatus.Internal
-  double caretAnimationElapsed;
-
   private final @NotNull EditorCaretMoveService caretMoveService = EditorCaretMoveService.getInstance();
 
   private void setCursorPosition() {
     synchronized (caretMoveService) {
-      if (!getSettings().isAnimatedCaret() || gainedFocus.getAndSet(false)) {
+      if (!getSettings().isAnimatedCaret() || gainedFocus.getAndSet(false) || myMouseDragStarted) {
         caretMoveService.setCursorPositionImmediately(this);
       } else {
         caretMoveService.setCursorPosition(this);
@@ -3312,15 +3309,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public final @Nullable Caret myCaret;
     public final boolean myIsRtl;
 
-    @ApiStatus.Internal
-    public final float myOpacity;
-
-    CaretRectangle(@NotNull Point2D point, float width, @Nullable Caret caret, boolean isRtl, float opacity) {
+    CaretRectangle(@NotNull Point2D point, float width, @Nullable Caret caret, boolean isRtl) {
       myPoint = point;
       myWidth = Math.max(width, 2);
       myCaret = caret;
       myIsRtl = isRtl;
-      myOpacity = opacity;
     }
 
     Point2D getPoint() {
@@ -3329,7 +3322,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   final class CaretCursor {
-    private CaretRectangle @NotNull [] myLocations = {new CaretRectangle(new Point(0, 0), 0, null, false, 1.0f)};
+    private CaretRectangle @NotNull [] myLocations = {new CaretRectangle(new Point(0, 0), 0, null, false)};
     private boolean myEnabled = true;
 
     private boolean myIsShown;

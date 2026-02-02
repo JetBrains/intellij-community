@@ -8,7 +8,7 @@ import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public interface ValueDescriptor extends NodeDescriptor {
   PsiElement getDescriptorEvaluation(DebuggerContext context) throws EvaluateException;

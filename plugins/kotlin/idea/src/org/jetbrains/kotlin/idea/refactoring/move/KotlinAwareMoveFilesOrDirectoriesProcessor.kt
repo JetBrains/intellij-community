@@ -13,8 +13,10 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtFile
 
+@K1Deprecation
 class KotlinAwareMoveFilesOrDirectoriesProcessor @JvmOverloads constructor(
     project: Project,
     private val elementsToMove: List<PsiElement>,

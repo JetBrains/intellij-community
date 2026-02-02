@@ -2,7 +2,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiListLikeElement;
+import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBuildCachedValuesManager.StubBuildCachedValueProvider;
 import com.intellij.psi.tree.IElementType;
@@ -32,7 +38,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueStubBuildOptimized;
 

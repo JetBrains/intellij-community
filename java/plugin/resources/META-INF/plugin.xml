@@ -9,17 +9,9 @@
   <category>Languages</category>
   <resource-bundle>messages.ActionsBundle</resource-bundle>
 
+  <!--other dependencies inside java.backend plugin-->
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
-    <plugin id="com.intellij.modules.vcs"/>
-    <plugin id="com.intellij.modules.xdebugger"/>
-    <plugin id="com.intellij.modules.xml"/>
-    <plugin id="com.intellij.modules.java-capable"/>
-    <module name="intellij.platform.structuralSearch"/>
-    <module name="intellij.platform.vcs.impl.lang"/>
-    <module name="intellij.spellchecker"/>
-    <module name="intellij.xml.dom.impl"/>
-    <module name="intellij.regexp"/>
   </dependencies>
 
   <module value="com.intellij.modules.java"/>
@@ -32,45 +24,56 @@
     <module name="intellij.java.psi.impl" loading="embedded"/>
     <module name="intellij.java.frontback.impl" loading="embedded"/>
 
-    <module name="intellij.java.indexing" loading="embedded"/>
-    <module name="intellij.platform.uast" loading="embedded"/>
-    <module name="intellij.platform.uast.ide" loading="embedded"/>
-    <module name="intellij.java.uast" loading="embedded"/>
-    <module name="intellij.java.compiler" loading="embedded"/>
-    <module name="intellij.java.analysis" loading="embedded"/>
-    <module name="intellij.java" loading="embedded"/>
-    <module name="intellij.java.resources" loading="embedded"/>
-    <module name="intellij.java.execution" loading="embedded"/>
+    <module name="intellij.java.indexing" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.platform.uast" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.platform.uast.ide" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.uast" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.compiler" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.analysis" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.resources" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.execution" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.remoteServers" loading="optional"/>
-    <module name="intellij.jvm.analysis" loading="embedded"/>
-    <module name="intellij.jsp" loading="embedded"/>
-    <module name="intellij.java.resources.en" loading="embedded"/>
-    <module name="intellij.java.debugger" loading="embedded"/>
-    <module name="intellij.java.codeserver.core" loading="embedded"/>
-    <module name="intellij.java.codeserver.highlighting" loading="embedded"/>
+    <module name="intellij.jvm.analysis" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.jsp" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.resources.en" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.debugger" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.codeserver.core" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.codeserver.highlighting" required-if-available="intellij.platform.backend"/>
 
-    <module name="intellij.jsp.spi" loading="embedded"/>
-    <module name="intellij.java.indexing.impl" loading="embedded"/>
-    <module name="intellij.java.analysis.impl" loading="embedded"/>
-    <module name="intellij.java.structureView" loading="embedded"/>
+    <module name="intellij.jsp.spi" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.indexing.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.analysis.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.structureView" required-if-available="intellij.platform.backend"/>
 
-    <module name="intellij.java.impl" loading="embedded"/>
-    <module name="intellij.java.impl.refactorings" loading="embedded"/>
-    <module name="intellij.java.compiler.impl" loading="embedded"/>
-    <module name="intellij.java.typeMigration" loading="embedded"/>
-    <module name="intellij.java.impl.inspections" loading="embedded"/>
-    <module name="intellij.jvm.analysis.refactoring" loading="embedded"/>
-    <module name="intellij.jvm.analysis.quickFix" loading="embedded"/>
-    <module name="intellij.uiDesigner" loading="embedded"/>
-    <module name="intellij.java.manifest" loading="embedded"/>
-    <module name="intellij.java.ui" loading="embedded"/>
-    <module name="intellij.java.execution.impl" loading="embedded"/>
-    <module name="intellij.java.debugger.impl" loading="embedded"/>
-    <module name="intellij.java.debugger.memory.agent" loading="embedded"/>
+    <module name="intellij.java.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.impl.refactorings" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.compiler.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.typeMigration" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.impl.inspections" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.jvm.analysis.refactoring" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.jvm.analysis.quickFix" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.uiDesigner" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.manifest" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.ui" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.execution.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.debugger.impl" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.debugger.memory.agent" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.remoteServers.impl" loading="optional"/>
-    <module name="intellij.java.uast.ide"  loading="embedded"/>
-    <module name="intellij.java.backend" required-if-available="intellij.platform.backend" />
+    <module name="intellij.java.uast.ide" required-if-available="intellij.platform.backend"/>
 
+    <module name="intellij.platform.jps.build" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.platform.jps.build.dependencyGraph" loading="embedded"/>
+    <module name="intellij.platform.jps.build.javac.rt" loading="embedded"/>
+    <module name="intellij.java.guiForms.compiler" loading="embedded"/>
+    <module name="intellij.java.compiler.antTasks" loading="embedded"/>
+    <module name="intellij.java.compiler.instrumentationUtil" loading="embedded"/>
+    <module name="intellij.java.compiler.instrumentationUtil.java8" loading="embedded"/>
+
+    <module name="intellij.java.backend" required-if-available="intellij.platform.backend"/>
+
+    <module name="intellij.java.frontend.split" required-if-available="intellij.platform.frontend.split"/>
+    <module name="intellij.java.backend.split"/>
 
     <module name="intellij.java.debugger.impl.shared" loading="embedded"/>
     <module name="intellij.java.execution.impl.shared" loading="embedded"/>
@@ -80,10 +83,10 @@
     <module name="intellij.java.unscramble"/>
     <module name="intellij.java.vcs"/>
     <module name="intellij.java.terminal" loading="optional"/>
-    <module name="intellij.jvm.analysis.impl" required-if-available="intellij.platform.backend"/>
-    <module name="intellij.java.debugger.impl.frontend"/>
-    <module name="intellij.java.debugger.impl.backend" loading="embedded"/>
-    <module name="intellij.java.execution.impl.frontend"/>
+    <module name="intellij.jvm.analysis.impl"/>
+    <module name="intellij.java.debugger.impl.frontend" required-if-available="intellij.platform.frontend"/>
+    <module name="intellij.java.debugger.impl.backend" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.execution.impl.frontend" required-if-available="intellij.platform.frontend"/>
     <module name="intellij.java.execution.impl.backend" required-if-available="intellij.platform.backend"/>
     <module name="intellij.java.ultimate.icons" loading="optional"/>
     <module name="intellij.java.langInjection"/>
@@ -94,6 +97,7 @@
     <module name="intellij.java.jam.impl"/>
     <module name="intellij.java.jam"/>
     <module name="intellij.profiler.ultimate"/>
+    <module name="intellij.debugger.jvm.advanced.java"/>
     <module name="intellij.jvm.dfa.analysis.ui"/>
     <module name="intellij.java.copyright"/>
     <module name="intellij.java.promo"/>

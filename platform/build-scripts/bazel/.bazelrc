@@ -87,3 +87,8 @@ common --per_file_copt=external/.*protobuf.*@--PROTOBUF_WAS_NOT_SUPPOSED_TO_BE_B
 common --host_per_file_copt=external/.*protobuf.*@--PROTOBUF_WAS_NOT_SUPPOSED_TO_BE_BUILT
 common --per_file_copt=external/.*grpc.*@--GRPC_WAS_NOT_SUPPOSED_TO_BE_BUILT
 common --host_per_file_copt=external/.*grpc.*@--GRPC_WAS_NOT_SUPPOSED_TO_BE_BUILT
+
+try-import %workspace%/../../../../build/remote_cache.bazelrc
+
+# Enable remote downloader config w/ allowed hosts and caching proxies
+common --downloader_config=../../../build/bazel_downloader.cfg

@@ -8,7 +8,7 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write

@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.testFramework.TestKotlinArtifactsProvider
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.ServiceLoader
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.exists
 

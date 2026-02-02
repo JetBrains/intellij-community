@@ -21,7 +21,7 @@ import com.intellij.pom.PomTarget;
 import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class DefaultDomTargetIconProvider extends PomIconProvider implements DumbAware {
   @Override

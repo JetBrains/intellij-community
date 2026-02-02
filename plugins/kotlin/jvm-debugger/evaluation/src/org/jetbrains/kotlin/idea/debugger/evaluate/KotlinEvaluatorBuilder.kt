@@ -3,11 +3,19 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.engine.ClientEvaluationExceptionType
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
-import com.intellij.debugger.engine.evaluation.expression.*
+import com.intellij.debugger.engine.evaluation.IncorrectCodeFragmentException
+import com.intellij.debugger.engine.evaluation.expression.Evaluator
+import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder
+import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl
+import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator
+import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluatorImpl
+import com.intellij.debugger.engine.evaluation.expression.ExternalExpressionEvaluator
+import com.intellij.debugger.engine.extractTypeFromClientException
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.internal.statistic.utils.hasStandardExceptionPrefix
 import com.intellij.openapi.application.runReadAction
@@ -22,15 +30,42 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.BitUtil
-import com.sun.jdi.*
+import com.sun.jdi.AbsentInformationException
+import com.sun.jdi.ArrayReference
+import com.sun.jdi.ArrayType
+import com.sun.jdi.ClassLoaderReference
+import com.sun.jdi.ClassNotLoadedException
+import com.sun.jdi.ClassNotPreparedException
+import com.sun.jdi.ClassType
+import com.sun.jdi.IncompatibleThreadStateException
+import com.sun.jdi.InconsistentDebugInfoException
+import com.sun.jdi.InterfaceType
+import com.sun.jdi.InternalException
+import com.sun.jdi.InvalidTypeException
+import com.sun.jdi.InvocationException
+import com.sun.jdi.Method
+import com.sun.jdi.ObjectCollectedException
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.StringReference
+import com.sun.jdi.VMDisconnectedException
 import com.sun.jdi.Value
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.eval4j.*
+import org.jetbrains.eval4j.AbnormalTermination
+import org.jetbrains.eval4j.AbstractValue
+import org.jetbrains.eval4j.Eval4JIllegalArgumentException
+import org.jetbrains.eval4j.Eval4JIllegalStateException
+import org.jetbrains.eval4j.Eval4JInterpretingException
+import org.jetbrains.eval4j.ExceptionThrown
+import org.jetbrains.eval4j.InterpreterResult
+import org.jetbrains.eval4j.ValueReturned
+import org.jetbrains.eval4j.interpreterLoop
 import org.jetbrains.eval4j.jdi.JDIEval
 import org.jetbrains.eval4j.jdi.asJdiValue
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.eval4j.jdi.makeInitialFrame
+import org.jetbrains.eval4j.obj
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.base.util.caching.ConcurrentFactoryCache
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
@@ -38,10 +73,16 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariableByName
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.isSubTypeOrSame
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.isEvaluationEntryPoint
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.*
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCodegenException
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CompilationCodeFragmentResult
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CompilationResult
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CompiledCodeFragmentData
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.FailedCompilationCodeFragment
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.mainClass
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.reportErrorWithAttachments
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilingEvaluator.loadClassesSafely
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.VariableFinder
@@ -54,7 +95,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.tree.ClassNode
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
@@ -210,29 +251,15 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
     private fun checkCauseOfEvaluateException(cause: Throwable, hasCast: Boolean): StatisticsEvaluationResult {
         if (cause is InvocationException) {
-            try {
-                val exceptionFromCodeFragment = cause.exception()
-                val type = exceptionFromCodeFragment.type()
-                if (type.signature().equals("Ljava/lang/IllegalArgumentException;")) {
-                    if (DebuggerUtils.tryExtractExceptionMessage(exceptionFromCodeFragment) == "argument type mismatch") {
-                        return StatisticsEvaluationResult.MISCOMPILED
-                    }
-                }
-                if (type.signature().startsWith("Ljava/lang/invoke/")
-                    || type.isSubTypeOrSame("java.lang.ReflectiveOperationException")
-                    || type.isSubTypeOrSame("java.lang.LinkageError")
-                ) {
-                    return StatisticsEvaluationResult.MISCOMPILED
-                }
-                if (type.isSubTypeOrSame("java.lang.ClassCastException")) {
-                    return if (hasCast) StatisticsEvaluationResult.USER_EXCEPTION else StatisticsEvaluationResult.MISCOMPILED
-                }
+            val exceptionFromCodeFragment = cause.exception()
+
+            val result = extractTypeFromClientException(exceptionFromCodeFragment, hasCast)
+
+            return when(result) {
+                ClientEvaluationExceptionType.MISCOMPILED -> StatisticsEvaluationResult.MISCOMPILED
+                ClientEvaluationExceptionType.USER_EXCEPTION -> StatisticsEvaluationResult.USER_EXCEPTION
+                ClientEvaluationExceptionType.ERROR_DURING_PARSING_EXCEPTION -> StatisticsEvaluationResult.ERROR_DURING_PARSING_EXCEPTION
             }
-            catch (e: Throwable) {
-                LOG.error("Can't extract error type from InvocationException", e)
-                return StatisticsEvaluationResult.ERROR_DURING_PARSING_EXCEPTION
-            }
-            return StatisticsEvaluationResult.USER_EXCEPTION
         }
 
         if (isSpecialException(cause)) {
@@ -602,10 +629,6 @@ fun createCompiledDataDescriptor(result: CompilationResult, canBeCached: Boolean
 
 fun evaluationException(msg: String): Nothing = throw EvaluateExceptionUtil.createEvaluateException(msg)
 fun evaluationException(e: Throwable): Nothing = throw EvaluateExceptionUtil.createEvaluateException(e)
-
-
-@ApiStatus.Internal
-class IncorrectCodeFragmentException(message: String) : EvaluateException(message)
 
 enum class CompilerType {
     OLD, IR, K2

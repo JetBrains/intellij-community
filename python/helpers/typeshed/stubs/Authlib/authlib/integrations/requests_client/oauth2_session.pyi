@@ -21,7 +21,7 @@ class OAuth2Session(OAuth2Client):
     client_auth_class = OAuth2ClientAuth
     token_auth_class = OAuth2Auth
     oauth_error_class = OAuthError  # type: ignore[assignment]
-    SESSION_REQUEST_PARAMS: tuple[str, ...]
+    SESSION_REQUEST_PARAMS: tuple[str, ...]  # type: ignore[assignment]
     default_timeout: Incomplete
     def __init__(
         self,

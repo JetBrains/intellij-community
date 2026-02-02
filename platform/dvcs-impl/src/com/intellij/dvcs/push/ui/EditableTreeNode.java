@@ -19,7 +19,7 @@ import com.intellij.dvcs.push.OutgoingResult;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 

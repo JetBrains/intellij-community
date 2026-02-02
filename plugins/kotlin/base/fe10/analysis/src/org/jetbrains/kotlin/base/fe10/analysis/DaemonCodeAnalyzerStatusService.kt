@@ -8,7 +8,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
 class DaemonCodeAnalyzerStatusService(project: Project) : Disposable {

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.util
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -18,17 +19,20 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoAfter
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.ifEmpty
 
+@K1Deprecation
 inline fun <reified T : PsiElement> Diagnostic.createIntentionForFirstParentOfType(
     factory: (T) -> KotlinQuickFixAction<T>?
 ) = psiElement.getNonStrictParentOfType<T>()?.let(factory)
 
 
+@K1Deprecation
 fun createIntentionFactory(
     factory: (Diagnostic) -> IntentionAction?
 ) = object : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic) = factory(diagnostic)
 }
 
+@K1Deprecation
 fun getDataFlowAwareTypes(
     expression: KtExpression,
     bindingContext: BindingContext = expression.analyze(),

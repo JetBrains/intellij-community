@@ -96,8 +96,10 @@
     <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.update.ShowUpdatedDiffActionProvider"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.history.actions.CompareRevisionsAction"/>
-    <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider"/>
-    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider"/>
+    <diff.actions.ShowDiffAction.ExtensionProvider
+      implementation="com.intellij.openapi.vcs.changes.actions.diff.ChangesViewShowDiffActionProvider"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
+      implementation="com.intellij.openapi.vcs.changes.actions.diff.ChangesViewShowDiffActionProvider"/>
     <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase$ShowStandaloneDiff"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.ShowEditorDiffPreviewActionProvider" order="first"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction" order="last"/>
@@ -137,7 +139,6 @@
     <vcs.commitMessageInspection implementation="com.intellij.vcs.commit.message.SubjectBodySeparationInspection"/>
     <vcs.commitMessageInspection implementation="com.intellij.vcs.commit.message.SubjectLimitInspection"/>
     <vcs.commitMessageInspection implementation="com.intellij.vcs.commit.message.BodyLimitInspection"/>
-    <vcs.commitMessageInspection implementation="com.intellij.vcs.commit.message.CommitMessageSpellCheckingInspection"/>
 
     <referenceProviderType key="commentsReferenceProvider"
                            implementationClass="com.intellij.psi.impl.source.resolve.reference.ArbitraryPlaceUrlReferenceProvider"/>
@@ -183,6 +184,9 @@
     <toolWindow id="Version Control" anchor="bottom" canCloseContents="true" icon="AllIcons.Toolwindows.ToolWindowChanges"
                 factoryClass="com.intellij.openapi.vcs.changes.ui.ChangeViewToolWindowFactory"/>
     <registryKey defaultValue="true" description="Show Version Control tool window in project without VCS" key="vcs.empty.toolwindow.show"/>
+    <registryKey key="vcs.more.plugins.search.query"
+                 defaultValue="/tag:VCS /vendor:&quot;JetBrains s.r.o.&quot;"
+                 description="Search query for 'More VCS plugins' link in VCS dialogs"/>
 
     <changesViewContent tabName="Repository"
                         className="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager"

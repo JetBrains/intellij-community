@@ -3,7 +3,7 @@ package com.intellij.ide.scratch.workspace
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.WorkspaceEntityLifecycleSupporter
-import java.util.*
+import java.util.Objects
 
 class ScratchEntityLifecycleSupporter : WorkspaceEntityLifecycleSupporter<ScratchRootsEntity, ScratchRootsEntityBuilder> {
   override fun getEntityClass(): Class<ScratchRootsEntity> {

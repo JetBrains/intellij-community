@@ -9,7 +9,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 /**
  * @author Eugene Belyaev

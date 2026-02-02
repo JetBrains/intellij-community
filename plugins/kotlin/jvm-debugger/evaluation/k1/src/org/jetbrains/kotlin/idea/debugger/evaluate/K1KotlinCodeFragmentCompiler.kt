@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.evaluation.IncorrectCodeFragmentException
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin
@@ -13,13 +14,18 @@ import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator.Companion.logCompilation
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.*
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompilationStats
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompilerHandler
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CompiledCodeFragmentData
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugForeignPropertyDescriptorProvider
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.IRCodeFragmentCompilingStrategy
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.getResolutionFacadeForCodeFragment
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.AnalyzingUtils
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
-import java.util.*
+import java.util.Collections
 
 private class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
     override val compilerType: CompilerType = CompilerType.IR

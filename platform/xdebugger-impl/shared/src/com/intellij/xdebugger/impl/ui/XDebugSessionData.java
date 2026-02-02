@@ -22,15 +22,6 @@ public class XDebugSessionData extends UserDataHolderBase {
   private final MutableStateFlow<Boolean> myBreakpointsMutedFlow = createMutableStateFlow(false);
   private final MutableStateFlow<Boolean> myPauseSupported = createMutableStateFlow(false);
 
-  /**
-   * @deprecated Use {@link #XDebugSessionData(String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public XDebugSessionData(@NotNull List<XExpression> ignoredWatchExpressions,
-                           @NotNull String configurationName) {
-    myConfigurationName = configurationName;
-  }
-
   @ApiStatus.Internal
   public XDebugSessionData(@NotNull String configurationName) {
     myConfigurationName = configurationName;

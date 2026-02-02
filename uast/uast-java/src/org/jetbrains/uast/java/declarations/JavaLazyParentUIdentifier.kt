@@ -4,7 +4,11 @@ package org.jetbrains.uast.java.declarations
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiReferenceExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.LazyParentUIdentifier
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.toUElementOfType
 
 internal class JavaLazyParentUIdentifier(psi: PsiElement?, givenParent: UElement?)
   : LazyParentUIdentifier(psi, givenParent) {

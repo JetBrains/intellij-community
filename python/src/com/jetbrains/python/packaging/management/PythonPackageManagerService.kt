@@ -16,7 +16,7 @@ interface PythonPackageManagerProvider {
    * package management files etc.
    * Sdk is expected to be a Python Sdk and have PythonSdkAdditionalData.
    */
-  suspend fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager?
+  fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager?
 
   companion object {
     val EP_NAME = ExtensionPointName.create<PythonPackageManagerProvider>("Pythonid.pythonPackageManagerProvider")
@@ -26,7 +26,7 @@ interface PythonPackageManagerProvider {
 @ApiStatus.Internal
 @ApiStatus.Experimental
 interface PythonPackageManagerService {
-  suspend fun forSdk(project: Project, sdk: Sdk): PythonPackageManager
+  fun forSdk(project: Project, sdk: Sdk): PythonPackageManager
 
   /**
    * Provides an implementation bridge for Python package management operations

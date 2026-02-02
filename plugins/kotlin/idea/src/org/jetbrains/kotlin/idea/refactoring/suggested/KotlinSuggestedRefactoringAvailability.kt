@@ -6,9 +6,15 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.suggested.*
+import com.intellij.refactoring.suggested.SuggestedChangeSignatureData
+import com.intellij.refactoring.suggested.SuggestedRefactoringAvailability
+import com.intellij.refactoring.suggested.SuggestedRefactoringData
+import com.intellij.refactoring.suggested.SuggestedRefactoringState
+import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
+import com.intellij.refactoring.suggested.SuggestedRenameData
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.forcedModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
@@ -26,6 +32,7 @@ import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isError
 
+@K1Deprecation
 class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactoringSupport) :
     SuggestedRefactoringAvailability(refactoringSupport)
 {

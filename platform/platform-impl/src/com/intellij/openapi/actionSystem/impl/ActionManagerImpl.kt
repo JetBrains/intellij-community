@@ -1249,7 +1249,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     val place = place ?: "tryToExecute"
     if (now) {
       try {
-        tryToExecuteNow(action, place, contextComponent, inputEvent, result)
+        @Suppress("DEPRECATION")
+        val dataContext = DataManager.getInstance().let {
+          if (contextComponent == null) it.dataContext else it.getDataContext(contextComponent)
+        }
+        tryToExecuteNow(action, place, contextComponent, inputEvent, result, dataContext)
       }
       finally {
         if (!result.isProcessed) {
@@ -1362,16 +1366,28 @@ private fun doPerformAction(action: AnAction,
   }
 }
 
-private fun tryToExecuteNow(action: AnAction,
-                            place: String,
-                            contextComponent: Component?,
-                            inputEvent: InputEvent?,
-                            callback: ActionCallback) {
+/**
+ * Synchronously updates and executes an action with a custom data context.
+ *
+ * @param action the action to execute
+ * @param place the action place (e.g., "MainMenu", "EditorPopup")
+ * @param contextComponent the component to use as context, may be null
+ * @param inputEvent the input event that triggered the action, may be null
+ * @param callback the callback to be notified of execution result
+ * @param dataContext the custom data context to use for update and execution
+ *
+ * @see ActionManager.tryToExecute for the public API that creates its own DataContext
+ */
+@ApiStatus.Internal
+fun tryToExecuteNow(
+  action: AnAction,
+  place: String,
+  contextComponent: Component?,
+  inputEvent: InputEvent?,
+  callback: ActionCallback,
+  dataContext: DataContext,
+) {
   val presentationFactory = PresentationFactory()
-  @Suppress("DEPRECATION")
-  val dataContext = DataManager.getInstance().let {
-    if (contextComponent == null) it.dataContext else it.getDataContext(contextComponent)
-  }
   val wrappedContext = Utils.createAsyncDataContext(dataContext)
   val actionProcessor = object : ActionProcessor() {}
   val inputEventAdjusted = inputEvent ?: KeyEvent(

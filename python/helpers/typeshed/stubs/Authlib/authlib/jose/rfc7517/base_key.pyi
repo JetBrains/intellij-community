@@ -7,7 +7,7 @@ class Key:
     PRIVATE_KEY_OPS: ClassVar[list[str]]
     PUBLIC_KEY_OPS: ClassVar[list[str]]
     REQUIRED_JSON_FIELDS: ClassVar[list[str]]
-    options: Incomplete
+    options: dict[Incomplete, Incomplete]
     def __init__(self, options=None) -> None: ...
     @property
     def tokens(self) -> dict[Incomplete, Incomplete]: ...

@@ -20,7 +20,7 @@
     <module name="intellij.libraries.kotlinx.io"/>
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.community.impl.installer"/>
-    <module name="intellij.python.community.impl.venv"/>
+    <module name="intellij.python.venv"/>
     <module name="intellij.python.community.services.systemPython"/>
     <module name="intellij.python.sdkConfigurator.common"/>
     <module name="intellij.python.processOutput"/>
@@ -169,6 +169,8 @@
     <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
     <applicationService serviceInterface="com.jetbrains.python.module.PyModuleService"
                         serviceImplementation="com.jetbrains.python.module.PyModuleServiceImpl"/>
+    <applicationService serviceInterface="com.jetbrains.python.psi.resolve.PackageAvailabilityService"
+                        serviceImplementation="com.jetbrains.python.packaging.PackageAvailabilityServiceImpl"/>
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyMethodNameTypedHandler" id="pyMethodNameTypedHandler"/>
 
     <idIndexer filetype="Python" implementationClass="com.jetbrains.python.PyIdIndexer"/>
@@ -719,6 +721,9 @@
     <registryKey defaultValue="true" description="Show value tooltip" key="python.debugger.show.value.tooltip"/>
 
     <registryKey defaultValue="3" description="Timeout to guess the best suitable SDK when adding new interpreter (seconds)" key="python.guess.sdk.timeout.seconds"/>
+
+    <statistics.counterUsagesCollector
+      implementationClass="com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector"/>
   </extensions>
 
   <extensionPoints>
@@ -960,6 +965,23 @@
     <inspectionExtension implementation="com.jetbrains.python.inspections.PyUnresolvedReferenceDefaultInspectionExtension" order="last"/>
 
     <runConfigurationEditorExtension implementation="com.jetbrains.python.run.PyRunConfigurationTargetOptions"/>
+
+    <projectSdkConfigurationExtension
+      implementation="com.jetbrains.python.venv.sdk.configuration.PyRequirementsTxtOrSetupPySdkConfiguration"
+      id="requirementsTxtOrSetupPy" order="before uv"/>
+    <projectSdkConfigurationExtension
+      implementation="com.jetbrains.python.conda.sdk.configuration.PyEnvironmentYmlSdkConfiguration"
+      id="environmentYml"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.pipenv.sdk.configuration.PyPipfileSdkConfiguration"
+                                      id="pipfile" order="before requirementsTxtOrSetupPy"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.poetry.sdk.configuration.PyPoetrySdkConfiguration"
+                                      id="poetry"/>"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.hatch.sdk.configuration.PyHatchSdkConfiguration"
+                                      id="hatch" order="after poetry"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.uv.sdk.configuration.PyUvSdkConfiguration"
+                                      id="uv" order="before venv"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.venv.sdk.configuration.PyVenvSdkConfiguration"
+                                      id="venv" order="last"/>
 
   </extensions>
 

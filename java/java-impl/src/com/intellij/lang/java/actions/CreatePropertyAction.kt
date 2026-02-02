@@ -6,12 +6,18 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil.generateSimpleGet
 import com.intellij.codeInsight.generation.GenerateMembersUtil.generateSimpleSetterPrototype
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.impl.VariableNode
-import com.intellij.lang.java.beans.PropertyKind.*
+import com.intellij.lang.java.beans.PropertyKind.BOOLEAN_GETTER
+import com.intellij.lang.java.beans.PropertyKind.GETTER
+import com.intellij.lang.java.beans.PropertyKind.SETTER
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.CreatePropertyActionGroup
 import com.intellij.lang.jvm.actions.JvmActionGroup
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.JvmPsiConversionHelper
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 import com.intellij.psi.util.PropertyUtilBase.getAccessorName
 

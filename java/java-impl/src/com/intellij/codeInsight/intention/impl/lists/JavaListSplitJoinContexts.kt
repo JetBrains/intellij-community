@@ -7,7 +7,15 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.editor.actions.lists.CommaListSplitJoinContext
 import com.intellij.openapi.editor.actions.lists.JoinOrSplit
 import com.intellij.openapi.editor.actions.lists.ListWithElements
-import com.intellij.psi.*
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiCall
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiExpressionList
+import com.intellij.psi.PsiParameterList
+import com.intellij.psi.PsiRecordHeader
 import com.intellij.psi.util.PsiTreeUtil
 
 

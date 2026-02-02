@@ -1,12 +1,17 @@
 package com.intellij.database.run.ui.table;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.ResultView;
+import com.intellij.database.datagrid.ViewIndex;
+import com.intellij.database.datagrid.ViewIndexSet;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JScrollPane;
+import java.awt.Point;
 
 enum GridSelectionGrowerStrategy {
   CELL {

@@ -5,7 +5,10 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentFactory
 import com.intellij.debugger.engine.evaluation.TextWithImports
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.JavaCodeFragment
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 
 abstract class JavaDebuggerCodeFragmentFactory : CodeFragmentFactory() {

@@ -18,7 +18,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.YAMLUtil;
-import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.YAMLAlias;
+import org.jetbrains.yaml.psi.YAMLAnchor;
+import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLPsiElement;
+import org.jetbrains.yaml.psi.YAMLSequenceItem;
+import org.jetbrains.yaml.psi.YAMLValue;
+import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 import org.jetbrains.yaml.resolve.YAMLAliasReference;
 
 import java.util.Collection;

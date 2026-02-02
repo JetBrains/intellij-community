@@ -20,7 +20,11 @@ import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class PathRelativizerService {

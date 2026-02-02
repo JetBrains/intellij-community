@@ -17,7 +17,8 @@ package com.intellij.util.graph;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.Objects;
 
 
 /**

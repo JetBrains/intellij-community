@@ -7,7 +7,11 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.downloadFileToCacheLocation
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyToRecursively
+import kotlin.io.path.createDirectories
+import kotlin.io.path.div
+import kotlin.io.path.exists
 
 private val os: String = System.getProperty("os.name").lowercase().let { name ->
   when {

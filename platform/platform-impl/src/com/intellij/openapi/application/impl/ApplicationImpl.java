@@ -1105,19 +1105,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     });
   }
 
-  private static void checkWriteActionAllowedOnCurrentThread() {
-    if (EDT.isCurrentThreadEdt()) {
-      return;
-    }
-    if (!InternalThreading.isBackgroundWriteActionAllowed()) {
-      throw new IllegalStateException(
-        "Background write action is not permitted on this thread. Consider using `backgroundWriteAction`, or switch to EDT");
-    }
-  }
-
   @Override
   public void runWriteAction(@NotNull Runnable action) {
-    checkWriteActionAllowedOnCurrentThread();
     incrementBackgroundWriteActionCounter();
     try {
       getThreadingSupport().runWriteActionBlocking(runnableUnitFunction(action));
@@ -1129,7 +1118,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public <T> T runWriteAction(@NotNull Computable<T> computation) {
-    checkWriteActionAllowedOnCurrentThread();
     incrementBackgroundWriteActionCounter();
     try {
       return getThreadingSupport().runWriteActionBlocking(computation::compute);
@@ -1141,7 +1129,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    checkWriteActionAllowedOnCurrentThread();
     incrementBackgroundWriteActionCounter();
     try {
       return getThreadingSupport().runWriteActionBlocking(rethrowCheckedExceptions(computation));

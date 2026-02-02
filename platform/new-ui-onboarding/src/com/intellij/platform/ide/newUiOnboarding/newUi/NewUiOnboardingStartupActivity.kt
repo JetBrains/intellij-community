@@ -29,7 +29,7 @@ internal class NewUiOnboardingStartupActivity : ProjectActivity {
     val propertyManager = serviceAsync<PropertiesComponent>()
     rememberNewUiOnFirstStartup(propertyManager)
 
-    if (NewUiOnboardingUtil.shouldProposeOnboarding()) {
+    if (NewUiOnboardingUtil.shouldProposeOnboarding(NewUiOnboardingUtil.OnboardingType.NEW_UI_ONBOARDING)) {
       propertyManager.unsetValue(ExperimentalUI.NEW_UI_SWITCH)
       val version = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
       propertyManager.setValue(ONBOARDING_PROPOSED_VERSION, version)

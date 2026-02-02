@@ -19,13 +19,15 @@ import java.io.InputStream
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
+import java.util.MissingResourceException
+import java.util.ResourceBundle
 import java.util.regex.Pattern
 
 @ApiStatus.Internal
 object GrazieDynamic : DynamicPluginListener {
-  private val hunspellPattern = Pattern.compile("hunspell-([a-z]{2})-${GraziePlugin.Hunspell.version}")
-  private val langToolPattern = Pattern.compile("([a-z]{2})-${GraziePlugin.LanguageTool.version}.jar")
+  private val hunspellPattern = Pattern.compile("hunspell-([a-z]{2,3})-${GraziePlugin.Hunspell.version}")
+  private val langToolPattern = Pattern.compile("([a-z]{2,3})-${GraziePlugin.LanguageTool.version}.jar")
 
   private val myDynClassLoaders by lazy {
 
@@ -79,7 +81,7 @@ object GrazieDynamic : DynamicPluginListener {
     val bundles = buildSet {
       for (language in languages) {
         val path = dynamicFolder.resolve(language.ltRemote!!.file)
-        if (language.isEnglish() || isValidBundleForLanguage(language, path)) {
+        if (language.isEnglish() || isValidBundleForLanguage(language.ltRemote, path)) {
           add(path)
         } else {
           thisLogger().error("""

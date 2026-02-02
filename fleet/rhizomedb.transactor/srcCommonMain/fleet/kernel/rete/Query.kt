@@ -1,9 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rete
 
-import com.jetbrains.rhizomedb.*
-import fleet.kernel.rete.impl.*
+import com.jetbrains.rhizomedb.Attribute
+import com.jetbrains.rhizomedb.Change
+import com.jetbrains.rhizomedb.Datom
+import com.jetbrains.rhizomedb.EAVa
+import com.jetbrains.rhizomedb.EID
 import fleet.fastutil.longs.LongSet
+import fleet.kernel.rete.impl.BroadcasterImpl
+import fleet.kernel.rete.impl.ObservableMatch
+import fleet.kernel.rete.impl.QueryTracingKey
+import fleet.kernel.rete.impl.ReteNetworkImpl
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**

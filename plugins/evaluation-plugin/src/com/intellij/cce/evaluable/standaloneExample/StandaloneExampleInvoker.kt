@@ -1,6 +1,10 @@
 package com.intellij.cce.evaluable.standaloneExample
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.Lookup
+import com.intellij.cce.core.Session
+import com.intellij.cce.core.Suggestion
+import com.intellij.cce.core.SuggestionSource
+import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.interpreter.FeatureInvoker
 
 class StandaloneExampleInvoker : FeatureInvoker {

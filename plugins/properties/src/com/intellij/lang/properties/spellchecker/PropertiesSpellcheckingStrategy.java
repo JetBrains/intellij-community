@@ -12,7 +12,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.inspections.PropertiesSplitter;
 import com.intellij.spellchecker.inspections.Splitter;
-import com.intellij.spellchecker.tokenizer.*;
+import com.intellij.spellchecker.tokenizer.EscapeSequenceTokenizer;
+import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
+import com.intellij.spellchecker.tokenizer.TokenConsumer;
+import com.intellij.spellchecker.tokenizer.Tokenizer;
+import com.intellij.spellchecker.tokenizer.TokenizerBase;
 import org.jetbrains.annotations.NotNull;
 
 final class PropertiesSpellcheckingStrategy extends SpellcheckingStrategy implements DumbAware {
@@ -29,7 +33,7 @@ final class PropertiesSpellcheckingStrategy extends SpellcheckingStrategy implem
       return EMPTY_TOKENIZER;
     }
     if (element instanceof PropertyValueImpl) {
-      return myPropertyValueTokenizer;
+      return useTextLevelSpellchecking(element) ? EMPTY_TOKENIZER : myPropertyValueTokenizer;
     }
     if (element instanceof PropertyKeyImpl) {
       return myPropertyTokenizer;

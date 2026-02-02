@@ -6,7 +6,11 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyPassStatement
+import com.jetbrains.python.psi.PyReturnStatement
+import com.jetbrains.python.psi.PyStatement
 
 /**
  * Appends missing `return None`, and transforms `return` into `return None`.

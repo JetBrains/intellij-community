@@ -26,11 +26,6 @@ interface UndoConstants {
 
     @JvmField
     @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use {@link UndoUtil#forceUndoIn(VirtualFile, Runnable)} instead")
-    val FORCE_RECORD_UNDO: Key<Boolean> = UndoUtil.FORCE_RECORD_UNDO
-
-    @JvmField
-    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use {@link UndoUtil#disableUndoIn(Document, Runnable)} instead")
     val DONT_RECORD_UNDO: Key<Boolean> = UndoUtil.DONT_RECORD_UNDO
   }

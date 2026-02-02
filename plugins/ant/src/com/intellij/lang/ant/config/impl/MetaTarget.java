@@ -2,7 +2,12 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.config.*;
+import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntBuildFileBase;
+import com.intellij.lang.ant.config.AntBuildListener;
+import com.intellij.lang.ant.config.AntBuildModelBase;
+import com.intellij.lang.ant.config.AntBuildTargetBase;
+import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;

@@ -3,7 +3,12 @@
 package org.jetbrains.kotlin.nj2k.printing
 
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKComment
+import org.jetbrains.kotlin.nj2k.tree.JKDeclaration
+import org.jetbrains.kotlin.nj2k.tree.JKFormattingOwner
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.hasLineBreakAfter
+import org.jetbrains.kotlin.nj2k.tree.hasLineBreakBefore
 
 class JKCommentPrinter(private val printer: JKPrinter) {
     // some comments may appear in the AST multiple times, so we keep track

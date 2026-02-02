@@ -38,6 +38,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.platform.instanceContainer.internal.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.IntelliJCoroutinesFacade
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.UList
@@ -80,7 +81,8 @@ val emptyConstructorMethodType: MethodType = MethodType.methodType(Void.TYPE)
 val coroutineScopeMethodType: MethodType = MethodType.methodType(Void.TYPE, CoroutineScope::class.java)
 
 private val applicationMethodType: MethodType = MethodType.methodType(Void.TYPE, Application::class.java)
-private val applicationAndScopeMethodType: MethodType = MethodType.methodType(Void.TYPE, Application::class.java, CoroutineScope::class.java)
+private val applicationAndScopeMethodType: MethodType =
+  MethodType.methodType(Void.TYPE, Application::class.java, CoroutineScope::class.java)
 private val componentManagerMethodType: MethodType = MethodType.methodType(Void.TYPE, ComponentManager::class.java)
 
 private val defaultSupportedSignaturesOfLightServiceConstructors: List<MethodType> = java.util.List.of(
@@ -314,7 +316,7 @@ abstract class ComponentManagerImpl(
   open fun registerComponents(
     modules: List<IdeaPluginDescriptorImpl>,
     app: Application?,
-    listenerCallbacks: MutableList<in Runnable>? = null
+    listenerCallbacks: MutableList<in Runnable>? = null,
   ) {
     val activityNamePrefix = activityNamePrefix()
 
@@ -419,9 +421,11 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  private fun registerComponents2Inner(pluginDescriptor: IdeaPluginDescriptor,
-                                       containerDescriptor: ContainerDescriptor,
-                                       headless: Boolean) {
+  private fun registerComponents2Inner(
+    pluginDescriptor: IdeaPluginDescriptor,
+    containerDescriptor: ContainerDescriptor,
+    headless: Boolean,
+  ) {
     val components = containerDescriptor.components
     if (components.isEmpty()) {
       return
@@ -556,7 +560,7 @@ abstract class ComponentManagerImpl(
       null
     }
     val registrar = serviceContainer.startRegistration(registrationScope)
-    val app = getApplication()!!
+    val app: Application? = getApplication()
     for (descriptor in services) {
       if (!isServiceSuitable(descriptor) || (descriptor.os != null && !descriptor.os.isSuitableForOs())) {
         continue
@@ -566,6 +570,7 @@ abstract class ComponentManagerImpl(
       // Null serviceImplementation means we want unregistering service. (empty serviceImplementation will be nullized by the reader)
       // This is the same code as in the ServiceDescriptor.getImplementation with the difference in how application instance is obtained.
       val implementation: String? = when {
+        app == null -> descriptor.serviceImplementation
         descriptor.testServiceImplementation != null && app.isUnitTestMode -> descriptor.testServiceImplementation
         descriptor.headlessImplementation != null && app.isHeadlessEnvironment -> descriptor.headlessImplementation
         else -> descriptor.serviceImplementation
@@ -574,7 +579,7 @@ abstract class ComponentManagerImpl(
       val key = descriptor.serviceInterface ?: implementation
       if (key == null) {
         LOG.error("Either 'serviceInterface' or 'serviceImplementation' must be non-null and non-empty. " +
-                  "(isUnitTestMode=${app.isUnitTestMode}, isHeadlessEnvironment=${app.isHeadlessEnvironment}. " +
+                  "(isUnitTestMode=${app?.isUnitTestMode}, isHeadlessEnvironment=${app?.isHeadlessEnvironment}. " +
                   "Error while loading service descriptor: $descriptor")
         continue
       }
@@ -609,9 +614,35 @@ abstract class ComponentManagerImpl(
         )
       }
     }
-    val handle = registrar.complete()
-    if (handle != null) {
-      pluginServicesStore.putServicesUnregisterHandle(pluginDescriptor, handle)
+    val result = registrar.complete()
+    if (result != null) {
+      setForwarding(result.shadowedInstances)
+      pluginServicesStore.putServicesUnregisterHandle(pluginDescriptor, result.unregisterHandle)
+    }
+  }
+
+  private fun setForwarding(shadowedInstances: Map<String, InstanceHolder>) {
+    if (!useProxiesForOpenServices) return // shortcut: there are no ServiceProxyInstrumentation instances in the list
+
+    shadowedInstances.forEach { (k, v) ->
+      val inst = v.tryGetInstance()
+      if (inst is ServiceProxyInstrumentation) {
+        inst.setForwarding(lazy(LazyThreadSafetyMode.PUBLICATION) {
+          // the warning is muted, because we have too many violations at the moment
+          //LOG.warn("Accessing overridden service using stale reference")
+          // TODO: is there a better way to get the service interface type here?
+          val serviceClass = v.instanceClass().classLoader.loadClass(k)
+          getService(serviceClass)!!
+        })
+      }
+    }
+  }
+
+  private fun resetForwarding(reactivatedInstances: Map<String, InstanceHolder>) {
+    if (!useProxiesForOpenServices) return // shortcut: there are no ServiceProxyInstrumentation instances in the list
+
+    reactivatedInstances.forEach { (_, holder) ->
+      (holder.tryGetInstance() as? ServiceProxyInstrumentation)?.setForwarding(null)
     }
   }
 
@@ -790,7 +821,7 @@ abstract class ComponentManagerImpl(
     implementation: Class<*>,
     pluginDescriptor: PluginDescriptor,
     override: Boolean,
-    clientKind: ClientKind?
+    clientKind: ClientKind?,
   ) {
     val descriptor = ServiceDescriptor(serviceInterface.name, implementation.name, null, null, false,
                                        false, null, PreloadMode.FALSE, clientKind, null)
@@ -962,10 +993,12 @@ abstract class ComponentManagerImpl(
 
   final override fun createError(message: String, pluginId: PluginId): PluginException = PluginException(message, pluginId)
 
-  final override fun createError(message: String,
-                                 error: Throwable?,
-                                 pluginId: PluginId,
-                                 attachments: MutableMap<String, String>?): RuntimeException {
+  final override fun createError(
+    message: String,
+    error: Throwable?,
+    pluginId: PluginId,
+    attachments: MutableMap<String, String>?,
+  ): RuntimeException {
     return PluginException(message, error, pluginId, attachments?.map { Attachment(it.key, it.value) } ?: java.util.List.of())
   }
 
@@ -988,7 +1021,8 @@ abstract class ComponentManagerImpl(
       LOG.trace { "$debugString : nothing to unload ${module.pluginId}:${module.descriptorPath}" }
       return
     }
-    val holders = handle?.unregister() ?: emptyMap()
+    val unregisterResult = handle?.unregister()
+    val holders = unregisterResult?.unregisteredInstances ?: emptyMap()
     if (holders.isEmpty() && dynamicInstances.isEmpty()) {
       // warn because the handle should not be in the map in the first place
       LOG.warn("$debugString : nothing unloaded for ${module.pluginId}:${module.descriptorPath}")
@@ -1005,6 +1039,11 @@ abstract class ComponentManagerImpl(
         Disposer.dispose(instance)
       }
       store.unloadComponent(instance)
+    }
+
+    val unshadowedInstances = unregisterResult?.unshadowedInstances
+    if (unshadowedInstances != null) {
+      resetForwarding(unshadowedInstances)
     }
   }
 
@@ -1398,6 +1437,9 @@ abstract class ComponentManagerImpl(
     }
     return intersectionScope
   }
+
+  internal open val useProxiesForOpenServices: Boolean =
+    SystemProperties.getBooleanProperty("intellij.platform.use.proxies.for.open.services", false)
 }
 
 private class PluginServicesStore {
@@ -1566,13 +1608,14 @@ private fun getInstanceBlocking(holder: InstanceHolder, debugString: String, cre
   }
 }
 
-private val forbidGetServiceEvenInNonCancellable: Boolean = System.getProperty("idea.forbid.get.service.in.nc.static.init", "false").toBoolean()
+private val forbidGetServiceEvenInNonCancellable: Boolean =
+  System.getProperty("idea.forbid.get.service.in.nc.static.init", "false").toBoolean()
 
 internal fun getOrCreateInstanceBlocking(holder: InstanceHolder, debugString: String, keyClass: Class<*>?): Any {
   // container scope might be canceled
   // => holder is initialized with CE
   // => caller should get PCE
-  rethrowCEasPCE(keyClass?:holder) {
+  rethrowCEasPCE(keyClass ?: holder) {
     val instance = holder.tryGetInstance()
     if (instance != null) {
       return instance
@@ -1606,7 +1649,7 @@ private fun doGetOrCreateInstanceBlocking(holder: InstanceHolder, keyClass: Clas
     }
   }
   catch (e: ProcessCanceledException) {
-    throwAlreadyDisposedIfNotUnderIndicatorOrJob(keyClass?:holder, cause = e)
+    throwAlreadyDisposedIfNotUnderIndicatorOrJob(keyClass ?: holder, cause = e)
     throw e
   }
 }
@@ -1710,7 +1753,7 @@ private inline fun <X> rethrowCEasPCE(self: Any, action: () -> X): X {
   }
 }
 
-private fun throwAlreadyDisposedIfNotUnderIndicatorOrJob(self:Any, cause: Throwable) {
+private fun throwAlreadyDisposedIfNotUnderIndicatorOrJob(self: Any, cause: Throwable) {
   if (!isUnderIndicatorOrJob()) {
     // in useInstanceContainer=false AlreadyDisposedException was thrown instead
     throw AlreadyDisposedException("Container $self is already disposed").initCause(cause)
@@ -1779,7 +1822,7 @@ fun ComponentManager.getComponentManagerImpl(): ComponentManagerImpl {
 private class StartUpMessageDeliveryListener(
   private val messageBus: MessageBusImpl,
   private val logMessageBusDeliveryFunction: (Topic<*>, String, Any, Long) -> Unit,
-): MessageDeliveryListener {
+) : MessageDeliveryListener {
   override fun messageDelivered(topic: Topic<*>, messageName: String, handler: Any, durationNanos: Long) {
     if (!StartUpMeasurer.isMeasuringPluginStartupCosts()) {
       messageBus.removeMessageDeliveryListener(this)

@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.api.data
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
-import java.util.*
+import java.util.Date
 
 @GraphQLFragment("/graphql/fragment/comment.graphql")
 open class GHComment(id: String,

@@ -11,11 +11,24 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.refactoring.RefactoringActionHandler
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractableCodeDescriptor
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractableCodeDescriptorWithConflicts
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionData
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionEngine
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionEngineHelper
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionGeneratorConfiguration
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionGeneratorOptions
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionOptions
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionResult
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionTarget
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.processDuplicatesSilently
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.propertyTargets
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.validate
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty.KotlinInplacePropertyIntroducer
 import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetSibling
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
@@ -23,12 +36,18 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHintByKey
 import org.jetbrains.kotlin.idea.refactoring.introduce.validateExpressionElements
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.plainContent
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class KotlinIntroduceConstantHandler(
     val helper: ExtractionEngineHelper = InteractiveExtractionHelper
 ) : RefactoringActionHandler {
@@ -171,6 +190,7 @@ class KotlinIntroduceConstantHandler(
     }
 }
 
+@K1Deprecation
 val INTRODUCE_CONSTANT: String
     @Nls
     get() = KotlinBundle.message("introduce.constant")

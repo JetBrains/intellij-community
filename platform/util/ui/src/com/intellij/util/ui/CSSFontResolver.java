@@ -4,7 +4,7 @@ package com.intellij.util.ui;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.text.AttributeSet;
-import java.awt.*;
+import java.awt.Font;
 
 /**
  * @see JBHtmlEditorKit#setFontResolver(CSSFontResolver)

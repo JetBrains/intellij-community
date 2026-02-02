@@ -6,7 +6,7 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @author Alexander Lobas

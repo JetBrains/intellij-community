@@ -11,7 +11,12 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.api.reflect.HasPublicType
-import org.jetbrains.plugins.gradle.model.*
+import org.jetbrains.plugins.gradle.model.DefaultGradleConfiguration
+import org.jetbrains.plugins.gradle.model.DefaultGradleConvention
+import org.jetbrains.plugins.gradle.model.DefaultGradleExtension
+import org.jetbrains.plugins.gradle.model.DefaultGradleExtensions
+import org.jetbrains.plugins.gradle.model.DefaultGradleProperty
+import org.jetbrains.plugins.gradle.model.GradleExtensions
 import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService

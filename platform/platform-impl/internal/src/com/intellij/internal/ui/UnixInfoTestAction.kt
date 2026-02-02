@@ -232,8 +232,8 @@ private class UnixInfoDialog(val project: Project?, dialogTitle: String) :
 
     val frame = getFrame()
     lbIsInFullScreenMode.text = if (frame == null) "IdeFrame not found" else X11UiUtil.isInFullScreenMode(frame).toString()
-    lbIsMaximizedVert.text = if (frame == null) "IdeFrame not found" else X11UiUtil.isMaximizedVert(frame).toString()
-    lbIsMaximizedHorz.text = if (frame == null) "IdeFrame not found" else X11UiUtil.isMaximizedHorz(frame).toString()
+    lbIsMaximizedVert.text = if (frame == null) "IdeFrame not found" else X11UiUtil.isVMaximized(frame).toString()
+    lbIsMaximizedHorz.text = if (frame == null) "IdeFrame not found" else X11UiUtil.isHMaximized(frame).toString()
     lbIdeFrameInFullScreen.text = frame?.isInFullScreen?.toString() ?: "IdeFrame not found"
     lbFrameExtendedState.text = if (frame == null) "IdeFrame not found" else extendedStateToString(frame.extendedState)
   }

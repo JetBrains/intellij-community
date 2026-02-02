@@ -42,7 +42,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.launchOnShow
-import com.intellij.util.ui.moveToFitChildPopupX
+import com.intellij.ui.wayland.moveToFitChildPopupX
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job

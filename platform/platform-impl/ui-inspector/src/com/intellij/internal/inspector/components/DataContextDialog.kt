@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector.components
 
 import com.intellij.ide.DataManager
@@ -7,6 +7,7 @@ import com.intellij.ide.impl.DataValidators
 import com.intellij.internal.inspector.UiInspectorUtil.getComponentName
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.Utils
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Comparing
@@ -144,7 +145,9 @@ internal class DataContextDialog(
     for (key in DataKey.allKeys()) {
       val specialKey = isSpecialContextComponentOnlyKey(key)
       if (specialKey && component !== componentList.first()) continue
-      val data = context.getData(key)
+      val data = runReadAction {
+        context.getData(key)
+      }
       val parentData = if (specialKey) null else parentContext.getData(key)
       if (equalData(data, parentData, 0, null)) continue
       val childData = childDataMap[key.name]

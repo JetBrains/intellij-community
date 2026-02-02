@@ -9,8 +9,23 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.*
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.*
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.CustomGradlePropertiesDsl
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.CustomGradlePropertiesTestFeature
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.DevModeTestFeature
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.DevModeTweaksDsl
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.DevModeTweaksImpl
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsLinkingDsl
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsPublishingDsl
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsPublishingTestsFeature
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.LibraryKindsChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.LinkedProjectPathsTestsFeature
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.NoErrorEventsDuringImportFeature
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.AllFilesAreUnderContentRootChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.AllFilesUnderContentRootConfigurationDsl
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.DocumentationChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.DocumentationCheckerDsl
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.ReferenceTargetChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.TestTasksChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.ContentRootsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.facets.KotlinFacetSettingsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingCheckDsl
@@ -45,7 +60,7 @@ import org.junit.Test
 import org.junit.runner.Description
 import org.junit.runner.RunWith
 import java.io.File
-import java.util.*
+import java.util.TreeSet
 
 /**
  * The base class for Kotlin MPP Import-based tests.

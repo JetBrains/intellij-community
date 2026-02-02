@@ -37,7 +37,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.task.ProjectTaskContext;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -109,7 +108,6 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
       });
   }
 
-  @RequiresBlockingContext
   public static ExternalProjectsManagerImpl getInstance(@NotNull Project project) {
     return (ExternalProjectsManagerImpl)ExternalProjectsManager.getInstance(project);
   }

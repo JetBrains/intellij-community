@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.base.platforms.KotlinJvmStdlibDetectorFacility;
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
 import org.jetbrains.kotlin.idea.projectConfiguration.JavaRuntimeLibraryDescription;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 import java.util.regex.Pattern;
 

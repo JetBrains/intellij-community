@@ -9,10 +9,50 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDisjunctionType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
+import com.intellij.psi.controlFlow.ControlFlowOptions;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
@@ -26,6 +66,7 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +82,16 @@ public final class ExtractLightMethodObjectHandler {
                                                                                   final @NotNull PsiCodeFragment fragment,
                                                                                   @NotNull String methodName,
                                                                                   @Nullable JavaSdkVersion javaVersion) throws PrepareFailedException {
+    return extractLightMethodObject(project, originalContext, fragment, methodName, javaVersion, null);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable LightMethodObjectExtractedData extractLightMethodObject(final Project project,
+                                                                                  @Nullable PsiElement originalContext,
+                                                                                  final @NotNull PsiCodeFragment fragment,
+                                                                                  @NotNull String methodName,
+                                                                                  @Nullable JavaSdkVersion javaVersion,
+                                                                                  @Nullable String explicitGeneratedEvaluationClassName) throws PrepareFailedException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     PsiElement[] elements = completeToStatementArray(fragment, elementFactory);
     if (elements == null) {
@@ -262,7 +313,7 @@ public final class ExtractLightMethodObjectHandler {
         new ReflectionAccessorToEverything(generatedClass, elementFactory).grantAccessThroughReflection(callExpression);
         boolean isJdkAtLeast11 = javaVersion == null || javaVersion.isAtLeast(JavaSdkVersion.JDK_11);
         if (isJdkAtLeast11 || Registry.is("debugger.compiling.evaluator.extract.generated.class")) {
-          generatedClass = ExtractGeneratedClassUtil.extractGeneratedClass(generatedClass, elementFactory, anchor);
+          generatedClass = ExtractGeneratedClassUtil.extractGeneratedClass(generatedClass, elementFactory, anchor, explicitGeneratedEvaluationClassName);
         }
       }
       else {

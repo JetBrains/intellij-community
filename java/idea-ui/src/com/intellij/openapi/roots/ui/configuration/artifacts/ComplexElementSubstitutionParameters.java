@@ -22,7 +22,12 @@ import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 public class ComplexElementSubstitutionParameters {
   private final Set<ComplexPackagingElementType<?>> myTypesToSubstitute = new HashSet<>();

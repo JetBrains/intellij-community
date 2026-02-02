@@ -1,0 +1,13 @@
+import kotlin.enums.enumEntries
+
+enum class MyEnum {
+    A, B, C
+}
+
+fun test(arr: Collection<Any>) {
+    println(arr.size)
+}
+
+fun main() {
+    test(enumEntries<MyEnum>())
+}

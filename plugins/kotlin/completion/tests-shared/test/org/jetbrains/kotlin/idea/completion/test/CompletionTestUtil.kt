@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.completion.test
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.platform.TargetPlatform

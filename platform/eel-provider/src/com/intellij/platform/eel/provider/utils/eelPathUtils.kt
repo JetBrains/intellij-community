@@ -1087,7 +1087,7 @@ object EelPathUtils {
       val localPathEel = sourceRoot.asEelPath()
       val sourceDescriptor = localPathEel.descriptor
       val localOsFamily = localPathEel.descriptor.osFamily
-      val remoteOsFamily = targetRoot.getEelDescriptor().osFamily
+      val remoteOsFamily = targetRoot.osFamily
       val sourceRoot = localPathEel.asNioPath()
       val targetRoot = targetRootEel.asNioPath()
 

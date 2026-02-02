@@ -6,7 +6,11 @@ import com.fasterxml.jackson.databind.RuntimeJsonMappingException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.errorProcessing.*
+import com.jetbrains.python.errorProcessing.ExecError
+import com.jetbrains.python.errorProcessing.ExecErrorReason
+import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyExecResult
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -66,7 +70,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
         .getOr { return it }
     }
 
-    val path = VirtualEnvReader.Instance.findPythonInPythonRoot(cwd.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
+    val path = VirtualEnvReader().findPythonInPythonRoot(cwd.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
     if (path == null) {
       return PyResult.localizedError(PyBundle.message("python.sdk.uv.failed.to.initialize.uv.environment"))
     }

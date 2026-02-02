@@ -1,12 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionHost.LensInvalidateSignal
 import com.intellij.execution.wsl.WslPath
-import com.intellij.java.JavaBundle
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
@@ -152,15 +149,6 @@ public class ExternalJavaConfigurationService(public val project: Project, priva
 
       // Update status and refresh inlays after configuration
       setStatus(filePath, JavaConfigurationStatus.AlreadyConfigured)
-
-      NotificationGroupManager.getInstance()
-        .getNotificationGroup("Setup JDK")
-        .createNotification(
-          JavaBundle.message("sdk.configured.external.config.title", fileName),
-          JavaBundle.message("sdk.configured", jdk.versionString),
-          NotificationType.INFORMATION
-        )
-        .notify(project)
     }
   }
 

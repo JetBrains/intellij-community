@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.result
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -9,18 +10,47 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.imports.importableFqName
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.*
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.*
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.AssignSequenceResultTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.AssignToVariableResultTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.ChainedCallGenerator
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.CollectionKind
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.MatchingState
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.ReplaceLoopResultTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.ResultTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.SequenceTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.TransformationMatch
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.TransformationMatcher
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.VariableInitialization
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.canChangeLocalVariableType
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.findVariableInitializationBeforeLoop
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.generateLambda
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.hasNoSideEffect
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isSimpleCollectionInstantiation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isStableInLoop
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isVariableReference
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.Condition
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.FilterNotNullTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.FilterTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.FlatMapTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.MapTransformation
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.overriddenTreeUniqueAsSequence
 
+@K1Deprecation
 class AddToCollectionTransformation(
     loop: KtForExpression,
     private val targetCollection: KtExpression
@@ -221,6 +251,7 @@ private fun DeclarationDescriptor.isCollectionAdd(): Boolean {
     }
 }
 
+@K1Deprecation
 class FilterToTransformation private constructor(
     loop: KtForExpression,
     private val inputVariable: KtCallableDeclaration,
@@ -279,6 +310,7 @@ class FilterToTransformation private constructor(
     }
 }
 
+@K1Deprecation
 class FilterNotNullToTransformation private constructor(
     loop: KtForExpression,
     private val targetCollection: KtExpression
@@ -307,6 +339,7 @@ class FilterNotNullToTransformation private constructor(
     }
 }
 
+@K1Deprecation
 class MapToTransformation private constructor(
     loop: KtForExpression,
     private val inputVariable: KtCallableDeclaration,
@@ -350,6 +383,7 @@ class MapToTransformation private constructor(
     }
 }
 
+@K1Deprecation
 class FlatMapToTransformation private constructor(
     loop: KtForExpression,
     private val inputVariable: KtCallableDeclaration,
@@ -388,6 +422,7 @@ class FlatMapToTransformation private constructor(
     }
 }
 
+@K1Deprecation
 class AssignToListTransformation(
     loop: KtForExpression,
     initialization: VariableInitialization,
@@ -408,6 +443,7 @@ class AssignToListTransformation(
     }
 }
 
+@K1Deprecation
 class AssignToMutableListTransformation(
     loop: KtForExpression,
     initialization: VariableInitialization
@@ -421,6 +457,7 @@ class AssignToMutableListTransformation(
     }
 }
 
+@K1Deprecation
 class AssignToSetTransformation(
     loop: KtForExpression,
     initialization: VariableInitialization
@@ -434,6 +471,7 @@ class AssignToSetTransformation(
     }
 }
 
+@K1Deprecation
 class AssignToMutableSetTransformation(
     loop: KtForExpression,
     initialization: VariableInitialization

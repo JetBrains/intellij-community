@@ -5,7 +5,14 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaValidation
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
-import com.jetbrains.jsonSchema.impl.light.*
+import com.jetbrains.jsonSchema.impl.light.ADDITIONAL_ITEMS
+import com.jetbrains.jsonSchema.impl.light.DEPENDENCIES
+import com.jetbrains.jsonSchema.impl.light.ITEMS
+import com.jetbrains.jsonSchema.impl.light.JSON_DEFINITIONS
+import com.jetbrains.jsonSchema.impl.light.JSON_DOLLAR_ID
+import com.jetbrains.jsonSchema.impl.light.JsonSchemaReferenceResolver
+import com.jetbrains.jsonSchema.impl.light.LocalSchemaReferenceResolver
+import com.jetbrains.jsonSchema.impl.light.RemoteSchemaReferenceResolver
 import com.jetbrains.jsonSchema.impl.validations.getSchema7AndEarlierValidations
 
 internal data object JsonSchema7Strategy : JsonSchemaInterpretationStrategy {

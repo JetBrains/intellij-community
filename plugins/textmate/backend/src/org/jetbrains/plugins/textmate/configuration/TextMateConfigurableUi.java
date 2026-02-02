@@ -12,7 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TextMateBundle;
 import org.jetbrains.plugins.textmate.TextMateService;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.util.Set;
 
 public class TextMateConfigurableUi implements ConfigurableUi<TextMateConfigurableData>, Disposable {

@@ -11,7 +11,13 @@ import org.junit.jupiter.api.TestInfo
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.*
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createFile
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.relativeTo
 
 class PyCharmCommunityBuildTest {
   companion object {

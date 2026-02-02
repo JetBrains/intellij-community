@@ -17,7 +17,7 @@ import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;

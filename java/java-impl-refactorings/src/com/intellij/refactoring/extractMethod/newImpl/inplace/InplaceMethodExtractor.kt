@@ -18,7 +18,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
-import com.intellij.refactoring.extractMethod.newImpl.*
+import com.intellij.refactoring.extractMethod.newImpl.CodeFragmentAnalyzer
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodService
+import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.addInlaySettingsElement
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.checkReferenceIdentifier
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createGreedyRangeMarker

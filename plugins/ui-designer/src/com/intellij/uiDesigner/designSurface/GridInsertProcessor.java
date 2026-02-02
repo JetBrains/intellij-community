@@ -8,8 +8,10 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.Cursor;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 
 public class GridInsertProcessor {

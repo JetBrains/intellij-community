@@ -185,17 +185,12 @@ internal class EditorCellActionsToolbarController(
 
     val panelLocationInEditor = SwingUtilities.convertPoint(panel, Point(0, 0), editor.contentComponent)
 
-    var xCoordinate = panelLocationInEditor.x + xOffset
+    val xCoordinate = panelLocationInEditor.x + xOffset
     var yCoordinate = panelLocationInEditor.y + yOffset
 
-    // We have also EditorInspectionsActionToolbar in the top right editor corner, and we want to protect from overlap.
-    val statusComponent = (editor.scrollPane as? JBScrollPane)?.statusComponent
-    if (statusComponent != null && xCoordinate + toolbarWidth > panelWidth - statusComponent.width) {
-      xCoordinate = panelWidth - statusComponent.width - toolbarWidth + editor.scrollPane.verticalScrollBar.width
-    }
-
+    // We have StickyLinesPanel - to show current class/method. This panel has a full-editor width.
     if (NotebookSettings.getInstance().cellToolbarStickyVisible) {
-      yCoordinate = max(yCoordinate, editor.contentComponent.visibleRect.y + JBUI.scale(2))
+      yCoordinate = max(yCoordinate, editor.contentComponent.visibleRect.y + JBUI.scale(2) + editor.stickyLinesPanelHeight)
 
       val bounds = cell.view?.calculateBounds()
       if (bounds != null) {
@@ -203,7 +198,17 @@ internal class EditorCellActionsToolbarController(
       }
     }
 
-    return Rectangle(xCoordinate, yCoordinate, toolbarWidth, toolbarHeight)
+    val result =  Rectangle(xCoordinate, yCoordinate, toolbarWidth, toolbarHeight)
+
+    // We have also EditorInspectionsActionToolbar in the top right editor corner, and we want to protect from overlap.
+    val statusComponent = (editor.scrollPane as? JBScrollPane)?.statusComponent
+    if (statusComponent != null) {
+      if(result.intersects(statusComponent.bounds.apply { y += editor.contentComponent.visibleRect.y })) {
+        result.y += statusComponent.height
+      }
+    }
+
+    return result
   }
 
   companion object {

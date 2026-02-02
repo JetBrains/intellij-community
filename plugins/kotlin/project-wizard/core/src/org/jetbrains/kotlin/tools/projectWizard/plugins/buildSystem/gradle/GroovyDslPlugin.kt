@@ -6,8 +6,8 @@ import org.jetbrains.kotlin.tools.projectWizard.core.PluginSettingsOwner
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.PipelineTask
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildFileData
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemData
-import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.addBuildSystemData
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
+import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.addBuildSystemData
 import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.GradlePrinter
 
 class GroovyDslPlugin(context: Context) : GradlePlugin(context) {

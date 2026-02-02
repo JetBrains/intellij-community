@@ -1322,7 +1322,6 @@ a:com.intellij.openapi.progress.Task
 - com.intellij.openapi.progress.TaskInfo
 - pf:myParentComponent:javax.swing.JComponent
 - pf:myProject:com.intellij.openapi.project.Project
-- p:myTitle:java.lang.String
 - f:asBackgroundable():com.intellij.openapi.progress.Task$Backgroundable
 - f:asModal():com.intellij.openapi.progress.Task$Modal
 - f:getCancelText():java.lang.String
@@ -3312,8 +3311,6 @@ c:com.intellij.psi.stubs.SerializerNotFoundException
 - java.lang.Exception
 - <init>(java.lang.String):V
 a:com.intellij.psi.stubs.StubBase
-- com.intellij.psi.stubs.ObjectStubBase
-- com.intellij.psi.stubs.StubElement
 - p:<init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.stubs.IStubElementType):V
 - compareByOrderWith(com.intellij.psi.stubs.ObjectStubBase):I
 - findChildStubByType(com.intellij.psi.stubs.IStubElementType):com.intellij.psi.stubs.StubElement

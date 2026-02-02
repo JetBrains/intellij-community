@@ -18,9 +18,22 @@ import com.intellij.psi.PsiTypes
 import com.intellij.psi.impl.LanguageConstantExpressionEvaluator
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.uast.UastHintedVisitorAdapter
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UPolyadicExpression
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.UastCallKind
 import org.jetbrains.uast.generate.getUastElementFactory
 import org.jetbrains.uast.generate.replace
+import org.jetbrains.uast.getUCallExpression
+import org.jetbrains.uast.resolveToUElement
+import org.jetbrains.uast.skipParenthesizedExprDown
+import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocalInspectionTool() {

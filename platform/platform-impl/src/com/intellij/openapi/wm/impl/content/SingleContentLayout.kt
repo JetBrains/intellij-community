@@ -484,10 +484,10 @@ internal class SingleContentLayout(
         labels.forEach { comp ->
           val labelBounds = comp.bounds
           if (jbTabs.selectedInfo == retrieveInfo(comp)) {
-            tabPainter.paintSelectedTab(JBTabsPosition.top, g, labelBounds, 1, null, twcui.window.isActive, comp.isHovered)
+            tabPainter.paintSelectedTab(tabsPosition, g, labelBounds, 1, null, twcui.window.isActive, comp.isHovered)
           }
           else {
-            tabPainter.paintTab(JBTabsPosition.top, g, labelBounds, 1, null, twcui.window.isActive, comp.isHovered)
+            tabPainter.paintTab(tabsPosition, g, labelBounds, 1, null, twcui.window.isActive, comp.isHovered)
           }
         }
       }

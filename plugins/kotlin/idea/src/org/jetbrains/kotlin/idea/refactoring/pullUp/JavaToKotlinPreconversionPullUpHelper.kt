@@ -3,9 +3,19 @@
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiIntersectionType
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.refactoring.encapsulateFields.*
+import com.intellij.refactoring.encapsulateFields.EncapsulateFieldHelper
+import com.intellij.refactoring.encapsulateFields.EncapsulateFieldUsageInfo
+import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsDescriptor
+import com.intellij.refactoring.encapsulateFields.FieldDescriptor
+import com.intellij.refactoring.encapsulateFields.FieldDescriptorImpl
 import com.intellij.refactoring.memberPullUp.JavaPullUpHelper
 import com.intellij.refactoring.memberPullUp.PullUpData
 import com.intellij.refactoring.memberPullUp.PullUpHelper
@@ -13,6 +23,7 @@ import com.intellij.refactoring.util.DocCommentPolicy
 import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.refactoring.util.classMembers.MemberInfo
 import com.intellij.util.VisibilityUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
@@ -22,8 +33,14 @@ import org.jetbrains.kotlin.idea.j2k.j2kText
 import org.jetbrains.kotlin.idea.refactoring.removeOverrideModifier
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPsiFactory
 
+@K1Deprecation
 class JavaToKotlinPreconversionPullUpHelper(
     private val data: PullUpData,
     private val dummyTargetClass: PsiClass,

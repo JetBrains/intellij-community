@@ -13,8 +13,16 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.*
-import com.intellij.vcs.log.data.*
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.branches
+import com.intellij.vcs.log.data.CommitIdByStringCondition
+import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.VcsLogGraphData
+import com.intellij.vcs.log.data.VcsLogStorage
+import com.intellij.vcs.log.data.roots
 import com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder
@@ -35,6 +43,9 @@ object VcsLogNavigationUtil {
   fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath? = null): CompletableFuture<Boolean> =
     VcsProjectLog.getInstance(project).showRevisionAsync(root, hash, filePath).asCompletableFuture()
 
+  /**
+   * Show a commit in the UI only if it is already loaded
+   */
   @Internal
   fun VcsLogUiEx.showCommitSync(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean {
     return when (jumpToCommitSyncInternal(hash, root, true, requestFocus)) {
@@ -47,6 +58,9 @@ object VcsLogNavigationUtil {
     }
   }
 
+  /**
+   * Show a commit in the UI, loading additional commits if necessary
+   */
   @Internal
   suspend fun VcsLogUiEx.showCommit(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean {
     return when (jumpToCommitInternal(hash, root, true, requestFocus).await()) {

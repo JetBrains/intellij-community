@@ -3,7 +3,11 @@ package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.GlobalInspectionTool
-import com.intellij.codeInspection.ex.*
+import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.codeInspection.ex.InspectionToolWrapper
+import com.intellij.codeInspection.ex.InspectionToolsSupplier
+import com.intellij.codeInspection.ex.ProjectInspectionToolRegistrar
+import com.intellij.codeInspection.ex.ToolsImpl
 import com.intellij.codeInspection.inspectionProfile.YamlProfileUtils.createProfileCopy
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -16,7 +20,13 @@ import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.PROFILE_DIR
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.search.scope.packageSet.*
+import com.intellij.psi.search.scope.packageSet.AbstractPackageSet
+import com.intellij.psi.search.scope.packageSet.NamedScope
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
+import com.intellij.psi.search.scope.packageSet.PackageSet
+import com.intellij.psi.search.scope.packageSet.PackageSetBase
+import com.intellij.psi.search.scope.packageSet.PackageSetFactory
+import com.intellij.psi.search.scope.packageSet.ParsingException
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.File

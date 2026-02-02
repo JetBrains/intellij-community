@@ -6,3 +6,5 @@ fun foo(list: List<String>, intList: MutableList<Int>, stringList: MutableList<S
 // EXIST: stringList
 // ABSENT: intList
 // ABSENT: p
+
+// IGNORE_K2

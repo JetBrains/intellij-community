@@ -12,9 +12,11 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.ui.PopupHandler
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtElement
 import javax.swing.JTree
 
+@K1Deprecation
 class KotlinCallHierarchyBrowser(element: PsiElement) :
     CallHierarchyBrowserBase(element.project, element) {
     override fun createTrees(trees: MutableMap<in String, in JTree>) {

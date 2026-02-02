@@ -2,15 +2,23 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.ReviseWhenPortedToJDK;
-import com.intellij.debugger.*;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.PositionManager;
+import com.intellij.debugger.PositionManagerFactory;
 import com.intellij.debugger.engine.evaluation.DebuggerImplicitEvaluationContextUtil;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.*;
+import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
+import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
@@ -18,20 +26,22 @@ import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.statistics.DebuggerStatistics;
 import com.intellij.debugger.statistics.StatisticsStorage;
-import com.intellij.debugger.ui.breakpoints.*;
+import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.breakpoints.InstrumentationTracker;
+import com.intellij.debugger.ui.breakpoints.RunToCursorBreakpoint;
+import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
+import com.intellij.debugger.ui.breakpoints.SyntheticBreakpoint;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -47,9 +57,28 @@ import com.intellij.xdebugger.impl.frame.ShowSessionTabUtils;
 import com.jetbrains.jdi.EventRequestManagerImpl;
 import com.jetbrains.jdi.LocationImpl;
 import com.jetbrains.jdi.ThreadReferenceImpl;
-import com.sun.jdi.*;
-import com.sun.jdi.event.*;
+import com.sun.jdi.BooleanValue;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.InternalException;
+import com.sun.jdi.Location;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.ThreadReference;
+import com.sun.jdi.VMDisconnectedException;
+import com.sun.jdi.Value;
+import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.event.ClassPrepareEvent;
+import com.sun.jdi.event.ClassUnloadEvent;
+import com.sun.jdi.event.Event;
 import com.sun.jdi.event.EventQueue;
+import com.sun.jdi.event.EventSet;
+import com.sun.jdi.event.LocatableEvent;
+import com.sun.jdi.event.StepEvent;
+import com.sun.jdi.event.ThreadDeathEvent;
+import com.sun.jdi.event.ThreadStartEvent;
+import com.sun.jdi.event.VMDeathEvent;
+import com.sun.jdi.event.VMDisconnectEvent;
+import com.sun.jdi.event.VMStartEvent;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import one.util.streamex.StreamEx;
@@ -57,7 +86,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -84,7 +120,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if (vm != null) {
       vmAttached(proxy);
       if (vm.canBeModified()) {
-        DebuggerEventThread eventThread = myEventThreads.computeIfAbsent(vm, __ -> new DebuggerEventThread(proxy));
+        DebuggerManagerThreadImpl managerThread = DebuggerManagerThreadImpl.getCurrentThread();
+        DebuggerEventThread eventThread = myEventThreads.computeIfAbsent(vm, __ -> new DebuggerEventThread(managerThread));
         ApplicationManager.getApplication().executeOnPooledThread(
           ConcurrencyUtil.underThreadNameRunnable("DebugProcessEvents", eventThread));
       }
@@ -131,9 +168,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
     private final VirtualMachineProxyImpl myVmProxy;
     private final DebuggerManagerThreadImpl myDebuggerManagerThread;
 
-    DebuggerEventThread(VirtualMachineProxyImpl proxy) {
-      myVmProxy = proxy;
-      myDebuggerManagerThread = getManagerThread();
+    DebuggerEventThread(DebuggerManagerThreadImpl managerThread) {
+      myVmProxy = managerThread.getVmProxy();
+      myDebuggerManagerThread = managerThread;
     }
 
     private boolean myIsStopped = false;
@@ -654,16 +691,46 @@ public class DebugProcessEvents extends DebugProcessImpl {
         final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
         ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
         boolean isEvaluationOnCurrentThread = threadProxy != null && threadProxy.isEvaluating();
-        if ((isEvaluationOnCurrentThread || myThreadBlockedMonitor.isInResumeAllMode()) &&
+
+        if (!DebuggerSession.enableBreakpointsDuringEvaluation() &&
             !(requestor instanceof InstrumentationTracker.InstrumentationMethodBreakpoint) &&
-            !DebuggerSession.enableBreakpointsDuringEvaluation()) {
-          notifySkippedBreakpointInEvaluation(event, suspendContext);
-          // is inside evaluation, so ignore any breakpoints
-          logSuspendContext(suspendContext,
-                            () -> "Resume because of evaluation: isEvaluationOnCurrentThread = " + isEvaluationOnCurrentThread +
-                            ", myThreadBlockedMonitor.isInResumeAllMode() = " + myThreadBlockedMonitor.isInResumeAllMode());
-          suspendManager.voteResume(suspendContext);
-          return;
+            !(requestor instanceof InstrumentedTechnicalBreakpoint)) {
+
+          if (isEvaluationOnCurrentThread || myThreadBlockedMonitor.isInResumeAllMode()) {
+            notifySkippedBreakpointInEvaluation(event, suspendContext);
+            // is inside evaluation, so ignore any breakpoints
+            logSuspendContext(suspendContext,
+                              () -> "Resume because of evaluation: isEvaluationOnCurrentThread = " + isEvaluationOnCurrentThread +
+                              ", myThreadBlockedMonitor.isInResumeAllMode() = " + myThreadBlockedMonitor.isInResumeAllMode());
+            suspendManager.voteResume(suspendContext);
+            return;
+          }
+
+          if (myIsUnderBreakpointCheckFn != null) {
+            EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, null);
+            try {
+              Value value = invokeMethod(
+                evaluationContext,
+                (ClassType)myIsUnderBreakpointCheckFn.declaringType(),
+                myIsUnderBreakpointCheckFn,
+                Collections.emptyList()
+              );
+              if (value instanceof BooleanValue booleanValue) {
+                if (booleanValue.value()) {
+                  notifySkippedBreakpointInEvaluation(event, suspendContext);
+                  suspendManager.voteResume(suspendContext);
+                  return;
+                }
+              }
+              else {
+                throw new RuntimeException("Expected BooleanValue, got: " + value);
+              }
+            }
+            catch (Throwable e) {
+              //TODO: switch off instrumentation breakpoint logic
+              logError("Error evaluating isUnderBreakpointCheckFn", e);
+            }
+          }
         }
 
         // Skip breakpoints in other threads during suspend-all stepping.
@@ -712,16 +779,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
         catch (final LocatableEventRequestor.EventProcessingException ex) {
           // stop timer here to prevent reporting dialog opened time
           endTimeNs = System.nanoTime();
+          String exceptionMessage = ex.getMessage();
           if (LOG.isDebugEnabled()) {
-            LOG.debug(ex.getMessage());
+            LOG.debug(exceptionMessage);
           }
-          final boolean[] considerRequestHit = new boolean[]{true};
-          DebuggerInvocationUtil.invokeAndWait(getProject(), () -> {
-            final String displayName = requestor instanceof Breakpoint<?> breakpoint ? breakpoint.getDisplayName() : requestor.getClass().getSimpleName();
-            final String message = JavaDebuggerBundle.message("error.evaluating.breakpoint.condition.or.action", displayName, ex.getMessage());
-            considerRequestHit[0] = Messages.showYesNoDialog(getProject(), message, ex.getTitle(), Messages.getQuestionIcon()) == Messages.YES;
-          }, ModalityState.nonModal());
-          requestHit = considerRequestHit[0];
+          String title = ex.getTitle();
+          final String displayName = DebuggerUtilsImpl.getRequestorStringForUser(requestor);
+          requestHit = DebuggerUtilsImpl.askAboutPauseOnException(getProject(), displayName, exceptionMessage, title);
           resumePreferred = !requestHit;
         }
         catch (VMDisconnectedException e) {

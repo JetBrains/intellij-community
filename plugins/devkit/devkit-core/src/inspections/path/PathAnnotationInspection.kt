@@ -11,8 +11,14 @@ import com.intellij.psi.PsiModifierListOwner
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.UVariable
 import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.getContainingUMethod
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 /**

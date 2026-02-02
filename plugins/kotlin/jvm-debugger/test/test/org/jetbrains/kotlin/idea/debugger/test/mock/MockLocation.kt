@@ -3,7 +3,11 @@
 package org.jetbrains.kotlin.idea.debugger.test.mock
 
 import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
-import com.sun.jdi.*
+import com.sun.jdi.AbsentInformationException
+import com.sun.jdi.Location
+import com.sun.jdi.Method
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.VirtualMachine
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_DEBUG_STRATA_NAME
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 

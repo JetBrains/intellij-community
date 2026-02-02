@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.util.elementType
 import com.intellij.util.application
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightReceiverUsagesHandler
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 
+@K1Deprecation
 class HighlightReceiverUsagesIntention : SelfTargetingOffsetIndependentIntention<KtElement>(
     KtElement::class.java,
     KotlinBundle.messagePointer("highlight.usages.of.receiver")

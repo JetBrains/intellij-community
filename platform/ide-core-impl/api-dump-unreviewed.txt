@@ -649,7 +649,6 @@ f:com.intellij.openapi.progress.util.ProgressIndicatorUtils
 - s:runInReadActionWithWriteActionPriority(java.lang.Runnable,com.intellij.openapi.progress.ProgressIndicator):Z
 - s:runWithWriteActionPriority(java.lang.Runnable,com.intellij.openapi.progress.ProgressIndicator):Z
 - s:scheduleWithWriteActionPriority(com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.progress.util.ReadTask):java.util.concurrent.CompletableFuture
-- s:scheduleWithWriteActionPriority(com.intellij.openapi.progress.ProgressIndicator,java.util.concurrent.Executor,com.intellij.openapi.progress.util.ReadTask):java.util.concurrent.CompletableFuture
 - s:scheduleWithWriteActionPriority(com.intellij.openapi.progress.util.ReadTask):V
 - s:withTimeout(J,com.intellij.openapi.util.Computable):java.lang.Object
 - s:yieldToPendingWriteActions():V

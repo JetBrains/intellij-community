@@ -10,7 +10,11 @@ import com.intellij.openapi.ui.ComboBoxWithEditableItem.EditableItem
 import com.intellij.openapi.ui.ComboBoxWithEditableItem.SelectEditableItem
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.COLUMNS_SHORT
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil

@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,13 +29,17 @@ public abstract class ShowSettingsUtil implements ShowSettingsUtilEx {
 
   public abstract void showSettingsDialog(@NotNull Project project, @Nullable Configurable toSelect);
 
-  public abstract <T extends Configurable> void showSettingsDialog(@Nullable Project project,
-                                                                   @NotNull Class<T> configurableClass,
-                                                                   @Nullable Consumer<? super T> additionalConfiguration);
+  public abstract <T extends Configurable> void showSettingsDialog(
+    @Nullable Project project,
+    @NotNull Class<T> configurableClass,
+    @Nullable Consumer<? super T> additionalConfiguration
+  );
 
-  public abstract void showSettingsDialog(@Nullable Project project,
-                                          @NotNull Predicate<? super Configurable> predicate,
-                                          @Nullable Consumer<? super Configurable> additionalConfiguration);
+  public abstract void showSettingsDialog(
+    @Nullable Project project,
+    @NotNull Predicate<? super Configurable> predicate,
+    @Nullable Consumer<? super Configurable> additionalConfiguration
+  );
 
   /**
    * Show a dialog with a defined configurable.
@@ -44,7 +47,7 @@ public abstract class ShowSettingsUtil implements ShowSettingsUtilEx {
    * editConfigurable method is a good choice to create and show a quick on-call created configurable.
    * If you'd like to show a configurable that is a part of the settings dialog, prefer using showSettingsDialog method
    */
-  public abstract boolean editConfigurable(Project project, @NotNull Configurable configurable);
+  public abstract boolean editConfigurable(@Nullable Project project, @NotNull Configurable configurable);
 
   public abstract boolean editConfigurable(@Nullable Project project, @NotNull Configurable configurable, @Nullable Runnable advancedInitialization);
 
@@ -56,19 +59,25 @@ public abstract class ShowSettingsUtil implements ShowSettingsUtilEx {
 
   public abstract boolean editConfigurable(@Nullable Component parent, @NlsContexts.ConfigurableName @NotNull String displayName, @Nullable Runnable advancedInitialization);
 
-  public abstract boolean editConfigurable(Component parent, @NotNull Configurable configurable, Runnable advancedInitialization);
+  public abstract boolean editConfigurable(@Nullable Component parent, @NotNull Configurable configurable, Runnable advancedInitialization);
 
-  public abstract boolean editConfigurable(Project project, @NonNls @NotNull String dimensionServiceKey, @NotNull Configurable configurable);
+  public abstract boolean editConfigurable(@Nullable Project project, @NotNull String dimensionServiceKey, @NotNull Configurable configurable);
 
-  public abstract boolean editConfigurable(Project project, @NonNls @NotNull String dimensionServiceKey, @NotNull Configurable configurable, boolean showApplyButton);
+  public abstract boolean editConfigurable(
+    @Nullable Project project,
+    @NotNull String dimensionServiceKey,
+    @NotNull Configurable configurable,
+    boolean showApplyButton
+  );
 
-  public abstract boolean editConfigurable(Component parent, @NonNls @NotNull String dimensionServiceKey, @NotNull Configurable configurable);
+  public abstract boolean editConfigurable(Component parent, @NotNull String dimensionServiceKey, @NotNull Configurable configurable);
 
   /**
    * Closes both types of settings - modal and non-modal
    * @param project - current project
    */
   public abstract void closeSettings(@NotNull Project project, @NotNull Component component);
+
   /**
    * OS-specific name.
    */

@@ -11,11 +11,26 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.descriptors.*;
+import org.jetbrains.kotlin.descriptors.ClassDescriptor;
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor;
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility;
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities;
+import org.jetbrains.kotlin.descriptors.DescriptorVisibility;
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor;
+import org.jetbrains.kotlin.descriptors.InvalidModuleException;
+import org.jetbrains.kotlin.descriptors.MemberDescriptor;
+import org.jetbrains.kotlin.descriptors.Modality;
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor;
+import org.jetbrains.kotlin.descriptors.PackageViewDescriptor;
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor;
+import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor;
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor;
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor;
+import org.jetbrains.kotlin.descriptors.VariableDescriptor;
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor;
 import org.jetbrains.kotlin.psi.KtElement;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class KotlinDescriptorIconProvider {
     private static final Logger LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider");

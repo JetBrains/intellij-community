@@ -16,8 +16,12 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.JPanel;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ArtifactPropertiesEditors {
   private final Map<@Nls(capitalization = Nls.Capitalization.Sentence) String, JPanel> myMainPanels;

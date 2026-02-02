@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.ex
 
 import com.intellij.openapi.editor.Document
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 @ApiStatus.Internal
 interface DocumentFullUpdateListener: EventListener {

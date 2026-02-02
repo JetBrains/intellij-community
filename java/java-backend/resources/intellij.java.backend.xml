@@ -34,7 +34,6 @@
     <module name="intellij.jvm.analysis"/>
     <module name="intellij.jsp"/>
 
-    <!--todo necessary?-->
     <module name="intellij.java.resources.en"/>
     <module name="intellij.java.debugger"/>
     <module name="intellij.java.codeserver.core"/>
@@ -61,6 +60,8 @@
     <module name="intellij.java.debugger.memory.agent"/>
     <module name="intellij.java.uast.ide"/>
 
+    <module name="intellij.platform.jps.build"/>
+
     <!--only backend-->
     <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>
@@ -74,13 +75,6 @@
     <moduleType id="JAVA_MODULE" classpathProvider="true" implementationClass="com.intellij.openapi.module.JavaModuleType"/>
     <moduleType id="GENERAL_MODULE" implementationClass="com.intellij.ide.projectWizard.GeneralModuleTypeForIdea"/>
     <newProjectWizard.generator implementation="com.intellij.ide.wizard.language.EmptyProjectGeneratorNewProjectWizard"/>
-
-
-    <!--todo temporary, should be inside JavaCodeServerCore.xml-->
-    <applicationService serviceInterface="com.intellij.psi.JavaModuleGraphHelper"
-                        serviceImplementation="com.intellij.java.codeserver.core.JavaPsiModuleUtil$Helper"
-                        overrides="true"/>
-
   </extensions>
 </idea-plugin>
 

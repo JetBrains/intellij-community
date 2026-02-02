@@ -11,6 +11,7 @@ jvm_library(
   name = "java-tests",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
+  exports = ["//java/java-backend:backend"],
   runtime_deps = [
     "@lib//:jetbrains-annotations",
     "//platform/ide-core-impl",
@@ -54,6 +55,7 @@ jvm_library(
     "//platform/execution",
     "//java/idea-ui:ui",
     "//java/openapi:java",
+    "//java/java-backend:backend",
     "@lib//:assert_j",
     "//xml/dom-impl",
     "//jvm/jvm-analysis-api:analysis",
@@ -85,6 +87,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//java/codeserver/highlighting",
   ],
+  exports = ["//java/java-backend:backend"],
   runtime_deps = [":java-tests"]
 )
 ### auto-generated section `build intellij.devkit.java.tests` end

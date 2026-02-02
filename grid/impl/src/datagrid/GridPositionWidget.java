@@ -13,7 +13,7 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.MouseEvent;
 
 public final class GridPositionWidget extends GridWidget implements Consumer<MouseEvent>, StatusBarWidget.Multiframe, FileEditorManagerListener {

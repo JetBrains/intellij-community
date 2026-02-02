@@ -1,11 +1,18 @@
 package com.intellij.cce.kotlin.visitor
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.CodeToken
+import com.intellij.cce.core.DocumentationProperties
+import com.intellij.cce.core.Language
 import com.intellij.cce.visitor.EvaluationVisitor
 import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 
 
 class KotlinDocGenerationVisitor : EvaluationVisitor, KtTreeVisitorVoid() {

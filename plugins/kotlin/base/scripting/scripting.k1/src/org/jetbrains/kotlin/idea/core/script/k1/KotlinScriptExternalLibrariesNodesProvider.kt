@@ -10,13 +10,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.virtualFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.core.script.k1.ucache.relativeName
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryRoot
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryRootTypeId
+import org.jetbrains.kotlin.idea.core.script.k1.ucache.relativeName
 import java.nio.file.Path
 
+@K1Deprecation
 class KotlinScriptExternalLibrariesNodesProvider: ExternalLibrariesWorkspaceModelNodesProvider<KotlinScriptEntity> {
 
     override fun getWorkspaceClass(): Class<KotlinScriptEntity> = KotlinScriptEntity::class.java

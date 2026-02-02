@@ -73,9 +73,6 @@ internal class FrontendRunDashboardManager(private val project: Project) : RunDa
       frontendDtos.value = updatesFromBackend
 
       updateDashboard(true)
-      withContext(Dispatchers.EDT) {
-        RunDashboardUiManagerImpl.getInstance(project).syncContentsFromBackend()
-      }
     }
   }
 
@@ -123,9 +120,14 @@ internal class FrontendRunDashboardManager(private val project: Project) : RunDa
 
   internal suspend fun subscribeToBackendConfigurationTypesUpdates() {
     RunDashboardServiceRpc.getInstance().getConfigurationTypes(project.projectId()).collect { updateFromBackend ->
-      // Just update types set on the frontend,
-      // do not filter frontend DTOs since they are synced via subscribeToBackendServicesUpdates().
-      configurationTypes.value = types
+      configurationTypes.value = updateFromBackend
+
+      updateDashboard(true)
+      withContext(Dispatchers.EDT) {
+        if (RunDashboardUiManagerImpl.getInstance(project).syncContentsFromBackend()) {
+          updateDashboard(true)
+        }
+      }
     }
   }
 

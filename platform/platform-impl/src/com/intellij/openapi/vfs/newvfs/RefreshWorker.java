@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileAttributes;
@@ -32,6 +31,9 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import kotlinx.coroutines.Dispatchers;
 import kotlinx.coroutines.ExecutorsKt;
@@ -596,13 +598,12 @@ final class RefreshWorker {
   private static boolean shouldScanDirectory(VirtualFile parent, Path child, String childName) {
     if (FileTypeManager.getInstance().isFileIgnored(childName)) return false;
     for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
-      if (ReadAction.compute(() -> ProjectFileIndex.getInstance(openProject).isUnderIgnored(parent))) {
-        return false;
-      }
-      String projectRootPath = openProject.getBasePath();
-      if (projectRootPath != null) {
-        Path path = Path.of(projectRootPath);
-        if (child.startsWith(path)) return true;
+      if (ReadAction.compute(() -> {
+        List<WorkspaceFileSet> indexableFileSet = WorkspaceFileIndex.getInstance(openProject)
+          .findFileSets(parent, true, true, /*includeContentNonIndexableSets*/ false, true, true, true);
+        return ContainerUtil.exists(indexableFileSet, set -> set instanceof WorkspaceFileSetWithCustomData && ((WorkspaceFileSetWithCustomData<?>)set).getRecursive());
+      })) {
+        return true;
       }
     }
     return false;

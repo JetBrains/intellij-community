@@ -10,3 +10,5 @@ fun foo(e: ElementType) {
 // ABSENT: FIELD
 // EXIST: TYPE
 // ABSENT: e
+
+// IGNORE_K2

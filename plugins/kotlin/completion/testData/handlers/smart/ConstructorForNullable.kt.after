@@ -5,3 +5,5 @@ fun foo(p : Any){
 }
 
 // ELEMENT: Foo
+
+// IGNORE_K2

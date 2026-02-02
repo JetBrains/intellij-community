@@ -2,13 +2,18 @@
 package com.intellij.util;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
@@ -20,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
-public final class CachedValuesManagerImpl extends CachedValuesManager {
+public final class CachedValuesManagerImpl extends CachedValuesManager implements Disposable {
   private static final Object NULL = new Object();
 
   private ConcurrentMap<UserDataHolder, Object> myCacheHolders = CollectionFactory.createConcurrentWeakIdentityMap();
@@ -118,6 +123,12 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
     }
   }
 
+  @ApiStatus.Internal
+  @Override
+  public void dispose() {
+    clearMyCacheHolders();
+  }
+
   private static boolean isClearedOnPluginUnload(@NotNull UserDataHolder dataHolder) {
     return dataHolder instanceof PsiElement || dataHolder instanceof ASTNode || dataHolder instanceof FileViewProvider;
   }
@@ -131,13 +142,17 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
 
   @ApiStatus.Internal
   public void clearCachedValues() {
+    clearMyCacheHolders();
+    CachedValueStabilityChecker.cleanupFieldCache();
+    myCacheHolders = CollectionFactory.createConcurrentWeakIdentityMap();
+    myKeys = ConcurrentHashMap.newKeySet();
+  }
+
+  private void clearMyCacheHolders() {
     for (UserDataHolder holder : myCacheHolders.keySet()) {
       for (Key<?> key : myKeys) {
         holder.putUserData(key, null);
       }
     }
-    CachedValueStabilityChecker.cleanupFieldCache();
-    myCacheHolders = CollectionFactory.createConcurrentWeakIdentityMap();
-    myKeys = ConcurrentHashMap.newKeySet();
   }
 }

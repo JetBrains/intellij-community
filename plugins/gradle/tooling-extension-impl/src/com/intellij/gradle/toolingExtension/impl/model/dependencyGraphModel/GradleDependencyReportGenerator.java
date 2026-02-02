@@ -1,7 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel;
 
-import com.intellij.openapi.externalSystem.model.project.dependencies.*;
+import com.intellij.openapi.externalSystem.model.project.dependencies.AbstractDependencyNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ArtifactDependencyNodeImpl;
+import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyScopeNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.FileCollectionDependencyNodeImpl;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencyNodeImpl;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ReferenceNode;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ResolutionState;
+import com.intellij.openapi.externalSystem.model.project.dependencies.UnknownDependencyNode;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.gradle.api.Describable;
 import org.gradle.api.Project;
@@ -12,12 +20,22 @@ import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.component.ComponentSelector;
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
-import org.gradle.api.artifacts.result.*;
+import org.gradle.api.artifacts.result.ComponentSelectionDescriptor;
+import org.gradle.api.artifacts.result.ComponentSelectionReason;
+import org.gradle.api.artifacts.result.DependencyResult;
+import org.gradle.api.artifacts.result.ResolutionResult;
+import org.gradle.api.artifacts.result.ResolvedComponentResult;
+import org.gradle.api.artifacts.result.ResolvedDependencyResult;
+import org.gradle.api.artifacts.result.UnresolvedDependencyResult;
 import org.gradle.api.file.FileCollection;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class GradleDependencyReportGenerator {

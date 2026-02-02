@@ -123,8 +123,8 @@ public abstract class AbstractKotlinFoldingTest extends KotlinLightCodeInsightFi
         String cleanContent = expectedContent.replaceAll(START_FOLD, "").replaceAll(END_FOLD, "");
 
         myFixture.configureByText(file.getName(), cleanContent);
-        String actual = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(true);
+        String actual = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(true, false);
 
-        Assert.assertEquals(expectedContent, actual);
+        Assert.assertEquals(expectedContent.replace("<caret>", ""), actual);
     }
 }

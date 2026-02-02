@@ -8,7 +8,7 @@ import io.qameta.allure.model.Status
 import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
-import java.util.*
+import java.util.Objects
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.name
 import kotlin.io.path.walk

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -25,9 +25,9 @@ public interface PsiImportModuleStatement extends PsiImportStatementBase {
   PsiJavaModule resolveTargetModule();
 
   /**
-   * Returns the name of the member imported from the statement.
+   * Returns the name of the module imported by the statement.
    *
-   * @return the name of the member.
+   * @return the name of the module.
    */
   @Nullable String getReferenceName();
 

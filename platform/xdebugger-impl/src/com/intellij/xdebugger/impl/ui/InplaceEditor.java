@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -197,7 +197,9 @@ public abstract class InplaceEditor implements AWTEventListener {
     editorComponent.getActionMap().put("escapeStroke", new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        cancelEditing();
+        WriteIntentReadAction.run(() -> {
+          cancelEditing();
+        });
       }
     });
     final Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
@@ -274,7 +276,7 @@ public abstract class InplaceEditor implements AWTEventListener {
     }
 
     if (ComponentUtil.getWindow(sourceComponent) == ComponentUtil.getWindow(myInplaceEditorComponent) && id == MouseEvent.MOUSE_PRESSED) {
-      doOKAction();
+      WriteIntentReadAction.run(this::doOKAction);
     }
   }
 

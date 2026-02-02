@@ -52,7 +52,6 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.util.PlatformUtils.*
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.workspaceModel.ide.EntitiesOrphanage
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.*
@@ -71,7 +70,6 @@ import java.util.concurrent.atomic.AtomicReference
 @Service(Service.Level.PROJECT)
 class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   companion object {
-    @RequiresBlockingContext
     fun getInstance(project: Project): JpsProjectModelSynchronizer = project.service()
 
     private val LOG = logger<JpsProjectModelSynchronizer>()

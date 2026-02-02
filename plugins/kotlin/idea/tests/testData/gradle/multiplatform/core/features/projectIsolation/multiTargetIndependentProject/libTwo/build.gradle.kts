@@ -3,21 +3,18 @@ plugins {
 }
 
 kotlin {
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
+    applyDefaultHierarchyTemplate()
+
     jvm()
     mingwX64()
+    macosArm64()
 
     sourceSets {
-        val commonMain by getting
-        val commonTest by getting {
+        commonTest {
             dependencies {
                 implementation(kotlin("test"))
             }
         }
-
-        val jvmMain by getting
-        val jvmTest by getting
-
-        val mingwX64Main by getting
-        val mingwX64Test by getting
     }
 }

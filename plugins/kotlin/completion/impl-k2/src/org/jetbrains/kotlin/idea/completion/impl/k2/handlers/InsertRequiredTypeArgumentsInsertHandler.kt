@@ -26,7 +26,15 @@ import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Correc
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.withChainedInsertHandler
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtTypeArgumentList
+import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector

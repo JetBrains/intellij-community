@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.gradle.properties` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "properties_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "properties",
+  module_name = "intellij.gradle.properties",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":properties_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+    "//plugins/gradle",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/util-rt",
+    "//platform/indexing-api:indexing",
+  ]
+)
+### auto-generated section `build intellij.gradle.properties` end

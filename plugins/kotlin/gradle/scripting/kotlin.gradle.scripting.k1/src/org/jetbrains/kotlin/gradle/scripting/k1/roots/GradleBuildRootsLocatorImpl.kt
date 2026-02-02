@@ -14,13 +14,22 @@ import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.gradle.scripting.k1.GradleScriptDefinitionsContributor
 import org.jetbrains.kotlin.gradle.scripting.k1.roots.GradleScriptingSupport.Companion.isApplicable
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.getFullDefinitionsClasspath
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.toGradleHomePath
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.kotlinDslScriptsModelImportSupported
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.*
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.AbstractGradleBuildRootDataSerializer
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRoot
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootData
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleScriptInfo
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.Legacy
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.New
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.StandaloneScriptsUpdater
 import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.DefaultScriptingSupport
@@ -57,6 +66,7 @@ import kotlin.io.path.invariantSeparatorsPathString
  *   - [org.jetbrains.kotlin.gradle.scripting.shared.roots.New] - not yet imported
  *   - [org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported] - imported
  */
+@K1Deprecation
 class GradleBuildRootsLocatorImpl(val project: Project, private val coroutineScope: CoroutineScope) : GradleBuildRootsLocator(project) {
     private val modifiedFilesCheckScheduled = AtomicBoolean()
     private val modifiedFiles = ConcurrentLinkedQueue<String>()
@@ -261,6 +271,7 @@ class GradleBuildRootsLocatorImpl(val project: Project, private val coroutineSco
     }
 }
 
+@K1Deprecation
 class GradleScriptingSupport(val project: Project) : ScriptingSupport {
     private val manager: GradleBuildRootsLocator
         get() = GradleBuildRootsLocator.getInstance(project)

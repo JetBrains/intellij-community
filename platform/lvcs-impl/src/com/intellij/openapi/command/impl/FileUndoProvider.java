@@ -198,7 +198,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
 
     MyUndoableAction(DocumentReference r) {
       super(r);
-      myActionChangeRange = new ChangeRange(myGateway, myLocalHistory, myLastChangeId);
+      myActionChangeRange = new ChangeRange(myProject, myGateway, myLocalHistory, myLastChangeId);
     }
 
     @Override

@@ -9,7 +9,7 @@ import org.intellij.plugins.xsltDebugger.ui.actions.OpenOutputAction;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 @ApiStatus.Internal
 public final class OutputTabComponent extends AbstractTabComponent {

@@ -17,8 +17,6 @@ import org.junit.runners.model.Statement;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 
-import static com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY;
-
 
 public class PluginTargetVersionsRule implements MethodRule {
     @SuppressWarnings("ClassExplicitlyAnnotation")

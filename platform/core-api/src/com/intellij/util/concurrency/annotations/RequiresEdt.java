@@ -5,7 +5,11 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.concurrency.ThreadingAssertions;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Methods (including constructors) annotated with {@code @RequiresEdt} must be called from the Event Dispatch Thread only.

@@ -32,7 +32,13 @@ import git4idea.index.getFileStatus
 import git4idea.index.isIgnored
 import git4idea.index.isUntracked
 import git4idea.status.GitRefreshListener
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -153,18 +159,6 @@ class GitUntrackedFilesHolder internal constructor(
     }
     scheduleUpdate()
   }
-
-  /**
-   * Returns the list of unversioned files.
-   * This method may be slow, if the full-refresh of untracked files is needed.
-   *
-   * @return untracked files.
-   * @throws VcsException if there is an unexpected error during Git execution.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("use {@link #retrieveUntrackedFilePaths} instead")
-  @Throws(VcsException::class)
-  fun retrieveUntrackedFiles(): Collection<VirtualFile?> = retrieveUntrackedFilePaths().mapNotNull { it.getVirtualFile() }
 
   @Throws(VcsException::class)
   fun retrieveUntrackedFilePaths(): Collection<FilePath> {

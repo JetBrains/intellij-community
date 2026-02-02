@@ -4,7 +4,11 @@ package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.Platform
 import com.intellij.execution.configurations.SimpleJavaParameters
-import com.intellij.execution.target.*
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetedCommandLine
+import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetValue
@@ -28,7 +32,11 @@ import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetu
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetupImpl.Helper.extractPathsFromInitScript
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetupImpl.Helper.extractPathsToMapFromInitScripts
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetupImpl.Helper.getToolingProxyDefaultJavaParameters
-import org.jetbrains.plugins.gradle.service.execution.*
+import org.jetbrains.plugins.gradle.service.execution.GRADLE_TOOLING_EXTENSION_PROXY_CLASSES
+import org.jetbrains.plugins.gradle.service.execution.GradleServerConfigurationProvider
+import org.jetbrains.plugins.gradle.service.execution.MAIN_INIT_SCRIPT_NAME
+import org.jetbrains.plugins.gradle.service.execution.getToolingExtensionsJarPaths
+import org.jetbrains.plugins.gradle.service.execution.toGroovyStringLiteral
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.tooling.proxy.Main
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters

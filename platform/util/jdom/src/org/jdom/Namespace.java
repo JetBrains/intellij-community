@@ -59,7 +59,12 @@ import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.jdom.JDOMConstants.*;
+import static org.jdom.JDOMConstants.NS_PREFIX_DEFAULT;
+import static org.jdom.JDOMConstants.NS_PREFIX_XML;
+import static org.jdom.JDOMConstants.NS_PREFIX_XMLNS;
+import static org.jdom.JDOMConstants.NS_URI_DEFAULT;
+import static org.jdom.JDOMConstants.NS_URI_XML;
+import static org.jdom.JDOMConstants.NS_URI_XMLNS;
 
 /**
  * An XML namespace representation, as well as a factory for creating XML

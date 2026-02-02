@@ -3,7 +3,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.readWrite
 
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.BitSet
 
 class ReadBeforeWriteState(
   val writes: BitSet = BitSet(),

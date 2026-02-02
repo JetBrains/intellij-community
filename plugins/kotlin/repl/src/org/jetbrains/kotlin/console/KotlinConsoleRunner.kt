@@ -38,6 +38,7 @@ import com.intellij.psi.impl.PsiFileFactoryImpl
 import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.console.actions.BuildAndRestartConsoleAction
 import org.jetbrains.kotlin.console.actions.KtExecuteCommandAction
@@ -69,11 +70,16 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.properties.Delegates
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptEvaluationConfiguration
+import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.api.displayName
+import kotlin.script.experimental.api.hostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
 private const val KOTLIN_SHELL_EXECUTE_ACTION_ID = "KotlinShellExecute"
 
+@K1Deprecation
 class KotlinConsoleRunner(
     val module: Module,
     private val environmentRequest: TargetEnvironmentRequest,

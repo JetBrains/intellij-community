@@ -19,6 +19,10 @@
             interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator"
             dynamic="true"/>
     <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.projectPostConfigurator"
+            interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectPostConfigurator"
+            dynamic="true"/>
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.compilerPluginConfigurator"
             interface="org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator"
             dynamic="true"/>
@@ -167,7 +171,7 @@
 
     <typeDeclarationProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinTypeDeclarationProvider"/>
     <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinGotoValVarTypeHandler"/>
-    <focusModeProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.core.KotlinFocusModeProvider" />
+    <focusModeProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinFocusModeProvider" />
 
     <lang.floatingToolbar language="kotlin"/>
 
@@ -529,7 +533,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.jvm">
-    <declarationSearcher language="kotlin" implementationClass="org.jetbrains.kotlin.idea.jvm.KotlinDeclarationSearcher"/>
+    <declarationSearcher language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinDeclarationSearcher"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -570,8 +574,6 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-    <action id="CopyKotlinProjectInformation" class="org.jetbrains.kotlin.idea.actions.internal.CopyKotlinProjectOverviewAction">
-    </action>
 
     <group id="ConvertJavaToKotlinGroup">
       <separator/>
@@ -592,46 +594,18 @@
 
     <group id="InternalKotlin" internal="true">
       <separator/>
-      <action id="HighlightingBenchmarkAction"
-              class="org.jetbrains.kotlin.idea.actions.internal.benchmark.HighlightingBenchmarkAction"/>
 
       <group id="KotlinInternalGroup" popup="true">
-        <action
-                id="CacheResetOnProcessCanceledToggleAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.CacheResetOnProcessCanceledToggleAction"/>
+
         <action
                 id="CheckComponentsUsageSearchAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.CheckComponentsUsageSearchAction"/>
-        <action
-                id="PrintOutNotPropertyMatches"
-                class="org.jetbrains.kotlin.idea.actions.internal.SearchNotPropertyCandidatesAction"/>
-        <action
-                id="StoredExceptionsThrowToggleAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.StoredExceptionsThrowToggleAction"/>
 
         <action
                 id="LibraryToSourceDependencySupportToggleAction"
                 class="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.LibraryToSourceDependencySupportToggleAction"/>
-        <action
-                id="KotlinFormattingSettingsStatusAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.KotlinFormattingSettingsStatusAction"/>
-        <action
-                id="KotlinThrowException"
-                class="org.jetbrains.kotlin.idea.actions.internal.KotlinThrowExceptionAction"/>
 
-        <action
-                id="EnableExperimentalKDocResolutionStrategy"
-                class="org.jetbrains.kotlin.idea.actions.internal.EnableExperimentalKDocResolutionStrategyToggleAction"/>
 
-        <group id="KotlinCompletionBenchmarkGroup" popup="true">
-          <action
-                  id="TopLevelCompletionBenchmarkAction"
-                  class="org.jetbrains.kotlin.idea.actions.internal.benchmark.TopLevelCompletionBenchmarkAction"/>
-
-          <action
-                  id="LocalCompletionBenchmarkAction"
-                  class="org.jetbrains.kotlin.idea.actions.internal.benchmark.LocalCompletionBenchmarkAction"/>
-        </group>
       </group>
 
       <separator/>

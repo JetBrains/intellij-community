@@ -8,9 +8,11 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JSpinner;
 import javax.swing.plaf.ComponentUI;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Insets;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
 import static com.intellij.laf.macos.MacIntelliJTextBorder.BW;

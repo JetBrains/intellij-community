@@ -19,14 +19,20 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usages.TextChunk
 import com.intellij.util.FontUtil
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.codeInsight.slicer.AbstractKotlinSliceUsage
 import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import java.awt.Font
 
+@K1Deprecation
 open class KotlinSliceUsage : AbstractKotlinSliceUsage {
     private var usageInfo: AdaptedUsageInfo? = null
 

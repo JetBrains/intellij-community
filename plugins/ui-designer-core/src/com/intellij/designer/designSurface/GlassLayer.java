@@ -22,8 +22,8 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.AWTEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 

@@ -16,12 +16,16 @@ import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmFragment
 import org.jetbrains.kotlin.gradle.idea.kpm.name
 import org.jetbrains.kotlin.idea.base.externalSystem.find
 import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ModuleDataInitializer
-import org.jetbrains.plugins.gradle.model.*
+import org.jetbrains.plugins.gradle.model.DefaultExternalSourceDirectorySet
+import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet
+import org.jetbrains.plugins.gradle.model.ExternalDependency
+import org.jetbrains.plugins.gradle.model.ExternalProject
+import org.jetbrains.plugins.gradle.model.ExternalSourceSet
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import java.util.*
+import java.util.Arrays
 import java.util.stream.Collectors
 
 @Order(ExternalSystemConstants.UNORDERED + 1)

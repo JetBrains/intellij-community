@@ -1,7 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.completion
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionResult
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
@@ -16,7 +22,12 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry.Companion.intValue
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.CachedValueProvider
@@ -32,7 +43,24 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.imports.AddImportHelper
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyAssignmentStatement
+import com.jetbrains.python.psi.PyCapturePattern
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyDecorator
+import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyExpressionStatement
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFileElementType
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyImportStatementBase
+import com.jetbrains.python.psi.PyPattern
+import com.jetbrains.python.psi.PyQualifiedNameOwner
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyStringElement
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyTypeAliasStatement
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder.QualifiedNameBasedScope
 import com.jetbrains.python.psi.resolve.fromFoothold

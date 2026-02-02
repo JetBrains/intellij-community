@@ -12,7 +12,9 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBRadioButton;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 public class ShRunConfigurationEditor extends SettingsEditor<ShRunConfiguration> {
   private JPanel myPanel;

@@ -16,7 +16,13 @@
 
 package org.intellij.lang.xpath.completion;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.psi.PsiElement;
@@ -24,7 +30,17 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.context.NamespaceContext;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.PrefixedName;
+import org.intellij.lang.xpath.psi.QNameElement;
+import org.intellij.lang.xpath.psi.XPath2InstanceOf;
+import org.intellij.lang.xpath.psi.XPath2TreatAs;
+import org.intellij.lang.xpath.psi.XPath2Type;
+import org.intellij.lang.xpath.psi.XPath2TypeElement;
+import org.intellij.lang.xpath.psi.XPathAxisSpecifier;
+import org.intellij.lang.xpath.psi.XPathElement;
+import org.intellij.lang.xpath.psi.XPathFunctionCall;
+import org.intellij.lang.xpath.psi.XPathNodeTest;
+import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.namespace.QName;

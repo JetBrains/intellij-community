@@ -80,6 +80,12 @@ class InvalidProxyLine(ParseException):
 
     def __init__(self, line: str) -> None: ...
 
+class InvalidProxyHeader(ParseException):
+    msg: str
+    code: int
+
+    def __init__(self, msg: str) -> None: ...
+
 class ForbiddenProxyRequest(ParseException):
     host: str
     code: int

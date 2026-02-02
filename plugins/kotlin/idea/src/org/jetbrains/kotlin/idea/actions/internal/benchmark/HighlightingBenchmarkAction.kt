@@ -25,6 +25,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.onClosed
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.actions.internal.benchmark.AbstractCompletionBenchmarkAction.Companion.addBoxWithLabel
 import org.jetbrains.kotlin.idea.actions.internal.benchmark.AbstractCompletionBenchmarkAction.Companion.collectSuitableKotlinFiles
 import org.jetbrains.kotlin.idea.actions.internal.benchmark.AbstractCompletionBenchmarkAction.Companion.shuffledSequence
@@ -33,10 +34,11 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
-import java.util.*
+import java.util.Random
 import javax.swing.JFileChooser
 import kotlin.properties.Delegates
 
+@K1Deprecation
 class HighlightingBenchmarkAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return

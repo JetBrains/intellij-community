@@ -23,9 +23,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractCellEditor;
+import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.util.EventObject;
 

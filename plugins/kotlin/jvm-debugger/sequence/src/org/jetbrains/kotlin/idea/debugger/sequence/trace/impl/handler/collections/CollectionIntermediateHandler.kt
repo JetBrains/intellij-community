@@ -7,7 +7,9 @@ import com.intellij.debugger.streams.core.trace.dsl.CodeBlock
 import com.intellij.debugger.streams.core.trace.dsl.Dsl
 import com.intellij.debugger.streams.core.trace.dsl.Expression
 import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class CollectionIntermediateHandler(
     order: Int,
     private val call: IntermediateStreamCall,

@@ -6,7 +6,10 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.ComparableTypeExternalizer;
+import org.jetbrains.jps.dependency.Maplet;
+import org.jetbrains.jps.dependency.MapletFactory;
+import org.jetbrains.jps.dependency.MultiMaplet;
 
 import java.util.Collection;
 import java.util.HashSet;

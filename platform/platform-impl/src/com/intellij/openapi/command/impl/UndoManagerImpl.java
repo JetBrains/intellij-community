@@ -78,7 +78,7 @@ public class UndoManagerImpl extends UndoManager {
   @NonInjectable
   protected UndoManagerImpl(@Nullable ComponentManager componentManager) {
     myProject = componentManager instanceof Project project ? project : null;
-    myUndoSharedState = new UndoSharedState(this::isPerClientSupported);
+    myUndoSharedState = new UndoSharedState(getUndoCapabilities());
   }
 
   @Override
@@ -284,11 +284,6 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @ApiStatus.Internal
-  public void clearAndRepairStacks(@Nullable FileEditor editor) {
-    clearStacks(editor);
-  }
-
-  @ApiStatus.Internal
   protected void undoOrRedo(@Nullable FileEditor editor, boolean isUndo) {
     UndoClientState state = getClientState(editor);
     if (state != null) {
@@ -312,49 +307,12 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @ApiStatus.Internal
-  protected boolean isTransparentSupported() {
-    return true;
+  public UndoCapabilities getUndoCapabilities() {
+    return UndoCapabilities.Default.INSTANCE;
   }
 
   @ApiStatus.Internal
-  protected boolean isConfirmationSupported() {
-    return true;
-  }
-
-  @ApiStatus.Internal
-  protected boolean isCompactSupported() {
-    return true;
-  }
-
-  @ApiStatus.Internal
-  protected boolean isGlobalSplitSupported() {
-    return true;
-  }
-
-  @ApiStatus.Internal
-  protected boolean isPerClientSupported() {
-    return true;
-  }
-
-  // TODO: remove it
-  @ApiStatus.Internal
-  public boolean isGroupIdChangeSupported() {
-    return true;
-  }
-
-  // TODO: IT IS A PRIORITY ONE
-  @ApiStatus.Internal
-  public boolean isCommandRestartSupported() {
-    return true;
-  }
-
-  @ApiStatus.Internal
-  protected boolean isEditorStateRestoreSupported() {
-    return true;
-  }
-
-  @ApiStatus.Internal
-  protected final int getStackSize(@Nullable DocumentReference docRef, boolean isUndo) {
+  public final int getStackSize(@Nullable DocumentReference docRef, boolean isUndo) {
     UndoClientState state = Objects.requireNonNull(getClientState(), "undo/redo is not available");
     return state.getStackSize(docRef, isUndo);
   }

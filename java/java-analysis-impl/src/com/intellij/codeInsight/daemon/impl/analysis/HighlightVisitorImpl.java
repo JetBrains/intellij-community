@@ -20,7 +20,16 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportHolder;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
 import com.intellij.util.ui.JBUI;
@@ -29,11 +38,20 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
+import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.ACCESS_PACKAGE_LOCAL;
+import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.ACCESS_PRIVATE;
+import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.ACCESS_PROTECTED;
+import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.CALL_AMBIGUOUS_NO_MATCH;
+import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.CALL_UNRESOLVED;
+import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.EXPRESSION_EXPECTED;
+import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.REFERENCE_AMBIGUOUS;
+import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.REFERENCE_UNRESOLVED;
+import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.SYNTAX_ERROR;
+import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.TYPE_UNKNOWN_CLASS;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 /**

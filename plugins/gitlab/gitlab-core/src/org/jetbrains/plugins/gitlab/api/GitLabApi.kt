@@ -3,7 +3,10 @@ package org.jetbrains.plugins.gitlab.api
 
 import com.intellij.collaboration.api.HttpApiHelper
 import com.intellij.collaboration.api.graphql.GraphQLApiHelper
-import com.intellij.collaboration.api.httpclient.*
+import com.intellij.collaboration.api.httpclient.CompoundRequestConfigurer
+import com.intellij.collaboration.api.httpclient.HttpClientUtil
+import com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
+import com.intellij.collaboration.api.httpclient.RequestTimeoutConfigurer
 import com.intellij.collaboration.api.json.JsonHttpApiHelper
 import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.api.json.loadOptionalJsonList

@@ -2,10 +2,12 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressionChecker
 
+@K1Deprecation
 class KotlinK1SuppressionChecker: KotlinSuppressionChecker {
     override fun isSuppressedFor(element: PsiElement, toolId: String): Boolean = KotlinCacheService.getInstance(element.project)
         .getSuppressionCache()

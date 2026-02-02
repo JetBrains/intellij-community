@@ -6,7 +6,11 @@ import com.intellij.util.containers.SLRUMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * We can have only limited number of nodes selected in a tree;

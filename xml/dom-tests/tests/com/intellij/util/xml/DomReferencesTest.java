@@ -16,7 +16,11 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -24,7 +28,11 @@ import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.xml.impl.GenericDomValueReference;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class DomReferencesTest extends DomHardCoreTestCase {
 

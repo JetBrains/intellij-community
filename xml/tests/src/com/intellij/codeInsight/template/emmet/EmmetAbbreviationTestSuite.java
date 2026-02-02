@@ -23,10 +23,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.ui.UIUtil;
 import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +35,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-
-import static org.junit.Assert.fail;
 
 public abstract class EmmetAbbreviationTestSuite extends TestSuite {
   protected void setUp(@NotNull Project project) throws Exception {
@@ -178,7 +176,7 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
       action.actionPerformed(myFixture.getEditor(), DataManager.getInstance().getDataContext());
 
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
       WriteCommandAction.runWriteCommandAction(getProject(), () -> {
         TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());

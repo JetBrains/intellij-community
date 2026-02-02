@@ -10,3 +10,5 @@ fun bar(o: Any) {
 // EXIST: { lookupString:"List", itemText:"List<String>", tailText: " (kotlin.collections)" }
 // EXIST: { lookupString:"String", itemText:"String", tailText: " (kotlin)" }
 // NOTHING_ELSE
+
+// IGNORE_K2

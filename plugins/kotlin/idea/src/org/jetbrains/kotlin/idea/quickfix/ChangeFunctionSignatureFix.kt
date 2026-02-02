@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.SYNTHESIZED
@@ -27,7 +28,11 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescrip
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.modify
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.runChangeSignature
 import org.jetbrains.kotlin.idea.util.getDataFlowAwareTypes
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.calls.util.getCall
 import org.jetbrains.kotlin.resolve.calls.util.getType
@@ -35,6 +40,7 @@ import org.jetbrains.kotlin.resolve.isValueClass
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 
+@K1Deprecation
 abstract class ChangeFunctionSignatureFix(
     element: PsiElement,
     protected val functionDescriptor: FunctionDescriptor

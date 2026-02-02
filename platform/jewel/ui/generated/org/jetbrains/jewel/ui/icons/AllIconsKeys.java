@@ -2043,6 +2043,9 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey Gift = new IntelliJIconKey("ide/gift.svg", "expui/ide/gift.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey GrayDot = new IntelliJIconKey("ide/grayDot.svg", "ide/grayDot.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey HectorOff = new IntelliJIconKey("ide/hectorOff.svg", "ide/hectorOff.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
@@ -3043,6 +3046,9 @@ public final class AllIconsKeys {
     /** 12x12 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Rating = new IntelliJIconKey("plugins/rating.svg", "plugins/rating.svg", AllIconsKeys.class);
+    /** 12x12 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Refresh = new IntelliJIconKey("plugins/refresh.svg", "plugins/refresh.svg", AllIconsKeys.class);
     /** 12x12 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Updated = new IntelliJIconKey("plugins/updated.svg", "plugins/updated.svg", AllIconsKeys.class);

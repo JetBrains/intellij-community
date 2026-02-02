@@ -2,7 +2,6 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;

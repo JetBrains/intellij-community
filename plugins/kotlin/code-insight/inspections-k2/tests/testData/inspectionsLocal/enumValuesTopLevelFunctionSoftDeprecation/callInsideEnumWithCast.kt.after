@@ -1,0 +1,8 @@
+import kotlin.enums.enumEntries
+
+enum class EnumClass {
+    ;
+    init {
+        val v = enumEntries<EnumClass>().toTypedArray()
+    }
+}

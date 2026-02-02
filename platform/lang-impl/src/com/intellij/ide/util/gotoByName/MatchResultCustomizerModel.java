@@ -2,7 +2,6 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.util.text.matching.MatchingMode;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +14,4 @@ public interface MatchResultCustomizerModel {
    */
   @Nullable
   MatchResult getCustomRulesMatchResult(@NotNull MinusculeMatcher fullMatcher, @NotNull String pattern, @NotNull MinusculeMatcher nameMatcher, @Nullable String name);
-
-  @Nullable
-  String processRequestPatternForFullMatcher(@NotNull String pattern);
 }

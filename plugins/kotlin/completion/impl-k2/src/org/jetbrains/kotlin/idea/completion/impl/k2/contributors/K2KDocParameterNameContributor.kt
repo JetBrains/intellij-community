@@ -24,8 +24,6 @@ import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.TypeParameterLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
-import kotlin.collections.orEmpty
-import kotlin.sequences.forEach
 
 internal class K2KDocParameterNameContributor : K2SimpleCompletionContributor<KDocNameReferencePositionContext>(
     KDocNameReferencePositionContext::class
@@ -43,7 +41,7 @@ internal class K2KDocParameterNameContributor : K2SimpleCompletionContributor<KD
         getParametersForKDoc(ownerDeclaration.symbol)
             .filter { (it as KaNamedSymbol).name.asString() !in alreadyDocumentedParameters }
             .flatMap { createLookupElements(it) }
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<KDocNameReferencePositionContext>)

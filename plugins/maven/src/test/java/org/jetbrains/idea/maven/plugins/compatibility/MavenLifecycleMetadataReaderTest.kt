@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.plugins.compatibility
 import com.intellij.maven.testFramework.MavenTestCase
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
-import org.jetbrains.idea.maven.utils.MavenPluginInfo
 import kotlin.io.path.isRegularFile
 
 class MavenLifecycleMetadataReaderTest : MavenTestCase() {

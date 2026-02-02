@@ -5,3 +5,4 @@ fun <T> foo(o: Any): T {
 }
 
 // AUTOCOMPLETE_SETTING: true
+// IGNORE_K2

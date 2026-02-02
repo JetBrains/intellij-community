@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
@@ -26,7 +27,11 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import java.awt.AWTEvent
-import java.awt.event.*
+import java.awt.event.InputEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
+import java.awt.event.MouseWheelListener
 import javax.swing.KeyStroke
 
 /**
@@ -261,8 +266,10 @@ private class TerminalKeyListener(
 
   private fun handleEvent(e: KeyEvent) {
     if (settings.overrideIdeShortcuts()) return // handled by the dispatcher
-    eventsHandler.handleKeyEvent(TimedKeyEvent(e))
-    e.consume()
+    WriteIntentReadAction.run {
+      eventsHandler.handleKeyEvent(TimedKeyEvent(e))
+      e.consume()
+    }
   }
 }
 

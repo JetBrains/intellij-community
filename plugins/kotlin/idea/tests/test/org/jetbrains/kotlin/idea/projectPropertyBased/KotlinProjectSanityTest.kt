@@ -11,7 +11,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.*
+import com.intellij.psi.PsiBinaryFile
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiPlainTextFile
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.propertyBased.MadTestingAction

@@ -58,6 +58,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class DaemonRespondToChangesPerfTest extends DaemonAnalyzerTestCase {
   private static final boolean DEBUG = false;
 
+  @PerformanceUnitTest
   public void testHugeAppendChainDoesNotCauseSOE_Stress() {
     StringBuilder text = new StringBuilder("class S { String ffffff =  new StringBuilder()\n");
     for (int i=0; i<2000; i++) {

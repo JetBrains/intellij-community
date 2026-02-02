@@ -12,8 +12,13 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.UiNotifyConnector
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel

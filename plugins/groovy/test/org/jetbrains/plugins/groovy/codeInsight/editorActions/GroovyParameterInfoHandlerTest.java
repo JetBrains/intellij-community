@@ -3,8 +3,8 @@ package org.jetbrains.plugins.groovy.codeInsight.editorActions;
 
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
 import org.jetbrains.plugins.groovy.util.ResolveTest;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -69,7 +69,7 @@ public class GroovyParameterInfoHandlerTest extends GroovyLatestTest implements 
     configureByText(text);
     EditorHintFixture myHintFixture = new EditorHintFixture(getFixture().getTestRootDisposable());
     getFixture().performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     waitForParameterInfo();
     return myHintFixture.getCurrentHintText();
   }
@@ -77,7 +77,7 @@ public class GroovyParameterInfoHandlerTest extends GroovyLatestTest implements 
   public static void waitForParameterInfo() {
     // effective there is a chain of 3 nonBlockingRead actions
     for (int i = 0; i < 3; i++) {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     }
   }

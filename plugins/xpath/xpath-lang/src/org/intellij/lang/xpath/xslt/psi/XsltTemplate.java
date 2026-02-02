@@ -15,11 +15,10 @@
  */
 package org.intellij.lang.xpath.xslt.psi;
 
-import org.intellij.lang.xpath.psi.XPathExpression;
-
 import com.intellij.psi.PsiNamedElement;
-import org.jetbrains.annotations.Nullable;
+import org.intellij.lang.xpath.psi.XPathExpression;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.xml.namespace.QName;
 

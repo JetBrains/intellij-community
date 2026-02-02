@@ -12,12 +12,14 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class KotlinInnerClassInheritorsSearcher: QueryExecutorBase<PsiClass, ClassInheritorsSearch.SearchParameters>() {
     override fun processQuery(queryParameters: ClassInheritorsSearch.SearchParameters, consumer: Processor<in PsiClass>) {
         val searchScope = queryParameters.scope.safeAs<LocalSearchScope>() ?: return

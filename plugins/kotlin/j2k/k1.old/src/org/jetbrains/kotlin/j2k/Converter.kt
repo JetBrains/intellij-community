@@ -3,24 +3,120 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
-import com.intellij.psi.CommonClassNames.*
+import com.intellij.psi.CommonClassNames.JAVA_IO_SERIALIZABLE
+import com.intellij.psi.CommonClassNames.JAVA_LANG_BYTE
+import com.intellij.psi.CommonClassNames.JAVA_LANG_CHARACTER
+import com.intellij.psi.CommonClassNames.JAVA_LANG_DOUBLE
+import com.intellij.psi.CommonClassNames.JAVA_LANG_FLOAT
+import com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
+import com.intellij.psi.CommonClassNames.JAVA_LANG_LONG
+import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
+import com.intellij.psi.CommonClassNames.JAVA_LANG_SHORT
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiAnnotationMethod
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassInitializer
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiImportList
+import com.intellij.psi.PsiImportStatementBase
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiPackageStatement
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiReferenceList
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiSuperExpression
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeElement
+import com.intellij.psi.PsiVariable
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiMethodUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.j2k.IdeaDocCommentConverter
-import org.jetbrains.kotlin.j2k.ast.*
 import org.jetbrains.kotlin.j2k.ast.Annotation
+import org.jetbrains.kotlin.j2k.ast.AnnotationUseTarget
+import org.jetbrains.kotlin.j2k.ast.Annotations
+import org.jetbrains.kotlin.j2k.ast.AnonymousClassBody
+import org.jetbrains.kotlin.j2k.ast.AssignmentExpression
+import org.jetbrains.kotlin.j2k.ast.Block
+import org.jetbrains.kotlin.j2k.ast.Class
+import org.jetbrains.kotlin.j2k.ast.ClassBody
+import org.jetbrains.kotlin.j2k.ast.ClassLiteralExpression
+import org.jetbrains.kotlin.j2k.ast.ClassType
+import org.jetbrains.kotlin.j2k.ast.CommentsAndSpacesInheritance
+import org.jetbrains.kotlin.j2k.ast.DeclarationStatement
+import org.jetbrains.kotlin.j2k.ast.DeferredElement
+import org.jetbrains.kotlin.j2k.ast.Element
 import org.jetbrains.kotlin.j2k.ast.Enum
+import org.jetbrains.kotlin.j2k.ast.EnumConstant
+import org.jetbrains.kotlin.j2k.ast.ErrorType
+import org.jetbrains.kotlin.j2k.ast.Expression
+import org.jetbrains.kotlin.j2k.ast.File
 import org.jetbrains.kotlin.j2k.ast.Function
+import org.jetbrains.kotlin.j2k.ast.FunctionLike
+import org.jetbrains.kotlin.j2k.ast.FunctionParameter
+import org.jetbrains.kotlin.j2k.ast.Identifier
+import org.jetbrains.kotlin.j2k.ast.Initializer
+import org.jetbrains.kotlin.j2k.ast.Interface
+import org.jetbrains.kotlin.j2k.ast.LocalVariable
+import org.jetbrains.kotlin.j2k.ast.Member
+import org.jetbrains.kotlin.j2k.ast.Modifier
+import org.jetbrains.kotlin.j2k.ast.Modifiers
+import org.jetbrains.kotlin.j2k.ast.Mutability
+import org.jetbrains.kotlin.j2k.ast.Object
+import org.jetbrains.kotlin.j2k.ast.Operator
+import org.jetbrains.kotlin.j2k.ast.PackageStatement
+import org.jetbrains.kotlin.j2k.ast.ParameterList
+import org.jetbrains.kotlin.j2k.ast.PrimaryConstructorSignature
+import org.jetbrains.kotlin.j2k.ast.PrimitiveType
+import org.jetbrains.kotlin.j2k.ast.Property
+import org.jetbrains.kotlin.j2k.ast.PropertyAccessor
+import org.jetbrains.kotlin.j2k.ast.PrototypeInfo
+import org.jetbrains.kotlin.j2k.ast.QualifiedExpression
+import org.jetbrains.kotlin.j2k.ast.ReferenceElement
+import org.jetbrains.kotlin.j2k.ast.ReturnStatement
+import org.jetbrains.kotlin.j2k.ast.Statement
+import org.jetbrains.kotlin.j2k.ast.SuperExpression
+import org.jetbrains.kotlin.j2k.ast.Type
+import org.jetbrains.kotlin.j2k.ast.TypeParameterList
+import org.jetbrains.kotlin.j2k.ast.VarArgType
+import org.jetbrains.kotlin.j2k.ast.assignNoPrototype
+import org.jetbrains.kotlin.j2k.ast.assignPrototype
+import org.jetbrains.kotlin.j2k.ast.assignPrototypes
+import org.jetbrains.kotlin.j2k.ast.assignPrototypesFrom
+import org.jetbrains.kotlin.j2k.ast.convertTypeParameterList
+import org.jetbrains.kotlin.j2k.ast.declarationIdentifier
 import org.jetbrains.kotlin.j2k.usageProcessing.FieldToPropertyProcessing
 import org.jetbrains.kotlin.j2k.usageProcessing.UsageProcessing
 import org.jetbrains.kotlin.j2k.usageProcessing.UsageProcessingExpressionConverter
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import org.jetbrains.kotlin.types.expressions.OperatorConventions.*
+import org.jetbrains.kotlin.types.expressions.OperatorConventions.BYTE
+import org.jetbrains.kotlin.types.expressions.OperatorConventions.CHAR
+import org.jetbrains.kotlin.types.expressions.OperatorConventions.DOUBLE
+import org.jetbrains.kotlin.types.expressions.OperatorConventions.FLOAT
+import org.jetbrains.kotlin.types.expressions.OperatorConventions.INT
+import org.jetbrains.kotlin.types.expressions.OperatorConventions.LONG
+import org.jetbrains.kotlin.types.expressions.OperatorConventions.SHORT
 
+@K1Deprecation
 class Converter private constructor(
     private val elementToConvert: PsiElement,
     val settings: ConverterSettings,
@@ -931,6 +1027,7 @@ class Converter private constructor(
     }
 }
 
+@K1Deprecation
 val PRIMITIVE_TYPE_CONVERSIONS: Map<String, String> = mapOf(
     "byte" to BYTE.asString(),
     "short" to SHORT.asString(),

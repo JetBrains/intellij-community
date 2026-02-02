@@ -2,7 +2,10 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.containers.ContainerUtil;

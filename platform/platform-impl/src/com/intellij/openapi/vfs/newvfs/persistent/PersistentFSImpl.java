@@ -68,6 +68,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import static com.intellij.configurationStore.StorageUtilKt.RELOADING_STORAGE_WRITE_REQUESTOR;
+import static com.intellij.openapi.vfs.newvfs.AsyncEventSupport.afterVfsChange;
 import static com.intellij.openapi.vfs.newvfs.events.VFileEvent.REFRESH_REQUESTOR;
 import static com.intellij.openapi.vfs.newvfs.impl.VfsThreadingUtil.runActionOnEdtRegardlessOfCurrentThread;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
@@ -1142,7 +1143,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           long newTimestamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
           long newLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
           executeTouch(file, false, event.getModificationStamp(), newLength, newTimestamp);
-          fireAfterEvents(getPublisherEdt(), getPublisherBackgroundable(), events);
+          fireAfterEvents(getPublisherEdt(), getPublisherBackgroundable(), Collections.emptyList(), events);
         }
       }
     };
@@ -1190,7 +1191,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       runSuppressing(
         () -> fireBeforeEvents(publisher, publisherBackgroundable, outValidatedEvents),
         () -> applyEvent(event),
-        () -> fireAfterEvents(publisher, publisherBackgroundable, outValidatedEvents),
+        () -> fireAfterEvents(publisher, publisherBackgroundable, Collections.emptyList(), outValidatedEvents),
+        EmptyRunnable.INSTANCE,
         EmptyRunnable.INSTANCE
       );
     }
@@ -1201,11 +1203,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         outApplyActions.add(() -> applyEvent(jarDeleteEvent));
         outValidatedEvents.add(jarDeleteEvent);
       }
-      applyMultipleEvents(publisher, publisherBackgroundable, outApplyActions, outValidatedEvents, false);
+      applyMultipleEvents(publisher, publisherBackgroundable, Collections.emptyList(), outApplyActions, outValidatedEvents, false);
     }
   }
 
-  private static void runSuppressing(@NotNull Runnable r1, @NotNull Runnable r2, @NotNull Runnable r3, @NotNull Runnable r4) {
+  private static void runSuppressing(@NotNull Runnable r1, @NotNull Runnable r2, @NotNull Runnable r3, @NotNull Runnable r4, @NotNull Runnable r5) {
     Throwable t = null;
     try {
       r1.run();
@@ -1230,12 +1232,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         r4.run();
       }
       catch (Throwable e) {
-        if (t == null) {
-          t = e;
-        }
-        else {
-          t.addSuppressed(e);
-        }
+        t = Suppressions.addSuppressed(t, e);
+      }
+    }
+    if (r5 != EmptyRunnable.INSTANCE) {
+      try {
+        r5.run();
+      }
+      catch (Throwable e) {
+        t = Suppressions.addSuppressed(t, e);
       }
     }
     if (t != null) {
@@ -1505,7 +1510,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final int INNER_ARRAYS_THRESHOLD = 4096;
 
   @ApiStatus.Internal
-  public void processEventsImpl(@NotNull List<CompoundVFileEvent> events, boolean excludeAsyncListeners) {
+  public void processEventsImpl(@NotNull List<CompoundVFileEvent> events, @NotNull List<AsyncFileListener.ChangeApplier> earlyAfterEventChangeAppliers, boolean excludeAsyncListeners) {
     ThreadingAssertions.assertWriteAccess();
 
     int startIndex = 0;
@@ -1536,13 +1541,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                     excludeAsyncListeners);
 
       if (!validated.isEmpty()) {
-        applyMultipleEvents(publisherEdt, publisherBackgroundable, applyActions, validated, excludeAsyncListeners);
+        applyMultipleEvents(publisherEdt, publisherBackgroundable, earlyAfterEventChangeAppliers, applyActions, validated, excludeAsyncListeners);
       }
     }
   }
 
   private static void applyMultipleEvents(@NotNull BulkFileListener publisher,
                                           @NotNull BulkFileListenerBackgroundable publisherBackgroundable,
+                                          @NotNull List<AsyncFileListener.ChangeApplier> earlyAfterEventChangeAppliers,
                                           @NotNull List<? extends @NotNull Runnable> applyActions,
                                           @NotNull List<? extends @NotNull VFileEvent> applyEvents,
                                           boolean excludeAsyncListeners) {
@@ -1574,7 +1580,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
       PingProgress.interactWithEdtProgress();
       try {
-        fireAfterEvents(publisher, publisherBackgroundable, toSend);
+        fireAfterEvents(publisher, publisherBackgroundable, earlyAfterEventChangeAppliers, toSend);
       }
       catch (Throwable t) {
         if (x != null) t.addSuppressed(x);
@@ -1594,15 +1600,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       () -> publisherBackgroundable.before(toSend),
       () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.before(toSend)),
       () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend),
+      EmptyRunnable.INSTANCE,
       EmptyRunnable.INSTANCE
     );
   }
 
   private static void fireAfterEvents(@NotNull BulkFileListener publisherEdt,
                                       @NotNull BulkFileListenerBackgroundable publisherBackgroundable,
+                                      @NotNull List<AsyncFileListener.ChangeApplier> earlyAfterEventChangeAppliers,
                                       @NotNull List<? extends VFileEvent> toSend) {
     runSuppressing(
       () -> CachedFileType.clearCache(),
+      () -> afterVfsChange(earlyAfterEventChangeAppliers),
       () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend),
       () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.after(toSend)),
       () -> publisherBackgroundable.after(toSend)

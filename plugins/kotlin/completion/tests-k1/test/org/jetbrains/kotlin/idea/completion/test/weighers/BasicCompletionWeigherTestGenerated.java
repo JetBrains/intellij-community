@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test.weighers;
 
@@ -409,6 +409,45 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/weighers/basic/namedArguments")
+    public static class NamedArguments extends AbstractBasicCompletionWeigherTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("PreferInMultiLine.kt")
+        public void testPreferInMultiLine() throws Exception {
+            runTest("../testData/weighers/basic/namedArguments/PreferInMultiLine.kt");
+        }
+
+        @TestMetadata("PreferLowerArgumentIndex.kt")
+        public void testPreferLowerArgumentIndex() throws Exception {
+            runTest("../testData/weighers/basic/namedArguments/PreferLowerArgumentIndex.kt");
+        }
+
+        @TestMetadata("PreferLowestMissingArgument.kt")
+        public void testPreferLowestMissingArgument() throws Exception {
+            runTest("../testData/weighers/basic/namedArguments/PreferLowestMissingArgument.kt");
+        }
+
+        @TestMetadata("PreferMatchingTypeSingleLine.kt")
+        public void testPreferMatchingTypeSingleLine() throws Exception {
+            runTest("../testData/weighers/basic/namedArguments/PreferMatchingTypeSingleLine.kt");
+        }
+
+        @TestMetadata("PreferWhenUsingNamedArgumentsSingleLine.kt")
+        public void testPreferWhenUsingNamedArgumentsSingleLine() throws Exception {
+            runTest("../testData/weighers/basic/namedArguments/PreferWhenUsingNamedArgumentsSingleLine.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/weighers/basic/parameterNameAndType")
     public static class ParameterNameAndType extends AbstractBasicCompletionWeigherTest {
         @java.lang.Override
@@ -773,6 +812,16 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @TestMetadata("PreferNullForNullable.kt")
         public void testPreferNullForNullable() throws Exception {
             runTest("../testData/weighers/basic/PreferNullForNullable.kt");
+        }
+
+        @TestMetadata("PreferThis.kt")
+        public void testPreferThis() throws Exception {
+            runTest("../testData/weighers/basic/PreferThis.kt");
+        }
+
+        @TestMetadata("PreferThisWithLabel.kt")
+        public void testPreferThisWithLabel() throws Exception {
+            runTest("../testData/weighers/basic/PreferThisWithLabel.kt");
         }
 
         @TestMetadata("PreferTypesMatchingAnnotatedType.kt")

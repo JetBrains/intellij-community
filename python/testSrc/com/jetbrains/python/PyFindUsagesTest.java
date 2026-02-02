@@ -8,7 +8,11 @@ import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 
 public class PyFindUsagesTest extends PyTestCase {

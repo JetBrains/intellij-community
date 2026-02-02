@@ -1,7 +1,9 @@
+from typing import Final
+
 from gunicorn.config import Config
 
-PLATFORM: str
-IS_CYGWIN: bool
+PLATFORM: Final[str]
+IS_CYGWIN: Final[bool]
 
 class WorkerTmp:
     def __init__(self, cfg: Config) -> None: ...

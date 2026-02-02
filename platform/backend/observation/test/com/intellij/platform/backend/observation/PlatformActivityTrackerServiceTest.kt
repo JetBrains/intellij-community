@@ -12,7 +12,6 @@ import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.Nls
 import org.junit.jupiter.api.RepeatedTest
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.collections.map
 import kotlin.random.Random.Default.nextInt
 
 class PlatformActivityTrackerServiceTest {

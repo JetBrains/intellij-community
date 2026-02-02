@@ -6,7 +6,9 @@ import com.intellij.debugger.streams.core.trace.dsl.CodeBlock
 import com.intellij.debugger.streams.core.trace.dsl.Expression
 import com.intellij.debugger.streams.core.trace.dsl.Lambda
 import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class KotlinLambda(override val variableName: String, override val body: CodeBlock) : Lambda {
     override fun call(callName: String, vararg args: Expression): Expression = TextExpression("(${toCode()})").call(callName, *args)
 

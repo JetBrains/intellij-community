@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryWithPsiElement
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 
 
+@K1Deprecation
 abstract class AbstractDiagnosticBasedMigrationInspection<T : PsiElement>(val elementType: Class<T>) : AbstractKotlinInspection() {
     abstract fun getDiagnosticFactory(languageVersionSettings: LanguageVersionSettings): DiagnosticFactoryWithPsiElement<T, *>
     open fun customIntentionFactory(): ((Diagnostic) -> IntentionAction?)? = null

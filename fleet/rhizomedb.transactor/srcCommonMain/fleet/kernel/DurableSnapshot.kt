@@ -1,15 +1,37 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel
 
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.Add
+import com.jetbrains.rhizomedb.Attribute
+import com.jetbrains.rhizomedb.Cardinality
+import com.jetbrains.rhizomedb.CreateEntity
+import com.jetbrains.rhizomedb.Datom
+import com.jetbrains.rhizomedb.DbContext
+import com.jetbrains.rhizomedb.DeserializationProblem
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.Instruction
+import com.jetbrains.rhizomedb.Mut
+import com.jetbrains.rhizomedb.Op
+import com.jetbrains.rhizomedb.Q
+import com.jetbrains.rhizomedb.ReifyEntities
+import com.jetbrains.rhizomedb.Schema
 import com.jetbrains.rhizomedb.Schema.Companion.CascadeDeleteByMask
 import com.jetbrains.rhizomedb.Schema.Companion.IndexedMask
 import com.jetbrains.rhizomedb.Schema.Companion.NothingMask
 import com.jetbrains.rhizomedb.Schema.Companion.RefMask
 import com.jetbrains.rhizomedb.Schema.Companion.RequiredMask
 import com.jetbrains.rhizomedb.Schema.Companion.UniqueMask
+import com.jetbrains.rhizomedb.TX
+import com.jetbrains.rhizomedb.attributeByIdent
+import com.jetbrains.rhizomedb.attributeIdent
+import com.jetbrains.rhizomedb.createUnknownAttribute
+import com.jetbrains.rhizomedb.createUnknownEntityType
+import com.jetbrains.rhizomedb.displayDatom
+import com.jetbrains.rhizomedb.getOne
 import com.jetbrains.rhizomedb.impl.attributeSerializer
 import com.jetbrains.rhizomedb.impl.generateSeed
+import com.jetbrains.rhizomedb.mutate
 import fleet.reporting.shared.tracing.span
 import fleet.util.UID
 import fleet.util.computeShim
@@ -22,7 +44,6 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonElement
-import kotlin.collections.set
 import kotlin.reflect.KClass
 
 @Serializable

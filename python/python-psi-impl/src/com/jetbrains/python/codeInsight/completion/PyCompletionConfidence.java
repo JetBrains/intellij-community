@@ -17,6 +17,7 @@ package com.jetbrains.python.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.CompletionConfidence;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -35,7 +36,10 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public final class PyCompletionConfidence extends CompletionConfidence {
 
   @Override
-  public @NotNull ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+  public @NotNull ThreeState shouldSkipAutopopup(@NotNull Editor editor,
+                                                 @NotNull PsiElement contextElement,
+                                                 @NotNull PsiFile psiFile,
+                                                 int offset) {
     final ASTNode node = contextElement.getNode();
     if (node != null) {
       final IElementType elementType = node.getElementType();
@@ -58,7 +62,7 @@ public final class PyCompletionConfidence extends CompletionConfidence {
         }
       }
     }
-    return super.shouldSkipAutopopup(contextElement, psiFile, offset);
+    return ThreeState.UNSURE;
   }
 
   private static boolean isSequenceOfDots(@NotNull PsiElement contextElement) {

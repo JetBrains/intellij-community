@@ -11,7 +11,11 @@ import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.starters.local.generator.convertOutputLocationForTests
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.local.wizard.StarterLibrariesStep
-import com.intellij.ide.starters.shared.*
+import com.intellij.ide.starters.shared.CustomizedMessages
+import com.intellij.ide.starters.shared.StarterLanguage
+import com.intellij.ide.starters.shared.StarterProjectType
+import com.intellij.ide.starters.shared.StarterTestRunner
+import com.intellij.ide.starters.shared.StarterWizardSettings
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.SettingsStep

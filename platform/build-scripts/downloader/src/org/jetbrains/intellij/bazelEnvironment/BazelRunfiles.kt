@@ -32,19 +32,21 @@ object BazelRunfiles {
       append(label.target)
     }
 
-    // On Windows there could be no runfiles tree, so we need to use manifest only
-    if (runfilesManifestOnly || runfileManifest.exists) {
-      val resolved = Path.of(runfileManifest.get(manifestKey))
-      check(resolved.exists()) {
-        "Unable to find dependency ($RUNFILES_MANIFEST_ONLY_ENV_NAME=${runfilesManifestOnly}) '${label.asLabel}' at $resolved\n" +
-        "Check `data` attribute of your target to make sure it's included there"
-      }
-      return resolved
+    val resolved = if (runfilesManifestOnly || runfileManifest.exists) {
+      // On Windows there could be no runfiles tree, so we need to use manifest only
+      Path.of(runfileManifest.get(manifestKey))
+    }
+    else {
+      // Locate file under runfiles tree
+      bazelJavaRunfilesPath.resolve(manifestKey)
     }
 
-    // Locate file under runfiles tree
-    val resolved = bazelJavaRunfilesPath.resolve(manifestKey)
-    check(resolved.exists()) { "Unable to find dependency '${label.asLabel}' at $resolved" }
+    check(resolved.exists()) {
+      "Unable to find dependency '${label.asLabel}' at $resolved\n" +
+      "($RUNFILES_MANIFEST_ONLY_ENV_NAME=${System.getenv(RUNFILES_MANIFEST_ONLY_ENV_NAME)}, runfilesManifestOnly=$runfilesManifestOnly, runfileManifest.exists=${runfileManifest.exists}, runfileManifest=$runfileManifest)\n" +
+      "Check `data` attribute of your target to make sure it's included there"
+    }
+
     return resolved
   }
 

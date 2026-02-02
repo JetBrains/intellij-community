@@ -67,12 +67,6 @@ public abstract class UsageContextPanelBase extends JBPanelWithEmptyText impleme
     updateLayoutLater(infos);
   }
 
-  @Override
-  @Deprecated
-  public final void updateLayout(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
-    updateLayoutLater(infos, usageView);
-  }
-
   @RequiresEdt
   protected void updateLayoutLater(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
     updateLayoutLater(infos);

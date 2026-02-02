@@ -4,7 +4,11 @@ package com.jetbrains.python
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.environmentVariables
+import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor

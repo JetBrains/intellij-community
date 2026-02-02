@@ -4,7 +4,11 @@ package com.intellij.ui.jcef.utils
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.callback.CefCallback
-import org.cef.handler.*
+import org.cef.handler.CefRequestHandlerAdapter
+import org.cef.handler.CefResourceHandler
+import org.cef.handler.CefResourceHandlerAdapter
+import org.cef.handler.CefResourceRequestHandler
+import org.cef.handler.CefResourceRequestHandlerAdapter
 import org.cef.misc.BoolRef
 import org.cef.network.CefRequest
 import java.net.URL

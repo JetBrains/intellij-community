@@ -27,7 +27,9 @@ import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.util.NameValidator;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.event.DocumentEvent;
 import java.text.MessageFormat;
 

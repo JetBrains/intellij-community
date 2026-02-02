@@ -3,7 +3,6 @@ package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.indicatorRunBlockingCancellable
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread

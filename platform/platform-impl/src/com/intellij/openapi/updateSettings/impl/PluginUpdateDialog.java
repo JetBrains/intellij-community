@@ -3,7 +3,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
-import com.intellij.ide.plugins.enums.PluginsGroupType;
+import com.intellij.ide.plugins.PluginsGroupType;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -177,7 +177,7 @@ public class PluginUpdateDialog extends DialogWrapper {
 
   protected void doIgnoreUpdateAction(ActionEvent e) {
     close(CANCEL_EXIT_CODE);
-    ApplicationManager.getApplication().getService(UpdateCheckerFacade.class)
+    UpdateCheckerFacade.getInstance()
       .ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, ListPluginComponent::getPluginDescriptor));
   }
 
@@ -257,7 +257,7 @@ public class PluginUpdateDialog extends DialogWrapper {
           if (PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed() &&
               !UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled()) {
             Notification notification =
-              ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).getNotificationGroupForPluginUpdateResults()
+              UpdateCheckerFacade.getInstance().getNotificationGroupForPluginUpdateResults()
                 .createNotification(IdeBundle.message("updates.plugins.notification.title"),
                                     IdeBundle.message("updates.plugins.autoupdate.notification.message"), NotificationType.INFORMATION)
                 .addAction(new NotificationAction(IdeBundle.message("updates.auto.update.title")) {
@@ -279,7 +279,7 @@ public class PluginUpdateDialog extends DialogWrapper {
             notification.notify(myProject);
           }
           if (!restartRequired) {
-            ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).getNotificationGroupForPluginUpdateResults()
+            UpdateCheckerFacade.getInstance().getNotificationGroupForPluginUpdateResults()
               .createNotification(getUpdateNotificationMessage(installedDescriptors),
                                   NotificationType.INFORMATION)
               .setDisplayId("plugins.updated.without.restart")

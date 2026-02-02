@@ -18,10 +18,17 @@ import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
 import org.jetbrains.jps.model.JpsProject;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

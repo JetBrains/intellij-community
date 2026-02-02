@@ -2,6 +2,7 @@ package com.intellij.python.pyproject.model.internal.workspaceBridge
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
@@ -15,7 +16,11 @@ import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.internal.PyProjectTomlBundle
 import com.intellij.python.pyproject.model.internal.pyProjectToml.FSWalkInfoWithToml
 import com.intellij.python.pyproject.model.internal.pyProjectToml.getPEP621Deps
-import com.intellij.python.pyproject.model.spi.*
+import com.intellij.python.pyproject.model.spi.ProjectName
+import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
+import com.intellij.python.pyproject.model.spi.Tool
+import com.intellij.python.pyproject.model.spi.WorkspaceName
+import com.intellij.python.pyproject.model.spi.plus
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.findFacet
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.findSdkEntity
@@ -38,13 +43,16 @@ import kotlin.io.path.name
 internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWithToml) {
   changeWorkspaceMutex.withLock {
     val (entries, excludeDirs) = generatePyProjectTomlEntries(files)
+    // No pyproject.toml files, no need to touch model at all
+    if (entries.isEmpty()) {
+      return
+    }
     val newStorage = createEntityStorage(entries, project.workspaceModel.getVirtualFileUrlManager())
 
     val workspaceModel = project.workspaceModel
     workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { currentStorage -> // Fake module entity is added by default if nothing was discovered
-      removeFakeModuleAndConflictingEntities(currentStorage, newStorage.entities(ModuleEntity::class.java))
-      // TODO: Store old module->SDK, so we can restoe it even when modules are destroyed
       relocateUserDefinedModuleSdk(currentStorage) {
+        removeFakeModuleAndConflictingEntities(currentStorage, newStorage.entities(ModuleEntity::class.java))
         currentStorage.replaceBySource({ it is PyProjectTomlEntitySource }, newStorage)
 
         // Exclude dirs
@@ -80,8 +88,10 @@ private fun MutableEntityStorage.excludeRoot(rootToExclude: VirtualFileUrl, modu
 internal fun relocateUserDefinedModuleSdk(storage: MutableEntityStorage, transfer: () -> Unit) {
 
   // Store SDK
-  val moduleIdToSdkId = storage.entities(ModuleEntity::class.java)
-    .filter { it.entitySource is PyProjectTomlEntitySource && it.type == PYTHON_MODULE_ID }
+  val pyModules = storage.entities(ModuleEntity::class.java).filter { it.isPythonModule }.toList()
+  // Module might be renamed, so we store its path as a last resort
+  val tomlDirToSdkId = mutableMapOf<VirtualFileUrl, SdkId>()
+  val moduleIdToSdkId = pyModules
     .mapNotNull { moduleEntity ->
       val sdkId = moduleEntity.sdkId
                   // Module has no SDK, but might have a facet
@@ -96,6 +106,10 @@ internal fun relocateUserDefinedModuleSdk(storage: MutableEntityStorage, transfe
       if (sdkId == null) {
         return@mapNotNull null
       }
+      val tomlDir = moduleEntity.pyProjectTomlEntity?.dirWithToml
+      if (tomlDir != null) {
+        tomlDirToSdkId[tomlDir] = sdkId
+      }
       Pair(moduleEntity.symbolicId, sdkId)
     }.toMap()
 
@@ -103,7 +117,17 @@ internal fun relocateUserDefinedModuleSdk(storage: MutableEntityStorage, transfe
 
   // Restore SDKs
   for ((moduleId, sdkId) in moduleIdToSdkId.entries) {
-    val moduleEntity = storage.resolve(moduleId) ?: continue
+    val moduleEntity = storage.resolve(moduleId)
+    if (moduleEntity != null) {
+      storage.modifyModuleEntity(moduleEntity) {
+        this.sdkId = sdkId
+      }
+    }
+  }
+  val pyModulesNoSdk = storage.entities(ModuleEntity::class.java).filter { it.isPythonModule && it.sdkId == null }
+  for (moduleEntity in pyModulesNoSdk) {
+    val tomlDir = moduleEntity.pyProjectTomlEntity?.dirWithToml ?: continue
+    val sdkId = tomlDirToSdkId[tomlDir] ?: continue
     storage.modifyModuleEntity(moduleEntity) {
       this.sdkId = sdkId
     }
@@ -276,16 +300,17 @@ private data class PyProjectTomlBasedEntryImpl(
  * @see com.intellij.openapi.project.impl.getOrInitializeModule
  */
 private fun removeFakeModuleAndConflictingEntities(storage: MutableEntityStorage, newModules: Sequence<ModuleEntity>) {
-  val contentsToRemove = newModules.flatMap { content -> content.contentRoots.map { it.url } }.toSet()
-  val namesToRemove = newModules.map { it.name }.toSet()
+  val vfsManager = VirtualFileManager.getInstance()
+  val contentsToRemove = newModules.flatMap { content -> content.contentRoots.map { vfsManager.findFileByUrl(it.url.url)!! } }.toSet()
+  val namesToRemove = newModules.map { it.name.lowercase() }.toSet()
   val modulesToRemove = storage.entities(ModuleEntity::class.java)
     .filter { moduleEntity ->
       moduleEntity.type == PYTHON_MODULE_ID // Python module
       && (
         // Intersects with new module content root
-        moduleEntity.contentRoots.map { it.url }.any { it in contentsToRemove } ||
+        moduleEntity.contentRoots.map { vfsManager.findFileByUrl(it.url.url) }.any { it in contentsToRemove } ||
         // Intersects by name
-        moduleEntity.name in namesToRemove ||
+        moduleEntity.name.lowercase() in namesToRemove ||
         // Auto-generated, temporary module
         moduleEntity.entitySource is NonPersistentEntitySource
          )
@@ -331,3 +356,5 @@ private val ModuleEntity.sdkId: SdkId?
       is SdkDependency -> it.sdk
     }
   }
+
+private val ModuleEntity.isPythonModule: Boolean get() = entitySource is PyProjectTomlEntitySource && type == PYTHON_MODULE_ID

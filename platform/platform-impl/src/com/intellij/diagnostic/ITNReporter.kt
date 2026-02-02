@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.diagnostic.ITNProxy.ErrorBean
@@ -76,9 +76,6 @@ open class ITNReporter internal constructor(private val postUrl: String) : Error
    * Used to enable error reporting even in release versions.
    */
   open fun showErrorInRelease(event: IdeaLoggingEvent): Boolean = false
-
-  @ApiStatus.Internal
-  fun hostId(): String = ITNProxy.DEVICE_ID
 
   private fun createReportBean(event: IdeaLoggingEvent, comment: String?): ErrorBean =
     ErrorBean(event, comment, event.plugin?.pluginId?.idString, event.plugin?.name, event.plugin?.version, IdeaLogger.ourLastActionId)

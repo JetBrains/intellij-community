@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.awt.*;
+import java.awt.Color;
 
 public final class MixedColorProducerTest {
   @Test

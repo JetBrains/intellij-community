@@ -4,6 +4,7 @@
 
 package com.intellij.openapi.editor.rd
 
+import com.intellij.idea.AppMode
 import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -16,7 +17,7 @@ val isLocalEditorUx: Boolean
   get() = Registry.`is`("editor.rd.local.ux")
 
 fun isMonolith(): Boolean {
-  return isLocalEditorUx || AppModeAssertions.isMonolith()
+  return isLocalEditorUx || AppMode.isMonolith()
 }
 
 fun assertLocalEditorSupport(editor: Editor) {

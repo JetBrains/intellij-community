@@ -3,7 +3,11 @@ package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class UpdatedFilesReverseSide {
   // just list of same groups = another presentation/container of same

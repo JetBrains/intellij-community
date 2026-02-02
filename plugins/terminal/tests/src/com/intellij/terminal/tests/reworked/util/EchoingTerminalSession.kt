@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.terminal.frontend.view.completion.PowerShellCompletionContributor
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -15,10 +16,29 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionResultWithContext
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
-import org.jetbrains.plugins.terminal.session.impl.*
-import org.jetbrains.plugins.terminal.session.impl.dto.*
+import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
+import org.jetbrains.plugins.terminal.session.impl.TerminalBeepEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCloseEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCompletionFinishedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalInitialStateEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
+import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalBlocksModelStateDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalCommandBlockDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalHyperlinksModelStateDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalOutputModelStateDto
+import org.jetbrains.plugins.terminal.session.impl.dto.toDto
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockIdImpl
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -35,9 +55,21 @@ import kotlin.concurrent.withLock
  *
  * Can be useful to test typing in the [com.intellij.terminal.frontend.view.TerminalView]
  * without starting a real shell process.
+ *
+ * @param startupOptions options to be returned as a part of [TerminalInitialStateEvent].
  */
-internal class EchoingTerminalSession(coroutineScope: CoroutineScope) : TerminalSession {
+internal class EchoingTerminalSession(
+  private val startupOptions: TerminalStartupOptions,
+  coroutineScope: CoroutineScope,
+) : TerminalSession {
   private val inputChannel = Channel<TerminalInputEvent>(Channel.UNLIMITED)
+
+  /**
+   * Can be used only for sending one-shot events, like [TerminalBeepEvent] or [TerminalCompletionFinishedEvent].
+   * Shouldn't be used for incremental updates.
+   */
+  private val outputChannel = Channel<TerminalOutputEvent>(Channel.UNLIMITED)
+
   private val screenState = ScreenState()
   private val screenLock = ReentrantLock()
 
@@ -63,14 +95,33 @@ internal class EchoingTerminalSession(coroutineScope: CoroutineScope) : Terminal
         isClosed = true
       }
       is TerminalWriteBytesEvent -> {
-        screenLock.withLock {
-          decodeBytesAndUpdateScreen(event.bytes)
+        if (String(event.bytes) == PowerShellCompletionContributor.CALL_COMPLETION_SEQUENCE) {
+          handleCompletionRequest()
+        }
+        else {
+          screenLock.withLock {
+            decodeBytesAndUpdateScreen(event.bytes)
+          }
         }
       }
       else -> {
         // other events are not supported
       }
     }
+  }
+
+  private fun handleCompletionRequest() {
+    // Just send the empty response
+    val emptyResult = PowerShellCompletionResultWithContext(
+      commandText = "",
+      cursorIndex = 0,
+      replacementIndex = 0,
+      replacementLength = 0,
+      matches = emptyList()
+    )
+    val emptyResultJson = Json.encodeToString(emptyResult)
+    val event = TerminalCompletionFinishedEvent(emptyResultJson)
+    outputChannel.trySend(event)
   }
 
   private fun decodeBytesAndUpdateScreen(bytes: ByteArray) {
@@ -101,7 +152,7 @@ internal class EchoingTerminalSession(coroutineScope: CoroutineScope) : Terminal
   }
 
   override suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>> {
-    return channelFlow {
+    val screenEventsFlow = channelFlow {
       val listenerDisposable = Disposer.newDisposable()
 
       screenLock.withLock {
@@ -121,6 +172,11 @@ internal class EchoingTerminalSession(coroutineScope: CoroutineScope) : Terminal
         Disposer.dispose(listenerDisposable)
       }
     }.buffer(Channel.UNLIMITED)
+
+    return merge(
+      screenEventsFlow,
+      outputChannel.receiveAsFlow().map { listOf(it) }
+    )
   }
 
   private fun createInitialStateEvent(screen: ScreenStateSnapshot): TerminalInitialStateEvent {
@@ -144,10 +200,10 @@ internal class EchoingTerminalSession(coroutineScope: CoroutineScope) : Terminal
     )
     val sessionState = TerminalSessionModelImpl.getInitialState().copy(
       isShellIntegrationEnabled = true,
-      currentDirectory = "fakeDir",
+      currentDirectory = startupOptions.workingDirectory,
     )
     return TerminalInitialStateEvent(
-      startupOptions = TerminalStartupOptionsDto(listOf("/bin/zsh", "--login", "-i"), "fakeDir", emptyMap()),
+      startupOptions = startupOptions.toDto(),
       sessionState = sessionState.toDto(),
       outputModelState = outputModelState,
       alternateBufferState = TerminalOutputModelStateDto("", 0, 0, 0, 0, emptyList()),

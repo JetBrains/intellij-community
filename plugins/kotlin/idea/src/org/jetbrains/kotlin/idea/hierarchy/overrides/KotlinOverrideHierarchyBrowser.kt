@@ -14,6 +14,7 @@ import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.ui.PopupHandler
 import com.intellij.usageView.UsageViewLongNameLocation
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import javax.swing.JPanel
 import javax.swing.JTree
 
+@K1Deprecation
 class KotlinOverrideHierarchyBrowser(
     project: Project, baseElement: PsiElement
 ) : MethodHierarchyBrowserBase(project, baseElement) {

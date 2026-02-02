@@ -1,9 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package andel.rope
 
-import andel.rope.impl.*
+import andel.rope.impl.BitMask
 import andel.rope.impl.Node
+import andel.rope.impl.Zipper
 import andel.rope.impl.buildRope
+import andel.rope.impl.nextLeaf
+import andel.rope.impl.prevLeaf
+import andel.rope.impl.scan
 import andel.rope.impl.zipper
 import kotlin.jvm.JvmInline
 

@@ -241,6 +241,7 @@
 - a:getInsertHandler():com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemInsertHandler
 - a:getName():java.lang.String
 - a:getOffset():I
+- s:getPolySymbol(com.intellij.codeInsight.lookup.LookupElement):com.intellij.polySymbols.PolySymbol
 - a:getPriority():com.intellij.polySymbols.PolySymbol$Priority
 - a:getProximity():java.lang.Integer
 - s:getPsiElement(com.intellij.codeInsight.lookup.LookupElement):com.intellij.psi.PsiElement
@@ -283,6 +284,7 @@
 - f:create(java.lang.String,I,com.intellij.polySymbols.PolySymbol):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - f:create(java.lang.String,I,com.intellij.polySymbols.PolySymbol,kotlin.jvm.functions.Function1):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 - bs:create$default(com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem$Companion,java.lang.String,I,com.intellij.polySymbols.PolySymbol,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+- f:getPolySymbol(com.intellij.codeInsight.lookup.LookupElement):com.intellij.polySymbols.PolySymbol
 - f:getPsiElement(com.intellij.codeInsight.lookup.LookupElement):com.intellij.psi.PsiElement
 *:com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 - a:aliases(java.util.Set):com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder

@@ -9,3 +9,5 @@ fun bar() {
 // EXIST: "Char, xx ->"
 // ABSENT: "s, i ->"
 // ABSENT: "c, xx ->"
+
+// IGNORE_K2

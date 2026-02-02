@@ -24,7 +24,9 @@ import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection;
 import org.intellij.plugins.intelliLang.inject.config.XPathSupportProxy;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 public class AdvancedXmlPanel extends AbstractInjectionPanel<AbstractTagInjection> {
 

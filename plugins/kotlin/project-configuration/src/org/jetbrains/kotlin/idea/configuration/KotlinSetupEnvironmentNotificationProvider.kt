@@ -38,7 +38,7 @@ import org.jetbrains.kotlin.idea.base.util.createComponentActionLabel
 import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
-import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
+import org.jetbrains.kotlin.idea.statistics.KotlinProjectSetupFUSCollector
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.idea.versions.getLibraryRootsWithIncompatibleAbi
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -96,7 +96,8 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
             !isStdlibModule(module) &&
             getLibraryRootsWithIncompatibleAbi(module).isEmpty()
         ) {
-            return createKotlinNotConfiguredPanel(module, getAbleToRunConfigurators(module).toList())
+            val configurators = getAbleToRunConfigurators(module).toList()
+            return createKotlinNotConfiguredPanel(module, configurators)
         }
 
         return null
@@ -175,7 +176,7 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
             configurators: List<KotlinProjectConfigurator>
         ): Function<in FileEditor, out JComponent?> =
             Function { fileEditor: FileEditor ->
-                KotlinJ2KOnboardingFUSCollector.logShowConfigureKtPanel(module.project)
+                KotlinProjectSetupFUSCollector.logShowConfigureKtPanel(module.project)
 
                 EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning).apply {
                     text = KotlinProjectConfigurationBundle.message("kotlin.not.configured")
@@ -189,7 +190,7 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
                                 val configuratorsPopup = createConfiguratorsPopup(project, configurators)
                                 configuratorsPopup.showUnderneathOf(label)
                             }
-                            KotlinJ2KOnboardingFUSCollector.logClickConfigureKtNotification(project)
+                            KotlinProjectSetupFUSCollector.logClickConfigureKtNotification(project)
                         }
 
                         createActionLabel(KotlinProjectConfigurationBundle.message("action.text.ignore")) {

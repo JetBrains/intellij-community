@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.test
 
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests.runTestIfEnabled
 import org.jetbrains.kotlin.test.utils.withExtension
 import org.junit.Assert
 import org.slf4j.LoggerFactory

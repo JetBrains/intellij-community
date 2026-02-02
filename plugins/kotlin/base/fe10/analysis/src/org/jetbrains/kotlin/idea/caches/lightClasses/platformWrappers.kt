@@ -3,16 +3,37 @@
 package org.jetbrains.kotlin.idea.caches.lightClasses
 
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassInitializer
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiParameterList
+import com.intellij.psi.PsiReferenceList
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeElement
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.impl.InheritanceImplUtil
 import com.intellij.psi.impl.PsiClassImplUtil
 import com.intellij.psi.impl.PsiSuperMethodImplUtil
-import com.intellij.psi.impl.light.*
+import com.intellij.psi.impl.light.LightElement
+import com.intellij.psi.impl.light.LightIdentifier
+import com.intellij.psi.impl.light.LightModifierList
+import com.intellij.psi.impl.light.LightParameter
+import com.intellij.psi.impl.light.LightParameterListBuilder
+import com.intellij.psi.impl.light.LightReferenceListBuilder
+import com.intellij.psi.impl.light.LightTypeParameterBuilder
+import com.intellij.psi.impl.light.LightTypeParameterListBuilder
 import com.intellij.psi.impl.source.ClassInnerStuffCache
 import com.intellij.psi.impl.source.PsiExtensibleClass
 import com.intellij.psi.impl.source.PsiImmediateClassType
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod
 import com.siyeh.ig.psiutils.TypeUtils
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.cannotModify
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.elements.KtLightElementBase
@@ -46,6 +67,7 @@ private val javaGetterNameToKotlinGetterName: Map<String, String> =
         Pair(javaGetterShortName.asString(), JvmAbi.getterName(propertyFqName.shortName().asString()))
     }.toMap()
 
+@K1Deprecation
 fun platformMutabilityWrapper(fqName: FqName, findJavaClass: (String) -> PsiClass?): PsiClass? {
     readOnlyQualifiedNamesToJavaClass[fqName]?.let { (javaClass, kotlinReadOnly) ->
         val javaBaseClass = findJavaClass(javaClass.asSingleFqName().asString()) ?: return null
@@ -70,6 +92,7 @@ private fun getOrCreateWrapper(javaBaseClass: PsiClass, kotlinFqName: FqName, is
 private var PsiClass.readOnlyWrapper: KtLightMutabilityPlatformWrapper? by UserDataProperty(Key.create("READ_ONLY_WRAPPER"))
 private var PsiClass.mutableWrapper: KtLightMutabilityPlatformWrapper? by UserDataProperty(Key.create("MUTABLE_WRAPPER"))
 
+@K1Deprecation
 class KtLightMutabilityPlatformWrapper(
     private val javaBaseClass: PsiClass,
     private val kotlinInterfaceFqName: FqName,
@@ -319,6 +342,7 @@ private class KtLightMethodWrapper(
 }
 
 
+@K1Deprecation
 abstract class KtAbstractContainerWrapper(internal val fqName: FqName, private val superInterface: PsiClass) :
     LightElement(superInterface.manager, KotlinLanguage.INSTANCE), PsiExtensibleClass {
 

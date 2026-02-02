@@ -7,7 +7,7 @@ import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Insets;
 
 /**
  * This is "synthetic" property of the RadContainer.

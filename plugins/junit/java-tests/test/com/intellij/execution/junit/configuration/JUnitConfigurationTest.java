@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.configuration;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -7,11 +7,23 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunConfigurationConfigurableAdapter;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.JavaCommandLine;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunConfigurationModule;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RuntimeConfigurationError;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.junit.*;
+import com.intellij.execution.junit.AllInPackageConfigurationProducer;
+import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit.TestInClassConfigurationProducer;
+import com.intellij.execution.junit.TestPackage;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.junit2.configuration.JUnitConfigurationModel;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -44,16 +56,28 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.IntelliJProjectConfiguration;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.ant.execution.SegmentedOutputStream;
 import com.intellij.rt.junit.JUnitStarter;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.CompilerTester;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.MapDataContext;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -64,7 +88,11 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.StringTokenizer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -165,16 +193,25 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
   }
 
   public void testRunningJUnit() throws ExecutionException {
-    PsiClass testA = findTestA(getModule1());
-    JUnitConfiguration configuration = createConfiguration(testA);
-    JavaParameters parameters = checkCanRun(configuration);
-    assertEquals("[-ea, -Didea.test.cyclic.buffer.size=1048576]", parameters.getVMParametersList().toString());
-    final SegmentedOutputStream notifications = new SegmentedOutputStream(System.out);
-    assertTrue(JUnitStarter.checkVersion(parameters.getProgramParametersList().getArray(),
-                                         new PrintStream(notifications)));
-    assertTrue(parameters.getProgramParametersList().getList().contains(testA.getQualifiedName()));
-    assertEquals(JUnitStarter.class.getName(), parameters.getMainClass());
-    assertEquals(myJdk.getHomeDirectory().getPresentableUrl(), parameters.getJdkPath());
+    RegistryValue registryValue = Registry.get("idea.test.graceful.shutdown.timeout.seconds");
+    int timeout = registryValue.asInteger();
+    try {
+      registryValue.setValue(400);
+
+      PsiClass testA = findTestA(getModule1());
+      JUnitConfiguration configuration = createConfiguration(testA);
+      JavaParameters parameters = checkCanRun(configuration);
+      assertEquals("[-ea, -Didea.test.cyclic.buffer.size=1048576, -Didea.test.graceful.shutdown.timeout.seconds=400]", parameters.getVMParametersList().toString());
+      final SegmentedOutputStream notifications = new SegmentedOutputStream(System.out);
+      assertTrue(JUnitStarter.checkVersion(parameters.getProgramParametersList().getArray(),
+                                           new PrintStream(notifications)));
+      assertTrue(parameters.getProgramParametersList().getList().contains(testA.getQualifiedName()));
+      assertEquals(JUnitStarter.class.getName(), parameters.getMainClass());
+      assertEquals(myJdk.getHomeDirectory().getPresentableUrl(), parameters.getJdkPath());
+    }
+    finally {
+      registryValue.setValue(timeout);
+    }
   }
 
 

@@ -977,13 +977,18 @@ plugins/gitlab/gitlab-git
 plugins/gitlab/gitlab-yaml
 plugins/gradle
 plugins/gradle-maven
+plugins/gradle/completion
 plugins/gradle/gradle-declarative-sync
 plugins/gradle/gradle-dependency-updater
 plugins/gradle/intellij.gradle.analysis
 plugins/gradle/java
+plugins/gradle/java/performance
 plugins/gradle/jps-plugin
+plugins/gradle/kotlin/tests
 plugins/gradle/native
 plugins/gradle/native/tooling
+plugins/gradle/properties
+plugins/gradle/toml
 plugins/gradle/tooling-extension-api
 plugins/gradle/tooling-extension-impl
 plugins/gradle/tooling-proxy
@@ -1256,6 +1261,7 @@ plugins/kotlin/jvm-debugger/sequence
 plugins/kotlin/jvm-debugger/test
 plugins/kotlin/jvm-debugger/test/compose
 plugins/kotlin/jvm-debugger/test/k2
+plugins/kotlin/jvm-debugger/test/kotlin.jvm-debugger.test.k1
 plugins/kotlin/jvm-debugger/test/parcelize
 plugins/kotlin/jvm-decompiler
 plugins/kotlin/jvm/k1
@@ -1279,6 +1285,7 @@ plugins/kotlin/navigation
 plugins/kotlin/navigation/tests
 plugins/kotlin/onboarding
 plugins/kotlin/onboarding-gradle
+plugins/kotlin/onboarding-maven
 plugins/kotlin/onboarding-promoter
 plugins/kotlin/plugin
 plugins/kotlin/plugin-updater
@@ -1392,6 +1399,7 @@ plugins/properties/tests
 plugins/rareJavaRefactorings
 plugins/remote-control
 plugins/repository-search
+plugins/repository-search/common
 plugins/restructuredtext
 plugins/search-everywhere-ml
 plugins/search-everywhere-ml/ranking/core
@@ -1402,6 +1410,7 @@ plugins/search-everywhere-ml/ranking/yaml
 plugins/search-everywhere-ml/typos
 plugins/settings-repository
 plugins/settings-sync/jba
+plugins/settings-sync/settingsSync.performanceTesting
 plugins/sh/backend
 plugins/sh/copyright
 plugins/sh/core

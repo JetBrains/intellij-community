@@ -1,7 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
-import com.intellij.build.events.*;
+import com.intellij.build.events.BuildEventPresentationData;
+import com.intellij.build.events.BuildEventsNls;
+import com.intellij.build.events.EventResult;
+import com.intellij.build.events.Failure;
+import com.intellij.build.events.FailureResult;
+import com.intellij.build.events.MessageEvent;
+import com.intellij.build.events.MessageEventResult;
+import com.intellij.build.events.SkippedResult;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.projectView.PresentationData;
@@ -20,7 +27,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

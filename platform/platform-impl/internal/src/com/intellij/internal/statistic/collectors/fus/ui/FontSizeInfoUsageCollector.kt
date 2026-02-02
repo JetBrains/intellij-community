@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.ui
 
 import com.intellij.ide.ui.LafManager
@@ -17,7 +17,7 @@ import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
  * @author Konstantin Bulenkov
  */
 internal class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("ui.fonts", 6)
+  private val GROUP = EventLogGroup("ui.fonts", 7)
 
   private val FONT_NAME: StringEventField = EventFields.String(
     "font_name", arrayListOf(
@@ -35,7 +35,8 @@ internal class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
     "mononoki", "Bitstream_Vera_Sans_Mono", "Comic_Sans_MS", "Courier_10_Pitch", "Cousine", "2Coding_ligature", "Droid_Sans_Mono_Dotted",
     "Inconsolata-dz", "Input", "Input_Mono", "Meslo_LG_M_DZ_for_Powerline", "Migu_2M", "Monoid", "Operator_Mono_Book",
     "Operator_Mono_Lig", "Operator_Mono_Medium", "Abadi_MT_Condensed_Extra_Bold", "Al_Bayan", "Meiryo", "Microsoft_JhengHei",
-    "Microsoft_Yahei_UI", "SansSerif", "Ubuntu_Light", "JetBrains_Mono", ".AppleSystemUIFont", ".SFNS-Regular", "Inter"
+    "Microsoft_Yahei_UI", "SansSerif", "Ubuntu_Light", "JetBrains_Mono", ".AppleSystemUIFont", ".SFNS-Regular", "Inter",
+    "Monaspace_Neon", "Monaspace_Neon_Var", "Cascadia_Code", "Comic_Mono", "Agave", "Monocraft", "CozetteVector"
   ))
 
   private val FONT_SIZE: IntEventField = EventFields.Int("font_size")
@@ -44,11 +45,14 @@ internal class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
   private val FONT_SIZE_STRING = EventFields.String(
     "font_size", arrayListOf("X_SMALL", "X_LARGE", "XX_SMALL", "XX_LARGE", "SMALL", "MEDIUM", "LARGE")
   )
+  private val FONT_VARIANTS = EventFields.StringListValidatedByInlineRegexp(
+    "font_variants", "ss\\d\\d|cv\\d\\d|case|clig|dlig|hlig|onum|salt|zero"
+  )
 
   private val UI_FONT: EventId3<String?, Int, Float> = GROUP.registerEvent("UI", FONT_NAME, FONT_SIZE, FONT_SIZE_2D)
   private val PRESENTATION_MODE_FONT: EventId1<Int> = GROUP.registerEvent("Presentation.mode", FONT_SIZE)
   private val EDITOR_FONT: VarargEventId = GROUP.registerVarargEvent("Editor", FONT_NAME, FONT_SIZE, FONT_SIZE_2D, LINE_SPACING)
-  private val IDE_EDITOR_FONT: VarargEventId = GROUP.registerVarargEvent("IDE.editor", FONT_NAME, FONT_SIZE, FONT_SIZE_2D, LINE_SPACING)
+  private val IDE_EDITOR_FONT: VarargEventId = GROUP.registerVarargEvent("IDE.editor", FONT_NAME, FONT_SIZE, FONT_SIZE_2D, LINE_SPACING, FONT_VARIANTS)
   private val CONSOLE_FONT: VarargEventId = GROUP.registerVarargEvent("Console", FONT_NAME, FONT_SIZE, FONT_SIZE_2D, LINE_SPACING)
   private val QUICK_DOC_FONT: EventId1<String?> = GROUP.registerEvent("QuickDoc", FONT_SIZE_STRING)
 
@@ -81,7 +85,8 @@ internal class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
         FONT_NAME.with(appPrefs.fontFamily),
         FONT_SIZE.with(appPrefs.getSize(appPrefs.fontFamily)),
         FONT_SIZE_2D.with(appPrefs.getSize2D(appPrefs.fontFamily)),
-        LINE_SPACING.with(appPrefs.lineSpacing))
+        LINE_SPACING.with(appPrefs.lineSpacing),
+        FONT_VARIANTS.with(appPrefs.characterVariants.toList()))
     }
     if (!scheme.isUseEditorFontPreferencesInConsole) {
       usages += CONSOLE_FONT.metric(

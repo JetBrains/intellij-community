@@ -3,7 +3,11 @@ package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.util.NlsSafe

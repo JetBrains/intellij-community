@@ -15,7 +15,11 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.jetbrains.rd.util.lifetime.Lifetime
 import java.awt.Dimension
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.OverlayLayout
+import javax.swing.SwingConstants
 
 internal class BannerOverlay(comp: JComponent) {
 

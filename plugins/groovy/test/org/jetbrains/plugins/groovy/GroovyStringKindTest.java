@@ -8,7 +8,12 @@ import org.junit.Test;
 
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.*;
+import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.DOLLAR_SLASHY;
+import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.DOUBLE_QUOTED;
+import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.SINGLE_QUOTED;
+import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.SLASHY;
+import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.TRIPLE_DOUBLE_QUOTED;
+import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.TRIPLE_SINGLE_QUOTED;
 import static org.junit.Assert.assertEquals;
 
 public class GroovyStringKindTest extends GroovyLatestTest {

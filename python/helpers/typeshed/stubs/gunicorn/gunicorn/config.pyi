@@ -63,6 +63,9 @@ _ClassValidatorType: TypeAlias = Callable[[object | str | None], type[Any] | Non
 _UserGroupValidatorType: TypeAlias = Callable[[str | int | None], int]
 _AddressValidatorType: TypeAlias = Callable[[str | None], _AddressType | None]
 _CallableValidatorType: TypeAlias = Callable[[str | _HookType], _HookType]
+_ProxyProtocolValidatorType: TypeAlias = Callable[[str | bool | None], str]
+_ASGILoopValidatorType: TypeAlias = Callable[[str | None], str]
+_ASGILifespanValidatorType: TypeAlias = Callable[[str | None], str]
 
 _ValidatorType: TypeAlias = (  # noqa: Y047
     _BoolValidatorType
@@ -74,6 +77,9 @@ _ValidatorType: TypeAlias = (  # noqa: Y047
     | _UserGroupValidatorType
     | _AddressValidatorType
     | _CallableValidatorType
+    | _ProxyProtocolValidatorType
+    | _ASGILoopValidatorType
+    | _ASGILifespanValidatorType
 )
 
 KNOWN_SETTINGS: list[Setting]
@@ -138,7 +144,7 @@ class Setting(metaclass=SettingMeta):
     short: ClassVar[str | None]
     desc: ClassVar[str | None]
     nargs: ClassVar[int | str | None]
-    const: ClassVar[bool | None]
+    const: ClassVar[bool | str | None]
     order: ClassVar[int]
 
     def __init__(self) -> None: ...
@@ -649,6 +655,7 @@ class SyslogTo(Setting):
     validator: ClassVar[_StringValidatorType]
     default: ClassVar[str]
     desc: ClassVar[str]
+    default_doc: ClassVar[str]
 
 class Syslog(Setting):
     name: ClassVar[str]
@@ -711,6 +718,15 @@ class StatsdPrefix(Setting):
     meta: ClassVar[str]
     default: ClassVar[str]
     validator: ClassVar[_StringValidatorType]
+    desc: ClassVar[str]
+
+class BacklogMetric(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    validator: ClassVar[_BoolValidatorType]
+    default: ClassVar[bool]
+    action: ClassVar[str]
     desc: ClassVar[str]
 
 class Procname(Setting):
@@ -906,16 +922,37 @@ class NewSSLContext(Setting):
 
     def ssl_context(config: Config, default_ssl_context_factory: Callable[[], SSLContext]) -> SSLContext: ...  # type: ignore[misc] # pyright: ignore[reportGeneralTypeIssues]
 
+def validate_proxy_protocol(val: str | bool | None) -> str: ...
+
 class ProxyProtocol(Setting):
     name: ClassVar[str]
     section: ClassVar[str]
     cli: ClassVar[list[str]]
-    validator: ClassVar[_BoolValidatorType]
-    default: ClassVar[bool]
-    action: ClassVar[str]
+    meta: ClassVar[str]
+    validator: ClassVar[_ProxyProtocolValidatorType]
+    default: ClassVar[str]
+    nargs: ClassVar[str]
+    const: ClassVar[str]
     desc: ClassVar[str]
 
 class ProxyAllowFrom(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    validator: ClassVar[_ListStringValidatorType]
+    default: ClassVar[str]
+    desc: ClassVar[str]
+
+class Protocol(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_StringValidatorType]
+    default: ClassVar[str]
+    desc: ClassVar[str]
+
+class UWSGIAllowFrom(Setting):
     name: ClassVar[str]
     section: ClassVar[str]
     cli: ClassVar[list[str]]
@@ -1059,6 +1096,36 @@ class HeaderMap(Setting):
     name: ClassVar[str]
     section: ClassVar[str]
     cli: ClassVar[list[str]]
+    validator: ClassVar[_StringValidatorType]
+    default: ClassVar[str]
+    desc: ClassVar[str]
+
+def validate_asgi_loop(val: str | None) -> str: ...
+def validate_asgi_lifespan(val: str | None) -> str: ...
+
+class ASGILoop(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_ASGILoopValidatorType]
+    default: ClassVar[str]
+    desc: ClassVar[str]
+
+class ASGILifespan(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_ASGILifespanValidatorType]
+    default: ClassVar[str]
+    desc: ClassVar[str]
+
+class RootPath(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
     validator: ClassVar[_StringValidatorType]
     default: ClassVar[str]
     desc: ClassVar[str]

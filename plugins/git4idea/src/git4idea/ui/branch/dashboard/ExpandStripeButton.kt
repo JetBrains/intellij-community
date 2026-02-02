@@ -10,8 +10,19 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
-import java.awt.*
-import javax.swing.*
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.Rectangle
+import java.awt.RenderingHints
+import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
+import javax.swing.UIManager
 import javax.swing.plaf.basic.BasicButtonUI
 import javax.swing.plaf.basic.BasicGraphicsUtils
 

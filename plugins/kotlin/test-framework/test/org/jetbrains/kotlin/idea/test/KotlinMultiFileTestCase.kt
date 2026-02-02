@@ -20,7 +20,10 @@ import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.isMultiExtensionName
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.toSlashEndingDirPath
 import java.io.File
 
 abstract class KotlinMultiFileTestCase : MultiFileTestCase(),

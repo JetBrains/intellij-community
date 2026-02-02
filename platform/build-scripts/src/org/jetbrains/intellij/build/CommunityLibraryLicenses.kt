@@ -1270,6 +1270,10 @@ object CommunityLibraryLicenses {
     LibraryLicense("thriftpy2", version = "0.4.13", attachedTo = "intellij.python", url = "https://github.com/Thriftpy/thriftpy2/")
       .mit("https://github.com/Thriftpy/thriftpy2/blob/master/LICENSE"),
 
+    LibraryLicense("toml4j", libraryName = "toml4j", url = "https://github.com/mwanji/toml4j")
+      .mit("https://github.com/mwanji/toml4j/blob/master/LICENSE")
+      .suppliedByPersons("Moandji Ezana"),
+
     // for traceprocessor-proto module library in intellij.android.profilersAndroid
     LibraryLicense("Trang", libraryName = "trang-core.jar", version = LibraryLicense.CUSTOM_REVISION, url = "https://relaxng.org/jclark/trang.html")
       .newBsd("https://opensource.org/license/bsd-3-clause/"),

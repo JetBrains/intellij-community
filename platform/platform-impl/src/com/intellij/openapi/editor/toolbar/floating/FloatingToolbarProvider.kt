@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.toolbar.floating.TransparentComponentAnimator
 import com.intellij.openapi.editor.toolbar.floating.TransparentComponentAnimator.Companion.RETENTION_TIME_MS
 import com.intellij.openapi.editor.toolbar.floating.TransparentComponentAnimator.Companion.SHOWING_TIME_MS
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.createExtensionDisposable
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 
@@ -51,12 +50,6 @@ interface FloatingToolbarProvider {
     @Deprecated("Use the [ExtensionPointName.findExtensionOrFail] function directly")
     inline fun <reified T : FloatingToolbarProvider> getProvider(): T {
       return EP_NAME.findExtensionOrFail(T::class.java)
-    }
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use the [ExtensionPointUtil.createExtensionDisposable] function directly")
-    fun createExtensionDisposable(provider: FloatingToolbarProvider, parentDisposable: Disposable): Disposable {
-      return EP_NAME.createExtensionDisposable(provider, parentDisposable)
     }
   }
 }

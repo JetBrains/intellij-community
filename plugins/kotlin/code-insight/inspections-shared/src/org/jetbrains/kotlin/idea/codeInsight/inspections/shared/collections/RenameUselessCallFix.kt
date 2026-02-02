@@ -8,7 +8,13 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections.AbstractUselessCallInspection.ScopedLabelVisitor
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtPrefixExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class RenameUselessCallFix(private val newName: String, private val invert: Boolean = false) : PsiUpdateModCommandQuickFix() {

@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.debugger.test
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.execution.process.ProcessOutputTypes
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
 import org.jetbrains.kotlin.idea.debugger.core.KotlinPositionManagerFactory
 import org.jetbrains.kotlin.idea.debugger.core.KotlinSourcePositionHighlighter
@@ -32,8 +31,3 @@ abstract class AbstractIrBreakpointHighlightingTest : AbstractIrKotlinSteppingTe
   }
 }
 
-abstract class AbstractK1IdeK2CodeBreakpointHighlightingTest : AbstractIrBreakpointHighlightingTest() {
-  override val compileWithK2 = true
-
-  override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
-}

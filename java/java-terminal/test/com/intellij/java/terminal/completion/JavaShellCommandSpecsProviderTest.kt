@@ -1,28 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.terminal.completion
 
-import com.intellij.execution.vmOptions.*
-import com.intellij.java.terminal.JavaShellCommandContext
 import com.intellij.java.terminal.JavaShellCommandUtils
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.terminal.completion.spec.ShellCommandResult
-import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
-import com.intellij.terminal.completion.spec.ShellFileInfo
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.testFramework.replaceService
-import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.TerminalEngine
-import org.jetbrains.plugins.terminal.block.completion.spec.ShellFileSystemSupport
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessExecutor
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessOptions
 import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTestFixture
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import java.util.concurrent.CompletableFuture
 
 @RunWith(Parameterized::class)
-class JavaShellCommandSpecsProviderTest(private val engine: TerminalEngine) : BasePlatformTestCase() {
+internal class JavaShellCommandSpecsProviderTest(engine: TerminalEngine) : JdkCommandsShellSpecsProviderTestBase(engine) {
   companion object {
     @JvmStatic
     @Parameterized.Parameters(name = "{0}")
@@ -31,7 +23,13 @@ class JavaShellCommandSpecsProviderTest(private val engine: TerminalEngine) : Ba
 
   @Test
   fun `default options are present`() = runBlocking {
-    val fixture = ShellCompletionTestFixture.builder(project).mockShellCommandResults { _ ->
+    val fixture = ShellCompletionTestFixture.builder(project)
+      .mockProcessesExecutor(object : ShellDataGeneratorProcessExecutor {
+        override suspend fun executeProcess(options: ShellDataGeneratorProcessOptions): ShellCommandResult {
+          return ShellCommandResult.create("", exitCode = 1)
+        }
+      })
+      .mockShellCommandResults { _ ->
       return@mockShellCommandResults ShellCommandResult.create("", exitCode = 1)
     }.build()
     assertSameElements(fixture.getCompletionNames(), listOf("-ea", "-enableassertions", "-da", "-disableassertions", "-esa", "-enablesystemassertions",
@@ -70,7 +68,7 @@ class JavaShellCommandSpecsProviderTest(private val engine: TerminalEngine) : Ba
     val fixture = createFixture()
     val completion =  fixture.getCompletions("java -cp '")
     assertSameElements(completion.map { it.name  }, listOf("file1.jar", "file2.jar", "dir1/"))
-    assertTrue(completion.all { it.prefixReplacementIndex == 1})
+    assertTrue(completion.all { it.prefixReplacementIndex == 0 })
   }
 
   @Test
@@ -80,7 +78,7 @@ class JavaShellCommandSpecsProviderTest(private val engine: TerminalEngine) : Ba
     val argument = "'file1.jar$separator"
     val completion =  fixture.getCompletions("java -cp $argument")
     assertSameElements(completion.map { it.name  }, listOf("file1.jar", "file2.jar", "dir1/"))
-    assertTrue(completion.all { it.prefixReplacementIndex == argument.length })
+    assertTrue(completion.all { it.prefixReplacementIndex == argument.length - 1 })
   }
 
   @Test
@@ -88,7 +86,7 @@ class JavaShellCommandSpecsProviderTest(private val engine: TerminalEngine) : Ba
     val fixture = createFixture()
     val completion =  fixture.getCompletions("java -cp \"")
     assertSameElements(completion.map { it.name  }, listOf("file1.jar", "file2.jar", "dir1/"))
-    assertTrue(completion.all { it.prefixReplacementIndex == 1})
+    assertTrue(completion.all { it.prefixReplacementIndex == 0 })
   }
 
   @Test
@@ -98,9 +96,8 @@ class JavaShellCommandSpecsProviderTest(private val engine: TerminalEngine) : Ba
     val argument = "\"file1.jar$separator"
     val completion =  fixture.getCompletions("java -cp $argument")
     assertSameElements(completion.map { it.name  }, listOf("file1.jar", "file2.jar", "dir1/"))
-    assertTrue(completion.all { it.prefixReplacementIndex == argument.length })
+    assertTrue(completion.all { it.prefixReplacementIndex == argument.length - 1 })
   }
-
 
   @Test
   fun `classpath suggestion generator simple`() = runBlocking {
@@ -128,59 +125,5 @@ class JavaShellCommandSpecsProviderTest(private val engine: TerminalEngine) : Ba
     val completion =  fixture.getCompletions("java -cp $argument")
     assertSameElements(completion.map { it.name  }, listOf("file1.jar", "file2.jar", "dir1/"))
     assertTrue(completion.all { it.prefixReplacementIndex == argument.length})
-  }
-
-  private fun createFixture(javaVersion: Int = 11): ShellCompletionTestFixture {
-    ApplicationManager.getApplication().replaceService(VMOptionsService::class.java, MockVMOptionsService(), testRootDisposable)
-    val fixture = ShellCompletionTestFixture.builder(project)
-      .setIsReworkedTerminal(engine == TerminalEngine.REWORKED)
-      .mockShellCommandResults { command ->
-        if (command == JavaShellCommandContext.JAVA_SHOW_SETTINGS_PROPERTIES_VERSION_COMMAND) {
-          return@mockShellCommandResults ShellCommandResult.create("java.home = /jre/home\njava.version = ${javaVersion}", exitCode = 0)
-        }
-
-        if (command.startsWith("__jetbrains_intellij_get_directory_files")) {
-          return@mockShellCommandResults ShellCommandResult.create("file1.jar\nfile2.jar\ndir1/", exitCode = 0)
-        }
-
-        return@mockShellCommandResults ShellCommandResult.create("", exitCode = 1)
-      }
-      .mockFileSystemSupport(object : ShellFileSystemSupport {
-        override suspend fun listDirectoryFiles(path: String): List<ShellFileInfo> {
-          return listOf(
-            ShellFileInfo.create("file1.jar", ShellFileInfo.Type.FILE),
-            ShellFileInfo.create("file2.jar", ShellFileInfo.Type.FILE),
-            ShellFileInfo.create("dir1", ShellFileInfo.Type.DIRECTORY),
-          )
-        }
-      })
-      .build()
-    return fixture
-  }
-
-  private suspend fun ShellCompletionTestFixture.getCompletionNames(command: String = "java "): List<String> {
-    val actual: List<ShellCompletionSuggestion> = getCompletions(command)
-    return actual.map { it.name }
-  }
-
-  private class MockVMOptionsService : VMOptionsService {
-    override fun getOrComputeOptionsForJdk(javaHome: String): CompletableFuture<JdkOptionsData> {
-      TestCase.assertEquals("/jre/home", javaHome)
-      return CompletableFuture.completedFuture(
-        JdkOptionsData(
-        listOf(
-          VMOption("settings", null, null, VMOptionKind.Product, null, VMOptionVariant.X),
-          VMOption("lint", null, null, VMOptionKind.Standard, null, VMOptionVariant.X),
-          VMOption("experiment", null, null, VMOptionKind.Experimental, null, VMOptionVariant.X),
-          VMOption("diagnose", null, null, VMOptionKind.Diagnostic, null, VMOptionVariant.X),
-          VMOption("advanced", null, null, VMOptionKind.Product, null, VMOptionVariant.XX),
-          VMOption("add-opens", null, null, VMOptionKind.Product, null, VMOptionVariant.DASH_DASH),
-          VMOption("add-exports", null, null, VMOptionKind.Standard, null, VMOptionVariant.DASH_DASH),
-          VMOption("add-experiment-exports", null, null, VMOptionKind.Experimental, null, VMOptionVariant.DASH_DASH),
-          VMOption("add-diagnostic-exports", null, null, VMOptionKind.Experimental, null, VMOptionVariant.DASH_DASH),
-        )
-        )
-      )
-    }
   }
 }

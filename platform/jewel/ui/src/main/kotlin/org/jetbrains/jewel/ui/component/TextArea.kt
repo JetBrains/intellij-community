@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
+import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.foundation.theme.LocalTextStyle
@@ -124,51 +125,21 @@ public fun TextArea(
         outline = outline,
         outputTransformation = outputTransformation,
         decorator =
-            if (undecorated) {
-                NoTextAreaDecorator(style, scrollbarStyle, scrollState, state, placeholder, textStyle)
-            } else {
-                TextAreaDecorator(
-                    style,
-                    state,
-                    placeholder,
-                    textStyle,
-                    minSize,
-                    scrollbarStyle,
-                    scrollState,
-                    decorationBoxModifier,
-                )
-            },
+            TextAreaDecorator(
+                style,
+                state,
+                placeholder,
+                textStyle,
+                minSize,
+                scrollbarStyle,
+                scrollState,
+                undecorated,
+                decorationBoxModifier,
+            ),
         undecorated = undecorated,
         scrollState = scrollState,
         modifier = modifier.addUndoRedoSemantics(state.undoState),
     )
-}
-
-@Composable
-private fun NoTextAreaDecorator(
-    style: TextAreaStyle,
-    scrollbarStyle: ScrollbarStyle?,
-    scrollState: ScrollState,
-    state: TextFieldState,
-    placeholder: @Composable (() -> Unit)?,
-    textStyle: TextStyle,
-) = TextFieldDecorator { innerTextField ->
-    val (contentPadding, innerEndPadding) =
-        calculatePaddings(scrollbarStyle, style, scrollState, LocalLayoutDirection.current)
-
-    Box(contentAlignment = Alignment.TopStart) {
-        if (state.text.isEmpty() && placeholder != null) {
-            Box(modifier = Modifier.padding(contentPadding)) {
-                CompositionLocalProvider(
-                    LocalTextStyle provides textStyle.copy(color = style.colors.placeholder),
-                    LocalContentColor provides style.colors.placeholder,
-                    content = placeholder,
-                )
-            }
-        }
-
-        TextAreaContentWrapper(style, scrollbarStyle, scrollState, contentPadding, innerEndPadding, innerTextField)
-    }
 }
 
 @Composable
@@ -180,6 +151,7 @@ private fun TextAreaDecorator(
     minSize: DpSize,
     scrollbarStyle: ScrollbarStyle?,
     scrollState: ScrollState,
+    undecorated: Boolean,
     modifier: Modifier = Modifier,
 ) = TextFieldDecorator { innerTextField ->
     val (contentPadding, innerEndPadding) =
@@ -187,13 +159,22 @@ private fun TextAreaDecorator(
 
     TextAreaDecorationBox(
         innerTextField = {
-            TextAreaContentWrapper(style, scrollbarStyle, scrollState, contentPadding, innerEndPadding, innerTextField)
+            TextAreaContentWrapper(
+                style,
+                scrollbarStyle,
+                scrollState,
+                contentPadding,
+                innerEndPadding,
+                undecorated,
+                innerTextField,
+            )
         },
         textStyle = textStyle,
         placeholder = if (state.text.isEmpty()) placeholder else null,
         placeholderTextColor = style.colors.placeholder,
         modifier = modifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height),
-        placeholderModifier = Modifier.padding(contentPadding).padding(style.metrics.borderWidth),
+        placeholderModifier =
+            Modifier.padding(contentPadding).thenIf(!undecorated) { padding(style.metrics.borderWidth) },
     )
 }
 
@@ -204,6 +185,7 @@ private fun TextAreaContentWrapper(
     scrollState: ScrollState,
     contentPadding: PaddingValues,
     innerEndPadding: Dp,
+    undecorated: Boolean,
     content: @Composable () -> Unit,
 ) {
     val wrappedContent = remember { movableContentOf { content() } }
@@ -211,7 +193,8 @@ private fun TextAreaContentWrapper(
         TextAreaScrollableContainer(
             scrollState,
             style = scrollbarStyle,
-            contentModifier = Modifier.padding(style.metrics.borderWidth).padding(end = innerEndPadding),
+            contentModifier =
+                Modifier.thenIf(!undecorated) { padding(style.metrics.borderWidth) }.padding(end = innerEndPadding),
             content = { Box(Modifier.padding(contentPadding)) { wrappedContent() } },
         )
     } else {
@@ -332,7 +315,8 @@ public fun TextArea(
                 placeholder = if (value.text.isEmpty()) placeholder else null,
                 placeholderTextColor = style.colors.placeholder,
                 modifier = decorationBoxModifier,
-                placeholderModifier = Modifier.padding(contentPadding).padding(style.metrics.borderWidth),
+                placeholderModifier =
+                    Modifier.padding(contentPadding).thenIf(!undecorated) { padding(style.metrics.borderWidth) },
             )
         },
         modifier = modifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height),

@@ -27,7 +27,14 @@ import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
@@ -41,7 +48,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadComme
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.UpdateableGHPRReviewThreadCommentViewModel
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
-import java.util.*
+import java.util.Date
 
 interface GHPRTimelineThreadViewModel
   : GHPRReviewThreadViewModel,

@@ -2,9 +2,7 @@
 package org.jetbrains.idea.maven.dsl
 
 import com.intellij.buildsystem.model.DeclaredDependency
-import com.intellij.maven.testFramework.MavenImportingTestCase
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.maven.testFramework.MavenTestCase
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Test

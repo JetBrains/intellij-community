@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.SymbolicEntityId

@@ -1,11 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.model;
 
-import com.intellij.designer.designSurface.*;
+import com.intellij.designer.designSurface.ComponentDecorator;
+import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.designer.designSurface.EditOperation;
+import com.intellij.designer.designSurface.ICaption;
+import com.intellij.designer.designSurface.OperationContext;
+import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 /**

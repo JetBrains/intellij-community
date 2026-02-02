@@ -11,15 +11,24 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.vcs.log.data.*
 import com.intellij.vcs.log.data.AbstractDataGetter.Companion.getCommitDetails
+import com.intellij.vcs.log.data.CommitDetailsGetter
+import com.intellij.vcs.log.data.DataPackChangeListener
+import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.VcsLogGraphData
+import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.data.index.IndexDiagnostic.getDiffFor
 import com.intellij.vcs.log.data.index.IndexDiagnostic.pickCommits
 import com.intellij.vcs.log.data.index.IndexDiagnostic.pickIndexedCommits
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus.Internal
 
 internal class IndexDiagnosticRunner(

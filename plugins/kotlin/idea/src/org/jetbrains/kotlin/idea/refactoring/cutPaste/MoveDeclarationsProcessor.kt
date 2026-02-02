@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.cutPaste
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
@@ -13,22 +14,31 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.RefactoringBundle
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.runRefactoringAndKeepDelayedRequests
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsTransferableData.Companion.STUB_RENDERER
-import org.jetbrains.kotlin.idea.refactoring.move.*
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveDeclarationDelegate
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMover
+import org.jetbrains.kotlin.idea.refactoring.move.MoveDeclarationsDescriptor
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.getSourceRoot
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclarationContainer
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import com.intellij.openapi.editor.asTextRange
 
+@K1Deprecation
 class MoveDeclarationsProcessor(
     val project: Project,
     private val sourceContainer: KtDeclarationContainer,

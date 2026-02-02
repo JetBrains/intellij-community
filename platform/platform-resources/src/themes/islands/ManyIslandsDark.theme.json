@@ -239,7 +239,66 @@
     "transparent": "#191A1C00",
     "bg-control-transparent": "#FFFFFF16",
     "border-transparent": "#FFFFFF20",
-    "bg-selection-hover": "#FFFFFF10"
+    "bg-selection-hover": "#FFFFFF10",
+
+    "grad-hor-left": "#2B2C3133",
+    "grad-hor-right": "#2B2C314D",
+    "grad-ver-top": "#2B2C311A",
+    "grad-ver-bottom": "#2B2C3180",
+
+    "grad-g1-amber-a1": "#724037FF",
+    "grad-g1-amber-a1-transparent": "#72403700",
+    "grad-g1-amber-a1-secondary": "#311C2B",
+    "grad-g1-amber-a2": "#36212B",
+    "grad-g1-amber-bg": "#291D19",
+
+    "grad-g2-rust-a1": "#5F461CFF",
+    "grad-g2-rust-a1-transparent": "#5F461C00",
+    "grad-g2-rust-a1-secondary": "#25220E",
+    "grad-g2-rust-a2": "#2E250F",
+    "grad-g2-rust-bg": "#21240F",
+
+    "grad-g3-olive-a1": "#4F4F1Cff",
+    "grad-g3-olive-a1-transparent": "#4F4F1C00",
+    "grad-g3-olive-a1-secondary": "#162226",
+    "grad-g3-olive-a2": "#212B16",
+    "grad-g3-olive-bg": "#172623",
+
+    "grad-g4-sky-a1": "#254D6FFF",
+    "grad-g4-sky-a1-transparent": "#254D6F00",
+    "grad-g4-sky-a1-secondary": "#1A2033",
+    "grad-g4-sky-a2": "#202341",
+    "grad-g4-sky-bg": "#1D1F2F",
+
+    "grad-g5-cobalt-a1": "#3F448DFF",
+    "grad-g5-cobalt-a1-transparent": "#3F448D00",
+    "grad-g5-cobalt-a1-secondary": "#182230",
+    "grad-g5-cobalt-a2": "#2D213B",
+    "grad-g5-cobalt-bg": "#1A232D",
+
+    "grad-g6-plum-a1": "#723B56FF",
+    "grad-g6-plum-a1-transparent": "#723B5600",
+    "grad-g6-plum-a1-secondary": "#271E29",
+    "grad-g6-plum-a2": "#30223A",
+    "grad-g6-plum-bg": "#272026",
+
+    "grad-g7-violet-a1": "#633D75FF",
+    "grad-g7-violet-a1-transparent": "#633D7500",
+    "grad-g7-violet-a1-secondary": "#21213B",
+    "grad-g7-violet-a2": "#202441",
+    "grad-g7-violet-bg": "#1C2235",
+
+    "grad-g8-ocean-a1": "#22534BFF",
+    "grad-g8-ocean-a1-transparent": "#22534B00",
+    "grad-g8-ocean-a1-secondary": "#162522",
+    "grad-g8-ocean-a2": "#162737",
+    "grad-g8-ocean-bg": "#1A222E",
+
+    "grad-g9-grass-a1": "#2D522EFF",
+    "grad-g9-grass-a1-transparent": "#2D522E00",
+    "grad-g9-grass-a1-secondary": "#1E2315",
+    "grad-g9-grass-a2": "#1B2921",
+    "grad-g9-grass-bg": "#22231A"
   },
 
   "ui": {
@@ -288,7 +347,8 @@
       "borderWidth": 6,
       "borderWidth.compact": 4,
       "borderColor": "container-tool-window-bg",
-      "inactiveAlpha": 0.56
+      "inactiveAlpha": 0.56,
+      "toolWindowAlpha": 0.2
     },
 
     "alt": {
@@ -500,8 +560,8 @@
 
       "tabInsets": "-6,8,-6,8",
       "tabInsets.compact": "-2,6,-2,4",
-      "verticalTabInsets": "-6,8,-6,10",
-      "verticalTabInsets.compact": "0,10,0,10",
+      "verticalTabInsets": "-4,8,-4,10",
+      "verticalTabInsets.compact": "-2,10,-2,10",
       "tabContentActionsRightInsets": "0,4,0,2"
     },
 
@@ -582,6 +642,8 @@
       "Panel.background": "container-popup-bg",
       "SearchField.background": "container-popup-bg"
     },
+    
+    "NavBar.borderWidth": 0,
 
     "NewUiOnboarding.Dialog.background": "container-popup-bg",
 
@@ -843,6 +905,7 @@
     "TabbedPane": {
       "tabHeight": 40,
       "tabSelectionArc": 4,
+      "tabContentMinWidth": 24,
       "hoverColor": "control-bg-hovered",
       "contentAreaColor": "container-dialog-border",
       "focusColor": "accent-brand-bg-muted"
@@ -1200,10 +1263,10 @@
     "ProjectGradients": {
       "Group1": {
         "DiagonalGradient": {
-          "Color1": "#3E192A",
-          "Color2": "#361F17",
-          "Color3": "#3E192A",
-          "Color4": "#2D1B15",
+          "Color1": "grad-g1-amber-a2",
+          "Color2": "grad-g1-amber-a1-secondary",
+          "Color3": "grad-g1-amber-a2",
+          "Color4": "grad-g1-amber-bg",
 
           "Fraction1": 0.0,
           "Fraction2": 0.13,
@@ -1211,24 +1274,24 @@
           "Fraction4": 1.0
         },
         "RadialGradient": {
-          "Color1": "#7B3A32FF",
-          "Color2": "#7B3A3200"
+          "Color1": "grad-g1-amber-a1",
+          "Color2": "grad-g1-amber-a1-transparent"
         },
         "HorizontalGradient": {
-          "Color1": "#2D2D2D1A",
-          "Color2": "#2D2D2D33"
+          "Color1": "grad-hor-left",
+          "Color2": "grad-hor-right"
         },
         "VerticalGradient": {
-          "Color1": "#2D2D2D1A",
-          "Color2": "#2D2D2D90"
+          "Color1": "grad-ver-top",
+          "Color2": "grad-ver-bottom"
         }
       },
       "Group2": {
         "DiagonalGradient": {
-          "Color1": "#262711",
-          "Color2": "#2C1C0C",
-          "Color3": "#262711",
-          "Color4": "#281E0B",
+          "Color1": "grad-g2-rust-a2",
+          "Color2": "grad-g2-rust-a1-secondary",
+          "Color3": "grad-g2-rust-a2",
+          "Color4": "grad-g2-rust-bg",
 
           "Fraction1": 0.0,
           "Fraction2": 0.13,
@@ -1236,24 +1299,24 @@
           "Fraction4": 1.0
         },
         "RadialGradient": {
-          "Color1": "#68451Dff",
-          "Color2": "#68451D00"
+          "Color1": "grad-g2-rust-a1",
+          "Color2": "grad-g2-rust-a1-transparent"
         },
         "HorizontalGradient": {
-          "Color1": "#2D2D2D1A",
-          "Color2": "#2D2D2D33"
+          "Color1": "grad-hor-left",
+          "Color2": "grad-hor-right"
         },
         "VerticalGradient": {
-          "Color1": "#2D2D2D1A",
-          "Color2": "#2D2D2D90"
+          "Color1": "grad-ver-top",
+          "Color2": "grad-ver-bottom"
         }
       },
       "Group3": {
         "DiagonalGradient": {
-          "Color1": "#152A2F",
-          "Color2": "#16221B",
-          "Color3": "#152A2F",
-          "Color4": "#151F28",
+          "Color1": "grad-g3-olive-a2",
+          "Color2": "grad-g3-olive-a1-secondary",
+          "Color3": "grad-g3-olive-a2",
+          "Color4": "grad-g3-olive-bg",
 
           "Fraction1": 0.0,
           "Fraction2": 0.13,
@@ -1261,24 +1324,24 @@
           "Fraction4": 1.0
         },
         "RadialGradient": {
-          "Color1": "#44511Fff",
-          "Color2": "#44511F00"
+          "Color1": "grad-g3-olive-a1",
+          "Color2": "grad-g3-olive-a1-transparent"
         },
         "HorizontalGradient": {
-          "Color1": "#2D2D2D1A",
-          "Color2": "#2D2D2D33"
+          "Color1": "grad-hor-left",
+          "Color2": "grad-hor-right"
         },
         "VerticalGradient": {
-          "Color1": "#2D2D2D1A",
-          "Color2": "#2D2D2D90"
+          "Color1": "grad-ver-top",
+          "Color2": "grad-ver-bottom"
         }
       },
       "Group4": {
         "DiagonalGradient": {
-          "Color1": "#1F2347",
-          "Color2": "#14222E",
-          "Color3": "#1F2347",
-          "Color4": "#191F33",
+          "Color1": "grad-g4-sky-a2",
+          "Color2": "grad-g4-sky-a1-secondary",
+          "Color3": "grad-g4-sky-a2",
+          "Color4": "grad-g4-sky-bg",
 
           "Fraction1": 0.0,
           "Fraction2": 0.13,
@@ -1286,24 +1349,24 @@
           "Fraction4": 1.0
         },
         "RadialGradient": {
-          "Color1": "#254D6Fff",
-          "Color2": "#254D6F00"
+          "Color1": "grad-g4-sky-a1",
+          "Color2": "grad-g4-sky-a1-transparent"
         },
         "HorizontalGradient": {
-          "Color1": "#2D2D2D1A",
-          "Color2": "#2D2D2D33"
+          "Color1": "grad-hor-left",
+          "Color2": "grad-hor-right"
         },
         "VerticalGradient": {
-          "Color1": "#2D2D2D1A",
-          "Color2": "#2D2D2D90"
+          "Color1": "grad-ver-top",
+          "Color2": "grad-ver-bottom"
         }
       },
       "Group5": {
         "DiagonalGradient": {
-          "Color1": "#311F47",
-          "Color2": "#171E36",
-          "Color3": "#311F47",
-          "Color4": "#191D34",
+          "Color1": "grad-g5-cobalt-a2",
+          "Color2": "grad-g5-cobalt-a1-secondary",
+          "Color3": "grad-g5-cobalt-a2",
+          "Color4": "grad-g5-cobalt-bg",
 
           "Fraction1": 0.0,
           "Fraction2": 0.13,
@@ -1311,24 +1374,24 @@
           "Fraction4": 1.0
         },
         "RadialGradient": {
-          "Color1": "#32478Fff",
-          "Color2": "#32478F00"
+          "Color1": "grad-g5-cobalt-a1",
+          "Color2": "grad-g5-cobalt-a1-transparent"
         },
         "HorizontalGradient": {
-          "Color1": "#2D2D2D1A",
-          "Color2": "#2D2D2D33"
+          "Color1": "grad-hor-left",
+          "Color2": "grad-hor-right"
         },
         "VerticalGradient": {
-          "Color1": "#2D2D2D1A",
-          "Color2": "#2D2D2D90"
+          "Color1": "grad-ver-top",
+          "Color2": "grad-ver-bottom"
         }
       },
       "Group6": {
         "DiagonalGradient": {
-          "Color1": "#2F2046",
-          "Color2": "#371B29",
-          "Color3": "#2F2046",
-          "Color4": "#311725",
+          "Color1": "grad-g6-plum-a2",
+          "Color2": "grad-g6-plum-a1-secondary",
+          "Color3": "grad-g6-plum-a2",
+          "Color4": "grad-g6-plum-bg",
 
           "Fraction1": 0.0,
           "Fraction2": 0.13,
@@ -1336,24 +1399,24 @@
           "Fraction4": 1.0
         },
         "RadialGradient": {
-          "Color1": "#7A3359ff",
-          "Color2": "#7A335900"
+          "Color1": "grad-g6-plum-a1",
+          "Color2": "grad-g6-plum-a1-transparent"
         },
         "HorizontalGradient": {
-          "Color1": "#2D2D2D1A",
-          "Color2": "#2D2D2D33"
+          "Color1": "grad-hor-left",
+          "Color2": "grad-hor-right"
         },
         "VerticalGradient": {
-          "Color1": "#2D2D2D1A",
-          "Color2": "#2D2D2D90"
+          "Color1": "grad-ver-top",
+          "Color2": "grad-ver-bottom"
         }
       },
       "Group7": {
         "DiagonalGradient": {
-          "Color1": "#1E2843",
-          "Color2": "#2F1C3A",
-          "Color3": "#1E2843",
-          "Color4": "#1B2137",
+          "Color1": "grad-g7-violet-a2",
+          "Color2": "grad-g7-violet-a1-secondary",
+          "Color3": "grad-g7-violet-a2",
+          "Color4": "grad-g7-violet-bg",
 
           "Fraction1": 0.0,
           "Fraction2": 0.13,
@@ -1361,24 +1424,24 @@
           "Fraction4": 1.0
         },
         "RadialGradient": {
-          "Color1": "#683687ff",
-          "Color2": "#68368700"
+          "Color1": "grad-g7-violet-a1",
+          "Color2": "grad-g7-violet-a1-transparent"
         },
         "HorizontalGradient": {
-          "Color1": "#2D2D2D1A",
-          "Color2": "#2D2D2D33"
+          "Color1": "grad-hor-left",
+          "Color2": "grad-hor-right"
         },
         "VerticalGradient": {
-          "Color1": "#2D2D2D1A",
-          "Color2": "#2D2D2D90"
+          "Color1": "grad-ver-top",
+          "Color2": "grad-ver-bottom"
         }
       },
       "Group8": {
         "DiagonalGradient": {
-          "Color1": "#152A3D",
-          "Color2": "#152320",
-          "Color3": "#152A3D",
-          "Color4": "#182230",
+          "Color1": "grad-g8-ocean-a2",
+          "Color2": "grad-g8-ocean-a1-secondary",
+          "Color3": "grad-g8-ocean-a2",
+          "Color4": "grad-g8-ocean-bg",
 
           "Fraction1": 0.0,
           "Fraction2": 0.13,
@@ -1386,24 +1449,24 @@
           "Fraction4": 1.0
         },
         "RadialGradient": {
-          "Color1": "#21544Cff",
-          "Color2": "#21544C00"
+          "Color1": "grad-g8-ocean-a1",
+          "Color2": "grad-g8-ocean-a1-transparent"
         },
         "HorizontalGradient": {
-          "Color1": "#2D2D2D1A",
-          "Color2": "#2D2D2D33"
+          "Color1": "grad-hor-left",
+          "Color2": "grad-hor-right"
         },
         "VerticalGradient": {
-          "Color1": "#2D2D2D1A",
-          "Color2": "#2D2D2D90"
+          "Color1": "grad-ver-top",
+          "Color2": "grad-ver-bottom"
         }
       },
       "Group9": {
         "DiagonalGradient": {
-          "Color1": "#182B26",
-          "Color2": "#1B2419",
-          "Color3": "#182B26",
-          "Color4": "#182414",
+          "Color1": "grad-g9-grass-a2",
+          "Color2": "grad-g9-grass-a1-secondary",
+          "Color3": "grad-g9-grass-a2",
+          "Color4": "grad-g9-grass-bg",
 
           "Fraction1": 0.0,
           "Fraction2": 0.13,
@@ -1411,16 +1474,16 @@
           "Fraction4": 1.0
         },
         "RadialGradient": {
-          "Color1": "#32522Dff",
-          "Color2": "#32522D00"
+          "Color1": "grad-g9-grass-a1",
+          "Color2": "grad-g9-grass-a1-transparent"
         },
         "HorizontalGradient": {
-          "Color1": "#2D2D2D1A",
-          "Color2": "#2D2D2D33"
+          "Color1": "grad-hor-left",
+          "Color2": "grad-hor-right"
         },
         "VerticalGradient": {
-          "Color1": "#2D2D2D1A",
-          "Color2": "#2D2D2D90"
+          "Color1": "grad-ver-top",
+          "Color2": "grad-ver-bottom"
         }
       }
     },

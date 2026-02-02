@@ -9,7 +9,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.roots.TestSourcesFilter
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScope.EMPTY_SCOPE
 import com.intellij.psi.search.GlobalSearchScope.allScope
@@ -22,7 +26,11 @@ import com.intellij.util.Processor
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.evaluateString
+import org.jetbrains.uast.getContainingUClass
+import org.jetbrains.uast.toUElement
 
 internal class RemoteMethodReferenceSearcher :
   QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters>() {

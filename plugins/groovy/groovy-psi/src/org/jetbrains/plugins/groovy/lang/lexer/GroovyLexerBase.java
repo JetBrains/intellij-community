@@ -7,7 +7,21 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.Stack;
 
 import static com.intellij.util.ArrayUtil.indexOf;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDEC;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_END;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mIDENT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mINC;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_BIG_DECIMAL;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_BIG_INT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_DOUBLE;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_FLOAT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_INT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRBRACK;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRCURLY;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mREGEX_END;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRPAREN;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.KEYWORDS;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.STRING_LITERALS;
 

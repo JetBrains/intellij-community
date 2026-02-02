@@ -5,30 +5,6 @@ com.intellij.analysis.problemsView.Problem
 f:com.intellij.analysis.problemsView.toolWindow.ProblemNode
 - com.intellij.analysis.problemsView.toolWindow.Node
 - *f:getContext():com.intellij.codeInsight.multiverse.CodeInsightContext
-*f:com.intellij.analysis.problemsView.toolWindow.ProblemsContextGroupNode
-- com.intellij.analysis.problemsView.toolWindow.Node
-- <init>(com.intellij.analysis.problemsView.toolWindow.ProblemsContextNode,java.lang.String,java.util.Collection):V
-- equals(java.lang.Object):Z
-- getChildren():java.util.List
-- f:getGroup():java.lang.String
-- getLeafState():com.intellij.ui.tree.LeafState
-- getName():java.lang.String
-- f:getParent():com.intellij.analysis.problemsView.toolWindow.ProblemsContextNode
-- f:getProblems():java.util.Collection
-- hashCode():I
-*f:com.intellij.analysis.problemsView.toolWindow.ProblemsContextNode
-- com.intellij.analysis.problemsView.toolWindow.Node
-- <init>(com.intellij.analysis.problemsView.toolWindow.FileNode,com.intellij.codeInsight.multiverse.CodeInsightContext,java.util.Collection,kotlin.jvm.functions.Function0):V
-- equals(java.lang.Object):Z
-- getChildren():java.util.List
-- f:getContextGroup():com.intellij.codeInsight.multiverse.CodeInsightContext
-- getLeafState():com.intellij.ui.tree.LeafState
-- f:getMyIcon():javax.swing.Icon
-- getName():java.lang.String
-- f:getParent():com.intellij.analysis.problemsView.toolWindow.FileNode
-- f:getProblems():java.util.Collection
-- hashCode():I
-- f:isGroupIdToolSwitchedOn():kotlin.jvm.functions.Function0
 a:com.intellij.build.AbstractViewManager
 - com.intellij.build.BuildProgressListener
 - com.intellij.build.BuildProgressObservable
@@ -1163,10 +1139,6 @@ f:com.intellij.testIntegration.TestFinderHelper
 - com.intellij.openapi.util.ModificationTracker
 - <init>(com.intellij.openapi.vfs.VirtualFile):V
 - getModificationCount():J
-c:com.intellij.util.indexing.IndexInfrastructureVersionBase
-- *s:getAllLanguageStubDescriptors():java.util.List
-- *s:getStubFileElementBaseVersion(com.intellij.psi.stubs.LanguageStubDescriptor):I
-- *s:getStubFileElementTypeKey(com.intellij.psi.stubs.LanguageStubDescriptor):java.lang.String
 *f:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
 - com.intellij.openapi.Disposable
 - *sf:Companion:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService$Companion

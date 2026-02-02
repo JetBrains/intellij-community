@@ -27,13 +27,18 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiParameter;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -50,11 +55,18 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -65,6 +77,7 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
   private final Project myProject;
 
   private JCheckBox myDebuggerAgent;
+  private JCheckBox myThrottling;
   private JButton myConfigureAnnotationsButton;
   private JPanel myCapturePanel;
   private MyTableModel myTableModel;
@@ -87,7 +100,18 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
 
   @Override
   public @Nullable JComponent createComponent() {
+    myConfigureAnnotationsButton.addActionListener(e -> new AsyncAnnotationsDialog(myProject).show());
+
+    myDebuggerAgent.addChangeListener(e -> setThrottlingCheckboxEnabled());
+    setThrottlingCheckboxEnabled();
+
     myTableModel = new MyTableModel();
+
+    boolean breakpointsEnabled = Registry.is("debugger.async.stacks.via.breakpoints", false);
+    myCaptureVariables.setVisible(breakpointsEnabled);
+    if (!breakpointsEnabled) {
+      return myPanel;
+    }
 
     JBTable table = new JBTable(myTableModel);
     table.setColumnSelectionAllowed(false);
@@ -296,14 +320,16 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
       }
     });
 
-    myConfigureAnnotationsButton.addActionListener(e -> new AsyncAnnotationsDialog(myProject).show());
-
     myCapturePanel.setBorder(
       IdeBorderFactory.createTitledBorder(JavaDebuggerBundle.message("settings.breakpoints.based"), false, JBUI.insetsTop(8))
         .setShowLine(false));
     myCapturePanel.add(decorator.createPanel(), BorderLayout.CENTER);
 
     return myPanel;
+  }
+
+  private void setThrottlingCheckboxEnabled() {
+    myThrottling.setEnabled(myDebuggerAgent.isSelected());
   }
 
   private StreamEx<CapturePoint> selectedCapturePoints(JBTable table) {
@@ -437,6 +463,7 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
   public boolean isModified() {
     return DebuggerSettings.getInstance().CAPTURE_VARIABLES != myCaptureVariables.isSelected() ||
            DebuggerSettings.getInstance().INSTRUMENTING_AGENT != myDebuggerAgent.isSelected() ||
+           DebuggerSettings.getInstance().AGENT_THROTTLING != myThrottling.isSelected() ||
            !DebuggerSettings.getInstance().getCapturePoints().equals(myTableModel.myCapturePoints);
   }
 
@@ -445,12 +472,14 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
     DebuggerSettings.getInstance().setCapturePoints(myTableModel.myCapturePoints);
     DebuggerSettings.getInstance().CAPTURE_VARIABLES = myCaptureVariables.isSelected();
     DebuggerSettings.getInstance().INSTRUMENTING_AGENT = myDebuggerAgent.isSelected();
+    DebuggerSettings.getInstance().AGENT_THROTTLING = myThrottling.isSelected();
   }
 
   @Override
   public void reset() {
     myCaptureVariables.setSelected(DebuggerSettings.getInstance().CAPTURE_VARIABLES);
     myDebuggerAgent.setSelected(DebuggerSettings.getInstance().INSTRUMENTING_AGENT);
+    myThrottling.setSelected(DebuggerSettings.getInstance().AGENT_THROTTLING);
     myTableModel.myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
     myTableModel.fireTableDataChanged();
   }

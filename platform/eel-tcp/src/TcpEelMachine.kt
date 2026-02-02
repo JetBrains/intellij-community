@@ -8,62 +8,117 @@ import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.tcp.IjentIsolatedTcpDeployingStrategy
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicBoolean
 
-enum class TcpEelDeployingMode {
-  Greedy,
-  Lazy,
-}
+/**
+ * Abstract base class for TCP-based EEL machines providing IJent session management.
+ *
+ * **Session lifecycle:**
+ * - Sessions are created lazily on first [toEelApi] call
+ * - Dead sessions (isRunning=false) are automatically recreated
+ * - Failed deployments can be retried after a backoff period (3 seconds)
+ *
+ * **Thread safety:**
+ * - Session state is guarded by [sessionMutex]
+ * - Fast path in [toEelApi] uses volatile read for running sessions
+ * - Concurrent [toEelApi] calls wait on mutex; first caller creates session
+ *
+ * **State machine:**
+ * - NotStarted → Started (on first toEelApi call)
+ * - Started → Started (session dies → recreated on next toEelApi)
+ * - NotStarted → Failed (on creation error, excluding cancellation)
+ * - Failed → Started (after backoff period)
+ */
+abstract class TcpEelMachine(override val internalName: String) : EelMachine {
 
-abstract class TcpEelMachine(
-  override val internalName: String,
-  val coroutineScope: CoroutineScope,
-  val strategyFactory: () -> IjentIsolatedTcpDeployingStrategy,
-) : EelMachine {
-  private val deferredEelSession = CompletableDeferred<IjentSession<IjentApi>>()
+  private val sessionMutex = Mutex()
 
-  @VisibleForTesting
-  val deployingState: AtomicBoolean = AtomicBoolean(false)
+  /**
+   * Session state machine.
+   * All state transitions happen under [sessionMutex] except for fast-path reads.
+   */
+  private sealed class SessionState {
+    data object NotStarted : SessionState()
+    data class Started(val session: IjentSession<IjentApi>) : SessionState()
+    data class Failed(val error: Throwable, val nanoTime: Long) : SessionState()
+  }
+
+  @Volatile
+  private var state: SessionState = SessionState.NotStarted
+
+  /**
+   * Returns true if the machine has an active, running session.
+   */
+  val isSessionRunning: Boolean
+    get() = (state as? SessionState.Started)?.session?.isRunning == true
+
+  protected abstract suspend fun createStrategy(): IjentIsolatedTcpDeployingStrategy
+
   override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {
-    val session = deferredEelSession.await()
-    /** Do not need additional cache, since the current implementation of [IjentSession.getIjentInstance] doing caching */
+    // Fast path: check if session is still running without acquiring mutex
+    (state as? SessionState.Started)?.session?.takeIf { it.isRunning }?.let {
+      return it.getIjentInstance(descriptor)
+    }
+
+    // Slow path: get or create session under mutex
+    val session = sessionMutex.withLock {
+      when (val currentState = state) {
+        is SessionState.Started -> {
+          if (currentState.session.isRunning) {
+            currentState.session
+          }
+          else {
+            // Session died, recreate it
+            createSession()
+          }
+        }
+        is SessionState.Failed -> {
+          // Allow retry after backoff
+          if (System.nanoTime() - currentState.nanoTime > RETRY_BACKOFF_NS) {
+            createSession()
+          }
+          else {
+            throw currentState.error
+          }
+        }
+        SessionState.NotStarted -> {
+          createSession()
+        }
+      }
+    }
     return session.getIjentInstance(descriptor)
   }
 
-  internal suspend fun waitForDeployment() {
-    deferredEelSession.await()
-  }
-
   /**
-   * Start deployment of the Ijent instance to the remote host. The deployment is start immediately on the background to speed up the process.
-   * Unfortunately, if the session is deployed, but no usages are made to the underlying file system, the deployment will not be stopped
-   *
-   * That means that there could be possible an indefinite (as persistance is implemented and enabled) number of running Ijent instances to the different remote machines.
+   * Creates a new session. Must be called under [sessionMutex].
+   * Concurrent callers wait on mutex and get the created session.
    */
-  @ApiStatus.Internal
-  fun deploy() {
-    if (deployingState.compareAndSet(false, true)) {
-      coroutineScope.async {
-        try {
-          deferredEelSession.complete(strategyFactory().createIjentSession())
-        }
-        catch (e: Throwable) {
-          deferredEelSession.completeExceptionally(e)
-
-          if (e is CancellationException) throw e
-        }
-      }
+  private suspend fun createSession(): IjentSession<IjentApi> {
+    return try {
+      val session: IjentSession<IjentApi> = createStrategy().createIjentSession()
+      state = SessionState.Started(session)
+      session
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      state = SessionState.Failed(e, System.nanoTime())
+      throw e
     }
   }
 
   override fun ownsPath(path: Path): Boolean {
-    val internalName = TcpEelPathParser.extractInternalMachineId(path) ?: return false
-    return internalName == this.internalName
+    val pathInternalName = TcpEelPathParser.extractInternalMachineId(path) ?: return false
+    return pathInternalName == this.internalName
+  }
+
+  companion object {
+    /**
+     * Backoff time in nanoseconds before retrying after a failed deployment.
+     */
+    private const val RETRY_BACKOFF_NS = 3_000_000_000L // 3 seconds
   }
 }

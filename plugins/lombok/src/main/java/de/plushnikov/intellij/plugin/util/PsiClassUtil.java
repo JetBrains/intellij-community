@@ -1,6 +1,17 @@
 package de.plushnikov.intellij.plugin.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;

@@ -171,7 +171,7 @@ public final class ProgressIndicatorUtils {
    */
   @Deprecated(forRemoval = true)
   @Obsolete
-  public static @NotNull CompletableFuture<?> scheduleWithWriteActionPriority(@NotNull ProgressIndicator progressIndicator,
+  private static @NotNull CompletableFuture<?> scheduleWithWriteActionPriority(@NotNull ProgressIndicator progressIndicator,
                                                                               @NotNull Executor executor,
                                                                               @NotNull ReadTask readTask) {
     // invoke later even if on EDT

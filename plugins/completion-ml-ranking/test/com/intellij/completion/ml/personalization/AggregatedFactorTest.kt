@@ -1,10 +1,17 @@
 package com.intellij.completion.ml.personalization
 
-import com.intellij.completion.ml.personalization.impl.*
+import com.intellij.completion.ml.personalization.impl.DailyAggregatedDoubleFactor
+import com.intellij.completion.ml.personalization.impl.MutableDoubleFactor
+import com.intellij.completion.ml.personalization.impl.UserFactorStorageBase
+import com.intellij.completion.ml.personalization.impl.aggregateAverage
+import com.intellij.completion.ml.personalization.impl.aggregateMax
+import com.intellij.completion.ml.personalization.impl.aggregateMin
+import com.intellij.completion.ml.personalization.impl.aggregateSum
+import com.intellij.completion.ml.personalization.impl.setOnDate
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.junit.Assert
-import java.util.*
+import java.util.Calendar
 
 /**
  * @author Vitaliy.Bibaev

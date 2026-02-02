@@ -2,10 +2,9 @@
 package org.jetbrains.kotlin.idea.core.script.k2.modules
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.SymbolicEntityId
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.annotations.Default
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {

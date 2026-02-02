@@ -11,7 +11,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.JavaCodeFragment
 import com.intellij.psi.PsiElement
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.projectStructure.analysisContextModule
@@ -27,9 +29,6 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.util.KotlinK2CodeFragmentUtil
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtBlockCodeFragment
 import org.jetbrains.kotlin.psi.KtExpression
-import kotlin.collections.filter
-import kotlin.collections.firstOrNull
-import kotlin.collections.orEmpty
 import kotlin.time.Duration.Companion.milliseconds
 
 class KotlinK2CodeFragmentFactory : KotlinCodeFragmentFactoryBase() {

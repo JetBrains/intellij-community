@@ -38,6 +38,7 @@ import org.jetbrains.intellij.build.MacLibcImpl
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
+import org.jetbrains.intellij.build.PluginDistribution
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.WindowsLibcImpl
@@ -47,7 +48,9 @@ import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.findProductModulesFile
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactData
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
+import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.impl.plugins.buildNonBundledPlugins
+import org.jetbrains.intellij.build.impl.plugins.buildPlugins
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
 import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
@@ -864,19 +867,63 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
   runtimeModuleRepositoryDirPath?.listDirectoryEntries()?.forEach { file ->
     extraFiles.put("$RUNTIME_REPOSITORY_MODULES_DIR_NAME/${file.fileName}", file)
   }
+
+  val (crossPlatformPluginsDir, crossPlatformBuiltPlugins) = buildCrossPlatformOnlyPlugins(context)
+
   crossPlatformZip(
     distResults = distResults.filter { it.libc != LinuxLibcImpl.MUSL },
     targetFile = targetFile,
     executableName = executableName,
     productJson = productJson,
     extraFiles = extraFiles,
-    context = context
+    crossPlatformPluginsDir = crossPlatformPluginsDir,
+    crossPlatformPluginDirNames = crossPlatformBuiltPlugins.mapTo(HashSet()) { it.layout.directoryName },
+    context = context,
   )
 
   validateProductJson(targetFile, pathInArchive = "", context)
 
   context.notifyArtifactBuilt(targetFile)
   return targetFile
+}
+
+fun getCrossPlatformOnlyBundledPlugins(context: BuildContext): List<PluginLayout> {
+  val bundledPluginModules = context.getBundledPluginModules().toSet()
+  return context.productProperties.productLayout.pluginLayouts
+    .filter {
+      it.bundlingRestrictions.includeInDistribution == PluginDistribution.CROSS_PLATFORM_DIST_ONLY &&
+      it.mainModule in bundledPluginModules
+    }
+}
+
+private suspend fun buildCrossPlatformOnlyPlugins(context: BuildContext): Pair<Path?, List<PluginBuildDescriptor>> {
+  val crossPlatformPlugins = getCrossPlatformOnlyBundledPlugins(context)
+
+  if (crossPlatformPlugins.isEmpty()) {
+    return null to emptyList()
+  }
+
+  val targetDir = context.paths.tempDir.resolve("cross-platform-only-plugins")
+
+  val builtPlugins = spanBuilder("build cross-platform-only plugins")
+    .setAttribute("count", crossPlatformPlugins.size.toLong())
+    .use {
+      val state = context.distributionState()
+      buildPlugins(
+        moduleOutputPatcher = ModuleOutputPatcher(),
+        plugins = crossPlatformPlugins,
+        os = null,
+        arch = null,
+        targetDir = targetDir,
+        state = state,
+        buildPlatformJob = null,
+        searchableOptionSet = null,
+        descriptorCacheContainer = state.platformLayout.descriptorCacheContainer,
+        context = context,
+      )
+    }
+
+  return targetDir to builtPlugins
 }
 
 private suspend fun checkClassFiles(root: Path, isDistAll: Boolean, context: BuildContext) {
@@ -953,6 +1000,8 @@ private fun crossPlatformZip(
   executableName: String,
   productJson: String,
   extraFiles: Map<String, Path>,
+  crossPlatformPluginsDir: Path?,
+  crossPlatformPluginDirNames: Set<String>,
   context: BuildContext,
 ) {
   val winX64DistDir = distResults.first { it.builder.targetOs == OsFamily.WINDOWS && it.arch == JvmArchitecture.x64 }.outDir
@@ -1042,6 +1091,15 @@ private fun crossPlatformZip(
         entryCustomizer = entryCustomizer,
       )
 
+      if (crossPlatformPluginsDir != null) {
+        out.dir(
+          startDir = crossPlatformPluginsDir,
+          prefix = "plugins/",
+          fileFilter = { _, _ -> true },
+          entryCustomizer = entryCustomizer,
+        )
+      }
+
       // not extracted into product properties because it (hopefully) will become obsolete soon
       val productFilter = when {
         context.applicationInfo.fullProductName.contains("Rider") -> { dist, _, relPath ->
@@ -1068,6 +1126,7 @@ private fun crossPlatformZip(
             !relPath.startsWith("Info.plist") &&
             !relPath.startsWith("Helpers/") &&
             !relPath.startsWith("lib/build-marker") &&
+            !crossPlatformPluginDirNames.any { dir -> relPath.startsWith("plugins/$dir/") } &&
             productFilter(it, file, relPath) &&
             filterFileIfAlreadyInZip(relPath, file, zipFileUniqueGuard)
           },

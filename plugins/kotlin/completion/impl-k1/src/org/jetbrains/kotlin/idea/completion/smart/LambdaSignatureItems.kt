@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion.smart
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
 import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
 import org.jetbrains.kotlin.idea.completion.LambdaSignatureTemplates
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 object LambdaSignatureItems {
     fun addToCollection(
         collection: MutableCollection<LookupElement>,

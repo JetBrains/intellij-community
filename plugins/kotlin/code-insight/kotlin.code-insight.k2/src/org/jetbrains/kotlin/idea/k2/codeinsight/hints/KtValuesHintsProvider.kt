@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_KOTLIN_TIME
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_RANGES
-import org.jetbrains.kotlin.idea.codeinsight.utils.getRangeLeftAndRightSigns
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames.KOTLIN_TIME_PACKAGE
+import org.jetbrains.kotlin.idea.codeinsight.utils.getRangeLeftAndRightSigns
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds

@@ -6,8 +6,9 @@ import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromEx
 import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 /**
  * Handles the following responsibilities:

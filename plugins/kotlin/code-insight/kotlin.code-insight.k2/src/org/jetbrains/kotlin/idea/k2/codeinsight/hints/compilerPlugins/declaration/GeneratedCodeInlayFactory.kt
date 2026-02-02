@@ -2,7 +2,17 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.declaration
 
 import com.intellij.codeInsight.hints.InlayHintsUtils.getDefaultInlayHintsProviderPopupActions
-import com.intellij.codeInsight.hints.presentation.*
+import com.intellij.codeInsight.hints.presentation.BasePresentation
+import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.codeInsight.hints.presentation.InlayTextMetrics
+import com.intellij.codeInsight.hints.presentation.InsetPresentation
+import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
+import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.codeInsight.hints.presentation.RoundWithBackgroundPresentation
+import com.intellij.codeInsight.hints.presentation.SequencePresentation
+import com.intellij.codeInsight.hints.presentation.SpacePresentation
+import com.intellij.codeInsight.hints.presentation.VerticalListInlayPresentation
+import com.intellij.codeInsight.hints.presentation.getFontRenderContext
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor

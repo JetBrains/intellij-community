@@ -49,7 +49,10 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
 
   @Override
   public @Nullable ExtendedInfo createExtendedInfo() {
-    return createPsiExtendedInfo();
+    final var vanillaInfo = createPsiExtendedInfo();
+    final var contributorModules = getContributorModules();
+    if (contributorModules == null || contributorModules.isEmpty()) return vanillaInfo;
+    return contributorModules.getFirst().mixinExtendedInfo(vanillaInfo);
   }
 
   @Override

@@ -1,21 +1,67 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.kotlin;
 
-import kotlin.metadata.*;
+import kotlin.metadata.Attributes;
+import kotlin.metadata.ClassKind;
+import kotlin.metadata.KmClass;
+import kotlin.metadata.KmConstructor;
+import kotlin.metadata.KmDeclarationContainer;
+import kotlin.metadata.KmFunction;
+import kotlin.metadata.KmPackage;
+import kotlin.metadata.KmProperty;
+import kotlin.metadata.KmPropertyAccessorAttributes;
+import kotlin.metadata.KmTypeAlias;
 import kotlin.metadata.jvm.JvmExtensionsKt;
 import kotlin.metadata.jvm.JvmMethodSignature;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.BackDependencyIndex;
+import org.jetbrains.jps.dependency.DifferentiateContext;
+import org.jetbrains.jps.dependency.Graph;
+import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.diff.Difference;
-import org.jetbrains.jps.dependency.java.*;
+import org.jetbrains.jps.dependency.java.AnnotationGroup;
+import org.jetbrains.jps.dependency.java.AnnotationInstance;
+import org.jetbrains.jps.dependency.java.ClassNewUsage;
+import org.jetbrains.jps.dependency.java.ClassUsage;
+import org.jetbrains.jps.dependency.java.JVMClassNode;
+import org.jetbrains.jps.dependency.java.JvmClass;
+import org.jetbrains.jps.dependency.java.JvmDifferentiateStrategyImpl;
+import org.jetbrains.jps.dependency.java.JvmField;
+import org.jetbrains.jps.dependency.java.JvmMethod;
+import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
+import org.jetbrains.jps.dependency.java.KotlinMeta;
+import org.jetbrains.jps.dependency.java.LookupNameUsage;
+import org.jetbrains.jps.dependency.java.MethodUsage;
+import org.jetbrains.jps.dependency.java.TypeRepr;
+import org.jetbrains.jps.dependency.java.Utils;
 import org.jetbrains.jps.util.Pair;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.asIterable;
+import static org.jetbrains.jps.util.Iterators.collect;
+import static org.jetbrains.jps.util.Iterators.contains;
+import static org.jetbrains.jps.util.Iterators.filter;
+import static org.jetbrains.jps.util.Iterators.find;
+import static org.jetbrains.jps.util.Iterators.flat;
+import static org.jetbrains.jps.util.Iterators.isEmpty;
+import static org.jetbrains.jps.util.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.unique;
 
 /**
  * This strategy augments Java strategy with some Kotlin-specific rules. Should be used in projects containing both Java and Kotlin code.

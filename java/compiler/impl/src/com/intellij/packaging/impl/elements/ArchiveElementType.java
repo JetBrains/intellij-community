@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 class ArchiveElementType extends CompositePackagingElementType<ArchivePackagingElement> {
   ArchiveElementType() {

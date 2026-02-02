@@ -3,6 +3,7 @@ package com.intellij.toolWindow
 
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.ProjectViewState
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowId
@@ -12,6 +13,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 
+@IJIgnore(issue = "AT-3959")
 class ProjectToolWindowTest : ToolWindowManagerTestCase() {
   fun testProjectViewActivate() {
     if (ExperimentalUI.isNewUI()) {

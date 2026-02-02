@@ -18,12 +18,23 @@ import org.jetbrains.jps.javac.JpsJavacFileProvider;
 import org.jetbrains.jps.javac.OutputFileObject;
 import org.jetbrains.jps.javac.ZipFileObject;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticListener;
+import javax.tools.FileObject;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileManager;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Set;
 
 import static com.intellij.util.io.TestFileSystemItem.fs;
 

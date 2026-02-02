@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.tools.projectWizard
 
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.PropertyKey
 import com.intellij.DynamicBundle
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.PropertyKey
 
 @NonNls
 private const val BUNDLE = "messages.KotlinNewProjectWizardBundle"

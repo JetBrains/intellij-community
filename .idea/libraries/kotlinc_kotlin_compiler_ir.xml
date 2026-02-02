@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-ir" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-ir-for-ide:2.4.0-dev-9">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-ir-for-ide:2.4.0-dev-1645">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.4.0-dev-9/kotlin-compiler-ir-for-ide-2.4.0-dev-9.jar">
-          <sha256sum>6ea2cbbc67e6b15ce5cca0dd4d1ae505c696ec7ff7555d73acd57df08673f6ea</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.4.0-dev-1645/kotlin-compiler-ir-for-ide-2.4.0-dev-1645.jar">
+          <sha256sum>8c356adb18f30a88c349d07e4e8f2f382aae23db06e33d5be337cb63663b9564</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.4.0-dev-9/kotlin-compiler-ir-for-ide-2.4.0-dev-9.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.4.0-dev-1645/kotlin-compiler-ir-for-ide-2.4.0-dev-1645.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.4.0-dev-9/kotlin-compiler-ir-for-ide-2.4.0-dev-9-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.4.0-dev-1645/kotlin-compiler-ir-for-ide-2.4.0-dev-1645-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

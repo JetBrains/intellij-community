@@ -4,6 +4,7 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.idea.AppMode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
@@ -23,7 +24,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.idea.AppModeAssertions.checkFrontend;
 import static com.intellij.openapi.editor.rd.LocalEditorSupportUtil.isLocalEditorSupport;
 
 @ApiStatus.Internal
@@ -66,7 +66,7 @@ public final class BackgroundHighlightingUtil {
   @RequiresEdt
   static boolean needMatching(@NotNull Editor newEditor, @NotNull CodeInsightSettings codeInsightSettings) {
     if (isLocalEditorSupport(newEditor)) {
-      return checkFrontend();
+      return !AppMode.isRemoteDevHost();
     }
     if (!codeInsightSettings.HIGHLIGHT_BRACES) return false;
 

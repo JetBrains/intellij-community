@@ -16,9 +16,19 @@ import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.isCompanionMemberOf
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
-import org.jetbrains.kotlin.idea.refactoring.memberInfo.*
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoStorage
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionTable
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinOrJavaClassCellRenderer
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinUsesAndInterfacesDependencyMemberInfoModel
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.toJavaMemberInfo
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
 import java.awt.event.ItemEvent
 import javax.swing.JComboBox
 

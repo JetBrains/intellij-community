@@ -3,7 +3,7 @@ package com.intellij.debugger.settings;
 
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.JToggleButton;
 import java.lang.reflect.Field;
 
 /**

@@ -19,7 +19,7 @@ import com.intellij.openapi.actionSystem.DataSink;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface AntOutputView {
   String getId();

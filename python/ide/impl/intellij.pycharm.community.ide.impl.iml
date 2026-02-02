@@ -14,7 +14,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.3.0/kotlin-compose-compiler-plugin-2.3.0.jar</args>
+              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.3.10-RC/kotlin-compose-compiler-plugin-2.3.10-RC.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -70,7 +70,7 @@
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.python.community.services.shared" />
     <orderEntry type="module" module-name="intellij.python.community.impl.pipenv" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.venv" />
+    <orderEntry type="module" module-name="intellij.python.venv" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.python.pyproject" />
     <orderEntry type="module" module-name="intellij.python.hatch" />

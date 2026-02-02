@@ -8,7 +8,9 @@ import com.intellij.python.junit5Tests.randomBinary
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 
 @PyEnvTestCase

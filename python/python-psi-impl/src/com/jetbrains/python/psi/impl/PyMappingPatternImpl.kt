@@ -3,10 +3,25 @@ package com.jetbrains.python.psi.impl
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiListLikeElement
 import com.intellij.psi.util.findParentInFile
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyDoubleStarPattern
+import com.jetbrains.python.psi.PyElementVisitor
+import com.jetbrains.python.psi.PyKeyValuePattern
+import com.jetbrains.python.psi.PyMappingPattern
+import com.jetbrains.python.psi.PyPattern
+import com.jetbrains.python.psi.PyPsiFacade
+import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
-import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.psi.types.PyCollectionType
+import com.jetbrains.python.psi.types.PyCollectionTypeImpl
+import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyLiteralType.Companion.upcastLiteralToClass
+import com.jetbrains.python.psi.types.PyNeverType
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeUtil
+import com.jetbrains.python.psi.types.PyTypedDictType
+import com.jetbrains.python.psi.types.PyUnionType
+import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappingPattern, PyCaptureContext, PsiListLikeElement {
   override fun acceptPyVisitor(pyVisitor: PyElementVisitor) {

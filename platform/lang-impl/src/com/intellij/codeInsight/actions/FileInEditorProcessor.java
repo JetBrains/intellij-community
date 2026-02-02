@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -252,7 +253,9 @@ public final class FileInEditorProcessor {
       return new HyperlinkAdapter() {
         @Override
         protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
-          getHyperlinkRunnable().run();
+          WriteIntentReadAction.run(() -> {
+            getHyperlinkRunnable().run();
+          });
         }
       };
     }

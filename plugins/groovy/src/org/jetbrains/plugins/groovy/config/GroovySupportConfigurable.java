@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class GroovySupportConfigurable extends FrameworkSupportInModuleConfigurable {
   @Override

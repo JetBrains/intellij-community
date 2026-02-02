@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.service.fus.collectors.TooltipActionsLogg
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -287,7 +288,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
           String description = e.getDescription();
           if (description != null &&
-              handle(description, editor)) {
+              WriteIntentReadAction.compute(() -> handle(description, editor))) {
             hint.hide();
             return;
           }

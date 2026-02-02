@@ -8,7 +8,13 @@ import java.io.InputStream
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.extension
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.relativeTo
+import kotlin.io.path.walk
 
 internal class ClassFileAnalyzerImpl(
   declarationProcessor: JvmBytecodeDeclarationProcessor?,

@@ -3,7 +3,7 @@ package com.intellij.ide.plugins.marketplace.statistics.collectors
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginEnabledState
-import com.intellij.ide.plugins.enums.PluginsGroupType
+import com.intellij.ide.plugins.PluginsGroupType
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum
 import com.intellij.ide.plugins.marketplace.statistics.enums.SignatureVerificationResult

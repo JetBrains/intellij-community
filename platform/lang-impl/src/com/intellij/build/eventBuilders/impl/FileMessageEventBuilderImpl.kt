@@ -3,7 +3,10 @@ package com.intellij.build.eventBuilders.impl
 
 import com.intellij.build.FilePosition
 import com.intellij.build.eventBuilders.FileMessageEventBuilder
-import com.intellij.build.events.BuildEventsNls.*
+import com.intellij.build.events.BuildEventsNls.Description
+import com.intellij.build.events.BuildEventsNls.Hint
+import com.intellij.build.events.BuildEventsNls.Message
+import com.intellij.build.events.BuildEventsNls.Title
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.FileMessageEventImpl
 import org.jetbrains.annotations.ApiStatus.Internal

@@ -55,11 +55,18 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JPanel myMainPanel;
@@ -168,7 +175,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
           var factory = myModel.getSelected();
           if (factory != null && !factory.isFrameworkInstalled(myProject, sdk)) {
             return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", factory.getName()),
-                                        createQuickFix(sdk, facetErrorPanel, factory.getPackageRequired()));
+                                        // isFrameworkInstalled() == false => getPackageSpec() != null
+                                        createQuickFix(sdk, facetErrorPanel, Objects.requireNonNull(factory.getPackageSpec()).getPackageName()));
           }
         }
         return ValidationResult.OK;

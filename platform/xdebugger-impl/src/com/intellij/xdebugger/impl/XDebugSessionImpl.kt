@@ -57,7 +57,6 @@ import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebuggerPerformanceCollector.logBreakpointReached
-import com.intellij.xdebugger.impl.XDebuggerSuspendScopeProvider.provideSuspendScope
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.breakpoints.BreakpointsUsageCollector.reportBreakpointVerified
 import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
@@ -896,12 +895,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   private fun clearPausedData() {
     val oldSuspendContextModel = suspendContextModel.getAndSet(null)
-    // If the scope is not provided by an XSuspendContent implementation,
-    // then a default scope, provided by XDebuggerSuspendScopeProvider is used,
-    // and it must be canceled manually
-    if (suspendContext?.coroutineScope != null) {
-      oldSuspendContextModel?.coroutineScope?.cancel()
-    }
+    oldSuspendContextModel?.cancel()
     this.currentExecutionStack = null
     currentStackFrame = null
     topStackFrame.value = null
@@ -926,12 +920,20 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   override fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean) {
-    setCurrentStackFrame(executionStack, frame, isTopFrame, false)
+    val currentSuspendContext = suspendContext ?: return
+    setCurrentStackFrame(currentSuspendContext, executionStack, frame, isTopFrame, false)
   }
 
-  @ApiStatus.Experimental
-  fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean, changedByUser: Boolean) {
-    if (suspendContext == null) return
+  @ApiStatus.Internal
+  fun setCurrentStackFrame(
+    expectedSuspendContext: XSuspendContext,
+    executionStack: XExecutionStack,
+    frame: XStackFrame,
+    isTopFrame: Boolean,
+    changedByUser: Boolean,
+  ) {
+    val currentContext = suspendContext ?: return
+    if (expectedSuspendContext !== currentContext) return
 
     val frameChanged = currentStackFrame !== frame
     this.currentExecutionStack = executionStack
@@ -1153,9 +1155,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   @ApiStatus.Internal
   fun updateSuspendContext(newSuspendContext: XSuspendContext) {
-    val suspendContextScope = newSuspendContext.coroutineScope ?: provideSuspendScope(this)
-    // coroutine scope of the previous model will be canceled in [clearPausedData]
-    suspendContextModel.set(XSuspendContextModel(suspendContextScope, newSuspendContext, this))
+    val newModel = XSuspendContextModel(coroutineScope, newSuspendContext, this)
+    val oldModel = suspendContextModel.getAndSet(newModel)
+    oldModel?.cancel()
 
     this.currentExecutionStack = newSuspendContext.activeExecutionStack
     val newCurrentStackFrame = currentExecutionStack?.topFrame

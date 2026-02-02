@@ -26,7 +26,11 @@ import org.jetbrains.idea.devkit.util.ActionType;
 import org.jetbrains.idea.devkit.util.ComponentType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Set;
 
 final class RegistrationCheckerUtil {
   enum RegistrationType {

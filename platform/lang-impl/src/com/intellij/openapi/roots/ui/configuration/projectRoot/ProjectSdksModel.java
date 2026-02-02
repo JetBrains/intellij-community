@@ -14,7 +14,14 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.SdkModel;
+import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.ValidatableSdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.projectRoots.impl.SdkUtils;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -25,10 +32,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.EelMachine;
 import com.intellij.platform.eel.provider.EelProviderUtil;
-import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.LocalEelMachine;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
@@ -39,16 +44,21 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.util.NlsActions.ActionText;
-import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
 
 /**
  * @author anna

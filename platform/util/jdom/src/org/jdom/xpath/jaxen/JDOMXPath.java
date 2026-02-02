@@ -57,7 +57,14 @@ package org.jdom.xpath.jaxen;
 import org.jaxen.BaseXPath;
 import org.jaxen.JaxenException;
 import org.jaxen.XPath;
-import org.jdom.*;
+import org.jdom.Attribute;
+import org.jdom.CDATA;
+import org.jdom.Comment;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.Namespace;
+import org.jdom.ProcessingInstruction;
+import org.jdom.Text;
 
 import java.util.ArrayList;
 import java.util.List;

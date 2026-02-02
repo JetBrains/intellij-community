@@ -6,7 +6,13 @@ import com.intellij.codeInsight.DumbAwareAnnotationUtil.hasAnnotation
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.JavaFeature
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiImportList
+import com.intellij.psi.PsiImportModuleStatement
+import com.intellij.psi.PsiImportStatement
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker

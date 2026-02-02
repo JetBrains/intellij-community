@@ -1,7 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unnecessaryModuleDependency;
 
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefClass;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefField;
+import com.intellij.codeInspection.reference.RefGraphAnnotator;
+import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.reference.RefMethod;
+import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -16,9 +22,18 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UField;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UParameter;
+import org.jetbrains.uast.UTypeReferenceExpression;
+import org.jetbrains.uast.UastContextKt;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
   public static final Key<Set<Module>> DEPENDENCIES = Key.create("inspection.dependencies");

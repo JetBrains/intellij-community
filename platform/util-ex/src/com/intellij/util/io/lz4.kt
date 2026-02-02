@@ -24,7 +24,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.invoke.MethodHandles
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.util.*
+import java.util.Arrays
 
 // see https://github.com/lz4/lz4-java/issues/183
 

@@ -455,8 +455,8 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
     background: Color?, selectionColor: Color?, rowHeight: Int, rowWidth: Int?,
     roundSelectionTop: Boolean, roundSelectionBottom: Boolean,
   ) {
-    val leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get()
-    val innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets()
+    val leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.unscaled.toInt()
+    val innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets().unscaled
 
     with(selectablePanel) {
       // Update height/insets every time, so IDE scaling is applied

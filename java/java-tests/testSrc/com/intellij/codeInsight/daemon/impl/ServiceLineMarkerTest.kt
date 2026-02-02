@@ -4,7 +4,12 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.impl.JavaServiceLineMarkerUtil.ServiceNavigationHandler
 import com.intellij.icons.AllIcons
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiJavaModule
+import com.intellij.psi.PsiProvidesStatement
+import com.intellij.psi.PsiUsesStatement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase

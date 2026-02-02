@@ -20,7 +20,11 @@ import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileHeavyProjectTestCase
 import java.io.File
 import javax.swing.tree.DefaultMutableTreeNode
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.pathString
+import kotlin.io.path.relativeTo
 
 abstract class AbstractKotlinProjectViewTest : KotlinMultiFileHeavyProjectTestCase() {
     private lateinit var treeStructure: TestProjectTreeStructure

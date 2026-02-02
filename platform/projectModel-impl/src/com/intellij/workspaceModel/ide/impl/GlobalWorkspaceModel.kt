@@ -31,7 +31,6 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
@@ -385,7 +384,6 @@ class GlobalWorkspaceModel internal constructor(
   companion object {
     private val LOG = logger<GlobalWorkspaceModel>()
 
-    @RequiresBlockingContext
     @JvmStatic
     fun getInstance(eelMachine: EelMachine): GlobalWorkspaceModel {
       return ApplicationManager.getApplication().service<GlobalWorkspaceModelRegistry>().getGlobalModel(eelMachine)

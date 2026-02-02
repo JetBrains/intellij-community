@@ -245,17 +245,20 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
           LOG.trace { "Phase is expired ${phase.myState}" }
           return null
         }
+
         LOG.trace { "Start non-blocking read action :: phase=${phase.replaced}" }
+
         // retrieve the injected file from scratch since our typing might have destroyed the old one completely
         val topLevelFile = PsiDocumentManager.getInstance(project).getPsiFile(topLevelEditor.getDocument())
         val completionEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile, offset)
-        val file = PsiDocumentManager.getInstance(project).getPsiFile(completionEditor.getDocument())
-        if (file == null || autopopup && shouldSkipAutoPopup(completionEditor, file) || condition != null && !condition.value(file)) {
-          LOG.trace { "File is null or should skip auto popup or condition is not met :: file=$file, condition=$condition" }
+        val completionFile = PsiDocumentManager.getInstance(project).getPsiFile(completionEditor.getDocument())
+
+        if (completionFile == null || autopopup && shouldSkipAutoPopup(completionEditor, completionFile) || condition != null && !condition.value(completionFile)) {
+          LOG.trace { "File is null or should skip auto popup or condition is not met :: file=$completionFile, condition=$condition" }
           return null
         }
 
-        loadContributorsOutsideEdt(completionEditor, file)
+        loadContributorsOutsideEdt(completionEditor, completionFile)
         return completionEditor
       }
 

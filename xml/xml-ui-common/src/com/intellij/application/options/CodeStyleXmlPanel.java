@@ -17,8 +17,12 @@ import com.intellij.xml.XmlUiBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import java.awt.Dimension;
 import java.util.Arrays;
 
 public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{

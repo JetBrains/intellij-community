@@ -11,7 +11,12 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx
+import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
+import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.util.concurrency.annotations.RequiresEdt

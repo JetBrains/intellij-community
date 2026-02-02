@@ -2,14 +2,12 @@ package com.intellij.ide.starter
 
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.path.GlobalPaths
-import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.utils.FileSystem
 import com.intellij.ide.starter.utils.HttpClient
 import com.intellij.ide.starter.utils.getUpdateEnvVarsWithPrependedPath
 import com.intellij.ide.starter.utils.updatePathEnvVariable
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import com.intellij.util.text.SemVer

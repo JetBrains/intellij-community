@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.openapi.util.text.StringUtil
@@ -9,7 +9,27 @@ import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.text.NameUtilCore
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.*
+import org.jetbrains.kotlin.analysis.api.components.allSupertypes
+import org.jetbrains.kotlin.analysis.api.components.approximateToSuperPublicDenotableOrSelf
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isAnyType
+import org.jetbrains.kotlin.analysis.api.components.isBooleanType
+import org.jetbrains.kotlin.analysis.api.components.isByteType
+import org.jetbrains.kotlin.analysis.api.components.isCharSequenceType
+import org.jetbrains.kotlin.analysis.api.components.isCharType
+import org.jetbrains.kotlin.analysis.api.components.isDoubleType
+import org.jetbrains.kotlin.analysis.api.components.isFloatType
+import org.jetbrains.kotlin.analysis.api.components.isFunctionType
+import org.jetbrains.kotlin.analysis.api.components.isIntType
+import org.jetbrains.kotlin.analysis.api.components.isLongType
+import org.jetbrains.kotlin.analysis.api.components.isShortType
+import org.jetbrains.kotlin.analysis.api.components.isStringType
+import org.jetbrains.kotlin.analysis.api.components.isUByteType
+import org.jetbrains.kotlin.analysis.api.components.isUIntType
+import org.jetbrains.kotlin.analysis.api.components.isULongType
+import org.jetbrains.kotlin.analysis.api.components.isUShortType
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.type
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -19,14 +39,33 @@ import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Case.CAMEL
 import org.jetbrains.kotlin.idea.base.psi.getCallElement
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
+import org.jetbrains.kotlin.idea.util.realName
 import org.jetbrains.kotlin.lexer.KotlinLexer
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.*
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.FqNameUnsafe
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunctionType
+import org.jetbrains.kotlin.psi.KtNullableType
+import org.jetbrains.kotlin.psi.KtPostfixExpression
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeElement
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getOutermostParenthesizerOrThis
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.*
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeSmart
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.toUpperCaseAsciiOnly
 
 @DslMarker
 private annotation class NameSuggesterDsl
@@ -184,7 +223,7 @@ class KotlinNameSuggester(
         val callElement = getCallElement(valueArgument) ?: return emptySequence()
         val resolvedCall = callElement.resolveToCall()?.singleFunctionCallOrNull() ?: return emptySequence()
         val parameter = resolvedCall.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return emptySequence()
-        return suggestNameByValidIdentifierName(parameter.name.asString(), validator)?.let { sequenceOf(it) } ?: emptySequence()
+        return suggestNameByValidIdentifierName(parameter.realName?.asString(), validator)?.let { sequenceOf(it) } ?: emptySequence()
     }
 
     /**

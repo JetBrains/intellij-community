@@ -4,7 +4,11 @@ package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.actions.MethodSmartStepTarget
 import com.intellij.debugger.actions.SmartStepTarget
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.BasicStepMethodFilter
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.MethodFilter
+import com.intellij.debugger.engine.NamedMethodFilter
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
@@ -38,7 +42,11 @@ import org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSteppingCommandPro
 import org.jetbrains.kotlin.idea.debugger.getContainingMethod
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepTarget
-import org.jetbrains.kotlin.idea.debugger.test.util.*
+import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinter
+import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
+import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
+import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstructionKind
+import org.jetbrains.kotlin.idea.debugger.test.util.render
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest
 import org.jetbrains.kotlin.idea.test.allKotlinFiles

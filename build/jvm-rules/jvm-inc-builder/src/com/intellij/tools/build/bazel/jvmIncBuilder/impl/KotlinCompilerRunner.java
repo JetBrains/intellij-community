@@ -1,14 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
-import org.jetbrains.kotlin.com.intellij.openapi.progress.ProcessCanceledException;
-import org.jetbrains.kotlin.com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.tools.build.bazel.jvmIncBuilder.*;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerDataSink;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputOrigin;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputSink;
-import org.jetbrains.kotlin.com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +23,9 @@ import org.jetbrains.kotlin.cli.common.config.ContentRoot;
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector;
 import org.jetbrains.kotlin.cli.jvm.config.VirtualJvmClasspathRoot;
 import org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline;
+import org.jetbrains.kotlin.com.intellij.openapi.progress.ProcessCanceledException;
+import org.jetbrains.kotlin.com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.kotlin.com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.kotlin.compiler.plugin.CliOptionValue;
 import org.jetbrains.kotlin.compiler.plugin.CommandLineProcessor;
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar;
@@ -67,7 +67,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
   private InlineConstTrackerImpl inlineConstTracker;
   private EnumWhenTrackerImpl enumWhenTracker;
   private ImportTrackerImpl importTracker;
-  private final @NotNull Map<@NotNull String, @NotNull String> myPluginIdToPluginClasspath = new HashMap<>();
+  private final @NotNull Map<@NotNull String, @NotNull PluginClasspathConfig> myPluginIdToPluginClasspath = new HashMap<>();
   private final @NotNull Map<@NotNull String, List<CliOptionValue>> myInternalPluginIdToOptions = new HashMap<>();
   private final List<String> myJavaSources;
 
@@ -82,8 +82,12 @@ public class KotlinCompilerRunner implements CompilerRunner {
     // classpath map for compiler plugins
     Map<CLFlags, List<String>> flags = context.getFlags();
     Iterator<String> pluginCp = CLFlags.PLUGIN_CLASSPATH.getValue(flags).iterator();
+    Path baseDir = context.getBaseDir();
     for (String pluginId : CLFlags.PLUGIN_ID.getValue(flags)) {
-      myPluginIdToPluginClasspath.put(pluginId, pluginCp.hasNext()? pluginCp.next() : "");
+      String classpath = pluginCp.hasNext()? pluginCp.next() : "";
+      myPluginIdToPluginClasspath.put(pluginId, new PluginClasspathConfig(
+        classpath.isBlank()? List.of() : collect(map(List.of(classpath.split(":")), relPath -> baseDir.resolve(relPath).toAbsolutePath().normalize()), new ArrayList<>())
+      ));
     }
 
     for (String entry : CLFlags.PLUGIN_OPTIONS.getValue(flags)) {
@@ -301,10 +305,10 @@ public class KotlinCompilerRunner implements CompilerRunner {
   }
 
   private AbstractCliPipeline<K2JVMCompilerArguments> createPipeline(OutputSink out, VirtualFile outputRoot, Consumer<GeneratedFile> outputItemCollector) throws IOException {
-    return new BazelJvmCliPipeline(createCompilerConfigurationUpdater(out, outputRoot), createOutputConsumer(out, outputItemCollector));
+    return new BazelJvmCliPipeline(createCompilerConfigurationUpdater(outputRoot), createOutputConsumer(out, outputItemCollector));
   }
 
-  private @NotNull Function1<? super @NotNull CompilerConfiguration, @NotNull Unit> createCompilerConfigurationUpdater(OutputSink out, VirtualFile outputRoot) throws IOException {
+  private @NotNull Function1<? super @NotNull CompilerConfiguration, @NotNull Unit> createCompilerConfigurationUpdater(VirtualFile outputRoot) throws IOException {
     var abiConsumer = createAbiOutputConsumer(myStorageManager.getAbiOutputBuilder());
     return configuration -> {
       List<ContentRoot> contentRootList = new ArrayList<>();
@@ -312,7 +316,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
       contentRootList.addAll(configuration.getList(CLIConfigurationKeys.CONTENT_ROOTS));
       configuration.put(CLIConfigurationKeys.CONTENT_ROOTS, contentRootList);
 
-      configurePlugins(myPluginIdToPluginClasspath, myInternalPluginIdToOptions, myContext.getBaseDir(), abiConsumer, out, myStorageManager, registeredPluginInfo -> {
+      configurePlugins(myPluginIdToPluginClasspath, myInternalPluginIdToOptions, abiConsumer, registeredPluginInfo -> {
         CompilerPluginRegistrar registrar = Objects.requireNonNull(registeredPluginInfo.getCompilerPluginRegistrar());
         configuration.add(CompilerPluginRegistrar.Companion.getCOMPILER_PLUGIN_REGISTRARS(), registrar);
         List<CliOptionValue> pluginOptions = registeredPluginInfo.getPluginOptions();

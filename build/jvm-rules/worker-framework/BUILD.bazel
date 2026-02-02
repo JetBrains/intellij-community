@@ -1,0 +1,41 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")
+
+pkg_files(
+    name = "files_to_zip",
+    prefix = "worker-framework",
+    srcs = glob(
+        ["**"],
+    ),
+    strip_prefix = strip_prefix.from_pkg(),
+    visibility = ["//visibility:public"],
+)
+
+kt_jvm_library(
+    name = "worker-framework",
+    srcs = glob(
+        ["*.kt"],
+        exclude = ["*Test.kt"],
+    ),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        "//:jackson-core_import",
+    ],
+    deps = [
+        "//:annotations_import",
+        "//:kotlin-stdlib_import",
+        "//:kotlinx-coroutines-core_import",
+        "//:netty-buffer_import",
+        "//:netty-common_import",
+        "//:opentelemetry-api_import",
+        "//:opentelemetry-context_import",
+        "//:opentelemetry-exporter-logging-otlp_import",
+        "//:opentelemetry-exporter-otlp_import",
+        "//:opentelemetry-sdk-common_import",
+        "//:opentelemetry-sdk-trace_import",
+        "//:opentelemetry-sdk_import",
+        "//:opentelemetry-semconv_import",
+        "//:protobuf-java_import",
+    ],
+)

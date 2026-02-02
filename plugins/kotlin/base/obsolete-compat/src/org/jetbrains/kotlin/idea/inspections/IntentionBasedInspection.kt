@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor as _findExistingEditor
 
+@K1Deprecation
 @Deprecated("Please use org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor instead")
 fun PsiElement.findExistingEditor(): Editor? =
     _findExistingEditor()

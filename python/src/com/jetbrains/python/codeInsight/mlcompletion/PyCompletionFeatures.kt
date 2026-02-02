@@ -17,7 +17,14 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.jetbrains.python.PyTokenTypes
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyConditionalStatementPart
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyForPart
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyStatementList
+import com.jetbrains.python.psi.StringLiteralExpression
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 

@@ -3,7 +3,12 @@ package com.intellij.platform.pasta.common
 
 import andel.editor.DocumentComponent
 import andel.editor.DocumentComponentKey
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.ChangeScope
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.Mixin
+import com.jetbrains.rhizomedb.RefFlags
+import com.jetbrains.rhizomedb.get
 
 
 internal interface DocumentComponentFactory<T : DocumentComponent> {

@@ -971,9 +971,6 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     val descriptorForActions = descriptorForActions!!
     var version = descriptorForActions.version
-    if (descriptorForActions.isBundled && !descriptorForActions.allowBundledUpdate) {
-      version = IdeBundle.message("plugin.version.bundled") + (if (Strings.isEmptyOrSpaces(version)) "" else " $version")
-    }
     if (updateDescriptor != null) {
       version = NewUiUtil.getUpdateVersionText(descriptorForActions.version, updateDescriptor!!.version)
     }
@@ -989,6 +986,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
 
     if (myVersion1 != null) {
+      myVersion1!!.icon = descriptorForActions.let { if (it.isBundledUpdate) AllIcons.Plugins.Updated else null }
       myVersion1!!.text = version
       myVersion1!!.isVisible = isVersion
     }
@@ -1527,9 +1525,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
             installButton.setEnabled(false, IdeBundle.message("plugin.status.installed"))
             if (installButton.isVisible()) {
               installedDescriptorForMarketplace = installedPlugin
-              installedDescriptorForMarketplace?.let {
+              installedDescriptorForMarketplace?.let { descriptorForMarketplace ->
                 installButton.setVisible(false)
-                myVersion1!!.text = it.version
+                myVersion1!!.icon = installedPlugin?.let { if (it.isBundledUpdate) AllIcons.Plugins.Updated else null }
+                myVersion1!!.text = descriptorForMarketplace.version
                 myVersion1!!.isVisible = true
                 updateEnabledState()
                 return

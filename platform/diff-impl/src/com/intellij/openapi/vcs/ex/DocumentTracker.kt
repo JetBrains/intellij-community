@@ -33,7 +33,7 @@ import kotlinx.serialization.encoding.Encoder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.*
+import java.util.BitSet
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.io.encoding.Base64

@@ -44,12 +44,8 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
   private val myDebugId: Long,
 ) : XSuspendContext(), SuspendContext, Disposable {
 
-  // Save the VM related to this suspend context, as a VM may be changed due to reattach
-  @Suppress("UsagesOfObsoleteApi")
-  val virtualMachineProxy: VirtualMachineProxyImpl = myDebugProcess.getVirtualMachineProxy()
-
-  @Suppress("UsagesOfObsoleteApi")
-  val managerThread: DebuggerManagerThreadImpl = myDebugProcess.managerThread
+  val managerThread: DebuggerManagerThreadImpl = DebuggerManagerThreadImpl.getCurrentThread()
+  val virtualMachineProxy: VirtualMachineProxyImpl get() = managerThread.vmProxy!!
 
   /** The thread that comes from the JVM event or was reset by switching to suspend-all procedure  */
   @get:ApiStatus.Internal

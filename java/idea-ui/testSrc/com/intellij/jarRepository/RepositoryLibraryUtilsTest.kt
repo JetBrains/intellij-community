@@ -21,7 +21,12 @@ import com.intellij.util.io.directoryContentOf
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.junit.*
+import org.junit.AfterClass
+import org.junit.Before
+import org.junit.BeforeClass
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import java.nio.file.Path
 
 class RepositoryLibraryUtilsTest {

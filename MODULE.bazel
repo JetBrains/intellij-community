@@ -47,10 +47,10 @@ kotlin_test_deps = use_repo_rule("//plugins/kotlin:kotlin_test_dependencies.bzl"
 kotlin_test_deps(name = "kotlin_test_deps")
 
 http_file(
-  name = "debugger_test_deps_debugger_agent",
-  downloaded_file_path = "debugger-agent.jar",
-  sha256 = "6ff754c762e064953dcf0ffd0956f10f1e34c1c233af2348a25cb1049262cf59",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.127/debugger-agent-1.127.jar",
+    name = "debugger_test_deps_debugger_agent",
+    downloaded_file_path = "debugger-agent.jar",
+    sha256 = "d08d14bf727e3a393dc9e0f95b86b3483d32c15027673324558a13d4eee3756e",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.133/debugger-agent-1.133.jar",
 )
 
 jbr_toolchains = use_extension("@community//build:jbr-toolchains.bzl", "jbr_toolchains")

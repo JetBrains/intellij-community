@@ -2,12 +2,14 @@
 
 package org.jetbrains.kotlin.idea.core.extension
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 interface KotlinIndicesHelperExtension {
     companion object : ProjectExtensionDescriptor<KotlinIndicesHelperExtension>(
         "org.jetbrains.kotlin.kotlinIndicesHelperExtension", KotlinIndicesHelperExtension::class.java

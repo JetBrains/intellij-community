@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -14,7 +15,11 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
 import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention.Holder.convert
 import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention.Holder.createContext
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.isNullabilityFlexible
@@ -22,6 +27,7 @@ import org.jetbrains.kotlin.types.typeUtil.isNothing
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 
+@K1Deprecation
 class ConvertToBlockBodyIntention : SelfTargetingIntention<KtDeclarationWithBody>(
     KtDeclarationWithBody::class.java,
     KotlinBundle.messagePointer("convert.to.block.body")

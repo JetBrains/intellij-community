@@ -26,7 +26,13 @@ import com.intellij.ui.JBAccountInfoService.AuthStateListener
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.application
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -69,7 +75,7 @@ class GrazieLoginManager(coroutineScope: CoroutineScope) {
   private val initialized = AtomicBoolean(false)
 
   init {
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
       coroutineScope.launch {
         val aiService = service<ProvisionedServiceRegistry>().getServiceById("ai")
         if (aiService == null) {

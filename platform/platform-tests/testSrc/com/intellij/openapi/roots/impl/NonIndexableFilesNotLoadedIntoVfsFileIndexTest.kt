@@ -54,12 +54,7 @@ class NonIndexableFilesNotLoadedIntoVfsFileIndexTest {
   }
 
   private fun collectFilesInVfs(root: VirtualFile): Set<String> {
-    val result = mutableSetOf<String>()
-    visitChildrenInVfsRecursively(root) { file ->
-      result.add(file.name)
-      true
-    }
-    return result
+    return visitChildrenInVfsRecursively(root).map { it.name }.toSet()
   }
 
   private fun iterateContentUnderDirectory(root: VirtualFile): Set<String> {

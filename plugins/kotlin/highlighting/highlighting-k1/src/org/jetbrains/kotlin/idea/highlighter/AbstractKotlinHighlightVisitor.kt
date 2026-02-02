@@ -16,6 +16,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.intellij.util.CommonProcessors
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.InvalidModuleException
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -37,6 +38,7 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 
+@K1Deprecation
 abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
     private var afterAnalysisVisitor: Array<AfterAnalysisHighlightingVisitor>? = null
     @Volatile

@@ -16,7 +16,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.intellij.lang.annotations.Language
-import training.dsl.*
+import training.dsl.LessonSample
+import training.dsl.PreviousTaskInfo
+import training.dsl.TaskContext
+import training.dsl.TaskTestContext
+import training.dsl.TaskTextProperties
+import training.dsl.parseLessonSample
+import training.dsl.prepareSampleFromCurrentState
 import training.learn.ActionsRecorder
 import training.learn.course.KLesson
 import training.learn.exceptons.NoTextEditor

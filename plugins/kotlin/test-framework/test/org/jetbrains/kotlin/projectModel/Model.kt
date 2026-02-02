@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.projectModel
 
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
-import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.platform.CommonPlatforms

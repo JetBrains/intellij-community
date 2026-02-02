@@ -21,7 +21,7 @@ import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class VcsDependentHistoryComponents {
   private final ColumnInfo<?, ?>[] myColumns;

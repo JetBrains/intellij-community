@@ -2,7 +2,13 @@
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;

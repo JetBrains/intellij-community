@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +31,6 @@ final class CheckForUpdateAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).updateAndShowResult(e.getProject());
+    UpdateCheckerFacade.getInstance().updateAndShowResult(e.getProject());
   }
 }

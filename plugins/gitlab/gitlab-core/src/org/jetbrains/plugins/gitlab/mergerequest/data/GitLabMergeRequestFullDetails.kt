@@ -8,9 +8,15 @@ import git4idea.push.GitSpecialRefRemoteBranch
 import git4idea.remote.hosting.HostedGitRepositoryRemote
 import git4idea.repo.GitRemote
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
-import org.jetbrains.plugins.gitlab.api.dto.*
+import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffRefs
+import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestPermissionsDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabPipelineDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabReviewerDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
-import java.util.*
+import java.util.Date
 
 data class GitLabMergeRequestFullDetails(
   val iid: String,

@@ -21,7 +21,7 @@ import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.NamedConfigurable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class FacetTypeConfigurable extends NamedConfigurable<FacetType> {
   private final FacetStructureConfigurable myFacetStructureConfigurable;

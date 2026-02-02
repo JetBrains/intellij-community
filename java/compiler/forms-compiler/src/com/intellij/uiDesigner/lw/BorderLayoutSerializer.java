@@ -4,7 +4,7 @@ package com.intellij.uiDesigner.lw;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.BorderLayout;
 
 final class BorderLayoutSerializer extends LayoutSerializer {
   public static final BorderLayoutSerializer INSTANCE = new BorderLayoutSerializer();

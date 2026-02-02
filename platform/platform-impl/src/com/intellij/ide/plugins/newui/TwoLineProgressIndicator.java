@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -11,6 +12,7 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public final class TwoLineProgressIndicator extends OneLineProgressIndicator {
   public TwoLineProgressIndicator() {
     this(true);

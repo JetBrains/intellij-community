@@ -11,7 +11,7 @@ import com.intellij.ui.navigation.Place;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.Objects;
 

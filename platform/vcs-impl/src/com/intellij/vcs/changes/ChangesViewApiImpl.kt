@@ -7,7 +7,11 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.vcs.AbstractVcsHelper
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
+import com.intellij.openapi.vcs.changes.InclusionListener
+import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.platform.vcs.impl.shared.rpc.BackendChangesViewEvent
@@ -19,8 +23,17 @@ import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.getProjectScoped
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScoped
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal class ChangesViewApiImpl : ChangesViewApi {
   override suspend fun getBackendChangesViewEvents(projectId: ProjectId): Flow<BackendChangesViewEvent> =

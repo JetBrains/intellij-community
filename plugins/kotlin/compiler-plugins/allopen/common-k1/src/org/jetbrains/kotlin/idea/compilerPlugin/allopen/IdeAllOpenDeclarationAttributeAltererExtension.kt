@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.allopen
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.allopen.AbstractAllOpenDeclarationAttributeAltererExtension
 import org.jetbrains.kotlin.allopen.AllOpenPluginNames.ANNOTATION_OPTION_NAME
 import org.jetbrains.kotlin.allopen.AllOpenPluginNames.PLUGIN_ID
@@ -12,8 +13,10 @@ import org.jetbrains.kotlin.idea.compilerPlugin.CachedAnnotationNames
 import org.jetbrains.kotlin.idea.compilerPlugin.getAnnotationNames
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 
+@K1Deprecation
 const val ALL_OPEN_ANNOTATION_OPTION_PREFIX: String = "plugin:$PLUGIN_ID:$ANNOTATION_OPTION_NAME="
 
+@K1Deprecation
 @InternalIgnoreDependencyViolation
 class IdeAllOpenDeclarationAttributeAltererExtension(val project: Project) :
     AbstractAllOpenDeclarationAttributeAltererExtension() {

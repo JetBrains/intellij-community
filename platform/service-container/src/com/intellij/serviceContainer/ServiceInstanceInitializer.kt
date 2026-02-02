@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
@@ -29,12 +30,14 @@ internal abstract class ServiceInstanceInitializer(
   override suspend fun createInstance(parentScope: CoroutineScope, instanceClass: Class<*>): Any {
     checkWriteAction(instanceClass)
     val instance = try {
-      instantiate(
+      val newInstance = instantiate(
         resolver = componentManager.dependencyResolver,
         parentScope = parentScope,
         instanceClass = instanceClass,
         supportedSignatures = componentManager.supportedSignaturesOfLightServiceConstructors,
       )
+
+      wrapIfDynamicOverrideSupported(newInstance)
     }
     catch (e: InstantiationException) {
       LOG.error(e)
@@ -66,6 +69,29 @@ internal abstract class ServiceInstanceInitializer(
       initializeService(instance, serviceDescriptor, pluginId, parentScope, componentManager)
     }
     return instance
+  }
+
+  private fun wrapIfDynamicOverrideSupported(instance: Any): Any {
+    return if (canBeDynamicallyOverridden()) {
+      val keyClassName = serviceDescriptor.serviceInterface ?: serviceDescriptor.implementation!!
+      // TODO: is there a better way to get the service interface type here?
+      val keyClass = instance.javaClass.classLoader.loadClass(keyClassName)
+
+      if (keyClass.isInterface) {
+        ServiceProxy.createInstance(keyClass, instance)
+      }
+      else {
+        thisLogger().error("Only proxies for interfaces are supported now. Actual: $keyClass")
+        instance
+      }
+    }
+    else {
+      instance
+    }
+  }
+
+  private fun canBeDynamicallyOverridden(): Boolean {
+    return componentManager.useProxiesForOpenServices && overridable
   }
 }
 

@@ -10,12 +10,11 @@ import com.jetbrains.python.errorProcessing.PyResult
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
-typealias CheckExistence = Boolean
 typealias CheckToml = Boolean
 typealias EnvExists = Boolean
 
 fun interface SdkCreator {
-  suspend fun createSdk(needsConfirmation: Boolean): PyResult<Sdk?>
+  suspend fun createSdk(): PyResult<Sdk>
 }
 
 @ApiStatus.Internal
@@ -25,27 +24,20 @@ sealed class CreateSdkInfo(private val sdkCreator: SdkCreator) :
   abstract val intentionName: String
 
   /**
-   * Creates SDK for a module named [moduleName]. This does **not** affect the module itself, but just sets user readable title.
+   * Creates SDK for a module named [moduleName]. This does **not** affect the module itself but just sets a user-readable title.
    */
   fun getSdkCreator(moduleName: @NlsSafe String): SdkCreator = {
     withContext(TraceContext(moduleName)) {
-      sdkCreator.createSdk(it)
+      sdkCreator.createSdk()
     }
   }
 
 
   /**
-   * Nullable SDK is only possible when we requested user confirmation but didn't get it. The idea behind this function is to provide
-   * non-nullable SDK when no confirmation from the user is needed.
-   *
-   *  TODO: Make SDK non-null
-   * It's a temporary solution until we'll be able to remove all custom user dialogs and enable [enableSDKAutoConfigurator] by default.
-   * After that lands, we'll get rid of nullable SDK.
-   *
-   * [moduleName] does **not** affect the module itself, but just sets user readable title.
+   * Creates SDK for a module named [moduleName]. This does **not** affect the module itself but just sets a user-readable title.
    */
-  suspend fun createSdkWithoutConfirmation(moduleName: @NlsSafe String): PyResult<Sdk> =
-    getSdkCreator(moduleName).createSdk(needsConfirmation = false).mapSuccess { it!! }
+  suspend fun createSdk(moduleName: @NlsSafe String): PyResult<Sdk> =
+    getSdkCreator(moduleName).createSdk()
 
   /**
    * We want to preserve the initial order, but at the same time existing environment should have a higher priority by default
@@ -76,26 +68,17 @@ sealed interface EnvCheckerResult {
 }
 
 @ApiStatus.Internal
-// TODO: Make internal after we drop WSL sdk configurator
 suspend fun prepareSdkCreator(
-  envChecker: suspend (CheckExistence) -> EnvCheckerResult,
+  envChecker: suspend () -> EnvCheckerResult,
   sdkCreator: (EnvExists) -> SdkCreator,
 ): CreateSdkInfo? {
-  var res = envChecker(true)
-  return when (res) {
+  return when (val res = envChecker()) {
     is EnvCheckerResult.EnvFound -> CreateSdkInfo.ExistingEnv(
       res.pythonInfo,
       res.intentionName,
       sdkCreator(true)
     )
-    is EnvCheckerResult.EnvNotFound -> {
-      res = envChecker(false)
-      when (res) {
-        is EnvCheckerResult.EnvNotFound -> CreateSdkInfo.WillCreateEnv(res.intentionName, sdkCreator(false))
-        is EnvCheckerResult.EnvFound -> throw AssertionError("Env shouldn't exist if we didn't check for it")
-        is EnvCheckerResult.CannotConfigure -> null
-      }
-    }
+    is EnvCheckerResult.EnvNotFound -> CreateSdkInfo.WillCreateEnv(res.intentionName, sdkCreator(false))
     is EnvCheckerResult.CannotConfigure -> null
   }
 }
@@ -103,4 +86,4 @@ suspend fun prepareSdkCreator(
 fun CreateSdkInfo.getSdkCreator(module: Module): SdkCreator =
   getSdkCreator(module.name)
 
-suspend fun CreateSdkInfo.createSdkWithoutConfirmation(module: Module): PyResult<Sdk> = createSdkWithoutConfirmation(module.name)
+suspend fun CreateSdkInfo.createSdk(module: Module): PyResult<Sdk> = createSdk(module.name)

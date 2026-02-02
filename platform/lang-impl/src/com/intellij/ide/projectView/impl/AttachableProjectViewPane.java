@@ -1,8 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.dnd.*;
+import com.intellij.ide.actions.AttachDirectoryStatisticsKt;
+import com.intellij.ide.dnd.DnDDropHandler;
+import com.intellij.ide.dnd.DnDEvent;
+import com.intellij.ide.dnd.DnDSupport;
+import com.intellij.ide.dnd.DnDTargetChecker;
+import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
@@ -23,11 +28,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultTreeModel;
-import java.awt.*;
-import java.util.*;
+import java.awt.BorderLayout;
+import java.awt.MouseInfo;
+import java.awt.Point;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.ide.dnd.FileCopyPasteUtil.getVirtualFileListFromAttachedObject;
 
@@ -100,6 +114,7 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
     final Module module = modules[0];
     ModuleRootModificationUtil.updateModel(module, model -> {
       for (VirtualFile file : dirs) {
+        AttachDirectoryStatisticsKt.logFilesOnDiskCount(myProject, file);
         model.addContentEntry(file);
       }
     });

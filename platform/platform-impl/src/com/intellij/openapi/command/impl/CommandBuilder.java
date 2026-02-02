@@ -19,7 +19,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Objects;
 
 
 final class CommandBuilder {
@@ -27,8 +29,7 @@ final class CommandBuilder {
   private static final Logger LOG = Logger.getInstance(CommandBuilder.class);
 
   private final @Nullable Project undoProject; // null - global, isDefault - error
-  private final boolean isTransparentSupported;
-  private final boolean isGroupIdChangeSupported;
+  private final UndoCapabilities undoCapabilities;
 
   private @NotNull CmdEvent cmdEvent;
   private @Nullable Throwable tracedStartCommand;
@@ -43,10 +44,9 @@ final class CommandBuilder {
   private boolean isValid;
   private boolean isInsideCommand;
 
-  CommandBuilder(@Nullable Project undoProject, boolean isTransparentSupported, boolean isGroupIdChangeSupported) {
+  CommandBuilder(@Nullable Project undoProject, @NotNull UndoCapabilities undoCapabilities) {
     this.undoProject = undoProject;
-    this.isTransparentSupported = isTransparentSupported;
-    this.isGroupIdChangeSupported = isGroupIdChangeSupported;
+    this.undoCapabilities = undoCapabilities;
     reset();
   }
 
@@ -127,9 +127,7 @@ final class CommandBuilder {
 
   @NotNull PerformedCommand commandFinished(@NotNull CmdEvent cmdFinishEvent) {
     assertInsideCommand(cmdFinishEvent);
-    if (isGroupIdChangeSupported) {
-      this.cmdEvent = cmdFinishEvent;
-    }
+    this.cmdEvent = cmdFinishEvent;
     this.editorStateAfter = currentEditorState();
     if (originalDocument != null && hasActions() && !isTransparent() && affectedDocuments.affectsOnlyPhysical()) {
       addDocumentAsAffected(Objects.requireNonNull(originalDocument));
@@ -227,7 +225,7 @@ final class CommandBuilder {
   }
 
   private boolean isTransparent() {
-    if (isTransparentSupported) {
+    if (undoCapabilities.isTransparentSupported()) {
       return cmdEvent.isTransparent();
     }
     return cmdEvent.isTransparent() && !hasActions();

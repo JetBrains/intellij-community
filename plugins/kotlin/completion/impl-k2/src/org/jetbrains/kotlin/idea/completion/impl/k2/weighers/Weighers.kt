@@ -7,7 +7,17 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.*
+import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
+import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
+import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
+import org.jetbrains.kotlin.analysis.api.components.importingScopeContext
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
+import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -32,17 +42,38 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadat
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
-import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.DurationPreferringWeigher
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.K2SoftDeprecationWeigher
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.PreferAbstractForOverrideWeigher
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.PreferredSubtypeWeigher
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaParameterNameWeigher
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaWeigher
 import org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinClassesWeigher
 import org.jetbrains.kotlin.idea.completion.isPositionInsideImportOrPackageDirective
 import org.jetbrains.kotlin.idea.completion.isPositionSuitableForNull
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.positionContext.*
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinSuperReceiverNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinWithSubjectEntryPositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtCatchClause
+import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtIsExpression
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.resolve.ImportPath
 
 internal class WeighingContext private constructor(
@@ -294,6 +325,7 @@ internal object Weighers {
         @Suppress("DEPRECATION")
         applyWeighs(sectionContext.weighingContext, symbolWithOrigin)
         PreferMatchingArgumentNameWeigher.addWeight(lookupElement)
+        PreferNamedArgumentCompletionWeigher.addWeight(lookupElement)
     }
 
     @Deprecated("This method only exists for compatibility for the old Fir contributors and will be removed soon")
@@ -334,6 +366,7 @@ internal object Weighers {
             PlatformWeighersIds.STATS,
             TrailingLambdaParameterNameWeigher,
             CompletionContributorGroupWeigher.Weigher,
+            PreferNamedArgumentCompletionWeigher.Weigher,
             ExpectedTypeWeigher.Weigher,
             DeprecatedWeigher.Weigher,
             PriorityWeigher.Weigher,

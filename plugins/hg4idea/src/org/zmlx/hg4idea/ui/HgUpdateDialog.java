@@ -20,7 +20,11 @@ import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings;
 import org.zmlx.hg4idea.provider.update.HgUpdateType;
 
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 

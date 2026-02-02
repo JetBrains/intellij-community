@@ -13,7 +13,11 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.annotation.*;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.AnnotationSession;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -40,7 +44,16 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiPlainText;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
@@ -54,12 +67,20 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -370,7 +391,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     Runnable checkHighlighted = () -> {
       if (success.get()) return;
       called.incrementAndGet();
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       long highlighted = Arrays.stream(markupModel.getAllHighlighters())
         .map(highlighter -> HighlightInfo.fromRangeHighlighter(highlighter))
         .filter(Objects::nonNull)
@@ -884,7 +905,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
       Document document = myFile.getFileDocument();
       VirtualFile virtualFile = myFile.getVirtualFile();
       FileEditorManager.getInstance(myProject).closeFile(virtualFile);
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
       configureByExistingFile(virtualFile);
       assertSame(document, getEditor().getDocument());

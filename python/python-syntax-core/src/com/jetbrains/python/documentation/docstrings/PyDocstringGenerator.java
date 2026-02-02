@@ -28,7 +28,20 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.ast.*;
+import com.jetbrains.python.ast.PyAstCallExpression;
+import com.jetbrains.python.ast.PyAstDocStringOwner;
+import com.jetbrains.python.ast.PyAstExpression;
+import com.jetbrains.python.ast.PyAstExpressionStatement;
+import com.jetbrains.python.ast.PyAstFile;
+import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.ast.PyAstNamedParameter;
+import com.jetbrains.python.ast.PyAstParameter;
+import com.jetbrains.python.ast.PyAstRaiseStatement;
+import com.jetbrains.python.ast.PyAstRecursiveElementVisitor;
+import com.jetbrains.python.ast.PyAstReturnStatement;
+import com.jetbrains.python.ast.PyAstStatementList;
+import com.jetbrains.python.ast.PyAstStatementListContainer;
+import com.jetbrains.python.ast.PyAstStringLiteralExpression;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.debugger.PySignature;
@@ -39,7 +52,12 @@ import com.jetbrains.python.psi.StructuredDocString;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public final class PyDocstringGenerator {
   public static final String TRIPLE_DOUBLE_QUOTES = "\"\"\"";

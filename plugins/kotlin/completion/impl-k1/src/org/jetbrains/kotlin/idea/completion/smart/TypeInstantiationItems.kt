@@ -9,18 +9,33 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptorWithTypeParameters
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
+import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.caches.resolve.util.resolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.codeInsight.collectSyntheticStaticMembersAndConstructors
-import org.jetbrains.kotlin.idea.completion.*
+import org.jetbrains.kotlin.idea.completion.BasicLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.LookupElementFactory
+import org.jetbrains.kotlin.idea.completion.ToFromOriginalFileMapper
+import org.jetbrains.kotlin.idea.completion.acceptOpeningBrace
 import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionCompositeDeclarativeInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionInsertHandler
+import org.jetbrains.kotlin.idea.completion.keepOldArgumentListOnTab
+import org.jetbrains.kotlin.idea.completion.shortenReferences
+import org.jetbrains.kotlin.idea.completion.suppressAutoInsertion
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
 import org.jetbrains.kotlin.idea.core.Tail
@@ -28,7 +43,12 @@ import org.jetbrains.kotlin.idea.core.multipleFuzzyTypes
 import org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.CallType
+import org.jetbrains.kotlin.idea.util.FuzzyType
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.makeNotNullable
+import org.jetbrains.kotlin.idea.util.presentationType
+import org.jetbrains.kotlin.idea.util.toFuzzyType
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -38,11 +58,18 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.resolveTopLevelClass
 import org.jetbrains.kotlin.resolve.sam.SamConstructorDescriptor
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
-import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.KotlinTypeFactory
+import org.jetbrains.kotlin.types.TypeAttributes
+import org.jetbrains.kotlin.types.TypeProjection
+import org.jetbrains.kotlin.types.TypeProjectionImpl
+import org.jetbrains.kotlin.types.TypeSubstitutor
+import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.constructors
 import org.jetbrains.kotlin.util.kind
 import org.jetbrains.kotlin.utils.addIfNotNull
 
+@K1Deprecation
 class TypeInstantiationItems(
   val resolutionFacade: ResolutionFacade,
   val bindingContext: BindingContext,

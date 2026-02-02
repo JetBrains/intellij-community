@@ -57,11 +57,11 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project), PluginEnabler {
   private var myInstalledPanel: PluginsGroupComponent? = null
-  var downloadedGroup: PluginsGroup? = null
+  var userInstalled: PluginsGroup? = null
     private set
   private var myInstalling: PluginsGroup? = null
   private var myTopController: TopComponentController? = null
-  private var myVendors: SortedSet<String>? = null
+  private var _vendorsSortedByPluginCountDescending: SortedSet<String>? = null
   private var myTags: SortedSet<String>? = null
 
   var needRestart: Boolean = false
@@ -74,13 +74,23 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   private var myPluginUpdatesService: PluginUpdatesService? = null
 
   private var myInvalidFixCallback: Runnable? = null
-  private var myCancelInstallCallback: ((PluginUiModel?) -> Unit)? = null
+  private var myCancelInstallCallback: ((PluginUiModel) -> Unit)? = null
 
   private val myRequiredPluginsForProject: MutableMap<PluginId, Boolean> = HashMap()
   private val myUninstalled: MutableSet<PluginId> = HashSet()
   private val myPluginManagerCustomizer: PluginManagerCustomizer?
 
   private var myInstallSource: FUSEventSource? = null
+
+  protected open val customRepoPlugins: Collection<PluginUiModel>? = null
+
+  private val myIcons: MutableMap<String?, Icon?> = HashMap<String?, Icon?>() // local cache for PluginLogo WeakValueMap
+
+  init {
+    val window = getActiveFrameOrWelcomeScreen()
+    myInitialWindow = WeakReference(window)
+    myPluginManagerCustomizer = PluginManagerCustomizer.getInstance()
+  }
 
   @ApiStatus.Internal
   fun setInstallSource(source: FUSEventSource?) {
@@ -229,7 +239,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       if (!PluginManagerMain.checkThirdPartyPluginsAllowed(listOf(actionDescriptor.getDescriptor()))) {
         return@withContext null
       }
-      val bgProgressIndicator = BgProgressIndicator()
+      val bgProgressIndicator = PluginDownloadBgProgressIndicator()
       val projectNotNull = tryToFindProject()
 
       val info = InstallPluginInfo(bgProgressIndicator, descriptor, this@MyPluginModel, updateDescriptor == null)
@@ -240,7 +250,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   private suspend fun runPluginInstallation(
     project: Project?,
-    bgProgressIndicator: BgProgressIndicator,
+    bgProgressIndicator: PluginDownloadBgProgressIndicator,
     descriptor: PluginUiModel,
     updateDescriptor: PluginUiModel?,
     controller: UiPluginManagerController,
@@ -309,7 +319,6 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   fun getErrors(result: InstallPluginResult): Map<PluginId, List<HtmlChunk>> {
     return result.errors.mapValues { getErrors(it.value) }
   }
-
 
   fun toBackground(): Boolean {
     val initialWindow = myInitialWindow.get()
@@ -461,8 +470,8 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       if (success) {
         appendOrUpdateDescriptor(installedDescriptor ?: descriptor, restartRequired, errorList)
         appendDependsAfterInstall(success, restartRequired, errors, installedDescriptor)
-        if (installedDescriptor == null && descriptor.isFromMarketplace && this.downloadedGroup != null && downloadedGroup!!.ui != null) {
-          val component = downloadedGroup!!.ui.findComponent(descriptor.pluginId)
+        if (installedDescriptor == null && descriptor.isFromMarketplace && this.userInstalled != null && userInstalled!!.ui != null) {
+          val component = userInstalled!!.ui.findComponent(descriptor.pluginId)
           component?.setInstalledPluginMarketplaceModel(descriptor)
         }
       }
@@ -471,8 +480,8 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       }
     }
     else if (success) {
-      if (this.downloadedGroup != null && downloadedGroup!!.ui != null && restartRequired) {
-        val component = downloadedGroup!!.ui.findComponent(pluginId)
+      if (this.userInstalled != null && userInstalled!!.ui != null && restartRequired) {
+        val component = userInstalled!!.ui.findComponent(pluginId)
         component?.enableRestart()
       }
     }
@@ -544,11 +553,11 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   fun setDownloadedGroup(
     panel: PluginsGroupComponent,
-    downloaded: PluginsGroup,
+    userInstalled: PluginsGroup,
     installing: PluginsGroup,
   ) {
     myInstalledPanel = panel
-    this.downloadedGroup = downloaded
+    this.userInstalled = userInstalled
     myInstalling = installing
   }
 
@@ -558,12 +567,12 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     errors: Map<PluginId, List<HtmlChunk>>,
     installedDescriptor: PluginUiModel?,
   ) {
-    if (this.downloadedGroup == null || downloadedGroup!!.ui == null) {
+    if (this.userInstalled == null || userInstalled!!.ui == null) {
       return
     }
     for (descriptor in InstalledPluginsState.getInstance().installedPlugins) {
       val pluginId = descriptor.getPluginId()
-      if (downloadedGroup!!.ui.findComponent(pluginId) != null) {
+      if (userInstalled!!.ui.findComponent(pluginId) != null) {
         continue
       }
 
@@ -607,25 +616,25 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
     needRestart = needRestart or restartNeeded
 
-    if (this.downloadedGroup == null) {
+    if (this.userInstalled == null) {
       return
     }
 
-    myVendors = null
+    _vendorsSortedByPluginCountDescending = null
     myTags = null
 
-    if (downloadedGroup!!.ui == null) {
-      downloadedGroup!!.addModel(descriptor)
-      downloadedGroup!!.titleWithEnabled(PluginModelFacade(this))
+    if (userInstalled!!.ui == null) {
+      userInstalled!!.addModel(descriptor)
+      userInstalled!!.titleWithEnabled(PluginModelFacade(this))
 
-      myInstalledPanel!!.addGroup(this.downloadedGroup!!, if (myInstalling == null || myInstalling!!.ui == null) 0 else 1)
-      myInstalledPanel!!.setSelection(downloadedGroup!!.ui.plugins[0])
+      myInstalledPanel!!.addGroup(this.userInstalled!!, if (myInstalling == null || myInstalling!!.ui == null) 0 else 1)
+      myInstalledPanel!!.setSelection(userInstalled!!.ui.plugins[0])
       myInstalledPanel!!.doLayout()
 
-      addEnabledGroup(this.downloadedGroup!!)
+      addEnabledGroup(this.userInstalled!!)
     }
     else {
-      val component = downloadedGroup!!.ui.findComponent(id)
+      val component = userInstalled!!.ui.findComponent(id)
       if (component != null) {
         if (restartNeeded) {
           myInstalledPanel!!.setSelection(component)
@@ -633,26 +642,26 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
         }
         return
       }
-      downloadedGroup!!.preloadedModel.setErrors(descriptor.pluginId, errors)
+      userInstalled!!.preloadedModel.setErrors(descriptor.pluginId, errors)
       val pluginInstallationState = pluginManager.getPluginInstallationState(descriptor.pluginId)
-      downloadedGroup!!.preloadedModel.setPluginInstallationState(descriptor.pluginId, pluginInstallationState)
-      myInstalledPanel!!.addToGroup(this.downloadedGroup!!, descriptor)
-      downloadedGroup!!.titleWithEnabled(PluginModelFacade(this))
+      userInstalled!!.preloadedModel.setPluginInstallationState(descriptor.pluginId, pluginInstallationState)
+      myInstalledPanel!!.addToGroup(this.userInstalled!!, descriptor)
+      userInstalled!!.titleWithEnabled(PluginModelFacade(this))
       myInstalledPanel!!.doLayout()
     }
   }
 
   val vendors: SortedSet<String?>
     get() {
-      if (myVendors.isNullOrEmpty()) {
-        val vendorsCount = getVendorsCount(installedDescriptors)
-        myVendors = TreeSet { v1, v2 ->
-          val result = vendorsCount[v2]!! - vendorsCount[v1]!!
-          if (result == 0) v2.compareTo(v1, ignoreCase = true) else result
+      if (_vendorsSortedByPluginCountDescending.isNullOrEmpty()) {
+        val pluginsCountPerVendor = getPluginsCountPerVendor(installedDescriptors)
+        _vendorsSortedByPluginCountDescending = TreeSet { v1, v2 ->
+          val result = pluginsCountPerVendor[v2]!! - pluginsCountPerVendor[v1]!!
+          if (result != 0) result else v2.compareTo(v1, ignoreCase = true)
         }
-        myVendors!!.addAll(vendorsCount.keys)
+        _vendorsSortedByPluginCountDescending!!.addAll(pluginsCountPerVendor.keys)
       }
-      return myVendors?.let { Collections.unmodifiableSortedSet(it) } ?: TreeSet()
+      return _vendorsSortedByPluginCountDescending?.let { Collections.unmodifiableSortedSet(it) } ?: TreeSet()
     }
 
   val tags: SortedSet<String?>
@@ -835,7 +844,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     myInvalidFixCallback = invalidFixCallback
   }
 
-  fun setCancelInstallCallback(callback: (PluginUiModel?) -> Unit) {
+  fun setCancelInstallCallback(callback: (PluginUiModel) -> Unit) {
     myCancelInstallCallback = callback
   }
 
@@ -1025,17 +1034,6 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     return getErrors(response)
   }
 
-  protected open val customRepoPlugins: Collection<PluginUiModel>? = null
-
-  private val myIcons: MutableMap<String?, Icon?> = HashMap<String?, Icon?>() // local cache for PluginLogo WeakValueMap
-
-  init {
-    val window = getActiveFrameOrWelcomeScreen()
-    myInitialWindow = WeakReference(window)
-
-    myPluginManagerCustomizer = PluginManagerCustomizer.getInstance()
-  }
-
   fun getIcon(descriptor: IdeaPluginDescriptor, big: Boolean, error: Boolean, disabled: Boolean): Icon {
     val key = descriptor.getPluginId().idString + big + error + disabled
     var icon = myIcons[key]
@@ -1099,16 +1097,14 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       info.indicator.removeStateDelegate(indicator)
     }
 
-    private fun getVendorsCount(descriptors: Collection<PluginUiModel>): Map<String, Int> {
+    private fun getPluginsCountPerVendor(descriptors: Collection<PluginUiModel>): Map<String, Int> {
       val vendors = mutableMapOf<String, Int>()
-
       for (descriptor in descriptors) {
         val vendor = StringUtil.trim(descriptor.vendor)
         if (!vendor.isNullOrBlank()) {
           vendors[vendor] = (vendors[vendor] ?: 0) + 1
         }
       }
-
       return vendors
     }
 

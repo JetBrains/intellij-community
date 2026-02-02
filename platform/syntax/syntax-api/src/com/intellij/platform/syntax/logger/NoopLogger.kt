@@ -5,8 +5,8 @@
 package com.intellij.platform.syntax.logger
 
 import com.intellij.platform.syntax.Logger
-import kotlin.jvm.JvmName
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmName
 
 @ApiStatus.Experimental
 fun noopLogger(): Logger = _NoopLogger

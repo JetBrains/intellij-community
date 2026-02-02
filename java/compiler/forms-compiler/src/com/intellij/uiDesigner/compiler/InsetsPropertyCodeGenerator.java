@@ -5,7 +5,7 @@ import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
-import java.awt.*;
+import java.awt.Insets;
 
 public final class InsetsPropertyCodeGenerator extends PropertyCodeGenerator {
   private final Type myInsetsType = Type.getType(Insets.class);

@@ -3,7 +3,11 @@ package org.jetbrains.jps.intellilang.instrumentation;
 
 import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
 import com.intellij.openapi.util.text.Strings;
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.AnnotationVisitor;
+import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.org.objectweb.asm.Type;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;

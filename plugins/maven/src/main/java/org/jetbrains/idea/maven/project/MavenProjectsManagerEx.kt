@@ -66,6 +66,39 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.withLazyProgressIndicator
 import kotlin.time.Duration
 
+
+private interface MavenSyncFileReader {
+  suspend operator fun invoke(wrappers: MavenEmbedderWrappers): MavenProjectsTreeUpdateResult
+}
+
+private class MavenFullSyncFileReader(
+  val projectsTree: MavenProjectsTree,
+  val spec: MavenSyncSpec,
+  val generalSettings: MavenGeneralSettings,
+) : MavenSyncFileReader {
+  override suspend fun invoke(wrappers: MavenEmbedderWrappers): MavenProjectsTreeUpdateResult {
+    return reportRawProgress { reporter ->
+      projectsTree.updateAll(spec.forceReading(), generalSettings, wrappers, reporter)
+    }
+  }
+}
+
+private class MavenPartialSyncFileReader(
+  val projectsTree: MavenProjectsTree,
+  val spec: MavenSyncSpec,
+  val generalSettings: MavenGeneralSettings,
+  val filesToUpdate: List<VirtualFile>,
+  val filesToDelete: List<VirtualFile>,
+) : MavenSyncFileReader {
+  override suspend fun invoke(wrappers: MavenEmbedderWrappers): MavenProjectsTreeUpdateResult {
+    return reportRawProgress { reporter ->
+      val deleted = projectsTree.delete(filesToDelete, generalSettings, wrappers, reporter)
+      val updated = projectsTree.update(filesToUpdate, spec.forceReading(), generalSettings, wrappers, reporter)
+      deleted + updated
+    }
+  }
+}
+
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
   fun scheduleUpdateAllMavenProjects(spec: MavenSyncSpec)
@@ -337,26 +370,8 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   ): List<Module> {
     val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
     mavenEmbedderWrappers.use {
-      return doUpdateMavenProjects(spec, null, mavenEmbedderWrappers) {
-        readMavenProjects(spec,
-                          filesToUpdate,
-                          filesToDelete,
-                          mavenEmbedderWrappers)
-      }
-    }
-  }
-
-  private suspend fun readMavenProjects(
-    spec: MavenSyncSpec,
-    filesToUpdate: List<VirtualFile>,
-    filesToDelete: List<VirtualFile>,
-    mavenEmbedderWrappers: MavenEmbedderWrappers,
-  ): MavenProjectsTreeUpdateResult {
-    return reportRawProgress { reporter ->
-      val progressReporter = reporter
-      val deleted = projectsTree.delete(filesToDelete, generalSettings, mavenEmbedderWrappers, progressReporter)
-      val updated = projectsTree.update(filesToUpdate, spec.forceReading(), generalSettings, mavenEmbedderWrappers, progressReporter)
-      deleted + updated
+      return doUpdateMavenProjects(spec, null, mavenEmbedderWrappers, MavenPartialSyncFileReader(
+        projectsTree, spec, generalSettings, filesToUpdate, filesToDelete))
     }
   }
 
@@ -434,17 +449,20 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
     val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
     mavenEmbedderWrappers.use {
-      return doUpdateMavenProjects(spec, modelsProvider, mavenEmbedderWrappers) { readAllMavenProjects(spec, mavenEmbedderWrappers) }
+      return doUpdateMavenProjects(spec,
+                                   modelsProvider,
+                                   mavenEmbedderWrappers,
+                                   MavenFullSyncFileReader(projectsTree, spec, generalSettings))
     }
   }
 
-  protected open suspend fun doUpdateMavenProjects(
+  private suspend fun doUpdateMavenProjects(
     spec: MavenSyncSpec,
     modelsProvider: IdeModifiableModelsProvider?,
     mavenEmbedderWrappers: MavenEmbedderWrappers,
-    read: suspend () -> MavenProjectsTreeUpdateResult,
+    read: MavenSyncFileReader,
   ): List<Module> {
-    return tracer.spanBuilder("syncMavenProject").useWithScope {
+    return tracer.spanBuilder("syncMavenProject").useWithScope doUpdateMavenProjects@{
       // display all import activities using the same build progress
       logDebug("Start update ${project.name}, $spec ${myProject.name}")
       ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC).syncStarted(myProject)
@@ -456,8 +474,8 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
       try {
         console.startImport(spec.isExplicit)
         if (MavenUtil.enablePreimport()) {
-          tracer.spanBuilder("doStaticSync").useWithScope {
-            val result = MavenProjectStaticImporter.getInstance(myProject)
+          val result = tracer.spanBuilder("doStaticSync").useWithScope doStaticSync@{
+            MavenProjectStaticImporter.getInstance(myProject)
               .syncStatic(
                 projectsTree.existingManagedFiles,
                 modelsProvider,
@@ -467,33 +485,33 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                 SimpleStructureProjectVisitor(),
                 syncActivity,
                 true)
-            if (MavenUtil.enablePreimportOnly()) return@useWithScope result.modules
+          }
+          if (MavenUtil.enablePreimportOnly()) return@doUpdateMavenProjects result.modules
 
-            if (!TrustedProjects.isProjectTrusted(project)) {
-              projectsTree.updater().copyFrom(result.projectTree)
-              showUntrustedProjectNotification(myProject)
-              return@useWithScope result.modules
-            }
-            incompleteState = tracer.spanBuilder("enterIncompleteState").useWithScope {
-              edtWriteAction {
-                project.service<IncompleteDependenciesService>().enterIncompleteState(this@MavenProjectsManagerEx)
-              }
+          if (!TrustedProjects.isProjectTrusted(project)) {
+            projectsTree.updater().copyFrom(result.projectTree)
+            showUntrustedProjectNotification(myProject)
+            return@doUpdateMavenProjects result.modules
+          }
+          incompleteState = tracer.spanBuilder("enterIncompleteState").useWithScope {
+            edtWriteAction {
+              project.service<IncompleteDependenciesService>().enterIncompleteState(this@MavenProjectsManagerEx)
             }
           }
         }
         if (!checkMavenEnvironment(spec)) {
           MavenLog.LOG.warn("Will not continue import, bad environment")
-          return@useWithScope emptyList()
+          return@doUpdateMavenProjects emptyList()
         }
         val result = tracer.spanBuilder("doDynamicSync").useWithScope {
           doDynamicSync(syncActivity, read, spec, modelsProvider, mavenEmbedderWrappers)
         }
 
-        return@useWithScope result
+        return@doUpdateMavenProjects result
       }
       catch (e: Throwable) {
         logImportErrorIfNotControlFlow(e)
-        return@useWithScope emptyList()
+        return@doUpdateMavenProjects emptyList()
       }
       finally {
         logDebug("Finish update ${project.name}, $spec ${myProject.name}")
@@ -521,12 +539,12 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
   private suspend fun doDynamicSync(
     syncActivity: StructuredIdeActivity,
-    read: suspend () -> MavenProjectsTreeUpdateResult,
+    read: MavenSyncFileReader,
     spec: MavenSyncSpec,
     modelsProvider: IdeModifiableModelsProvider?,
     mavenEmbedderWrappers: MavenEmbedderWrappers,
   ): List<Module> {
-    val readingResult = readMavenProjectsActivity(syncActivity) { read() }
+    val readingResult = readMavenProjectsActivity(syncActivity) { read(mavenEmbedderWrappers) }
 
     fireImportAndResolveScheduled()
     val projectsToResolve = collectProjectsToResolve(readingResult)
@@ -660,15 +678,6 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
         project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).pomReadingFinished()
         result
       }
-    }
-  }
-
-  protected suspend fun readAllMavenProjects(
-    spec: MavenSyncSpec,
-    mavenEmbedderWrappers: MavenEmbedderWrappers,
-  ): MavenProjectsTreeUpdateResult {
-    return reportRawProgress { reporter ->
-      projectsTree.updateAll(spec.forceReading(), generalSettings, mavenEmbedderWrappers, reporter)
     }
   }
 

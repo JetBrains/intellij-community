@@ -12,15 +12,21 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.net.localhostInetAddress
 import com.jetbrains.jdi.SocketListeningConnector
+import com.sun.jdi.Location
 import com.sun.jdi.ThreadReference
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.debugger.core.FileApplicabilityChecker
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.addRoot
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.incremental.isClassFile
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.resolve.BindingContext
 import java.io.File
 import kotlin.properties.Delegates
 
@@ -111,8 +117,7 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase(),
         )
         val sourceFiles =
             compilerFacility.creatKtFiles(jvmSourcesOutputDirectory, commonSourcesOutputDirectory, scriptSourcesOutputDirectory).jvmKtFiles
-        val (_, analysisResult) = compilerFacility.analyzeSources(sourceFiles)
-        val bindingContext = analysisResult.bindingContext
+
 
         val outputFiles = classesDir.walk()
             .filter { it.isClassFile() }
@@ -140,7 +145,10 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase(),
             try {
                 val mainThread = virtualMachine.allThreads().single { it.name() == "main" }
                 waitUntil { areCompiledClassesLoaded(mainThread, outputFiles, skipLoadingClasses) }
-                doTest(options, mainThread, sourceFiles, bindingContext, jvmSourcesOutputDirectory, outputFiles)
+                val ranker: (List<KtFile>, Location) -> Map<KtFile, Int> = rankFiles(compilerFacility, sourceFiles, options)
+                doTest(
+                    options, mainThread, sourceFiles, jvmSourcesOutputDirectory, outputFiles, ranker
+                )
             } finally {
                 virtualMachine.exit(0)
                 process.destroy()
@@ -150,13 +158,23 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase(),
         }
     }
 
+    protected open fun rankFiles(
+        compilerFacility: DebuggerTestCompilerFacility, sourceFiles: List<KtFile>, options: Set<String>
+    ): (List<KtFile>, Location) -> Map<KtFile, Int> {
+        return { files, location ->
+            mapOf(runBlocking {
+                FileApplicabilityChecker.chooseMostApplicableFile(files, location)
+            } to 0)
+        }
+    }
+
     protected abstract fun doTest(
         options: Set<String>,
         mainThread: ThreadReference,
         sourceFiles: List<KtFile>,
-        bindingContext: BindingContext,
         jvmSrcDir: File,
         outputFiles: List<CompiledClassFile>,
+        ranker: (List<KtFile>, Location) -> Map<KtFile, Int>,
     )
 
     private fun areCompiledClassesLoaded(

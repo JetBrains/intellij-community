@@ -2,7 +2,11 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.*;
+import com.intellij.internal.statistic.eventLog.events.EventField;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId1;
+import com.intellij.internal.statistic.eventLog.events.IntEventField;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.ui.treeStructure.ProjectView3rdPartyPluginUpdateCause;

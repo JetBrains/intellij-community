@@ -2,7 +2,6 @@
 package com.intellij.java.psi
 
 import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.compiled.ClsClassImpl
 import com.intellij.psi.search.GlobalSearchScope

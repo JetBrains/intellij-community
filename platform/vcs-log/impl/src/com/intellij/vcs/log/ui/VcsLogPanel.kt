@@ -56,25 +56,30 @@ class VcsLogPanel(private val manager: VcsLogManager, override val vcsLogUi: Vcs
       sink: DataSink,
       vcsLogUi: VcsLogUiEx,
     ) {
-      sink[VcsLogDataKeys.VCS_LOG_DATA_PROVIDER] = vcsLogUi.logData
-      sink[VcsLogInternalDataKeys.LOG_DATA] = vcsLogUi.logData
-      val selection = vcsLogUi.table.selection
-      val hashes = selection.commits
+      val logData = vcsLogUi.logData
+      sink[VcsLogDataKeys.VCS_LOG_DATA_PROVIDER] = logData
+      sink[VcsLogInternalDataKeys.LOG_DATA] = logData
       sink[VcsLogDataKeys.VCS_LOG] = vcsLogUi.vcsLog
       sink[VcsLogDataKeys.VCS_LOG_UI] = vcsLogUi
-      sink[VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION] = selection
-      if (hashes.isNotEmpty()) {
-        sink[VcsDataKeys.VCS_REVISION_NUMBER] = VcsLogUtil.convertToRevisionNumber(hashes.first().hash)
-      }
-      if (hashes.isNotEmpty() && hashes.size <= VcsLogUtil.MAX_SELECTED_COMMITS) {
-        sink[PlatformDataKeys.SELECTED_ITEMS] = hashes.toTypedArray()
-        sink[VcsDataKeys.VCS_REVISION_NUMBERS] = hashes
-          .map { VcsLogUtil.convertToRevisionNumber(it.hash) }
-          .toTypedArray<VcsRevisionNumber>()
-      }
-      val metadata = selection.cachedMetadata
-      if (metadata.isNotEmpty() && metadata.size <= VcsLogUtil.MAX_SELECTED_COMMITS) {
-        sink[VcsDataKeys.VCS_COMMIT_SUBJECTS] = metadata.map { it.getSubject() }.toTypedArray()
+
+      if (!logData.isDisposed) {
+        val selection = vcsLogUi.table.selection
+        sink[VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION] = selection
+
+        val hashes = selection.commits
+        if (hashes.isNotEmpty()) {
+          sink[VcsDataKeys.VCS_REVISION_NUMBER] = VcsLogUtil.convertToRevisionNumber(hashes.first().hash)
+        }
+        if (hashes.isNotEmpty() && hashes.size <= VcsLogUtil.MAX_SELECTED_COMMITS) {
+          sink[PlatformDataKeys.SELECTED_ITEMS] = hashes.toTypedArray()
+          sink[VcsDataKeys.VCS_REVISION_NUMBERS] = hashes
+            .map { VcsLogUtil.convertToRevisionNumber(it.hash) }
+            .toTypedArray<VcsRevisionNumber>()
+        }
+        val metadata = selection.cachedMetadata
+        if (metadata.isNotEmpty() && metadata.size <= VcsLogUtil.MAX_SELECTED_COMMITS) {
+          sink[VcsDataKeys.VCS_COMMIT_SUBJECTS] = metadata.map { it.getSubject() }.toTypedArray()
+        }
       }
     }
   }

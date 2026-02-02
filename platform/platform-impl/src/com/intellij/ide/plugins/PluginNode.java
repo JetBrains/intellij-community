@@ -116,22 +116,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
     this.isPaid = isPaid;
   }
 
-  /**
-   * @deprecated Use {@link #getDefaultTrialPeriod()}
-   */
-  @Deprecated(forRemoval = true)
-  public @Nullable Integer getTrialPeriod() {
-    return defaultTrialPeriod;
-  }
-
-  /**
-   * @deprecated Use {@link #setDefaultTrialPeriod(Integer)}}
-   */
-  @Deprecated(forRemoval = true)
-  public void setTrialPeriod(@Nullable Integer trialPeriod) {
-    this.defaultTrialPeriod = trialPeriod;
-  }
-
   public @Nullable Integer getDefaultTrialPeriod() {
     return defaultTrialPeriod;
   }

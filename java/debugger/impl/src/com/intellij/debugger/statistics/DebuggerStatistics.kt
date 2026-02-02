@@ -7,14 +7,19 @@ import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.DebugProcessEvents
 import com.intellij.debugger.engine.SteppingAction
 import com.intellij.debugger.impl.DebuggerUtilsImpl
-import com.intellij.debugger.statistics.EvaluationOnPauseStatus.*
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.DEBUGGER_AGENT_HELPER_THREAD_DISABLED_FAILURE
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.DEBUGGER_AGENT_HELPER_THREAD_DISABLED_SUCCESS
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.DEBUGGER_AGENT_HELPER_THREAD_ENABLED_FAILURE
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.DEBUGGER_AGENT_HELPER_THREAD_ENABLED_SUCCESS
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.EVALUATION_ON_PAUSE_DISABLED
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.NO_DEBUGGER_AGENT_FAILURE
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.NO_DEBUGGER_AGENT_SUCCESS
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Int
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -22,7 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 object DebuggerStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("java.debugger", 13)
+  private val GROUP = EventLogGroup("java.debugger", 16)
 
   // fields
 
@@ -44,7 +49,7 @@ object DebuggerStatistics : CounterUsagesCollector() {
   private val dumpedVirtualThreadsCounter = Int("virtual_threads")
 
   private val threadDumpTriggeringExceptionField =
-    EventFields.StringValidatedByCustomRule("exception", ThreadDumpTriggeringExceptionValidator::class.java)
+    EventFields.String("exception", THREAD_DUMP_TRIGGERING_EXCEPTIONS_TO_LOG)
 
   // events
   /** Reports overhead spent on checking where a breakpoint must be installed. */
@@ -72,6 +77,11 @@ object DebuggerStatistics : CounterUsagesCollector() {
   /** Reports execution time of debugger commands in buckets, updated at the end of a debugger session. */
   private val timeBucketCount = GROUP.registerEvent("debugger.command.time.bucket.updated", EventFields.Int("bucket_upper_limit_ms"), EventFields.Count, EventFields.Boolean("is_remote"))
   internal val bucketUpperLimits = (generateSequence(1L) { it * 2 }.takeWhile { it <= 2048 } + Long.MAX_VALUE).toList().toLongArray()
+
+
+  private val agentOverheadDetected = GROUP.registerEvent("debugger.agent.overhead.detected",
+                                                          EventFields.Long("passed_since_session_start_ms"),
+                                                          "Detected noticeable overhead of the debugger agent due to async stack traces collection")
 
   @JvmStatic
   fun logProcessStatistics(debugProcess: DebugProcess) {
@@ -175,6 +185,10 @@ object DebuggerStatistics : CounterUsagesCollector() {
   @JvmStatic
   fun logPlatformThreadDumpFallback(project: Project, status: ThreadDumpStatus) {
     threadDump.log(project, status, -1, -1)
+  }
+
+  fun logAgentOverheadDetected(project: Project, passedSinceSessionStartMs: Long) {
+    agentOverheadDetected.log(project, passedSinceSessionStartMs)
   }
 
 

@@ -18,7 +18,12 @@ import com.intellij.testFramework.StartupActivityTestUtil
 import com.intellij.testFramework.loadProject
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.PathUtil
-import com.intellij.util.io.*
+import com.intellij.util.io.FileTextMatcher
+import com.intellij.util.io.assertMatches
+import com.intellij.util.io.copy
+import com.intellij.util.io.directoryContentOf
+import com.intellij.util.io.move
+import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking

@@ -1,16 +1,41 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.canBeFinal;
 
-import com.intellij.codeInspection.reference.*;
-import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.*;
+import com.intellij.codeInspection.reference.RefClass;
+import com.intellij.codeInspection.reference.RefClassImpl;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefElementImpl;
+import com.intellij.codeInspection.reference.RefField;
+import com.intellij.codeInspection.reference.RefFieldImpl;
+import com.intellij.codeInspection.reference.RefGraphAnnotatorEx;
+import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.reference.RefMethod;
+import com.intellij.codeInspection.reference.RefMethodImpl;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
   private final RefManager myManager;

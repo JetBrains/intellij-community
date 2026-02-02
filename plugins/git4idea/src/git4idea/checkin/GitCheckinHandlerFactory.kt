@@ -23,7 +23,12 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.checkin.*
+import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.checkin.CommitCheck
+import com.intellij.openapi.vcs.checkin.CommitInfo
+import com.intellij.openapi.vcs.checkin.CommitProblem
+import com.intellij.openapi.vcs.checkin.CommitProblemWithDetails
+import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.SequentialProgressReporter
 import com.intellij.platform.util.progress.reportSequentialProgress

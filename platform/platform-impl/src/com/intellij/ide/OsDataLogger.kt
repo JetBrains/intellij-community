@@ -1,13 +1,18 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsContexts.DetailedDescription
 import com.intellij.util.system.OS
+import com.intellij.util.ui.UnixDesktopEnv
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Service(Service.Level.APP)
 private class OsDataLogger(val coroutineScope: CoroutineScope) {
@@ -30,6 +35,14 @@ private class OsDataLogger(val coroutineScope: CoroutineScope) {
       if (osInfo is OS.LinuxInfo) {
         if (osInfo.isUnderWsl) info += " (in WSL)"
         if (osInfo.glibcVersion != null) info += "; glibc: " + osInfo.glibcVersion
+      }
+      UnixDesktopEnv.CURRENT?.let { currentEnv ->
+        info += "; desktop: " + currentEnv.name
+        withContext(Dispatchers.IO) {
+          ExecUtil.execAndReadLine(GeneralCommandLine(currentEnv.versionCommand))?.let { line ->
+            info += " ($line)"
+          }
+        }
       }
 
       logger<OsDataLogger>().info(info)

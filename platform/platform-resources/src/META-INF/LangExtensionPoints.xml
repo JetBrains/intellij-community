@@ -769,4 +769,8 @@
 
     <extensionPoint name="saveAndSyncHandlerListener" interface="com.intellij.ide.SaveAndSyncHandlerListener" dynamic="true"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.codeInsight.template.TemplateGroupOrderProvider" open="true"/>
+  </extensions>
 </idea-plugin>

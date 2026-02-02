@@ -6,7 +6,14 @@ import com.intellij.codeInsight.completion.command.commands.AbstractSafeDeleteCo
 import com.intellij.codeInsight.completion.command.commands.DirectInspectionFixCompletionCommand
 import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.*
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 

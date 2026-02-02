@@ -49,9 +49,11 @@ private fun resolveFieldFromIndexValue(method: PsiMethod, isGetter: Boolean): Ps
   return null
 }
 
-@VisibleForTesting
-val javaSimplePropertyGist: PsiFileGist<Int2ObjectMap<PropertyIndexValue>> = GistManager.getInstance().newPsiFileGist("java.simple.property", 3, SimplePropertiesExternalizer()) { file ->
-  findSimplePropertyCandidates(file.node.lighterAST)
+@get:VisibleForTesting
+val javaSimplePropertyGist: PsiFileGist<Int2ObjectMap<PropertyIndexValue>> by lazy {
+  GistManager.getInstance().newPsiFileGist("java.simple.property", 3, SimplePropertiesExternalizer()) { file ->
+    findSimplePropertyCandidates(file.node.lighterAST)
+  }
 }
 
 private val allowedExpressions by lazy {

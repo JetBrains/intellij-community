@@ -14,7 +14,7 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 
-internal class JpsModuleOutputProvider(private val project: JpsProject) : ModuleOutputProvider {
+internal class JpsModuleOutputProvider(private val project: JpsProject, override val useTestCompilationOutput: Boolean) : ModuleOutputProvider {
   private val modules = project.modules
   private val nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
 

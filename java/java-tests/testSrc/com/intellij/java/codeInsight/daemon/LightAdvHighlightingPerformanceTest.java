@@ -27,11 +27,11 @@ import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.impl.source.tree.injected.ConcatenationInjectorManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -120,7 +120,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     while (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized()) {
       LOG.debug("waiting for default project dispose...");
       ((ProjectManagerImpl)ProjectManager.getInstance()).disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests();
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
     String message = ContainerUtil.map(ProjectManagerEx.getInstance().getOpenProjects(), p -> p + "; creation trace:"+((ProjectEx)p).getCreationTrace()+"\n").toString();
     assertNotNull(message, ProjectCoreUtil.theOnlyOpenProject());

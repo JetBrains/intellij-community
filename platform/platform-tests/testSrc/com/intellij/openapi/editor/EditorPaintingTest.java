@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,9 @@ import java.util.Collections;
 
 @TestDataPath("$CONTENT_ROOT/testData/editor/painting")
 public class EditorPaintingTest extends EditorPaintingTestCase {
+  private void setNewSelectionEnabled(boolean enabled) {
+    Registry.get("editor.disable.new.selection").setValue(!enabled);
+  }
 
   public void testWholeLineHighlighterAtDocumentEnd() throws Exception {
     initText("foo");
@@ -147,7 +151,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResultWithGutterForNewUI();
   }
 
-  public void testBlockInlaysWithSelection() throws Exception {
+  private void runTestBlockInlaysWithSelection() throws Exception {
     initText("line 1\nline 2\n");
     addBlockInlay(getEditor().getDocument().getLineStartOffset(0));
     addBlockInlay(getEditor().getDocument().getLineStartOffset(1));
@@ -156,12 +160,44 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResult();
   }
 
-  public void testMarginIsShownOverSelectionInBlockInlayRange() throws Exception {
+  public void testBlockInlaysWithSelection() throws Exception {
+    setNewSelectionEnabled(false);
+    runTestBlockInlaysWithSelection();
+  }
+
+  public void testBlockInlaysWithNewSelection() throws Exception {
+    setNewSelectionEnabled(true);
+    runTestBlockInlaysWithSelection();
+  }
+
+  public void testBlockInlaysAboveWithNewSelection() throws Exception {
+    setNewSelectionEnabled(true);
+    initText("\n\nline 1\nline 2\n");
+    addBlockInlay(getEditor().getDocument().getLineStartOffset(2), true);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+    for (int i = 0; i < 2; i++) {
+      executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
+    }
+    checkResult();
+  }
+
+  private void runTestMarginIsShownOverSelectionInBlockInlayRange() throws Exception {
     initText("  \n");
     addBlockInlay(0);
     executeAction(IdeActions.ACTION_SELECT_ALL);
     getEditor().getSettings().setRightMargin(1);
     checkResult();
+  }
+
+  public void testMarginIsShownOverSelectionInBlockInlayRange() throws Exception {
+    setNewSelectionEnabled(false);
+    runTestMarginIsShownOverSelectionInBlockInlayRange();
+  }
+
+  public void testMarginIsShownOverSelectionInBlockInlayRangeWithNewSelection() throws Exception {
+    setNewSelectionEnabled(true);
+    runTestMarginIsShownOverSelectionInBlockInlayRange();
   }
 
   public void testIndentGuideOverBlockInlayWithSoftWraps() throws Exception {
@@ -289,10 +325,20 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResultWithGutterForNewUI();
   }
 
-  public void testCustomFoldRegionInsideSelection() throws Exception {
+  private void runTestCustomFoldRegionInsideSelection() throws Exception {
     initText("<selection>\ntext\n<caret></selection>");
     addCustomLinesFolding(1, 1);
     checkResult();
+  }
+
+  public void testCustomFoldRegionInsideSelection() throws Exception {
+    setNewSelectionEnabled(false);
+    runTestCustomFoldRegionInsideSelection();
+  }
+
+  public void testCustomFoldRegionInsideSelectionWithNewSelection() throws Exception {
+    setNewSelectionEnabled(true);
+    runTestCustomFoldRegionInsideSelection();
   }
 
   private void addCustomLinesFolding(int startLine, int endLine) {

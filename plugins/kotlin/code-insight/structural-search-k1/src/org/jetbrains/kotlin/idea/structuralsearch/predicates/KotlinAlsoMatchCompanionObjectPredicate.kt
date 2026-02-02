@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.structuralsearch.predicates
 import com.intellij.psi.PsiElement
 import com.intellij.structuralsearch.impl.matcher.MatchContext
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class KotlinAlsoMatchCompanionObjectPredicate : MatchPredicate() {
     override fun match(matchedNode: PsiElement, start: Int, end: Int, context: MatchContext): Boolean = true
 }

@@ -30,8 +30,10 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JEditorPane;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Color;
 
 import static java.util.Objects.requireNonNull;
 

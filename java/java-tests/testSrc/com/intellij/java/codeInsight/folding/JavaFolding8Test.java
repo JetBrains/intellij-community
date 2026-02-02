@@ -215,6 +215,7 @@ public class JavaFolding8Test extends JavaFoldingTestCase {
                  * A cool package
                  */
                 package com.example;
+                <caret>
                 """);
     assertEquals(List.of("FoldRegion +(0:27), placeholder='/.../'",
                          "FoldRegion -(28:53), placeholder='/** A cool package */'"),

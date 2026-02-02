@@ -3,7 +3,24 @@ package com.intellij.java.psi
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.DefaultLogger
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiDeconstructionPattern
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiExpressionStatement
+import com.intellij.psi.PsiForeachPatternStatement
+import com.intellij.psi.PsiForeachStatement
+import com.intellij.psi.PsiImplicitClass
+import com.intellij.psi.PsiInstanceOfExpression
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiPatternVariable
+import com.intellij.psi.PsiReturnStatement
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeTestPattern
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.impl.source.PsiImmediateClassType
 import com.intellij.psi.javadoc.PsiDocComment

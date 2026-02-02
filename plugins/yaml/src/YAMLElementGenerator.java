@@ -11,7 +11,12 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.YAMLFile;
+import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLScalar;
+import org.jetbrains.yaml.psi.YAMLSequence;
+import org.jetbrains.yaml.psi.YAMLSequenceItem;
+import org.jetbrains.yaml.psi.YAMLValue;
 import org.jetbrains.yaml.psi.impl.YAMLQuotedTextImpl;
 
 import java.util.Collection;

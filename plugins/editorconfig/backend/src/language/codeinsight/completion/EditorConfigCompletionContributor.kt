@@ -3,7 +3,14 @@ package org.editorconfig.language.codeinsight.completion
 
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionType
-import org.editorconfig.language.codeinsight.completion.providers.*
+import org.editorconfig.language.codeinsight.completion.providers.EditorConfigCompletionProviderBase
+import org.editorconfig.language.codeinsight.completion.providers.EditorConfigComplexKeyFullTemplateCompletionProvider
+import org.editorconfig.language.codeinsight.completion.providers.EditorConfigComplexKeyTemplateCompletionProvider
+import org.editorconfig.language.codeinsight.completion.providers.EditorConfigComplexValueCompletionProvider
+import org.editorconfig.language.codeinsight.completion.providers.EditorConfigRootDeclarationCompletionProvider
+import org.editorconfig.language.codeinsight.completion.providers.EditorConfigRootDeclarationValueCompletionProvider
+import org.editorconfig.language.codeinsight.completion.providers.EditorConfigSectionCompletionProvider
+import org.editorconfig.language.codeinsight.completion.providers.EditorConfigSimpleOptionKeyCompletionProvider
 
 class EditorConfigCompletionContributor : CompletionContributor() {
   init {

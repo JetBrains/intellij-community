@@ -8,7 +8,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.HintedReferenceHost;
+import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.injected.XmlAttributeLiteralEscaper;
@@ -28,7 +36,7 @@ import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class XmlAttributeValueImpl extends XmlElementImpl
   implements XmlAttributeValue, PsiLanguageInjectionHost, RegExpLanguageHost, PsiMetaOwner, PsiMetaData, HintedReferenceHost {

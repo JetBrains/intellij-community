@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 final class SliceForwardHandler extends SliceHandler {

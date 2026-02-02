@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -201,7 +201,9 @@ public final class CheckRegExpForm {
         final Editor editor = mySampleText.getEditor();
         if (editor == null) return;
         final int offset = editor.getCaretModel().getOffset();
-        highlightSampleGroup(offset, regExpFile);
+        ApplicationManager.getApplication().invokeLater(() -> { // we use invokeLater here to wrap this computation into a write-intent lock
+          highlightSampleGroup(offset, regExpFile);
+        });
       }
     });
 

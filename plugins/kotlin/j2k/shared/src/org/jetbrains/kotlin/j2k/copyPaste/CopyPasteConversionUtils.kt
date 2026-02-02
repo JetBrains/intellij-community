@@ -13,8 +13,14 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
-import org.jetbrains.kotlin.j2k.*
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.*
+import org.jetbrains.kotlin.j2k.ConverterContext
+import org.jetbrains.kotlin.j2k.ConverterSettings
+import org.jetbrains.kotlin.j2k.J2KPostProcessingRunner
+import org.jetbrains.kotlin.j2k.J2kConverterExtension
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_OLD
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
+import org.jetbrains.kotlin.j2k.ParseContext
 import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -156,14 +162,7 @@ fun runPostProcessing(
     val postProcessor = J2kConverterExtension.extension(j2kKind).createPostProcessor()
     if (j2kKind != K1_OLD) {
         val runnable = {
-            val processor = J2kConverterExtension.extension(j2kKind).createWithProgressProcessor(
-                ProgressManager.getInstance().progressIndicator!!,
-                emptyList(),
-                postProcessor.phasesCount
-            )
-            J2KPostProcessingRunner.run(postProcessor, file, converterContext, bounds) { phase, description ->
-                processor.updateState(0, phase, description)
-            }
+            J2KPostProcessingRunner.run(postProcessor, file, converterContext, bounds)
         }
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
             runnable,

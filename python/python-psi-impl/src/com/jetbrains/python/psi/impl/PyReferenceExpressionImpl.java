@@ -7,7 +7,13 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
@@ -19,18 +25,63 @@ import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.Property;
+import com.jetbrains.python.psi.PyAugAssignmentStatement;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionCodeFragment;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
-import com.jetbrains.python.psi.resolve.*;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult;
+import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyCollectionType;
+import com.jetbrains.python.psi.types.PyDescriptorTypeUtil;
+import com.jetbrains.python.psi.types.PyImportedModuleType;
+import com.jetbrains.python.psi.types.PyModuleType;
+import com.jetbrains.python.psi.types.PyNarrowedType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.PyTypeUtil;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.PyUnsafeUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType;
@@ -426,13 +477,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (target instanceof PyElement && context.allowDataFlow(anchor)) {
       final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(anchor);
       final String name = ((PyElement)target).getName();
-      if (scopeOwner != null &&
-          name != null &&
-          (!ScopeUtil.getElementsOfAccessType(name, scopeOwner, ReadWriteInstruction.ACCESS.ASSERTTYPE).isEmpty()
-           || target instanceof PyTargetExpression || target instanceof PyNamedParameter)) {
-        final PyType type = getTypeByControlFlow(name, context, anchor, scopeOwner);
-        if (type != null) {
-          return type;
+      if (scopeOwner != null && name != null) {
+        if (!ScopeUtil.getElementsOfAccessType(name, scopeOwner, ReadWriteInstruction.ACCESS.ASSERTTYPE).isEmpty() ||
+            (target instanceof PyTargetExpression || target instanceof PyNamedParameter) && ScopeUtil.getScopeOwner(target) == scopeOwner) {
+          final PyType type = getTypeByControlFlow(name, context, anchor, scopeOwner);
+          if (type != null) {
+            return type;
+          }
         }
       }
     }

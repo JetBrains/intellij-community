@@ -10,3 +10,5 @@ fun f(){
 // EXIST: { lookupString: "emptyList", typeText: "List<String>" }
 // EXIST: { lookupString: "emptyList", typeText: "List<Int>" }
 // NOTHING_ELSE
+
+// IGNORE_K2

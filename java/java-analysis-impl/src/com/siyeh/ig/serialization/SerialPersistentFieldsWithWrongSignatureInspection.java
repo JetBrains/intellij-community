@@ -26,7 +26,9 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.PsiModifier.*;
+import static com.intellij.psi.PsiModifier.FINAL;
+import static com.intellij.psi.PsiModifier.PRIVATE;
+import static com.intellij.psi.PsiModifier.STATIC;
 
 public final class SerialPersistentFieldsWithWrongSignatureInspection extends BaseInspection {
 

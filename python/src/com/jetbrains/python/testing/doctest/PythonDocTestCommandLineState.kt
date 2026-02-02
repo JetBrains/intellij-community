@@ -10,7 +10,11 @@ import com.intellij.execution.target.value.plus
 import com.intellij.execution.target.value.targetPath
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.PythonScriptExecution
-import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType.*
+import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType.TEST_CLASS
+import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType.TEST_FOLDER
+import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType.TEST_FUNCTION
+import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType.TEST_METHOD
+import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType.TEST_SCRIPT
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly

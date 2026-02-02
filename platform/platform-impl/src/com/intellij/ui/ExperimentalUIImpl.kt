@@ -24,6 +24,7 @@ import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
+import com.intellij.util.PlatformUtils
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG: Logger
@@ -126,6 +127,9 @@ internal class ExperimentalUIImpl : ExperimentalUI() {
     if (isNewUI()) {
       val version = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
       PropertiesComponent.getInstance().setValue(NEW_UI_USED_VERSION, version)
+
+      cleanUpClassicUIFromDisabled?.run()
+      cleanUpClassicUIFromDisabled = null
     }
   }
 
@@ -157,6 +161,19 @@ internal class ExperimentalUIImpl : ExperimentalUI() {
  * because it would create another instance of ExperimentalUiImpl
  */
 private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
+
+  override fun appFrameCreated(commandLineArgs: List<String?>) {
+    if (ExperimentalUI.switchedFromClassicToIslandsInSession) {
+      ExperimentalUI.switchedFromClassicToIslandsInSession = false
+
+      val settings = UISettings.getInstance()
+      if (!PlatformUtils.isDataGrip()) {
+        settings.mainMenuDisplayMode = MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR
+      }
+      settings.compactMode = true
+    }
+  }
+
   override fun appStarted() {
     (ExperimentalUI.getInstance() as? ExperimentalUIImpl)?.appStarted()
   }

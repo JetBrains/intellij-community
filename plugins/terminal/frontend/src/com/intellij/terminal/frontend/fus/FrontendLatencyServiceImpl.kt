@@ -2,7 +2,13 @@ package com.intellij.terminal.frontend.fus
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImpl
-import org.jetbrains.plugins.terminal.fus.*
+import org.jetbrains.plugins.terminal.fus.BatchLatencyReporter
+import org.jetbrains.plugins.terminal.fus.FrontendLatencyService
+import org.jetbrains.plugins.terminal.fus.FrontendOutputActivity
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.jetbrains.plugins.terminal.fus.percentile
+import org.jetbrains.plugins.terminal.fus.thirdLargest
+import org.jetbrains.plugins.terminal.fus.totalDuration
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import java.util.concurrent.ArrayBlockingQueue
 import kotlin.time.TimeMark

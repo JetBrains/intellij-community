@@ -11,6 +11,7 @@ import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBund
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.MISC_PROJECT_WITH_WELCOME_NAME
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.miscProjectDefaultPath
 import com.jetbrains.python.projectCreation.createVenvAndSdk
+import com.jetbrains.python.sdk.ModuleOrProject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
@@ -43,7 +44,7 @@ internal class PyCharmWelcomeScreenProjectProvider : WelcomeScreenProjectProvide
     }
 
     if (PlatformProjectOpenProcessor.isNewProject(project)) {
-      createVenvAndSdk(project, confirmInstallation = {
+      createVenvAndSdk(ModuleOrProject.ProjectOnly(project), confirmInstallation = {
         withContext(Dispatchers.EDT) {
           MessageDialogBuilder.yesNo(
             PyCharmCommunityCustomizationBundle.message("misc.no.python.found"),

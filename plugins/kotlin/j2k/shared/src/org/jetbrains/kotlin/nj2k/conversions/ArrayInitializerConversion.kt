@@ -8,8 +8,25 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.toArgumentList
-import org.jetbrains.kotlin.nj2k.tree.*
-import org.jetbrains.kotlin.nj2k.types.*
+import org.jetbrains.kotlin.nj2k.tree.JKArgumentList
+import org.jetbrains.kotlin.nj2k.tree.JKCallExpressionImpl
+import org.jetbrains.kotlin.nj2k.tree.JKExpression
+import org.jetbrains.kotlin.nj2k.tree.JKExpressionStatement
+import org.jetbrains.kotlin.nj2k.tree.JKJavaNewArray
+import org.jetbrains.kotlin.nj2k.tree.JKJavaNewEmptyArray
+import org.jetbrains.kotlin.nj2k.tree.JKLambdaExpression
+import org.jetbrains.kotlin.nj2k.tree.JKNewExpression
+import org.jetbrains.kotlin.nj2k.tree.JKStubExpression
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.JKTypeArgumentList
+import org.jetbrains.kotlin.nj2k.tree.detached
+import org.jetbrains.kotlin.nj2k.tree.withFormattingFrom
+import org.jetbrains.kotlin.nj2k.types.JKClassType
+import org.jetbrains.kotlin.nj2k.types.JKJavaArrayType
+import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType
+import org.jetbrains.kotlin.nj2k.types.JKType
+import org.jetbrains.kotlin.nj2k.types.arrayFqName
+import org.jetbrains.kotlin.nj2k.types.updateNullability
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 
 class ArrayInitializerConversion(context: ConverterContext) : RecursiveConversion(context) {

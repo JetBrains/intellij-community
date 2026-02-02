@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class DvcsStatusWidget<T extends Repository> extends EditorBasedWidget
   implements StatusBarWidget.MultipleTextValuesPresentation, StatusBarWidget.Multiframe {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase
 
 import com.intellij.dvcs.DvcsUtil
@@ -25,7 +25,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.DropDownLink
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.COLUMNS_SHORT
+import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
+import com.intellij.ui.dsl.builder.Placeholder
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.IconUtil
 import com.intellij.util.asSafely
@@ -46,11 +51,21 @@ import git4idea.i18n.GitBundle
 import git4idea.merge.GIT_REF_PROTOTYPE_VALUE
 import git4idea.merge.createRepositoryField
 import git4idea.merge.createSouthPanelWithOptionsDropDown
-import git4idea.merge.dialog.*
+import git4idea.merge.dialog.CmdLabel
+import git4idea.merge.dialog.FlatComboBoxUI
+import git4idea.merge.dialog.GitOptionsPanel
+import git4idea.merge.dialog.GitOptionsPopupBuilder
+import git4idea.merge.dialog.OptionInfo
+import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.ComboBoxWithAutoCompletion
 import java.awt.Insets
-import java.awt.event.*
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import java.util.Collections.synchronizedMap
 import javax.swing.JComboBox
 import javax.swing.SwingUtilities
@@ -169,7 +184,7 @@ internal class GitRebaseDialog(private val project: Project,
     return GitRebaseParams(gitVersion, branch, newBase, upstream, selectedOptions intersect REBASE_FLAGS)
   }
 
-  private fun getSelectedRepo() = rootField.item
+  fun getSelectedRepo(): GitRepository = rootField.item
 
   private fun saveSettings() {
     rebaseSettings.options = selectedOptions intersect REBASE_FLAGS

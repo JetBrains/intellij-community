@@ -3,15 +3,28 @@ package git4idea.test
 
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.Hash
 import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
 import git4idea.GitVcs
+import git4idea.GitWorkingTree
 import git4idea.branch.GitBranchesCollection
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder
 import git4idea.merge.GitResolvedMergeConflictsFilesHolder
-import git4idea.repo.*
+import git4idea.repo.GitBranchTrackInfo
+import git4idea.repo.GitHooksInfo
+import git4idea.repo.GitRemote
+import git4idea.repo.GitRepoInfo
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryFiles
+import git4idea.repo.GitRepositoryTagsHolder
+import git4idea.repo.GitRepositoryTagsHolderImpl
+import git4idea.repo.GitSubmoduleInfo
+import git4idea.repo.GitTagHolder
+import git4idea.repo.GitUntrackedFilesHolder
+import git4idea.repo.GitWorkingTreeHolder
 import git4idea.status.GitStagingAreaHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
@@ -29,7 +42,16 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
     @JvmName("branchTrackInfos_") get
   var remoteBranchesWithHashes:Map<GitRemoteBranch, Hash> = emptyMap()
     @JvmName("remoteBranchesWithHashes_") get
-  var workingTreeHolder: GitWorkingTreeHolder? = null
+  var workingTrees: List<GitWorkingTree> = listOf(computeWorkingTree())
+    @JvmName("workingTrees_") get
+  val workingTreeHolder: GitWorkingTreeHolder = object : GitWorkingTreeHolder {
+    override fun getWorkingTrees(): Collection<GitWorkingTree> {
+      return workingTrees
+    }
+
+    override fun reload() {
+    }
+  }
     @JvmName("workingTreeHolder_") get
 
   override fun getGitDir(): VirtualFile {
@@ -145,12 +167,16 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
 
   override fun getTagsHolder(): GitRepositoryTagsHolder = tagsHolder
 
-  override fun getWorkingTreeHolder(): GitWorkingTreeHolder {
-    return workingTreeHolder ?: GitWorkingTreeHolder(this)
-  }
-
-
+  override fun getWorkingTreeHolder(): GitWorkingTreeHolder = workingTreeHolder
 
   override fun dispose() {
+  }
+
+  fun updateWorkingTrees() {
+    workingTrees = listOf(computeWorkingTree())
+  }
+
+  private fun computeWorkingTree(): GitWorkingTree {
+    return GitWorkingTree(VcsContextFactory.getInstance().createFilePathOn(root), currentBranch, true, true)
   }
 }

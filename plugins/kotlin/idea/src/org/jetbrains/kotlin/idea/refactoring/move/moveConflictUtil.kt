@@ -12,7 +12,14 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.ElementDescriptionUtil
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiImportStatement
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiPackage
+import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
@@ -27,6 +34,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewTypeLocation
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -34,18 +42,47 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.descriptors.DescriptorVisibility
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilityUtils
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.MemberDescriptor
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyAccessorDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyGetterDescriptor
+import org.jetbrains.kotlin.descriptors.SourceElement
+import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.descriptors.findPackage
 import org.jetbrains.kotlin.descriptors.impl.MutablePackageFragmentDescriptor
+import org.jetbrains.kotlin.descriptors.isSealed
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.platforms.forcedTargetPlatform
-import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.firstOrNull
+import org.jetbrains.kotlin.idea.base.projectStructure.forcedModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.and
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.not
-import org.jetbrains.kotlin.idea.caches.resolve.*
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.hasJavaResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.util.javaResolutionFacade
@@ -64,14 +101,34 @@ import org.jetbrains.kotlin.load.java.JavaDescriptorVisibilities
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
+import org.jetbrains.kotlin.psi.KtTypeParameter
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.psiUtil.contains
+import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isAncestor
+import org.jetbrains.kotlin.psi.psiUtil.isPublic
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.descriptorUtil.*
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
+import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
+import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
+import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
+import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.lazy.descriptors.findPackageFragmentForFile
@@ -83,8 +140,9 @@ import org.jetbrains.kotlin.util.isJavaDescriptor
 import org.jetbrains.kotlin.util.supertypesWithAny
 import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import java.util.*
+import java.util.Locale
 
+@K1Deprecation
 fun analyzeConflictsInFile(
     file: KtFile,
     usages: Collection<UsageInfo>,
@@ -114,6 +172,7 @@ fun analyzeConflictsInFile(
     return conflicts
 }
 
+@K1Deprecation
 class KotlinMoveConflictCheckerInfo(
     val project: Project,
     val elementsToMove: Collection<KtElement>,
@@ -126,6 +185,7 @@ class KotlinMoveConflictCheckerInfo(
     fun isToBeMoved(element: PsiElement): Boolean = allElementsToMove.any { it.isAncestor(element, false) }
 }
 
+@K1Deprecation
 fun checkAllConflicts(
     moveCheckerInfo: KotlinMoveConflictCheckerInfo,
     internalUsages: MutableSet<UsageInfo>,
@@ -289,6 +349,7 @@ private fun analyzeModuleConflictsInUsages(
     return conflicts
 }
 
+@K1Deprecation
 fun checkModuleConflictsInUsages(
     moveCheckerInfo: KotlinMoveConflictCheckerInfo,
     externalUsages: MutableSet<UsageInfo>
@@ -315,6 +376,7 @@ private fun getScopeWithPlatformAwareDependencies(module: Module): SearchScope {
         .fold(baseScope as SearchScope) { scope, jdkEntry -> scope and !JdkScope(module.project, jdkEntry) }
 }
 
+@K1Deprecation
 @OptIn(ExperimentalMultiplatform::class)
 fun checkModuleConflictsInDeclarations(
     moveCheckerInfo: KotlinMoveConflictCheckerInfo,
@@ -394,6 +456,7 @@ fun checkModuleConflictsInDeclarations(
     return conflicts
 }
 
+@K1Deprecation
 fun checkVisibilityInUsages(
     moveCheckerInfo: KotlinMoveConflictCheckerInfo,
     usages: Collection<UsageInfo>
@@ -434,6 +497,7 @@ fun checkVisibilityInUsages(
     return conflicts
 }
 
+@K1Deprecation
 fun checkVisibilityInDeclarations(moveCheckerInfo: KotlinMoveConflictCheckerInfo): MultiMap<PsiElement, String> {
     val conflicts = MultiMap<PsiElement, String>()
     val targetContainer = moveCheckerInfo.moveTarget.getContainerDescriptor(moveCheckerInfo.context) ?: return MultiMap.empty()
@@ -516,6 +580,7 @@ fun checkVisibilityInDeclarations(moveCheckerInfo: KotlinMoveConflictCheckerInfo
     return conflicts
 }
 
+@K1Deprecation
 fun checkInternalMemberUsages(moveCheckerInfo: KotlinMoveConflictCheckerInfo): MultiMap<PsiElement, String> {
     val conflicts = MultiMap<PsiElement, String>()
     val targetModule = moveCheckerInfo.moveTarget.getTargetModule(moveCheckerInfo.project) ?: return MultiMap.empty()
@@ -548,6 +613,7 @@ fun checkInternalMemberUsages(moveCheckerInfo: KotlinMoveConflictCheckerInfo): M
     return conflicts
 }
 
+@K1Deprecation
 fun checkSealedClassMove(moveCheckerInfo: KotlinMoveConflictCheckerInfo): MultiMap<PsiElement, String> {
     val languageVersionSettings = moveCheckerInfo.project.languageVersionSettings
     return if (languageVersionSettings.supportsFeature(LanguageFeature.AllowSealedInheritorsInDifferentFilesOfSamePackage)) {
@@ -612,6 +678,7 @@ private fun checkSealedClassMoveWithinPackageAndModule(moveChecker: KotlinMoveCo
     return conflicts
 }
 
+@K1Deprecation
 fun checkNameClashes(moveCheckerInfo: KotlinMoveConflictCheckerInfo): MultiMap<PsiElement, String> {
     fun <T> equivalent(a: T, b: T): Boolean = when (a) {
         is DeclarationDescriptor -> when (a) {

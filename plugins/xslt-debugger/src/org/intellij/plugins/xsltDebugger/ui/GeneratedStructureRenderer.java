@@ -26,7 +26,7 @@ import org.intellij.plugins.xsltDebugger.XsltDebuggerBundle;
 import org.intellij.plugins.xsltDebugger.rt.engine.OutputEventQueue;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 class GeneratedStructureRenderer extends ColoredTreeCellRenderer {

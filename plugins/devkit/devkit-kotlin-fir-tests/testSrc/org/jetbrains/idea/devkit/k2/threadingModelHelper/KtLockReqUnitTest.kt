@@ -12,7 +12,7 @@ import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisConfig
 import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisResult
 import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqAnalyzerParallelBFS
-import java.util.*
+import java.util.EnumSet
 
 @TestDataPath($$"$CONTENT_ROOT/testData/threadingModelHelper/")
 class KtLockReqUnitTest : BasePlatformTestCase() {

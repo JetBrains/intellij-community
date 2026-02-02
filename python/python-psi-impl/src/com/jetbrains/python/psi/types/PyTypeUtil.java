@@ -25,9 +25,19 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyPsiFacade;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collector;
@@ -160,6 +170,9 @@ public final class PyTypeUtil {
     if (type instanceof PyUnsafeUnionType weakUnionType) {
       return StreamEx.of(weakUnionType.getMembers());
     }
+    if (type instanceof PyIntersectionType intersectionType) {
+      return StreamEx.of(intersectionType.getMembers());
+    }
     return StreamEx.of(type);
   }
 
@@ -219,6 +232,11 @@ public final class PyTypeUtil {
   @ApiStatus.Experimental
   public static @NotNull Collector<@Nullable PyType, ?, @Nullable PyType> toUnsafeUnion() {
     return Collectors.collectingAndThen(Collectors.toList(), PyUnsafeUnionType::unsafeUnion);
+  }
+
+  @ApiStatus.Experimental
+  public static @NotNull Collector<@Nullable PyType, ?, @Nullable PyType> toIntersection() {
+    return Collectors.collectingAndThen(Collectors.toList(), PyIntersectionType::intersection);
   }
 
   public static @NotNull Collector<@Nullable PyType, ?, @Nullable PyType> toUnion(@Nullable PyType streamSource) {

@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -123,6 +124,11 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
   @RequiresWriteLock
   public abstract void setProjectSdkName(@NotNull String name, @NotNull String sdkTypeName);
 
+  /**
+   * This method shares a contract with {@link ModuleRootManager#getInstance} in terms of disposable module action
+   */
+  @NotNull
+  @RequiresReadLock(generateAssertion = false)
   @ApiStatus.Internal
   public abstract ModuleRootManager getModuleRootManager(@NotNull Module module);
 }

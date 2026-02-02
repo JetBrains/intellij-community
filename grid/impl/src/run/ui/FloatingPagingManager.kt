@@ -24,7 +24,9 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Popup.toolbarPanelColor
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Dimension
+import java.awt.Graphics
 import javax.swing.JLayeredPane
 
 class FloatingPagingManager {

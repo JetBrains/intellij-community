@@ -3,12 +3,14 @@
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.usages
 
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtInitializerList
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 
+@K1Deprecation
 class KotlinEnumEntryWithoutSuperCallUsage(enumEntry: KtEnumEntry) : KotlinUsageInfo<KtEnumEntry>(enumEntry) {
     override fun processUsage(changeInfo: KotlinChangeInfo, element: KtEnumEntry, allUsages: Array<out UsageInfo>): Boolean {
         if (changeInfo.newParameters.isNotEmpty()) {

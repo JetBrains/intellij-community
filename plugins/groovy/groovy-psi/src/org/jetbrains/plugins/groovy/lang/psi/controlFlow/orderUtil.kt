@@ -5,7 +5,8 @@ package org.jetbrains.plugins.groovy.lang.psi.controlFlow
 
 import com.intellij.util.ArrayUtilRt
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl
-import java.util.*
+import java.util.Deque
+import java.util.LinkedList
 import kotlin.math.abs
 
 private val fakeRoot = InstructionImpl(null)

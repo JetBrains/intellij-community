@@ -14,12 +14,40 @@ import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Companion.TypedDictFieldQualifier
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyAssignmentStatement
+import com.jetbrains.python.psi.PyBoolLiteralExpression
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyDelStatement
+import com.jetbrains.python.psi.PyDictLiteralExpression
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyImportStatementBase
+import com.jetbrains.python.psi.PyKeyValueExpression
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyParenthesizedExpression
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PySequenceExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PySubscriptionExpression
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyTypeParameter
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.PySubscriptionExpressionImpl
-import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.psi.types.PyClassLikeType
+import com.jetbrains.python.psi.types.PyCollectionType
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeParameterMapping
+import com.jetbrains.python.psi.types.PyTypeUtil
+import com.jetbrains.python.psi.types.PyTypeVarType
+import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL_PARAMETER
+import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyTypedDictInspection : PyInspection() {
 

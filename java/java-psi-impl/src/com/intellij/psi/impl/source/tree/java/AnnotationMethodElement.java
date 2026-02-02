@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.impl.source.tree.ChildRole;
 import org.jetbrains.annotations.NotNull;
 
 public class AnnotationMethodElement extends MethodElement {

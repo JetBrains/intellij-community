@@ -11,11 +11,19 @@ import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogObjectsFactory
+import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.index.IndexedDetails
 import com.intellij.vcs.log.data.index.VcsLogIndex
+import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
-import it.unimi.dsi.fastutil.ints.*
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.ints.IntConsumer
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.annotations.ApiStatus
 
 class MiniDetailsGetter internal constructor(

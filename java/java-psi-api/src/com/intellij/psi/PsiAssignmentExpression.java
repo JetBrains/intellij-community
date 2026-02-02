@@ -15,9 +15,9 @@
  */
 package com.intellij.psi;
 
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.psi.tree.IElementType;
 
 /**
  * Represents a simple assignment ({@code a=b}) or a compound assignment ({@code a+=1}) expression.

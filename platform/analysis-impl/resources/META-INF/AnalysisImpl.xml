@@ -31,6 +31,11 @@
       <with attribute="descriptor" implements="com.intellij.codeInsight.completion.serialization.PrefixMatcherDescriptor"/>
       <with attribute="converter" implements="com.intellij.codeInsight.completion.serialization.PrefixMatcherDescriptorConverter"/>
     </extensionPoint>
+    <extensionPoint name="completion.frontendFriendlyPrefixCondition" beanClass="com.intellij.codeInsight.serialization.ExtensionPointSerializerBean" dynamic="true">
+      <with attribute="target" implements="com.intellij.patterns.ElementPattern"/>
+      <with attribute="descriptor" implements="com.intellij.codeInsight.completion.serialization.PrefixConditionDescriptor"/>
+      <with attribute="converter" implements="com.intellij.codeInsight.completion.serialization.PrefixConditionDescriptorConverter"/>
+    </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.profile.codeInspection.InspectionProjectProfileManager" open="true"

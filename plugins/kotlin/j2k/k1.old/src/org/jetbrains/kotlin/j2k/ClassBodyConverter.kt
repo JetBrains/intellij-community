@@ -2,14 +2,31 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.psi.*
-import org.jetbrains.kotlin.j2k.ast.*
+import com.intellij.psi.PsiAnnotationMethod
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassInitializer
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.j2k.ast.Class
+import org.jetbrains.kotlin.j2k.ast.ClassBody
+import org.jetbrains.kotlin.j2k.ast.LBrace
+import org.jetbrains.kotlin.j2k.ast.Member
+import org.jetbrains.kotlin.j2k.ast.PrimaryConstructor
+import org.jetbrains.kotlin.j2k.ast.PrimaryConstructorSignature
+import org.jetbrains.kotlin.j2k.ast.RBrace
+import org.jetbrains.kotlin.j2k.ast.SecondaryConstructor
+import org.jetbrains.kotlin.j2k.ast.assignPrototype
 import org.jetbrains.kotlin.j2k.usageProcessing.AccessorToPropertyProcessing
 import org.jetbrains.kotlin.j2k.usageProcessing.MemberIntoObjectProcessing
 import org.jetbrains.kotlin.j2k.usageProcessing.ToObjectWithOnlyMethodsProcessing
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.SpecialNames
 
+@K1Deprecation
 enum class ClassKind {
     FINAL_CLASS,
     OPEN_CLASS,
@@ -25,6 +42,7 @@ enum class ClassKind {
     fun isEnum() = this == FINAL_ENUM || this == OPEN_ENUM
 }
 
+@K1Deprecation
 class ClassBodyConverter(private val psiClass: PsiClass,
                          private val classKind: ClassKind,
                          private val converter: Converter

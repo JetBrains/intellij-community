@@ -952,9 +952,11 @@
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.VarargsSelectioner"/>
 
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.KeywordCompletionItemProvider"/>
+    <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.MemberNameItemProvider"/>
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.InstanceOfClassItemProvider"/>
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.LabelReferenceItemProvider"/>
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.AnnotationAttributeItemProvider"/>
+    <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.ExpectedTypeMemberItemProvider"/>
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.GenerateMemberItemProvider"/>
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.ReferenceItemProvider"/>
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.NonImportedClassProvider"/>
@@ -1290,23 +1292,6 @@
 
     <inspection.basicVisitor class="com.intellij.psi.JavaElementVisitor"/>
 
-    <globalInspection groupPath="Java" language="JAVA" shortName="UnusedReturnValue" bundle="messages.JavaBundle"
-                      key="inspection.unused.return.value.display.name"
-                      groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
-                      level="WARNING"
-                      implementationClass="com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue"/>
-    <globalInspection groupPath="Java" language="UAST" shortName="SameParameterValue" bundle="messages.JavaBundle"
-                      key="inspection.same.parameter.display.name"
-                      groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
-                      level="WARNING"
-                      implementationClass="com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection"/>
-    <globalInspection groupPath="Java" language="JAVA" shortName="unused" groupBundle="messages.InspectionsBundle"
-                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
-                      implementationClass="com.intellij.codeInspection.deadCode.UnusedDeclarationInspection"
-                      presentation="com.intellij.codeInspection.deadCode.UnusedDeclarationPresentation" key="inspection.unused.display.name"
-                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
-                      bundle="messages.JavaBundle"/>
-
     <externalAnnotationsArtifactsResolver implementation="com.intellij.jarRepository.ExternalAnnotationsRepositoryResolver"/>
     <errorQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaErrorQuickFixProvider"/>
 
@@ -1343,7 +1328,6 @@
                        key="notification.group.preview.features"/>
     <notificationGroup id="Remove redundant exports/opens" displayType="BALLOON" bundle="messages.JavaBundle"
                        key="notification.group.redundant.exports"/>
-    <notificationGroup id="Setup JDK" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.setup.jdk"/>
     <notificationGroup id="External annotations" displayType="BALLOON" bundle="messages.JavaBundle"
                        key="notification.group.setup.external.annotations"/>
     <notificationGroup id="Test integration" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.testintegration"/>

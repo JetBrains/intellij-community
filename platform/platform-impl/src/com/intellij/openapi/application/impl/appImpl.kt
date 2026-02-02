@@ -13,6 +13,7 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.util.SlowOperations
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.application
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -183,19 +184,6 @@ object InternalThreading {
   fun decrementBackgroundWriteActionCount() {
     backgroundWriteActionCounter.decrementAndGet()
   }
-
-  object RunInBackgroundWriteActionMarker
-    : CoroutineContext.Element,
-      CoroutineContext.Key<RunInBackgroundWriteActionMarker> {
-    override val key: CoroutineContext.Key<*> get() = this
-  }
-
-  @Internal
-  @JvmStatic
-  fun isBackgroundWriteActionAllowed(): Boolean =
-    currentThreadContext()[RunInBackgroundWriteActionMarker] != null
-
-
 
   @RequiresBackgroundThread(generateAssertion = false)
   @RequiresWriteLock(generateAssertion = false)

@@ -1,10 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener
@@ -20,6 +19,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
 import com.intellij.platform.workspace.jps.entities.SdkId
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -34,8 +34,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.ConcurrentHashMap
 
 private val LOG = logger<ProjectRootManagerImpl>()
-
-private val EP_NAME = ProjectExtensionPointName<ProjectExtension>("com.intellij.projectExtension")
 
 @State(name = "ProjectRootManager")
 @ApiStatus.Internal
@@ -313,14 +311,6 @@ open class ProjectRootManagerImpl(
     // There is no mergeRootsChangesDuring because currently it has a bug: "after" event will never fire if mergeRootsChangesDuring
     // is invoked while another rootsChange event (caused by the WSM change) is in progress (see RootsChangedTest).
     actionToRunWhenProjectJdkChanges.run()
-    fireJdkChanged()
-  }
-
-  private fun fireJdkChanged() {
-    val sdk = getProjectSdk()
-    for (extension in EP_NAME.getExtensions(project)) {
-      extension.projectSdkChanged(sdk)
-    }
   }
 
   @get:ApiStatus.Internal
@@ -416,6 +406,13 @@ open class ProjectRootManagerImpl(
   }
 
   override fun getModuleRootManager(module: Module): ModuleRootManager {
+    // If module gets disposed here, we have an exception, hence race.
+    // As for now, too many usages without read lock.
+    // As soon as all code migrates to RA, we make it mandatory
+    val existed = moduleRootManagerInstances.containsKey(module)
+    if (!existed && module.isDisposed) {
+      throw AlreadyDisposedException("module ${module.name} is already disposed. Please read ${ProjectRootManager::getModuleRootManager} doc and follow the contract")
+    }
     return moduleRootManagerInstances.computeIfAbsent(module) { ModuleRootComponentBridge(module) }
   }
 

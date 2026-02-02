@@ -7,7 +7,13 @@ import com.intellij.codeInsight.navigation.CtrlMouseHandler
 import com.intellij.lang.java.JavaDocumentationProvider
 import com.intellij.openapi.application.ReadAction
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiDocCommentOwner
+import com.intellij.psi.PsiExpressionList
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiRecordComponent
+import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase

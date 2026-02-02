@@ -47,7 +47,8 @@
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
-    <orderEntry type="module" module-name="intellij.repository.search" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
+    <orderEntry type="module" module-name="intellij.repository.search.common" />
+    <orderEntry type="module" module-name="intellij.gradle.completion" />
   </component>
 </module>

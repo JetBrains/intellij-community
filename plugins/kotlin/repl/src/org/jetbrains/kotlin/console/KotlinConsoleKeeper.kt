@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.console
 
+import com.intellij.execution.JavaParametersBuilder
 import com.intellij.execution.configurations.CompositeParameterTargetedValue
 import com.intellij.execution.configurations.JavaCommandLineState
 import com.intellij.execution.target.TargetEnvironmentRequest
@@ -13,11 +14,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import com.intellij.execution.JavaParametersBuilder
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.projectStructure.version
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
@@ -26,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.notExists
 
+@K1Deprecation
 class KotlinConsoleKeeper(val project: Project) {
     private val consoleMap: MutableMap<VirtualFile, KotlinConsoleRunner> = ConcurrentHashMap()
 

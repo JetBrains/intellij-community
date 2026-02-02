@@ -2,9 +2,15 @@
 
 package org.jetbrains.kotlin.j2k.usageProcessing
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceExpression
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.load.java.JvmAbi
 
+@K1Deprecation
 class ToObjectWithOnlyMethodsProcessing(private val psiClass: PsiClass) : UsageProcessing {
     override val targetElement: PsiElement get() = psiClass
 

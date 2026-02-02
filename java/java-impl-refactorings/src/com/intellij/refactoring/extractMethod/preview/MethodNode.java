@@ -4,14 +4,18 @@ package com.intellij.refactoring.extractMethod.preview;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.ChunkExtractor;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
 

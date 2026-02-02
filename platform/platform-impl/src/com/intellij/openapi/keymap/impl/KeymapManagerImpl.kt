@@ -66,7 +66,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
       }
 
       override fun reloaded(schemeManager: SchemeManager<Keymap>, schemes: Collection<Keymap>) {
-        if (schemeManager.activeScheme == null) {
+        if (schemeManager.currentSchemeName == null) {
           // listeners expect that event will be fired in EDT
           AppUIUtil.invokeOnEdt {
             schemeManager.setCurrentSchemeName(DefaultKeymap.getInstance().defaultKeymapName, true)
@@ -181,10 +181,10 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
 
   override fun getState(): Element {
     val result = Element("state")
-    schemeManager.activeScheme?.let {
-      if (it.name != DefaultKeymap.getInstance().defaultKeymapName) {
+    schemeManager.currentSchemeName?.let {
+      if (it != DefaultKeymap.getInstance().defaultKeymapName) {
         val e = Element(ACTIVE_KEYMAP)
-        e.setAttribute(NAME_ATTRIBUTE, it.name)
+        e.setAttribute(NAME_ATTRIBUTE, it)
         result.addContent(e)
       }
     }

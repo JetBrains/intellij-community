@@ -44,8 +44,18 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.jps.cmdline.ClasspathBootstrap
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
-import kotlin.io.path.*
+import java.util.Collections
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyToRecursively
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.inputStream
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.notExists
+import kotlin.io.path.writeText
 
 private val LOG = Logger.getInstance("org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesKt")
 

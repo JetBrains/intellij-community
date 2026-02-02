@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.cli.extensionsStorage
 import org.jetbrains.kotlin.cli.plugins.processCompilerPluginsOptions
 import org.jetbrains.kotlin.compiler.plugin.CommandLineProcessor
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
@@ -36,7 +37,7 @@ import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
+import org.jetbrains.kotlin.extensions.ExtensionPointDescriptor
 import org.jetbrains.kotlin.fir.extensions.FirAssignExpressionAltererExtension
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
@@ -45,6 +46,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleKind
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsCache.Companion.substitutePluginJar
 import org.jetbrains.kotlin.idea.util.getOriginalOrDelegateFileOrSelf
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.makeScriptCompilerArguments
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -90,7 +92,7 @@ class KtCompilerPluginsCache private constructor(
     @OptIn(KaExperimentalApi::class)
     fun <T : Any> getRegisteredExtensions(
         module: KaModule,
-        extensionType: ProjectExtensionDescriptor<T>
+        extensionType: ExtensionPointDescriptor<T>
     ): List<T> {
         if (!module.areCompilerPluginsSupported()) return emptyList()
         val classLoader = pluginsClassLoader
@@ -116,7 +118,7 @@ class KtCompilerPluginsCache private constructor(
         classLoader: ClassLoader,
         registrarForModule: ConcurrentMap<K, Optional<CompilerPluginRegistrar.ExtensionStorage>>,
         cacheKey: K,
-        extensionType: ProjectExtensionDescriptor<T>
+        extensionType: ExtensionPointDescriptor<T>
     ): List<T> {
         val extensionStorage = registrarForModule.computeIfAbsent(cacheKey) {
             Optional.ofNullable(computeExtensionStorage(classLoader, this))
@@ -164,7 +166,10 @@ class KtCompilerPluginsCache private constructor(
         ProgressManager.checkCanceled()
 
         val compilerConfiguration =
-            CompilerConfiguration().apply { // Temporary work-around for KTIJ-24320. Calls to 'setupCommonArguments()' and 'setupJvmSpecificArguments()'
+            CompilerConfiguration().apply {
+                @OptIn(ExperimentalCompilerApi::class)
+                extensionsStorage = CompilerPluginRegistrar.ExtensionStorage()
+                // Temporary work-around for KTIJ-24320. Calls to 'setupCommonArguments()' and 'setupJvmSpecificArguments()'
                 // (or even a platform-agnostic alternative) should be added.
                 if (compilerArguments is K2JVMCompilerArguments && module is KaSourceModule) {
                     val compilerExtension = CompilerModuleExtension.getInstance(module.openapiModule)

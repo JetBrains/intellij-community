@@ -17,7 +17,7 @@ import com.intellij.icons.AllIcons;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDescriptor {
   private final ThreadReferenceProxyImpl myThread;

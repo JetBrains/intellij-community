@@ -2,7 +2,11 @@
 package com.intellij.lang.properties.refactoring.rename;
 
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.editor.*;
+import com.intellij.lang.properties.editor.PropertyStructureViewElement;
+import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
+import com.intellij.lang.properties.editor.ResourceBundleEditor;
+import com.intellij.lang.properties.editor.ResourceBundleFileStructureViewElement;
+import com.intellij.lang.properties.editor.ResourceBundleUtil;
 import com.intellij.lang.properties.structureView.PropertiesPrefixGroup;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;

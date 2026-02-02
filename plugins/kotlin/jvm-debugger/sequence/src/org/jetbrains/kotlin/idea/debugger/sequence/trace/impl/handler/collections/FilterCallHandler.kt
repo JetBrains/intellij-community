@@ -2,7 +2,12 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.collections
 
-import com.intellij.debugger.streams.core.trace.dsl.*
+import com.intellij.debugger.streams.core.trace.dsl.CodeBlock
+import com.intellij.debugger.streams.core.trace.dsl.Dsl
+import com.intellij.debugger.streams.core.trace.dsl.Expression
+import com.intellij.debugger.streams.core.trace.dsl.MapVariable
+import com.intellij.debugger.streams.core.trace.dsl.Variable
+import com.intellij.debugger.streams.core.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.core.trace.impl.handler.type.ClassTypeImpl
 import com.intellij.debugger.streams.core.wrapper.CallArgument
@@ -10,9 +15,11 @@ import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.core.wrapper.StreamCall
 import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
 import com.intellij.debugger.streams.core.wrapper.impl.CallArgumentImpl
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.typeBefore
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.withArgs
 
+@K1Deprecation
 class FilterCallHandler : BothSemanticsHandler {
     private companion object {
         const val VALUES_ARRAY_NAME = "objectsInPredicate"

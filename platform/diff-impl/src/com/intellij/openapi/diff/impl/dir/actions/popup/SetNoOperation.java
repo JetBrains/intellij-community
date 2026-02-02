@@ -10,7 +10,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTable;
 
 /**
  * @author lene

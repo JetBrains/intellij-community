@@ -3,7 +3,9 @@
 
 package com.intellij.diagnostic
 
-import com.intellij.diagnostic.StackframeShrinkVerdict.*
+import com.intellij.diagnostic.StackframeShrinkVerdict.KEEP
+import com.intellij.diagnostic.StackframeShrinkVerdict.OMIT
+import com.intellij.diagnostic.StackframeShrinkVerdict.SHRINK
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 

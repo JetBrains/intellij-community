@@ -2,7 +2,17 @@
 package org.jetbrains.idea.devkit.threadingModelHelper.java
 
 import com.intellij.openapi.progress.blockingContextToIndicator
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiMethodReferenceExpression
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
@@ -13,7 +23,7 @@ import org.jetbrains.idea.devkit.threadingModelHelper.BaseLockReqRules
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqRules
 import org.jetbrains.idea.devkit.threadingModelHelper.MethodSignature
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 

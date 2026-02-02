@@ -16,7 +16,8 @@ import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.util.Objects;
 
 @Service(Service.Level.PROJECT)

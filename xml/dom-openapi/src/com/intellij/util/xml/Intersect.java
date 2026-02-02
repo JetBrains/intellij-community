@@ -16,10 +16,10 @@
 
 package com.intellij.util.xml;
 
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.annotation.ElementType;
 
 /**
  * Annotates methods with return values that should be merged with <b>AND</b> semantics by {@link ModelMerger}

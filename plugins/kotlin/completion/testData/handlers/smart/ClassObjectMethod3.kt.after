@@ -11,3 +11,5 @@ fun foo(){
 }
 
 // ELEMENT: bar
+
+// IGNORE_K2

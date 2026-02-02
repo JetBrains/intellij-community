@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.fragmented;
 
-import com.intellij.diff.util.*;
+import com.intellij.diff.util.DiffDrawUtil;
+import com.intellij.diff.util.DiffGutterOperation;
+import com.intellij.diff.util.DiffGutterRenderer;
+import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.Side;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
@@ -14,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
 

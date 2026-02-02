@@ -2,7 +2,6 @@
 package com.intellij.platform.eel.channels
 
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.CheckReturnValue
 import java.nio.ByteBuffer
 
 // Channel might send the whole buffer by itself without external loop

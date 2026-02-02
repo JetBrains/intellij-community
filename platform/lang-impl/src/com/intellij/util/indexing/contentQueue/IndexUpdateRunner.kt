@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(IntellijInternalApi::class)
 
 package com.intellij.util.indexing.contentQueue
@@ -32,9 +32,13 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.SystemProperties.getBooleanProperty
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexImpl
+import com.intellij.util.indexing.FileIndexingResult
 import com.intellij.util.indexing.IndexingFlag.unlockFile
+import com.intellij.util.indexing.IndexingStamp
 import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles
+import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.indexing.contentQueue.dev.IndexWriter
 import com.intellij.util.indexing.contentQueue.dev.TOTAL_WRITERS_NUMBER
 import com.intellij.util.indexing.dependencies.FileIndexingStamp
@@ -44,8 +48,16 @@ import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.events.FileIndexingRequest
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.FileNotFoundException
@@ -514,7 +526,7 @@ class IndexUpdateRunner(
 
     fun getPresentableLocationBeingIndexed(project: Project, file: VirtualFile): @NlsSafe String {
       var actualFile = file
-      if (actualFile.fileSystem is ArchiveFileSystem) {
+      if (actualFile.isValid && actualFile.fileSystem is ArchiveFileSystem) {
         actualFile = VfsUtil.getLocalFile(actualFile)
       }
       var path = getProjectRelativeOrAbsolutePath(project, actualFile)

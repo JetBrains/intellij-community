@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.testing.PyAbstractTestFactory
 import com.jetbrains.python.testing.PyUnitTestFactory
@@ -14,10 +15,14 @@ import com.jetbrains.python.testing.PythonTestConfigurationType
 class PyAutoDetectionConfigurationFactory(private val type: PythonTestConfigurationType) : PyAbstractTestFactory<PyAutoDetectTestConfiguration>(
   type) {
   internal companion object {
+    private val PACKAGE_SPEC = PackageAvailabilitySpec("unittest", "unittest.TestCase")
+
     val factoriesExcludingThis: Collection<PyAbstractTestFactory<*>>
       get() =
         PythonTestConfigurationType.getInstance().typedFactories.toTypedArray().filterNot { it is PyAutoDetectionConfigurationFactory }
   }
+
+  override val packageSpec: PackageAvailabilitySpec = PACKAGE_SPEC
 
 
   @Deprecated("Use getFactory(sdk, project)", ReplaceWith("getFactory(sdk, project)"), DeprecationLevel.ERROR)

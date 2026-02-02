@@ -20,6 +20,8 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.K
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.OLD_KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyZipUnpacker
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader.isKotlinDistInitialized
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader.lazyDownloadAndUnpackKotlincDist
 import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactDownloader.DownloadContext
 import org.jetbrains.kotlin.idea.util.application.isHeadlessEnvironment
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode

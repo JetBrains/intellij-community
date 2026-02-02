@@ -3,11 +3,15 @@
 package org.jetbrains.kotlin.idea.base.psi.unifier
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.siblings
-import java.util.*
+import java.util.Collections
 
 sealed interface KotlinPsiRange {
     object Empty : KotlinPsiRange {

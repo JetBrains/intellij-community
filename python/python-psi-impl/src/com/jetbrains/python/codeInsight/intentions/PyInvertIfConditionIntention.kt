@@ -10,7 +10,12 @@ import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.TokenType
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.parents
@@ -24,7 +29,21 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.getInvertedConditionExpression
 import com.jetbrains.python.codeInsight.isValidConditionExpression
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyBreakStatement
+import com.jetbrains.python.psi.PyConditionalExpression
+import com.jetbrains.python.psi.PyContinueStatement
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyForPart
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyIfStatement
+import com.jetbrains.python.psi.PyRaiseStatement
+import com.jetbrains.python.psi.PyReturnStatement
+import com.jetbrains.python.psi.PyStatementList
+import com.jetbrains.python.psi.PyStatementListContainer
+import com.jetbrains.python.psi.PyStatementPart
+import com.jetbrains.python.psi.PyWhilePart
 import com.jetbrains.python.psi.impl.PyPsiUtils
 
 /**

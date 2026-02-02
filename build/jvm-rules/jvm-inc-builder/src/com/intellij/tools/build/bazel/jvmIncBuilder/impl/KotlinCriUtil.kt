@@ -2,16 +2,17 @@
 
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl
 
+import org.jetbrains.annotations.TestOnly
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import org.jetbrains.jps.dependency.BackDependencyIndex
 import org.jetbrains.jps.dependency.DependencyGraph
 import org.jetbrains.jps.dependency.ReferenceID
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID
-import org.jetbrains.jps.dependency.java.SubclassesIndex
+import org.jetbrains.jps.dependency.kotlin.KotlinSubclassesIndex
 import org.jetbrains.jps.dependency.kotlin.LookupsIndex
 
-const val VERSION = 3
+const val VERSION = 4
 
 internal fun prepareSerializedData(graph: DependencyGraph): ByteArray {
   val serializedDataResult = ByteArrayOutputStream().use { byteStream ->
@@ -19,10 +20,12 @@ internal fun prepareSerializedData(graph: DependencyGraph): ByteArray {
       dataOut.writeVersion()
 
       // process subtypes
-      val subclassesIndex: BackDependencyIndex? = graph.getIndex(SubclassesIndex.NAME)
-      val subclassesCount = subclassesIndex?.keys?.count() ?: 0
+      val subclassesIndex: BackDependencyIndex? = graph.getIndex(KotlinSubclassesIndex.NAME)
+      val subclassesFilteredKeys = subclassesIndex?.keys
+        ?.filter { key -> subclassesIndex.getDependencies(key).iterator().hasNext() }
+      val subclassesCount = subclassesFilteredKeys?.count() ?: 0
       dataOut.writeInt(subclassesCount)
-      subclassesIndex?.keys
+      subclassesFilteredKeys
         ?.sortedBy { it.toFqName() }
         ?.forEach { key ->
           val dependencies = subclassesIndex.getDependencies(key).map { it.toFqName() }.sorted()
@@ -63,23 +66,52 @@ internal fun prepareSerializedData(graph: DependencyGraph): ByteArray {
 }
 
 /**
- * Converts the current `ReferenceID` to its fully qualified name (FqName) representation.
+ * Converts a JVM reference ID to a dot-separated fully qualified name.
  *
- * Example transformation:
- * Input:  `com/intellij/AppKt$foo$3$1`
- * Output: `com.intellij.AppKt.foo`
- *
- * @return The fully qualified name as a `String`.
+ * Examples:
+ * - `com/example/Foo` → `com.example.Foo`
+ * - `com/example/Foo$Bar` → `com.example.Foo.Bar`
+ * - `com/example/Foo$1` → `com.example.Foo`
+ * - `com/example/Foo$$Lambda$3` → `com.example.Foo.$Lambda`
  */
 private fun ReferenceID.toFqName(): String {
-  return (this as? JvmNodeReferenceID)?.nodeName
-           ?.replace('/', '.')
-           ?.replace(DOLLAR_DIGITS_SUFFIX_REGEX, "")
-           ?.replace('$', '.')
-         ?: this.toString()
+  val jvmName: String = (this as? JvmNodeReferenceID)?.nodeName ?: return toString()
+
+  return jvmName.normalizeJvmName()
 }
 
-private val DOLLAR_DIGITS_SUFFIX_REGEX = Regex("(?:\\$\\d+)+$")
+private fun String.normalizeJvmName(): String =
+  this.replace('/', '.')
+    .replace("$$", DOUBLE_DOLLAR_PLACEHOLDER)
+    .removeAnonymousSuffix()
+    .replace('$', '.')
+    .replace(DOUBLE_DOLLAR_PLACEHOLDER, ".$")
+
+@TestOnly
+fun String.normalizeJvmNameForTests(): String = normalizeJvmName()
+
+private const val DOUBLE_DOLLAR_PLACEHOLDER = "\u0000DOUBLE_DOLLAR\u0000"
+private fun String.removeAnonymousSuffix(): String {
+  var end = length
+
+  while (end > 0) {
+    var i = end - 1
+    // Skip digits
+    while (i >= 0 && this[i].isDigit()) {
+      i--
+    }
+
+    // Check for $ and at least one digit found
+    if (i >= 0 && i < end - 1 && this[i] == '$') {
+      end = i
+    }
+    else {
+      break
+    }
+  }
+
+  return if (end == length) this else substring(0, end)
+}
 
 private fun String.addFilePathIfNeeded(fileIdToPathEntryAccumulator: MutableMap<String, Int>): Int {
   return fileIdToPathEntryAccumulator.computeIfAbsent(this) { fileIdToPathEntryAccumulator.size + 1 }

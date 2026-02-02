@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.idea.KotlinFacetTestCase
 import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.junit.jupiter.api.Assertions
-import kotlin.collections.contains
 
 class IdePluginUtilsTest : KotlinFacetTestCase() {
     val facet

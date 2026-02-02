@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.DnDTarget;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -373,11 +374,11 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
 
       if (toDrawTabs == TabsDrawMode.PAINT_ALL) {
         if (each.isSelected()) {
-          tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, borderThickness, each.getTabColor(),
+          tabPainter.paintSelectedTab(getTabsPosition(), g2d, r, borderThickness, each.getTabColor(),
                                       ui.window.isActive() && ui.isActive(), each.isHovered());
         }
         else {
-          tabPainter.paintTab(JBTabsPosition.top, g2d, r, borderThickness, each.getTabColor(),
+          tabPainter.paintTab(getTabsPosition(), g2d, r, borderThickness, each.getTabColor(),
                               ui.window.isActive(), each.isHovered());
         }
       }
@@ -504,5 +505,18 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
 
   public static int defaultTabLayoutStart() {
     return ExperimentalUI.isNewUI() ? 0 : TAB_LAYOUT_START;
+  }
+
+  public JBTabsPosition getTabsPosition() {
+    return JBTabsPosition.top;
+  }
+
+  public int getTabHOffsetUnscaled() {
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    if (customization == null) {
+      return 0;
+    }
+
+    return customization.getTabHOffsetUnscaled(UISettings.getInstance().getCompactMode(), getTabsPosition());
   }
 }

@@ -24,8 +24,11 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.ReorderableListController;
 import com.intellij.ui.ScrollingUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListModel;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

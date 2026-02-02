@@ -107,7 +107,7 @@
     <orderEntry type="module" module-name="intellij.python.community.services.internal.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.junit5Tests.framework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.services.shared" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.venv" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.venv" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.services.systemPython" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.interpreters" scope="TEST" />
   </component>

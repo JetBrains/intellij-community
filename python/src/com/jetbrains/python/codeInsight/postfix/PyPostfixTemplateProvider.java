@@ -16,7 +16,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.*;
+import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.readExternalConditions;
+import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.readExternalLiveTemplate;
+import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.readExternalTopmostAttribute;
 
 public final class PyPostfixTemplateProvider implements PostfixTemplateProvider {
 

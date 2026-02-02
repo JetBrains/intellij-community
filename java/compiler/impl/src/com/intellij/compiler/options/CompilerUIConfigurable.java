@@ -6,7 +6,11 @@ import com.intellij.compiler.MalformedPatternException;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.options.ConfigurationException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 import static com.intellij.compiler.options.CompilerOptionsFilter.Setting;
 

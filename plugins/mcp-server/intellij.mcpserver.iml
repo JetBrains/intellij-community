@@ -29,6 +29,24 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="module-library">
+      <library name="toml4j" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.moandjiezana.toml:toml4j:0.7.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/moandjiezana/toml/toml4j/0.7.2/toml4j-0.7.2.jar">
+              <sha256sum>f5475e63e7e89e5db62223489aec7a56bd303543772077a17c2cb54c19ca3a20</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/moandjiezana/toml/toml4j/0.7.2/toml4j-0.7.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/moandjiezana/toml/toml4j/0.7.2/toml4j-0.7.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
@@ -129,6 +147,7 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.io" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />

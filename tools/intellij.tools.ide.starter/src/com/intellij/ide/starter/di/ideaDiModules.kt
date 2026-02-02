@@ -4,8 +4,8 @@ import com.intellij.ide.starter.buildTool.BuildTool
 import com.intellij.ide.starter.buildTool.GradleBuildTool
 import com.intellij.ide.starter.buildTool.JpsBuildTool
 import com.intellij.ide.starter.buildTool.MavenBuildTool
-import com.intellij.ide.starter.frameworks.Framework
 import com.intellij.ide.starter.frameworks.AndroidFramework
+import com.intellij.ide.starter.frameworks.Framework
 import com.intellij.ide.starter.frameworks.SpringFramework
 import com.intellij.ide.starter.ide.IDETestContext
 import org.kodein.di.DI

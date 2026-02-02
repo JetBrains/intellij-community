@@ -98,7 +98,7 @@
 
     <applicationService serviceInterface="com.intellij.openapi.vfs.pointers.VirtualFilePointerManager"
                         serviceImplementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl"/>
-    <vfs.asyncListener implementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl$MyAsyncFileListener"/>
+    <vfs.asyncListenerBackgroundable implementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl$MyAsyncFileListener"/>
     <persistentFsConnectionListener
       implementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl$MyPersistentFsConnectionListener"/>
 
@@ -1159,7 +1159,6 @@
                  description="The data from the recorder with selected id will be sent"/>
 
     <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl"/>
-    <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.wsl.WslFileWatcher"/>
     <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.eel.EelFileWatcher"/>
 
     <virtualFileSystem key="dummy" implementationClass="com.intellij.openapi.vfs.ex.dummy.DummyFileSystem"/>
@@ -1572,6 +1571,9 @@
                         serviceImplementation="com.intellij.ui.AutoScrollToSourceTaskManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService" headlessImplementation="" open="true"/>
+    <applicationService
+      serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateCheckerPluginsFacade"
+      serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerPluginsFacadeImpl"/>
     <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerProjectActivity" order="last"/>
 
     <registryKey key="ide.enable.notification.trace.data.sharing" defaultValue="true" description="Enables notification about sharing trace data"/>
@@ -2051,6 +2053,16 @@
 
     <applicationService serviceInterface="com.intellij.configurationStore.defaults.DefaultSettingsService" open="true"
                         serviceImplementation="com.intellij.configurationStore.defaults.DefaultSettingsServiceImpl" />
+
+    <!-- Remove all this stuff when the notification is no longer needed -->
+    <typedHandler implementation="com.intellij.ide.ui.WaylandUserActivityTracker" />
+    <editorFactoryMouseListener implementation="com.intellij.ide.ui.WaylandUserActivityTracker" />
+    <editorFactoryMouseMotionListener implementation="com.intellij.ide.ui.WaylandUserActivityTracker" />
+    <registryKey key="wayland.notification.delay.after.first.activity" defaultValue="20"
+                 description="Show the notification about the native Wayland toolkit after this many minutes have passed since the first user activity" />
+    <registryKey key="wayland.notification.delay.after.previous.activity" defaultValue="1"
+                 description="Show the notification about the native Wayland toolkit after this many minutes have passed since the previous user activity" />
+    <notificationGroup id="Wayland" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.wayland" isLogByDefault="true"/>
   </extensions>
 
   <applicationListeners>

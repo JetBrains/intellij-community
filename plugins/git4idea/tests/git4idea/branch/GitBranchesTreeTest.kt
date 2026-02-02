@@ -14,7 +14,15 @@ import git4idea.GitStandardRemoteBranch
 import git4idea.GitTag
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.dashboard.*
+import git4idea.ui.branch.dashboard.BranchInfo
+import git4idea.ui.branch.dashboard.BranchNodeDescriptor
+import git4idea.ui.branch.dashboard.BranchTreeNode
+import git4idea.ui.branch.dashboard.BranchesTreeModel
+import git4idea.ui.branch.dashboard.BranchesTreeModelBase
+import git4idea.ui.branch.dashboard.FilteringBranchesTreeBase
+import git4idea.ui.branch.dashboard.NodeDescriptorsModel
+import git4idea.ui.branch.dashboard.RefsCollection
+import git4idea.ui.branch.dashboard.TagInfo
 import junit.framework.TestCase.assertEquals
 
 abstract class GitBranchesTreeTest: LightPlatformTestCase() {

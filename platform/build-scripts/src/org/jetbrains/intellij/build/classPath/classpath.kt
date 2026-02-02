@@ -9,6 +9,7 @@ import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import org.jdom.Element
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
@@ -149,6 +150,7 @@ internal fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
 internal data class PluginBuildDescriptor(
   @JvmField val dir: Path,
   @JvmField val os: OsFamily?,
+  @JvmField val arch: JvmArchitecture?,
   @JvmField val layout: PluginLayout,
   @JvmField val distribution: Collection<DistributionFileEntry>,
 )

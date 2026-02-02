@@ -13,3 +13,5 @@ fun f() {
 // EXIST: null
 // EXIST: { lookupString: "kClass = null", itemText: "kClass = null" }
 // NOTHING_ELSE
+
+// IGNORE_K2

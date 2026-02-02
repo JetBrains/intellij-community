@@ -14,7 +14,11 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLTokenTypes;
-import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.YAMLAlias;
+import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLMapping;
+import org.jetbrains.yaml.psi.YAMLSequence;
+import org.jetbrains.yaml.psi.YAMLValue;
 
 import java.util.Collection;
 import java.util.Collections;

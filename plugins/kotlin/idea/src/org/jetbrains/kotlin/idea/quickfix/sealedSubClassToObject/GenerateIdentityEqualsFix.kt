@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix.sealedSubClassToObject
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory.CallableBuilder
 import org.jetbrains.kotlin.psi.KtPsiFactory.CallableBuilder.Target.FUNCTION
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
+@K1Deprecation
 class GenerateIdentityEqualsFix : LocalQuickFix {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val klass = descriptor.psiElement.getParentOfType<KtClass>(false) ?: return

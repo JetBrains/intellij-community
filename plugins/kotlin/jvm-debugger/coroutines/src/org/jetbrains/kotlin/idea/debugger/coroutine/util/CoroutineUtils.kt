@@ -6,6 +6,7 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.impl.instanceOf
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
@@ -13,9 +14,20 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.xdebugger.XSourcePosition
-import com.sun.jdi.*
-import org.jetbrains.kotlin.idea.debugger.base.util.*
+import com.sun.jdi.ClassObjectReference
+import com.sun.jdi.Location
+import com.sun.jdi.Method
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.Type
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
+import org.jetbrains.kotlin.idea.debugger.base.util.SUSPEND_LAMBDA_CLASSES
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariableByName
+import org.jetbrains.kotlin.idea.debugger.base.util.wrapIllegalArgumentException
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
@@ -73,17 +85,17 @@ internal fun extractContinuation(frameProxy: StackFrameProxyImpl): ObjectReferen
 fun Location.safeCoroutineExitPointLineNumber() =
   (wrapIllegalArgumentException { DebuggerUtilsEx.getLineNumber(this, false) } ?: -2) == -1
 
-fun Type.isBaseContinuationImpl() =
-    isSubtype("kotlin.coroutines.jvm.internal.BaseContinuationImpl")
-
 fun Type.isCoroutineScope() =
-    isSubtype("kotlinx.coroutines.CoroutineScope")
+    instanceOf("kotlinx.coroutines.CoroutineScope")
 
-fun Type.isSubTypeOrSame(className: String) =
-    name() == className || isSubtype(className)
+@Deprecated(
+    "Use com.intellij.debugger.engine.DebuggerUtils.instanceOf instead",
+    ReplaceWith("com.intellij.debugger.engine.DebuggerUtils.instanceOf(this, className)")
+)
+fun Type.isSubTypeOrSame(className: String): Boolean = instanceOf(className)
 
 fun ReferenceType.isSuspendLambda() =
-    SUSPEND_LAMBDA_CLASSES.any { isSubtype(it) }
+    SUSPEND_LAMBDA_CLASSES.any { instanceOf(it) }
 
 fun Location.isInvokeSuspend() =
     safeMethod()?.isInvokeSuspend() ?: false

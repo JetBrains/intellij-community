@@ -15,9 +15,13 @@ import com.jetbrains.python.conda.saveLocalPythonCondaPath
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
-import com.jetbrains.python.sdk.flavors.conda.*
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.EmptyNamedEnv
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import com.jetbrains.python.sdk.flavors.conda.addCondaPythonToTargetCommandLine
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule

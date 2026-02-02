@@ -9,7 +9,7 @@ import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
 import org.jetbrains.jps.dependency.impl.PathSource;
 import org.jetbrains.jps.dependency.java.*;
 import org.jetbrains.org.objectweb.asm.Opcodes;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.jetbrains.jps.util.Iterators.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 public class DependencyGraphTest {
 

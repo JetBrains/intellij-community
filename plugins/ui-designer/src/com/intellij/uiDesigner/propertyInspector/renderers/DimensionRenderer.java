@@ -3,7 +3,7 @@ package com.intellij.uiDesigner.propertyInspector.renderers;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Dimension;
 
 public final class DimensionRenderer extends LabelPropertyRenderer<Dimension> {
   @Override

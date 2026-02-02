@@ -6,6 +6,7 @@ import com.intellij.codeInspection.SuppressIntentionAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
@@ -22,9 +23,14 @@ import org.jetbrains.kotlin.idea.quickfix.QuickFixes
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
-import java.lang.reflect.*
-import java.util.*
+import java.lang.reflect.Field
+import java.lang.reflect.GenericArrayType
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
+import java.lang.reflect.WildcardType
+import java.util.Collections
 
+@K1Deprecation
 class Fe10QuickFixProviderImpl : Fe10QuickFixProvider {
     private fun createQuickFixes(
         intentionActionsFactories: Collection<KotlinIntentionActionsFactory>,

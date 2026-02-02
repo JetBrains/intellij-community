@@ -21,10 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.LicensingFacade;
-import com.intellij.ui.RelativeFont;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -424,10 +421,9 @@ public final class ListPluginComponent extends JPanel {
       myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
     }
     else {
-      String version = myPlugin.isBundled() ? IdeBundle.message("plugin.status.bundled") : myPlugin.getVersion();
-
+      String version = myPlugin.getVersion();
       if (!StringUtil.isEmptyOrSpaces(version)) {
-        myVersion = createRatingLabel(myMetricsPanel, version, null);
+        myVersion = createRatingLabel(myMetricsPanel, version, myPlugin.isBundledUpdate() ? AllIcons.Plugins.Updated : null);
       }
     }
 
@@ -589,7 +585,7 @@ public final class ListPluginComponent extends JPanel {
     }
     else {
       if (myVersion != null) {
-        myVersion.setText(NewUiUtil.getUpdateVersionText(plugin.getVersion(), myUpdateDescriptor.getVersion()));
+        myVersion.setText(plugin.getVersion());
       }
       if (plugin.getProductCode() == null && myUpdateDescriptor.getProductCode() != null &&
           !plugin.isBundled() && !LicensePanel.isEA2Product(myUpdateDescriptor.getProductCode()) &&
@@ -630,9 +626,12 @@ public final class ListPluginComponent extends JPanel {
   }
 
   void updateColors(@NotNull EventHandler.SelectionType type) {
-    updateColors(GRAY_COLOR, type == EventHandler.SelectionType.NONE
-                             ? PluginManagerConfigurable.MAIN_BG_COLOR
-                             : (type == EventHandler.SelectionType.HOVER ? HOVER_COLOR : SELECTION_COLOR));
+    Color background = PluginManagerConfigurable.MAIN_BG_COLOR;
+    Color foreground = (type == EventHandler.SelectionType.NONE)
+                       ? background
+                       : (type == EventHandler.SelectionType.HOVER ? HOVER_COLOR : SELECTION_COLOR);
+
+    updateColors(GRAY_COLOR, JBColor.lazy(() -> ColorUtil.alphaBlending(foreground, background)));
   }
 
   private void updateColors(@NotNull Color grayedFg, @NotNull Color background) {

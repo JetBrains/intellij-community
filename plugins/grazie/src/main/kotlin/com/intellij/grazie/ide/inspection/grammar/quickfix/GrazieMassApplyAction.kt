@@ -4,7 +4,6 @@ package com.intellij.grazie.ide.inspection.grammar.quickfix
 
 import com.intellij.codeInsight.intention.CustomizableIntentionAction
 import com.intellij.codeInspection.IntentionAndQuickFixAction
-import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.grazie.GrazieBundle
@@ -19,7 +18,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiFile
-import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFixFactory
 import javax.swing.Icon
 
 class GrazieMassApplyAction : IntentionAndQuickFixAction(), Iconable, CustomizableIntentionAction {
@@ -45,8 +43,4 @@ class GrazieMassApplyAction : IntentionAndQuickFixAction(), Iconable, Customizab
   }
 
   override fun getIcon(flags: Int): Icon = GrazieIcons.Stroke.Grazie
-}
-
-class GrazieMassApplyActionProvider : SpellCheckerQuickFixFactory() {
-  override fun createAdditionalFixes(): List<LocalQuickFix> = listOf(GrazieMassApplyAction())
 }

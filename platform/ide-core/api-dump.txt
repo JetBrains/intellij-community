@@ -36,6 +36,8 @@ f:com.intellij.ide.RecentProjectsManager$Companion
 - f:getLAST_PROJECTS_TOPIC():com.intellij.util.messages.Topic
 com.intellij.ide.RecentProjectsManager$LastProjectsListener
 - a:lastProjectsReopened(com.intellij.openapi.project.Project):V
+a:com.intellij.ide.caches.CachesInvalidator
+- isVisible():Z
 com.intellij.ide.dnd.DnDDropHandler
 - a:drop(com.intellij.ide.dnd.DnDEvent):V
 com.intellij.ide.dnd.DnDDropHandler$WithResult
@@ -149,6 +151,7 @@ com.intellij.notification.Notifications
 - register(java.lang.String,com.intellij.notification.NotificationDisplayType,Z,Z):V
 - register(java.lang.String,com.intellij.notification.NotificationDisplayType,Z,Z,java.lang.String):V
 a:com.intellij.openapi.actionSystem.ActionPlaces
+- sf:CHANGES_TREE_POPUP:java.lang.String
 - sf:FIND_IN_FILES_POPUP:java.lang.String
 - sf:XDEBUGGER_TREE_POPUP:java.lang.String
 com.intellij.openapi.actionSystem.ActionWithDelegate

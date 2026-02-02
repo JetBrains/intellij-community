@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.completion.modcommand;
 
+import com.intellij.codeInsight.JavaTailTypes;
+import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.MemberLookupHelper;
 import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
@@ -19,7 +21,20 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JspPsiUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -132,6 +147,7 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
     PsiFile file = updater.getPsiFile();
     Project project = updater.getProject();
 
+    PsiDocumentManager.getInstance(project).commitDocument(document);
     if (variable instanceof PsiField field) {
       if (shouldImport()) {
         RangeMarker toDelete = JavaCompletionUtil.insertTemporary(updater.getCaretOffset(), document, " ");
@@ -150,7 +166,7 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
         }
       }
       else if (VariableLookupItem.shouldQualify(field, file.findReferenceAt(updater.getCaretOffset() - 1))) {
-        qualifyFieldReference(actionContext.offset(), updater, field);
+        qualifyFieldReference(actionContext.selection().getStartOffset(), updater, field);
       }
     }
     PsiDocumentManager.getInstance(project).commitDocument(document);
@@ -174,6 +190,10 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
           ModCommandExecutor.getInstance().executeForFileCopy(fix.perform(actionContext), file);
         }
       }
+    }
+    if (JavaCompletionContributor.IN_SWITCH_LABEL.accepts(ref)) {
+      PsiSwitchBlock block = Objects.requireNonNull(PsiTreeUtil.getParentOfType(ref, PsiSwitchBlock.class));
+      JavaTailTypes.forSwitchLabel(block).processTail(updater, updater.getCaretOffset());
     }
 
     //final char completionChar = insertionContext.insertionCharacter();
@@ -207,7 +227,6 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
 
   private void qualifyFieldReference(int startOffset, ModPsiUpdater updater, PsiField field) {
     Document document = updater.getDocument();
-    PsiDocumentManager.getInstance(updater.getProject()).commitDocument(document);
     PsiFile file = updater.getPsiFile();
     final PsiReference reference = file.findReferenceAt(startOffset);
     if (reference instanceof PsiJavaCodeReferenceElement codeRef && codeRef.isQualified()) {

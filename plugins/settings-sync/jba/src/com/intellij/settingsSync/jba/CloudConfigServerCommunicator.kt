@@ -4,7 +4,11 @@ import com.intellij.ide.RegionUrlMapper
 import com.intellij.ide.plugins.PluginManagerCore.isRunningFromSources
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.settingsSync.core.*
+import com.intellij.settingsSync.core.AbstractServerCommunicator
+import com.intellij.settingsSync.core.SettingsSyncBundle
+import com.intellij.settingsSync.core.SettingsSyncEventListener
+import com.intellij.settingsSync.core.SettingsSyncEvents
+import com.intellij.settingsSync.core.SettingsSyncStatusTracker
 import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.jba.auth.JBAAuthService
 import com.intellij.util.net.PlatformHttpClient

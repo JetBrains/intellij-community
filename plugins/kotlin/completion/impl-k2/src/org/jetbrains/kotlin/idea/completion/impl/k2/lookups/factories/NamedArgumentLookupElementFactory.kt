@@ -21,17 +21,20 @@ internal object NamedArgumentLookupElementFactory {
 
     context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
-    fun createLookup(name: Name, types: List<KaType>): LookupElement {
-        val typeText = types.singleOrNull()?.renderVerbose() ?: "..."
+    fun createLookup(name: Name, types: List<IndexedValue<KaType>>): LookupElement {
+        val typeText = types.singleOrNull()?.value?.renderVerbose() ?: "..."
         val nameString = name.asString()
-        return LookupElementBuilder.create(NamedArgumentLookupObject(name), "$nameString =")
+
+        // Here we use the lowest possible argument index of all the possibilities of all signatures
+        val lowestArgumentIndex = types.minOfOrNull { it.index } ?: 0
+        return LookupElementBuilder.create(NamedArgumentLookupObject(name, lowestArgumentIndex), "$nameString =")
             .withTailText(" $typeText")
             .withIcon(KotlinIcons.PARAMETER)
             .withInsertHandler(NamedArgumentInsertHandler(name))
     }
 
-    fun createLookup(name: Name, value: String): LookupElement {
-        return LookupElementBuilder.create(NamedArgumentLookupObject(name), "${name.asString()} = $value")
+    fun createLookup(name: Name, value: String, argumentIndex: Int): LookupElement {
+        return LookupElementBuilder.create(NamedArgumentLookupObject(name, argumentIndex), "${name.asString()} = $value")
             .withIcon(KotlinIcons.PARAMETER)
             .withInsertHandler(NamedArgumentWithValueInsertionHandler(name, value))
     }
@@ -53,4 +56,5 @@ internal data class NamedArgumentWithValueInsertionHandler(
 @Serializable
 internal data class NamedArgumentLookupObject(
     @Serializable(with = KotlinNameSerializer::class) override val shortName: Name,
+    val argumentIndex: Int,
 ) : KotlinLookupObject

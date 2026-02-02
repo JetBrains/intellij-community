@@ -16,10 +16,18 @@ import com.intellij.util.KeyedLazyInstanceEP
 import com.intellij.util.containers.MultiMap
 import training.lang.LangManager
 import training.lang.LangSupport
-import training.learn.course.*
+import training.learn.course.IftModule
+import training.learn.course.LearningCourse
+import training.learn.course.LearningCourseBase
+import training.learn.course.LearningCoursesMergeStrategy
+import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
 import training.statistic.LessonStartingWay
-import training.util.*
+import training.util.LEARNING_PANEL_OPENED_IN
+import training.util.WeakReferenceDelegator
+import training.util.courseCanBeUsed
+import training.util.getAllLearnToolWindows
+import training.util.switchOnExperimentalLessons
 
 @Service(Service.Level.APP)
 class CourseManager internal constructor() : Disposable {

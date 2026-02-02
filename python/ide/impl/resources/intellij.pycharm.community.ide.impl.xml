@@ -25,7 +25,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <python.common.toolToIconMapper implementation="com.intellij.pycharm.community.ide.impl.configuration.PyReqToolIdToIconMapper"/>
     <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
                     serviceImplementation="com.intellij.pycharm.community.ide.impl.PyProjectScopeBuilder"
                     overrides="true"/>
@@ -140,32 +139,9 @@
 
     <ignoredFileProvider implementation="com.intellij.pycharm.community.ide.impl.configuration.PyTemporarilyIgnoredFileProvider"/>
 
-    <statistics.counterUsagesCollector
-      implementationClass="com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector"/>
-
     <codeInsight.codeVision.settings.defaults implementation="com.intellij.pycharm.community.ide.impl.PyCharmCodeVisionSettingsDefaults"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewEnvCollector"/>
     <startPagePromoter
       implementation="com.intellij.pycharm.community.ide.impl.promo.WelcomeToUnifiedWelcomeScreenBanner"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="Pythonid">
-    <projectSdkConfigurationExtension
-      implementation="com.intellij.pycharm.community.ide.impl.configuration.PyRequirementsTxtOrSetupPySdkConfiguration"
-      id="requirementsTxtOrSetupPy" order="before uv"/>
-    <projectSdkConfigurationExtension
-      implementation="com.intellij.pycharm.community.ide.impl.conda.PyEnvironmentYmlSdkConfiguration"
-      id="environmentYml"/>
-    <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyPipfileSdkConfiguration"
-                                      id="pipfile" order="before requirementsTxtOrSetupPy"/>
-    <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyPoetrySdkConfiguration"
-                                      id="poetry"/>"/>
-    <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyHatchSdkConfiguration"
-                                      id="hatch" order="after poetry"/>
-    <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyUvSdkConfiguration"
-                                      id="uv" order="last"/>
-    <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyVenvSdkConfiguration"
-                                      id="venv" order="before requirementsTxtOrSetupPy"/>
   </extensions>
 
   <applicationListeners>

@@ -13,7 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 

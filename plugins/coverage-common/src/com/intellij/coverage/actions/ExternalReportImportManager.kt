@@ -1,8 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.actions
 
-import com.intellij.coverage.*
+import com.intellij.coverage.CoverageDataManager
+import com.intellij.coverage.CoverageEngine
 import com.intellij.coverage.CoverageLogger.logSuiteImport
+import com.intellij.coverage.CoverageRunner
+import com.intellij.coverage.CoverageSuite
+import com.intellij.coverage.CoverageSuitesBundle
+import com.intellij.coverage.ExternalCoverageWatchManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooser

@@ -5,8 +5,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest

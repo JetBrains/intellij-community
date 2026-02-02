@@ -61,6 +61,7 @@ public final class JUnit5BazelRunner {
   private static final Launcher launcher = LauncherFactory.create();
 
   private static final BucketsPostDiscoveryFilter bucketingPostDiscoveryFilter = new BucketsPostDiscoveryFilter();
+  private static final PostDiscoveryFilter performancePostDiscoveryFilter = new JUnit5TeamCityRunnerForTestAllSuite.PerformancePostDiscoveryFilter();
 
   private static LauncherDiscoveryRequest getDiscoveryRequest() throws Throwable {
     List<? extends DiscoverySelector> bazelTestSelectors = getTestsSelectors(ourClassLoader);
@@ -323,6 +324,7 @@ public final class JUnit5BazelRunner {
   private static Filter<?>[] getTestFilters(List<? extends DiscoverySelector> bazelTestSelectors) {
     List<Filter<?>> filters = new ArrayList<>();
     filters.add(bucketingPostDiscoveryFilter);
+    filters.add(performancePostDiscoveryFilter);
 
     // value of --test_filter, if specified
     // https://bazel.build/reference/test-encyclopedia

@@ -17,12 +17,29 @@ import com.intellij.modcompletion.ModCompletionItemPresentation;
 import com.intellij.modcompletion.PsiUpdateCompletionItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ModNavigator;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -90,6 +107,11 @@ final class MethodCallCompletionItem extends PsiUpdateCompletionItem<PsiMethod> 
       }
     }
     return null;
+  }
+
+  public @Nullable PsiType getType() {
+    PsiType type = MemberLookupHelper.patchGetClass(myMethod, myInferenceSubstitutor.substitute(myMethod.getReturnType()));
+    return getSubstitutor().substitute(type);
   }
 
   MethodCallCompletionItem withForcedQualifier(String forcedQualifier) {
@@ -220,6 +242,8 @@ final class MethodCallCompletionItem extends PsiUpdateCompletionItem<PsiMethod> 
   }
 
   private static void insertParentheses(ModNavigator updater, ThreeState mayHaveParameters) {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    if (settings != null && !settings.isInsertParenthesesAutomatically()) return;
     boolean needRightParenth = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
     CommonCodeStyleSettings styleSettings = CodeStyle.getLanguageSettings(updater.getPsiFile(), JavaLanguage.INSTANCE);
     boolean spaceBetweenParentheses = mayHaveParameters == ThreeState.YES && styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES ||

@@ -44,6 +44,6 @@ internal class K2ImportDirectivePackageMembersCompletionContributor : K2SimpleCo
                             scopeKind = scopeWithKind.kind,
                         )
                     }
-            }.forEach { context.addElement(it) }
+            }.forEach { addElement(it) }
     }
 }

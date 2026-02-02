@@ -2,7 +2,18 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.community.execService.*
+import com.intellij.python.community.execService.Args
+import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.BinOnTarget
+import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.community.execService.ExecGetProcessOptions
+import com.intellij.python.community.execService.ExecOptions
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.ExecuteGetProcessError
+import com.intellij.python.community.execService.ProcessOutputTransformer
+import com.intellij.python.community.execService.PyProcessListener
+import com.intellij.python.community.execService.execGetStdout
+import com.intellij.python.community.execService.execute
 import com.intellij.python.community.execService.python.HelperName
 import com.intellij.python.community.execService.python.addHelper
 import com.jetbrains.python.PyBundle

@@ -85,21 +85,30 @@ fun PolySymbol.withMatchedKind(kind: PolySymbolKind): PolySymbol =
   else this
 
 fun PolySymbol.withNavigationTarget(target: PsiElement): PolySymbolDelegate<PolySymbol> =
-  object : PolySymbolDelegate<PolySymbol> {
-    override val delegate: PolySymbol
-      get() = this@withNavigationTarget
+  PolySymbolWithNavigationTarget(this, target)
 
-    override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
-      listOf(SymbolNavigationService.getInstance().psiElementNavigationTarget(target))
+private data class PolySymbolWithNavigationTarget(
+  override val delegate: PolySymbol,
+  private val target: PsiElement,
+) : PolySymbolDelegate<PolySymbol> {
 
-    override fun createPointer(): Pointer<out PolySymbolDelegate<PolySymbol>> {
-      val symbolPtr = delegate.createPointer()
-      val targetPtr = target.createSmartPointer()
-      return Pointer {
-        targetPtr.dereference()?.let { symbolPtr.dereference()?.withNavigationTarget(it) }
-      }
+  override fun isEquivalentTo(symbol: Symbol): Boolean =
+    symbol === this
+    || delegate.isEquivalentTo(symbol)
+    || (symbol is PolySymbolWithNavigationTarget
+        && delegate.isEquivalentTo(symbol.delegate))
+
+  override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
+    listOf(SymbolNavigationService.getInstance().psiElementNavigationTarget(target))
+
+  override fun createPointer(): Pointer<out PolySymbolDelegate<PolySymbol>> {
+    val symbolPtr = delegate.createPointer()
+    val targetPtr = target.createSmartPointer()
+    return Pointer {
+      targetPtr.dereference()?.let { symbolPtr.dereference()?.withNavigationTarget(it) }
     }
   }
+}
 
 fun PolySymbol.unwrapMatchedSymbols(): Sequence<PolySymbol> =
   if (this is PolySymbolMatch)

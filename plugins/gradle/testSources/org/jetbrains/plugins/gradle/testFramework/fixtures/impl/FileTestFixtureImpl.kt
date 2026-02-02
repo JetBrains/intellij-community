@@ -3,8 +3,8 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installBulkVirtualFileListener
 import com.intellij.openapi.externalSystem.util.runReadAction
@@ -12,10 +12,20 @@ import com.intellij.openapi.externalSystem.util.runWriteActionAndGet
 import com.intellij.openapi.observable.operation.core.onFailureCatching
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.io.*
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.util.io.findOrCreateDirectory
+import com.intellij.openapi.util.io.findOrCreateFile
+import com.intellij.openapi.util.io.getResolvedPath
+import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findDocument
+import com.intellij.openapi.vfs.findOrCreateDirectory
+import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.openapi.vfs.readText
+import com.intellij.openapi.vfs.refreshAndFindVirtualFile
+import com.intellij.openapi.vfs.writeText
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.utils.editor.reloadFromDisk
 import com.intellij.testFramework.utils.vfs.deleteChildrenRecursively
@@ -32,7 +42,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.refreshAndAwait
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.PathMatcher
-import java.util.*
+import java.util.Optional
 
 internal class FileTestFixtureImpl(
   private val relativePath: String,

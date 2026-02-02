@@ -5,7 +5,9 @@ package org.jetbrains.kotlin.idea.searcheverywhere
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType
-import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType.*
+import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType.DoNothing
+import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType.Replace
+import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType.Skip
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade

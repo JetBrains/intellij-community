@@ -9,7 +9,11 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.SortedListModel;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -20,8 +24,10 @@ import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 
 import static com.intellij.util.ObjectUtils.notNull;

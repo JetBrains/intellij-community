@@ -9,7 +9,7 @@ import com.intellij.util.containers.intcaches.SLRUIntObjectCache
 import com.intellij.util.io.IOCancellationCallbackHolder
 import com.intellij.util.io.InlineKeyDescriptor
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.*
+import java.util.ServiceLoader
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReferenceArray

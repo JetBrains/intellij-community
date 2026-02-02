@@ -28,9 +28,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 import javax.swing.border.CompoundBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.util.Collection;
 import java.util.List;
 

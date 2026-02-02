@@ -1,6 +1,15 @@
 package org.intellij.plugins.markdown.ui.actions.styling
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
@@ -19,7 +28,10 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import javax.accessibility.AccessibleContext
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
 
 internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
   private val group = SetHeaderLevelGroup()

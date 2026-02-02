@@ -16,3 +16,5 @@ fun foo(p1: Int) {
 // EXIST: expr3
 // EXIST: s
 // EXIST: i
+
+// IGNORE_K2

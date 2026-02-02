@@ -11,6 +11,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
+import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -41,7 +42,7 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
       subcommand("with-cursor-single") {
         argument {
           suggestions {
-            listOf(ShellCompletionSuggestion("suggestion().after") { insertValue("suggestion({cursor}).after") })
+            listOf(ShellCompletionSuggestion("suggestionAfter") { insertValue("suggestion{cursor}After") })
           }
         }
       }
@@ -50,9 +51,9 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
           suggestions {
             listOf(
               ShellCompletionSuggestion("suggestion"),
-              ShellCompletionSuggestion("suggestion().after") {
+              ShellCompletionSuggestion("suggestionAfter") {
                 priority(100)
-                insertValue("suggestion({cursor}).after")
+                insertValue("suggestion{cursor}After")
               }
             )
           }
@@ -133,19 +134,21 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test Enter key event is sent after inserting directory name without file separator (Windows)`() = doTest { fixture ->
-    fixture.type("test_cmd stop sha")
-    fixture.callCompletionPopup()
-    val lookup = fixture.getActiveLookup() ?: error("No active lookup")
-    assertThat(lookup.items.map { it.lookupString })
-      .hasSameElementsAs(listOf("shared\\", "shared-ui\\"))
+  fun `test Enter key event is sent after inserting directory name without file separator (Windows)`() {
+    doTest(isPowerShell = true) { fixture ->
+      fixture.type("test_cmd stop sha")
+      fixture.callCompletionPopup()
+      val lookup = fixture.getActiveLookup() ?: error("No active lookup")
+      assertThat(lookup.items.map { it.lookupString })
+        .hasSameElementsAs(listOf("shared\\", "shared-ui\\"))
 
-    fixture.type("red")
-    fixture.insertSelectedItem()
+      fixture.type("red")
+      fixture.insertSelectedItem()
 
-    val expectedText = "test_cmd stop shared\\\n"
-    val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong())
-    fixture.assertOutputModelState(expectedText, expectedCursorOffset)
+      val expectedText = "test_cmd stop shared\\\n"
+      val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong())
+      fixture.assertOutputModelState(expectedText, expectedCursorOffset)
+    }
   }
 
   @Test
@@ -154,14 +157,14 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
     fixture.callCompletionPopup()
     val lookup = fixture.getActiveLookup() ?: error("No active lookup")
     assertThat(lookup.items.map { it.lookupString })
-      .hasSameElementsAs(listOf("suggestion", "suggestion().after"))
+      .hasSameElementsAs(listOf("suggestion", "suggestionAfter"))
     assertThat(lookup.currentItem?.lookupString)
-      .isEqualTo("suggestion().after")
+      .isEqualTo("suggestionAfter")
 
     fixture.insertSelectedItem()
 
-    val expectedText = "test_cmd with-cursor-double suggestion().after"
-    val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong() - 7) // cursor is between parentheses
+    val expectedText = "test_cmd with-cursor-double suggestionAfter"
+    val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong() - 5) // cursor is before 'After'
     fixture.assertOutputModelState(expectedText, expectedCursorOffset)
   }
 
@@ -170,8 +173,8 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
     fixture.type("test_cmd with-cursor-single sugg")
     fixture.callCompletionPopup(waitForPopup = false)
 
-    val expectedText = "test_cmd with-cursor-single suggestion().after"
-    val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong() - 7) // cursor is between parentheses
+    val expectedText = "test_cmd with-cursor-single suggestionAfter"
+    val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong() - 5) // cursor is before 'After'
     fixture.assertOutputModelState(expectedText, expectedCursorOffset)
   }
 
@@ -213,19 +216,26 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
       .isTrue
   }
 
-  private fun doTest(block: suspend (TerminalCompletionFixture) -> Unit) = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixtureScope = childScope("TerminalCompletionFixture")
-    val session = EchoingTerminalSession(fixtureScope.childScope("EchoingTerminalSession"))
-    doWithCompletionFixture(project, session, fixtureScope) { fixture ->
-      fixture.mockTestShellCommand(testCommandSpec)
-      fixture.setCompletionOptions(
-        showPopupAutomatically = false,
-        showingMode = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS,
-        parentDisposable = testRootDisposable
+  private fun doTest(isPowerShell: Boolean = false, block: suspend (TerminalCompletionFixture) -> Unit) {
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      val fixtureScope = childScope("TerminalCompletionFixture")
+      val startupOptions = TerminalStartupOptionsImpl(
+        shellCommand = if (isPowerShell) listOf("powershell.exe") else listOf("/bin/zsh", "--login", "-i"),
+        workingDirectory = "fakeDir",
+        envVariables = emptyMap()
       )
-      fixture.awaitShellIntegrationFeaturesInitialized()
+      val session = EchoingTerminalSession(startupOptions, fixtureScope.childScope("EchoingTerminalSession"))
+      doWithCompletionFixture(project, session, fixtureScope) { fixture ->
+        fixture.mockTestShellCommand(testCommandSpec)
+        fixture.setCompletionOptions(
+          showPopupAutomatically = false,
+          showingMode = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS,
+          parentDisposable = testRootDisposable
+        )
+        fixture.awaitShellIntegrationFeaturesInitialized()
 
-      block(fixture)
+        block(fixture)
+      }
     }
   }
 }

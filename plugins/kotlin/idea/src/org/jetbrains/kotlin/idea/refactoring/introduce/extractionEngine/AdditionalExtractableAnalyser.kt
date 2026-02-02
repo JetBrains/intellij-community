@@ -3,10 +3,12 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.kotlin.K1Deprecation
 
 /**
  * Allows to modify ExtractableCodeDescriptor within [ExtractionData.performAnalysis].
  */
+@K1Deprecation
 interface AdditionalExtractableAnalyser {
 
     fun amendDescriptor(descriptor: ExtractableCodeDescriptor): ExtractableCodeDescriptor

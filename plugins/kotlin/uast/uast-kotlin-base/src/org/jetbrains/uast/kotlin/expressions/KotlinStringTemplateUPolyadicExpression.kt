@@ -7,8 +7,14 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.DEFAULT_EXPRESSION_TYPES_LIST
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UPolyadicExpression
+import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.UastLazyPart
 import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 class KotlinStringTemplateUPolyadicExpression(

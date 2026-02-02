@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.cloneDialog
 
 import com.intellij.icons.AllIcons
@@ -17,6 +17,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.dialog.VcsDialogUtils
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
@@ -69,6 +70,7 @@ internal class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
               selectedItem = null
             }
             .component
+          cell(VcsDialogUtils.getMorePluginsLink(mainPanel))
         }
       }
       val insets = UIUtil.PANEL_REGULAR_INSETS

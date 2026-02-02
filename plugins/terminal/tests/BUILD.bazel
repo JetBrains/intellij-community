@@ -40,6 +40,8 @@ jvm_library(
     "//libraries/pty4j",
     "//libraries/guava",
     "@lib//:junit4",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
   ]
 )
 
@@ -89,6 +91,8 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/platform-impl/eel:ide-impl-wsl",
     "//platform/execution",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
   ],
   runtime_deps = [":tests"]
 )

@@ -3,7 +3,11 @@ package com.intellij.facet.impl;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.facet.*;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetConfiguration;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetType;
+import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.facet.impl.invalid.InvalidFacet;
 import com.intellij.facet.impl.invalid.InvalidFacetConfiguration;
 import com.intellij.openapi.application.ApplicationManager;

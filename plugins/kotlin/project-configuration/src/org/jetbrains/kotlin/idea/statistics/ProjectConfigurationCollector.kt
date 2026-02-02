@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.configuration.getPlatform
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.konan.target.KonanTarget
-import java.util.*
+import java.util.Locale
 
 internal class ProjectConfigurationCollector : ProjectUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
@@ -82,7 +82,7 @@ internal class ProjectConfigurationCollector : ProjectUsagesCollector() {
         }
     }
 
-    private val GROUP = EventLogGroup("kotlin.project.configuration", 59)
+    private val GROUP = EventLogGroup("kotlin.project.configuration", 60)
 
     private val systemField = EventFields.String("system", listOf("JPS", "Maven", "Gradle", "unknown"))
     private val platformField = EventFields.String("platform", composePlatformFields())

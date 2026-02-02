@@ -3,7 +3,7 @@ package com.intellij.ide.util;
 
 import com.intellij.psi.PsiElement;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class DelegatingPsiElementCellRenderer<T extends PsiElement> extends PsiElementListCellRenderer<T> {
 

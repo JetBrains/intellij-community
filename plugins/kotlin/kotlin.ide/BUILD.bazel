@@ -20,6 +20,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//libraries/jsoup",
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/base/statistics",
     "//platform/ide-core-impl",
@@ -38,6 +39,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-common",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//plugins/kotlin/base/scripting/scripting.shared",
+    "//libraries/gson",
   ],
   runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
 )

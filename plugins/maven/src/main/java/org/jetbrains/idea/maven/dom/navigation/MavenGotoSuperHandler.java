@@ -5,7 +5,11 @@ import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigationProvider;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
-import org.jetbrains.idea.maven.dom.model.*;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependencyManagement;
+import org.jetbrains.idea.maven.dom.model.MavenDomParent;
+import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
+import org.jetbrains.idea.maven.dom.model.MavenDomPluginManagement;
 
 public final class MavenGotoSuperHandler extends DomElementNavigationProvider {
   @Override

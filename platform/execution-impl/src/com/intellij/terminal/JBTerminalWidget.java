@@ -147,46 +147,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
     return bar;
   }
 
-  /**
-   * @deprecated use {@link JBTerminalSystemSettingsProviderBase#getTerminalFontSize()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public int getFontSize() {
-    return Math.round(getSettingsProvider().getTerminalFontSize());
-  }
-
-  /**
-   * @deprecated use {@link JBTerminalSystemSettingsProviderBase#getTerminalFontSize()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public float getFontSize2D() {
-    return getSettingsProvider().getTerminalFontSize();
-  }
-
-  /**
-   * @deprecated use {@link JBTerminalSystemSettingsProviderBase#setTerminalFontSize(float)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void setFontSize(int fontSize) {
-    getSettingsProvider().setTerminalFontSize(fontSize);
-  }
-
-  /**
-   * @deprecated use {@link JBTerminalSystemSettingsProviderBase#setTerminalFontSize(float)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void setFontSize(float fontSize) {
-    getSettingsProvider().setTerminalFontSize(fontSize);
-  }
-
-  /**
-   * @deprecated use {@link JBTerminalSystemSettingsProviderBase#resetTerminalFontSize()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void resetFontSize() {
-    getSettingsProvider().resetTerminalFontSize();
-  }
-
   public @Nullable ProcessTtyConnector getProcessTtyConnector() {
     return ObjectUtils.tryCast(getTtyConnector(), ProcessTtyConnector.class);
   }

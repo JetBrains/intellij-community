@@ -3,12 +3,12 @@
 package org.jetbrains.kotlin.idea.completion.test.weighers
 
 import com.intellij.codeInsight.completion.CompletionType
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes
 import org.jetbrains.kotlin.idea.completion.test.testWithAutoCompleteSetting
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.junit.Assert
 
 abstract class AbstractCompletionWeigherTest(val completionType: CompletionType, val relativeTestDataPath: String) :

@@ -12,8 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static git4idea.stash.ui.GitStashContentProviderKt.*;
-
 /**
  * Git unstash action
  */

@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.jpsGraph.test;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout;
 import org.jetbrains.kotlin.jps.build.AbstractIncrementalK2JvmJpsTest;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;

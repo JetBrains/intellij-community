@@ -3,7 +3,9 @@ package org.jetbrains.idea.svn.status
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.io.FileUtil.*
+import com.intellij.openapi.util.io.FileUtil.getRelativePath
+import com.intellij.openapi.util.io.FileUtil.isAncestor
+import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces
 import com.intellij.util.containers.ContainerUtil.find
 import com.intellij.util.containers.Convertor
@@ -11,18 +13,30 @@ import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.SvnUtil
 import org.jetbrains.idea.svn.SvnUtil.append
 import org.jetbrains.idea.svn.SvnUtil.isSvnVersioned
-import org.jetbrains.idea.svn.api.*
+import org.jetbrains.idea.svn.api.BaseSvnClient
+import org.jetbrains.idea.svn.api.Depth
+import org.jetbrains.idea.svn.api.ErrorCode
+import org.jetbrains.idea.svn.api.NodeKind
+import org.jetbrains.idea.svn.api.Revision
 import org.jetbrains.idea.svn.api.Target
 import org.jetbrains.idea.svn.checkin.CommitInfo
-import org.jetbrains.idea.svn.commandLine.*
+import org.jetbrains.idea.svn.commandLine.CommandExecutor
+import org.jetbrains.idea.svn.commandLine.CommandUtil
 import org.jetbrains.idea.svn.commandLine.CommandUtil.parse
 import org.jetbrains.idea.svn.commandLine.CommandUtil.requireExistingParent
+import org.jetbrains.idea.svn.commandLine.SvnBindException
+import org.jetbrains.idea.svn.commandLine.SvnCommandName
+import org.jetbrains.idea.svn.commandLine.SvnExceptionWrapper
 import org.jetbrains.idea.svn.info.Info
 import org.jetbrains.idea.svn.lock.Lock
 import java.io.File
 import java.util.function.Supplier
 import javax.xml.bind.JAXBException
-import javax.xml.bind.annotation.*
+import javax.xml.bind.annotation.XmlAccessType
+import javax.xml.bind.annotation.XmlAccessorType
+import javax.xml.bind.annotation.XmlAttribute
+import javax.xml.bind.annotation.XmlElement
+import javax.xml.bind.annotation.XmlRootElement
 import javax.xml.bind.annotation.adapters.XmlAdapter
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter
 

@@ -4,7 +4,11 @@ package org.jetbrains.kotlin.idea.core.script.shared
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.compiled.*
+import com.intellij.psi.impl.compiled.ClsClassImpl
+import com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy
+import com.intellij.psi.impl.compiled.ClsFieldImpl
+import com.intellij.psi.impl.compiled.ClsFileImpl
+import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.psi.util.MethodSignatureUtil
 
 abstract class AbstractScriptDependencySourceNavigationPolicyForJavaClasses : ClsCustomNavigationPolicy {

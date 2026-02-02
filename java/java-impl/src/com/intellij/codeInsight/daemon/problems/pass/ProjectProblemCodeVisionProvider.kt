@@ -30,7 +30,13 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SmartPointerManager
 import com.intellij.util.SmartList
 import java.awt.Color
 import java.awt.event.MouseEvent

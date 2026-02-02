@@ -10,7 +10,9 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
 
@@ -40,14 +42,14 @@ public class OptCustomTest extends LightPlatform4TestCase {
         }
 
         @Override
-        public @NotNull JComponent render(String data, @NotNull Project project) {
+        public @NotNull JComponent render(String data, @NotNull OptionController controller, @NotNull Project project) {
           return new JLabel(data);
         }
       }, getTestRootDisposable());
     CustomComponentExtension.EP_NAME.getPoint().registerExtension(
       new CustomComponentExtensionWithSwingRenderer<Void>("y") {
         @Override
-        public @NotNull JComponent render(Void data, @NotNull Project project) {
+        public @NotNull JComponent render(Void data, @NotNull OptionController controller, @NotNull Project project) {
           return new JButton("3");
         }
       }, getTestRootDisposable());

@@ -6,7 +6,11 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.callOn
 import org.jetbrains.kotlin.nj2k.parenthesizeIfCompoundExpression
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKBinaryExpression
+import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.detached
+import org.jetbrains.kotlin.nj2k.tree.withFormattingFrom
 import org.jetbrains.kotlin.nj2k.types.isStringType
 
 class AnyWithStringConcatenationConversion(context: ConverterContext) : RecursiveConversion(context) {

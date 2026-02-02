@@ -38,7 +38,7 @@ common --legacy_external_runfiles
 # which is we don't need for generator
 build --@rules_kotlin//kotlin/settings:jvm_emit_jdeps=False
 
-test --test_verbose_timeout_warnings --test_timeout=60 --test_output=all
+test --test_verbose_timeout_warnings --test_output=all --test_summary=detailed --test_timeout=60,300,900,14400
 
 # https://www.buildbuddy.io/blog/debugging-slow-bazel-builds/
 common --nolegacy_important_outputs --remote_build_event_upload=minimal --remote_cache_async --remote_cache_compression
@@ -71,3 +71,11 @@ common --per_file_copt=external/.*protobuf.*@--PROTOBUF_WAS_NOT_SUPPOSED_TO_BE_B
 common --host_per_file_copt=external/.*protobuf.*@--PROTOBUF_WAS_NOT_SUPPOSED_TO_BE_BUILT
 common --per_file_copt=external/.*grpc.*@--GRPC_WAS_NOT_SUPPOSED_TO_BE_BUILT
 common --host_per_file_copt=external/.*grpc.*@--GRPC_WAS_NOT_SUPPOSED_TO_BE_BUILT
+
+# need to use Python from rules_python in rules_pkg in pkg_zip target
+common --@rules_python//python/config_settings:bootstrap_impl=script
+
+try-import %workspace%/../../../build/remote_cache.bazelrc
+
+# Enable remote downloader config w/ allowed hosts and caching proxies
+common --downloader_config=../../build/bazel_downloader.cfg

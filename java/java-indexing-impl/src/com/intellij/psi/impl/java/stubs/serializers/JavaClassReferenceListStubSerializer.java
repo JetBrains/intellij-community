@@ -10,7 +10,12 @@ import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassReferenceListStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.IndexSink;
+import com.intellij.psi.stubs.StubBase;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.StubSerializer;
 import com.intellij.psi.tree.java.IJavaElementType;
 import org.jetbrains.annotations.NotNull;
 

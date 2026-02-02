@@ -12,6 +12,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
+import com.intellij.codeInspection.numeric.RemoveLiteralUnderscoresInspection
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
@@ -1502,6 +1503,29 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
 
     val elements = myFixture.completeBasic()
     assertTrue(elements.any { element -> element.lookupString.contains("Extract method", ignoreCase = true) })
+  }
+
+  fun testCorrectTextOfInspection() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          void foo() {
+              int a = 1_000_000.<caret>;
+          }
+      }""")
+
+    myFixture.enableInspections(RemoveLiteralUnderscoresInspection())
+    myFixture.doHighlighting()
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Replace '1_000_000' with '1000000'", ignoreCase = true) })
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+
+    myFixture.checkResult("""
+      class A {
+          void foo() {
+              int a = 1000000;
+          }
+      }""")
   }
 
   fun testExtractMethodInTheEndOfStatement() {

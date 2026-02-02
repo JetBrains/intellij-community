@@ -8,8 +8,13 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.kotlinSourceRootType
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.AbstractKlibLibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.PlatformModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME

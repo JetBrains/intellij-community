@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.diagnostic.VMOptions;
@@ -29,7 +29,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
 
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 76);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 77);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -96,6 +96,14 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private static final EventId IDE_CRASH_DETECTED = LIFECYCLE.registerEvent("ide.crash.detected");
 
   private static final EventId IDE_DEADLOCK_DETECTED = LIFECYCLE.registerEvent("ide.deadlock.detected");
+
+  private static final EventField<Integer> numberOfExceptionsField = EventFields.Int("number_of_exceptions");
+  private static final EventId1<Integer> IDE_HUNDRED_EXCEPTIONS_HAPPENED =
+    LIFECYCLE.registerEvent("ide.hundred.exceptions.happened", numberOfExceptionsField,
+                            "The number of exceptions happened while IDE was opened is a multiple of 100");
+  private static final EventId2<Integer, PluginInfo> IDE_HUNDRED_EXCEPTIONS_HAPPENED_IN_PLUGIN =
+    LIFECYCLE.registerEvent("ide.hundred.exceptions.happened.in.plugin", numberOfExceptionsField, EventFields.PluginInfo,
+                            "The number of exceptions happened in the plugin while IDE was opened is a multiple of 100");
 
 
   private enum ProjectOpenMode {New, Same, Attach}
@@ -255,5 +263,18 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
 
   public static void pluginFreezeIgnored(@NotNull PluginId id) {
     IDE_FREEZE_PLUGIN_IGNORED.log(getPluginInfoById(id));
+  }
+
+  public static void onExceptionHappened(int numberOfExceptions) {
+    if (numberOfExceptions % 100 == 0) {
+      IDE_HUNDRED_EXCEPTIONS_HAPPENED.log(numberOfExceptions);
+    }
+  }
+
+  public static void onExceptionInPluginHappened(int numberOfExceptions, @Nullable PluginId pluginId) {
+    if (numberOfExceptions % 100 == 0) {
+      PluginInfo pluginInfo = (pluginId != null) ? getPluginInfoById(pluginId) : getPlatformPlugin();
+      IDE_HUNDRED_EXCEPTIONS_HAPPENED_IN_PLUGIN.log(numberOfExceptions, pluginInfo);
+    }
   }
 }

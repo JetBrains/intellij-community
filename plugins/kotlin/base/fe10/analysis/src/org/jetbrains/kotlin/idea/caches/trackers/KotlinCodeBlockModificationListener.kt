@@ -20,13 +20,16 @@ import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.CHILD_MOVED
 import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGED
 import com.intellij.psi.impl.PsiTreeChangePreprocessor
 import com.intellij.psi.util.PsiModificationTracker
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinLanguage
 
+@K1Deprecation
 val KOTLIN_CONSOLE_KEY = Key.create<Boolean>("kotlin.console")
 
 /**
  * Tested in [OutOfBlockModificationTestGenerated]
  */
+@K1Deprecation
 @Service(Service.Level.PROJECT)
 class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePreprocessor, Disposable.Default {
     private val modificationTrackerImpl: PsiModificationTracker =

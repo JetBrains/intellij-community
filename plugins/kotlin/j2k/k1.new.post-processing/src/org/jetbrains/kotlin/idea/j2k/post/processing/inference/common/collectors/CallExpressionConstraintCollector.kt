@@ -2,11 +2,25 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.*
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundType
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeCalculator
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeImpl
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintBuilder
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.GenericLabel
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.InferenceContext
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.NoClassReference
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.TypeElementBasedTypeVariable
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.TypeParameter
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.TypeParameterElementData
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.TypeVariableLabel
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.asBoundType
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.withEnhancementFrom
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtElement
@@ -15,6 +29,7 @@ import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 class CallExpressionConstraintCollector : ConstraintsCollector() {
     override fun ConstraintBuilder.collectConstraints(
         element: KtElement,

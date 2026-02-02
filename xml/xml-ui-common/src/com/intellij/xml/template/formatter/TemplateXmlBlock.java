@@ -1,11 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.template.formatter;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Spacing;
+import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.formatter.xml.*;
+import com.intellij.psi.formatter.xml.AnotherLanguageBlockWrapper;
+import com.intellij.psi.formatter.xml.ReadOnlyBlock;
+import com.intellij.psi.formatter.xml.XmlBlock;
+import com.intellij.psi.formatter.xml.XmlFormattingPolicy;
+import com.intellij.psi.formatter.xml.XmlTagBlock;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;

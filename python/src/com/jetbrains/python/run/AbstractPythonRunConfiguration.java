@@ -5,7 +5,12 @@ import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.AbstractRunConfiguration;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParamsGroup;
+import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption;
+import com.intellij.execution.configurations.RuntimeConfigurationError;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.testframework.sm.runner.GeneralIdBasedToSMTRunnerEventsConvertor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -37,7 +42,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
 

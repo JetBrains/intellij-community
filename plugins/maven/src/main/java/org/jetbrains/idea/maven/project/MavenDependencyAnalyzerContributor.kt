@@ -3,9 +3,17 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.externalSystem.dependency.analyzer.*
+import com.intellij.openapi.externalSystem.dependency.analyzer.DAArtifact
+import com.intellij.openapi.externalSystem.dependency.analyzer.DADependency
+import com.intellij.openapi.externalSystem.dependency.analyzer.DAModule
+import com.intellij.openapi.externalSystem.dependency.analyzer.DAOmitted
+import com.intellij.openapi.externalSystem.dependency.analyzer.DAProject
+import com.intellij.openapi.externalSystem.dependency.analyzer.DAScope
+import com.intellij.openapi.externalSystem.dependency.analyzer.DAWarning
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency.Scope.Type.CUSTOM
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency.Scope.Type.STANDARD
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle.message
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key

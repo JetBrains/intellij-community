@@ -18,6 +18,7 @@ import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerEngine
 import com.jetbrains.python.packaging.utils.PyProxyUtils
+import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.executeHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -52,7 +53,7 @@ class PipPackageManagerEngine(
   suspend fun syncProject(): PyResult<Unit> {
     return runPackagingTool(
       operation = "install",
-      arguments = listOf(".")
+      arguments = listOf(sdk.associatedModulePath ?: ".")
     ).mapSuccess { }
   }
 

@@ -4,14 +4,22 @@ package com.intellij.debugger.codeinsight
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.ui.breakpoints.JavaExceptionBreakpointType
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.parents
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.codeinsight.ControlExceptionBreakpointSupport
 import com.intellij.xdebugger.codeinsight.ControlExceptionBreakpointSupport.ExceptionReference
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UThrowExpression
+import org.jetbrains.uast.toUElement
 
 open class ControlExceptionBreakpointJVMSupport : ControlExceptionBreakpointSupport {
 

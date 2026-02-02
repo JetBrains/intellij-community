@@ -2,7 +2,18 @@
 package org.jetbrains.plugins.gradle.service.resolve.transformation
 
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiReferenceList
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiWildcardType
+import com.intellij.psi.ResolveState
 import com.intellij.psi.impl.light.LightReferenceListBuilder
 import com.intellij.psi.impl.light.LightTypeParameter
 import com.intellij.psi.scope.PsiScopeProcessor

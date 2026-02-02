@@ -10,8 +10,15 @@ import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
-import com.intellij.ide.util.gotoByName.GotoActionModel.*
-import com.intellij.openapi.actionSystem.*
+import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
+import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
+import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValueType
+import com.intellij.openapi.actionSystem.AbbreviationManager
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionStubBase
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
@@ -30,12 +37,28 @@ import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.CollectConsumer
 import com.intellij.util.gotoByName.FindActionSearchableOptionsFilter
 import com.intellij.util.text.matching.MatchingMode
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.channels.toList
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.withIndex
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.PriorityBlockingQueue
@@ -278,10 +301,8 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
         launch {
           runCatching {
             val startOneTime = System.currentTimeMillis()
-            LOG.debug { "[$pattern] TEST DIAGNOSTICS: before model.actionMatches: ${action::class.java.simpleName}" }
             val mode = model.actionMatches(pattern, matcher, action)
             val endTime = System.currentTimeMillis()
-            LOG.debug { "[$pattern] TEST DIAGNOSTICS: after model.actionMatches: ${action::class.java.simpleName} - (duration:${endTime - startOneTime} ms, totalDuration: ${endTime - startAllTime} ms)" }
 
             if (mode != MatchMode.NONE) {
               if (isCollectLogsAction) {

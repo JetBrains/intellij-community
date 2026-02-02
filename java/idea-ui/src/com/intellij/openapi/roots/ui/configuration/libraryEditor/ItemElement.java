@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 
 

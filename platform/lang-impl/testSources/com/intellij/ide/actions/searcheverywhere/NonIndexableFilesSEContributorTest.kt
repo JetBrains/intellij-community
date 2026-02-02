@@ -32,7 +32,6 @@ import java.nio.file.Files
 
 
 @TestApplication
-@RegistryKey("search.in.non.indexable", "false")
 @RegistryKey("se.enable.non.indexable.files.contributor", "true")
 open class NonIndexableFilesSEContributorTest {
   @RegisterExtension
@@ -100,10 +99,6 @@ open class NonIndexableFilesSEContributorTest {
     val items = searchNonIndexableFiles("f")
     val names = items.map { it.name }
     assertThat(names).containsExactlyInAnyOrder("f1", "f2")
-  }
-
-  private fun processNames(): List<String> {
-    TODO("not implemented")
   }
 
   @Test
@@ -212,7 +207,6 @@ open class NonIndexableFilesSEContributorTest {
   }
 
   @Test
-  @RegistryKey("search.in.non.indexable", "false")
   fun `default search everywhere doesn't work`(): Unit = runBlocking {
     val unindexed1 = baseDir.newVirtualDirectory("dir1").toVirtualFileUrl(urlManager)
     baseDir.newVirtualFile("dir1/file1")
@@ -276,15 +270,6 @@ open class NonIndexableFilesSEContributorTest {
     assertThat(names).containsExactlyInAnyOrder("file1")
   }
 }
-
-@RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
-@RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "false")
-class NonIndexableFilesSEContributorBfsOneReadActionTest : NonIndexableFilesSEContributorTest()
-
-@RegistryKey("se.enable.non.indexable.files.use.bfs", "true")
-@RegistryKey("se.enable.non.indexable.files.use.bfs.blocking.read.actions", "true")
-class NonIndexableFilesSEContributorBfsManyReadActionsTest : NonIndexableFilesSEContributorTest()
-
 
 
 private fun createEvent(project: Project): AnActionEvent {

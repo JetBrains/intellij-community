@@ -16,7 +16,10 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDoWhileStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.impl.source.tree.java.PsiWhileStatementImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;

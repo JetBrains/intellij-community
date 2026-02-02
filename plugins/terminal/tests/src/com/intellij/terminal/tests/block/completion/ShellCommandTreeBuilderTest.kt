@@ -370,6 +370,63 @@ internal class ShellCommandTreeBuilderTest(private val engine: TerminalEngine) {
     }
   }
 
+  @Test
+  fun `subcommand in quotes is resolved`() {
+    doTest("'sub'") {
+      assertSubcommandOf("'sub'", commandName)
+    }
+  }
+
+
+  @Test
+  fun `option in quotes is resolved`() {
+    doTest("'--argum'") {
+      assertOptionOf("'--argum'", commandName)
+    }
+  }
+
+  @Test
+  fun `argument in quotes is resolved`() {
+    doTest("--argum", "'someArg'") {
+      assertOptionOf("--argum", commandName)
+      assertArgumentOfOption("'someArg'", "--argum")
+    }
+  }
+
+  @Test
+  fun `options and arguments in quotes are resolved`() {
+    doTest("--argum", "'someArg'", "'bbb'") {
+      assertOptionOf("--argum", commandName)
+      assertArgumentOfOption("'someArg'", "--argum")
+      assertArgumentOfSubcommand("'bbb'", commandName)
+    }
+  }
+
+  @Test
+  fun `file path in quotes is resolved`() {
+    mockFilePathsSuggestions("dir${separator}" to listOf("file.txt", "folder${separator}", "file"))
+    doTest("withFiles", "'dir${separator}'") {
+      assertSubcommandOf("withFiles", commandName)
+      assertArgumentOfSubcommand("'dir${separator}'", "withFiles")
+    }
+  }
+
+  @Test
+  fun `option is resolved after unknown token`() {
+    doTest("unknown", "--bcde") {
+      assertUnknown("unknown", commandName)
+      assertOptionOf("--bcde", commandName)
+    }
+  }
+
+  @Test
+  fun `argument is resolved after unknown token`() {
+    doTest("unknown", "aaa") {
+      assertUnknown("unknown", commandName)
+      assertArgumentOfSubcommand("aaa", commandName)
+    }
+  }
+
   private fun doTest(vararg arguments: String, assertions: ShellCommandTreeAssertions.() -> Unit) =
     runBlocking {
       doTestImpl(arguments.toList(), assertions)

@@ -4,37 +4,36 @@ package com.intellij.codeInsight.daemon.impl.indentGuide
 import com.intellij.openapi.editor.IndentGuideDescriptor
 import com.intellij.openapi.editor.impl.zombie.LimbedNecromancy
 import com.intellij.openapi.editor.impl.zombie.LimbedZombie
-import java.io.DataInput
-import java.io.DataOutput
 
 
-internal class IndentGuideZombie(
+internal class IndentGuideZombie private constructor(
   limbs: List<IndentGuideDescriptor>,
 ) : LimbedZombie<IndentGuideDescriptor>(limbs) {
 
   object Necromancy : LimbedNecromancy<IndentGuideZombie, IndentGuideDescriptor>(spellLevel=0) {
-    override fun buryLimb(grave: DataOutput, limb: IndentGuideDescriptor) {
-      writeInt(grave, limb.indentLevel)
-      writeInt(grave, limb.codeConstructStartLine)
-      writeInt(grave, limb.startLine)
-      writeInt(grave, limb.endLine)
+
+    override fun formZombie(limbs: List<IndentGuideDescriptor>): IndentGuideZombie {
+      return IndentGuideZombie(limbs)
     }
 
-    override fun exhumeLimb(grave: DataInput): IndentGuideDescriptor {
-      val indentLevel:            Int = readInt(grave)
-      val codeConstructStartLine: Int = readInt(grave)
-      val startLine:              Int = readInt(grave)
-      val endLine:                Int = readInt(grave)
+    override fun Out.writeLimb(limb: IndentGuideDescriptor) {
+      writeInt(limb.indentLevel)
+      writeInt(limb.codeConstructStartLine)
+      writeInt(limb.startLine)
+      writeInt(limb.endLine)
+    }
+
+    override fun In.readLimb(): IndentGuideDescriptor {
+      val indentLevel:            Int = readInt()
+      val codeConstructStartLine: Int = readInt()
+      val startLine:              Int = readInt()
+      val endLine:                Int = readInt()
       return IndentGuideDescriptor(
         indentLevel,
         codeConstructStartLine,
         startLine,
         endLine,
       )
-    }
-
-    override fun formZombie(limbs: List<IndentGuideDescriptor>): IndentGuideZombie {
-      return IndentGuideZombie(limbs)
     }
   }
 }

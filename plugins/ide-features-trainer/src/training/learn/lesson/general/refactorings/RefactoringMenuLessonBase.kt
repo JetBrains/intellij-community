@@ -6,8 +6,16 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.ui.EngravedLabel
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskContext
+import training.dsl.TaskRuntimeContext
+import training.dsl.TaskTestContext
+import training.dsl.defaultRestoreDelay
+import training.dsl.dropMnemonic
+import training.dsl.showWarningIfInplaceRefactoringsDisabled
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.util.adaptToNotNativeLocalization

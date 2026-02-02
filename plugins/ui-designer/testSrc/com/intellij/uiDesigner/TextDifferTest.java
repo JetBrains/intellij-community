@@ -15,8 +15,8 @@
  */
 package com.intellij.uiDesigner;
 
-import junit.framework.TestCase;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import junit.framework.TestCase;
 
 public final class TextDifferTest extends TestCase{
 

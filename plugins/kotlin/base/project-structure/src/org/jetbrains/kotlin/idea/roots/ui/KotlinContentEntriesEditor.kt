@@ -3,7 +3,11 @@
 package org.jetbrains.kotlin.idea.roots.ui
 
 import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ui.configuration.*
+import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor
+import com.intellij.openapi.roots.ui.configuration.ContentEntryEditor
+import com.intellij.openapi.roots.ui.configuration.JavaContentEntriesEditor
+import com.intellij.openapi.roots.ui.configuration.JavaContentEntryEditor
+import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.config.ResourceKotlinRootType
 import org.jetbrains.kotlin.config.SourceKotlinRootType

@@ -2,7 +2,11 @@
 package jetbrains.antlayout.datatypes;
 
 import org.apache.tools.ant.Main;
-import org.apache.tools.ant.taskdefs.*;
+import org.apache.tools.ant.taskdefs.Jar;
+import org.apache.tools.ant.taskdefs.Manifest;
+import org.apache.tools.ant.taskdefs.ManifestException;
+import org.apache.tools.ant.taskdefs.PatchedJar;
+import org.apache.tools.ant.taskdefs.Zip;
 import org.apache.tools.ant.types.EnumeratedAttribute;
 import org.apache.tools.ant.types.ZipFileSet;
 

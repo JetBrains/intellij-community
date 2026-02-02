@@ -3,7 +3,14 @@ package org.jetbrains.kotlin.tools.projectWizard.core.service
 
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.TargetJvmVersion
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.TargetJvmVersion.*
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.TargetJvmVersion.JVM_10
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.TargetJvmVersion.JVM_11
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.TargetJvmVersion.JVM_12
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.TargetJvmVersion.JVM_13
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.TargetJvmVersion.JVM_14
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.TargetJvmVersion.JVM_15
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.TargetJvmVersion.JVM_1_8
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.TargetJvmVersion.JVM_9
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 

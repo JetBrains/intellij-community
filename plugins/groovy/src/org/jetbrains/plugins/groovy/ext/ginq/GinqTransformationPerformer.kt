@@ -20,7 +20,16 @@ import com.intellij.psi.impl.source.tree.FileElement
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.parents
 import com.intellij.util.asSafely
-import org.jetbrains.plugins.groovy.ext.ginq.ast.*
+import org.jetbrains.plugins.groovy.ext.ginq.ast.AliasedExpression
+import org.jetbrains.plugins.groovy.ext.ginq.ast.getClosestGinqTree
+import org.jetbrains.plugins.groovy.ext.ginq.ast.getStoredGinq
+import org.jetbrains.plugins.groovy.ext.ginq.ast.getTopParsedGinqErrors
+import org.jetbrains.plugins.groovy.ext.ginq.ast.getTopParsedGinqTree
+import org.jetbrains.plugins.groovy.ext.ginq.ast.getTopShutdownGinq
+import org.jetbrains.plugins.groovy.ext.ginq.ast.ginqParents
+import org.jetbrains.plugins.groovy.ext.ginq.ast.isGinqRoot
+import org.jetbrains.plugins.groovy.ext.ginq.ast.isGinqUntransformed
+import org.jetbrains.plugins.groovy.ext.ginq.ast.refCallIdentifier
 import org.jetbrains.plugins.groovy.ext.ginq.completion.GinqCompletionUtils
 import org.jetbrains.plugins.groovy.ext.ginq.formatting.GINQ_AWARE_GROOVY_BLOCK_PRODUCER
 import org.jetbrains.plugins.groovy.ext.ginq.formatting.produceGinqFormattingBlock
@@ -40,7 +49,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.resolve.*
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
+import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessFields
+import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
+import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
 import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineASTTransformationPerformerEx
 
 class GinqTransformationPerformer(private val root: GinqRootPsiElement) : GroovyInlineASTTransformationPerformerEx {

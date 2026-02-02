@@ -5,13 +5,23 @@ import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.Executor.childPath
+import com.intellij.openapi.vcs.Executor.echo
+import com.intellij.openapi.vcs.Executor.overwrite
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import git4idea.config.UpdateMethod.MERGE
 import git4idea.config.UpdateMethod.REBASE
 import git4idea.repo.GitRepository
-import git4idea.test.*
+import git4idea.test.addCommit
+import git4idea.test.assertCommitted
+import git4idea.test.cd
+import git4idea.test.git
+import git4idea.test.last
+import git4idea.test.registerRepo
+import git4idea.test.setupDefaultUsername
 import java.nio.file.Path
 import java.util.Locale
 

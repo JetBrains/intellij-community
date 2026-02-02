@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.j2k.ast
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.j2k.append
 
+@K1Deprecation
 class Block(val statements: List<Statement>, val lBrace: LBrace, val rBrace: RBrace, val notEmpty: Boolean = false) : Statement() {
     override val isEmpty: Boolean
         get() = !notEmpty && statements.all { it.isEmpty }
@@ -26,6 +28,7 @@ class Block(val statements: List<Statement>, val lBrace: LBrace, val rBrace: RBr
 }
 
 // we use LBrace and RBrace elements to better handle comments around them
+@K1Deprecation
 class LBrace : Element() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append("{")
@@ -33,6 +36,7 @@ class LBrace : Element() {
 }
 
 
+@K1Deprecation
 class RBrace : Element() {
     override fun generateCode(builder: CodeBuilder) {
         builder.append("}")

@@ -3,7 +3,8 @@ package com.intellij.ui.scale;
 
 import com.intellij.util.ui.JBUI;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.GraphicsConfiguration;
 
 /**
  * The scale factors derived from the {@link ScaleType} scale factors. Used for convenience.

@@ -162,7 +162,7 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
     val compactMode = UISettings.getInstance().compactMode
 
     val hOffset = JBUIScale.scale(getHOffsetUnscaled(compactMode, position).toFloat()).toDouble()
-    val minVOffset = JBUIScale.scale(if (compactMode) 4f else 8f).toDouble()
+    val minVOffset = JBUIScale.scale(if (compactMode) 4f else (if (position.isSide) 6f else 8f)).toDouble()
 
     val fullHeight = JBUIScale.scale(if (compactMode) 24f else 28f).toDouble()
     val vOffset = (rect.height - fullHeight).coerceAtLeast(minVOffset)
@@ -184,13 +184,6 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
 
     g.color = draw
     RectanglePainter2D.DRAW.paint(g, x, y, width, height, arc)
-  }
-
-  private fun getHOffsetUnscaled(compactMode: Boolean, position: JBTabsPosition): Int {
-    return  when (position.isSide) {
-        true -> 6
-        false -> if (compactMode) 2 else 4
-      }
   }
 
   private val hoverBackground = JBColor("EditorTabs.hoverBackground", JBColor(Color(0xE5, 0xEE, 0xFF, 0x80), Color(0x34, 0x3E, 0x51, 0x80)))
@@ -223,5 +216,14 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
       return hoveredColors
     }
     return regularColors
+  }
+
+  internal companion object {
+    internal fun getHOffsetUnscaled(compactMode: Boolean, position: JBTabsPosition): Int {
+      return when (position.isSide) {
+        true -> 6
+        false -> if (compactMode) 2 else 4
+      }
+    }
   }
 }

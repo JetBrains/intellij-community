@@ -5,8 +5,13 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.icons.AllIcons
 import com.intellij.java.ift.JavaLessonsBundle
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonSample
 import training.dsl.LessonUtil.highlightRunGutter
+import training.dsl.addNewRunConfigurationFromContext
+import training.dsl.checkToolWindowState
+import training.dsl.dropMnemonic
+import training.dsl.parseLessonSample
 import training.learn.lesson.general.run.CommonRunConfigurationLesson
 
 class JavaRunConfigurationLesson : CommonRunConfigurationLesson("java.run.configuration") {

@@ -14,9 +14,24 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.*
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isNullable
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
+import org.jetbrains.kotlin.analysis.api.components.sealedClassInheritors
+import org.jetbrains.kotlin.analysis.api.components.staticDeclaredMemberScope
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
@@ -44,7 +59,13 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.KtWhenCondition
+import org.jetbrains.kotlin.psi.KtWhenConditionIsPattern
+import org.jetbrains.kotlin.psi.KtWhenConditionWithExpression
+import org.jetbrains.kotlin.psi.KtWhenEntry
+import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.renderer.render
 
 internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContributor<KotlinWithSubjectEntryPositionContext>(
@@ -92,9 +113,9 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         val isSingleCondition = whenCondition.isSingleConditionInEntry()
 
         createNullBranchLookupElement(subjectType)
-            ?.let { context.addElement(it) }
+            ?.let { addElement(it) }
         createElseBranchLookupElement(whenCondition)
-            ?.let { context.addElement(it) }
+            ?.let { addElement(it) }
 
         when {
             classSymbol?.classKind == KaClassKind.ENUM_CLASS -> {
@@ -163,7 +184,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
                     fqName = (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
                     isSingleCondition = isSingleCondition,
                 )
-            }.forEach { context.addElement(it) }
+            }.forEach { addElement(it) }
 
         if (prefixMatcher.prefix.isNotEmpty()) {
             context.completeLaterInSameSession("Index", priority = K2ContributorSectionPriority.FROM_INDEX) {
@@ -183,7 +204,11 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
                             fqName = (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
                             isSingleCondition = isSingleCondition,
                         )
-                    }.forEach { innerContext.addElement(it) }
+                    }.forEach {
+                        context(innerContext) {
+                            addElement(it)
+                        }
+                    }
             }
         }
     }
@@ -227,7 +252,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
                     fqName = classId.asSingleFqName(),
                     isSingleCondition = isSingleCondition,
                 )
-            }.forEach { context.addElement(it) }
+            }.forEach { addElement(it) }
 
         if (getAllSealedInheritors(classSymbol).any { it.modality == KaSymbolModality.ABSTRACT }) {
             completeAllTypes(
@@ -307,7 +332,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
                     fqName = entry.callableId?.asSingleFqName(),
                     isSingleCondition = isSingleCondition,
                 )
-            }.forEach { context.addElement(it) }
+            }.forEach { addElement(it) }
     }
 
     private fun KtWhenCondition.isSingleConditionInEntry(): Boolean {

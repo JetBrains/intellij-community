@@ -16,7 +16,8 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.function.BiFunction
 import java.util.function.Function
 

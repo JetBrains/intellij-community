@@ -1,0 +1,132 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.pipenv.sdk.configuration
+
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.execService.ZeroCodeStdoutParserTransformer
+import com.intellij.python.community.impl.pipenv.pipenvPath
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.baseDir
+import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.EnvCheckerResult
+import com.jetbrains.python.sdk.configuration.PIPENV_TOOL_ID
+import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtension
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.PipEnvResult
+import com.jetbrains.python.sdk.configuration.findEnvOrNull
+import com.jetbrains.python.sdk.configuration.prepareSdkCreator
+import com.jetbrains.python.sdk.findAmongRoots
+import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.jetbrains.python.sdk.impl.resolvePythonBinary
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.pipenv.PipEnvFileHelper
+import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData
+import com.jetbrains.python.sdk.pipenv.getPipEnvExecutable
+import com.jetbrains.python.sdk.pipenv.runPipEnv
+import com.jetbrains.python.sdk.pipenv.setupPipEnv
+import com.jetbrains.python.sdk.pipenv.suggestedSdkName
+import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
+import com.jetbrains.python.sdk.setAssociationToModule
+import com.jetbrains.python.venvReader.VirtualEnvReader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.nio.file.Path
+import kotlin.io.path.isExecutable
+import kotlin.io.path.pathString
+
+private val LOGGER = Logger.getInstance(PyPipfileSdkConfiguration::class.java)
+
+internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
+
+  override val toolId: ToolId = PIPENV_TOOL_ID
+
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
+    prepareSdkCreator(
+      { checkManageableEnv(module) }
+    ) { { createAndAddSdk(module) } }
+
+  override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
+
+  private suspend fun checkManageableEnv(
+    module: Module,
+  ): EnvCheckerResult = withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
+    val pipfile = findAmongRoots(module, PipEnvFileHelper.PIP_FILE)?.name ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
+    val pipEnvExecutable = getPipEnvExecutable() ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
+    val canManage = pipEnvExecutable.isExecutable()
+    val intentionName = PyBundle.message("sdk.create.pipenv.suggestion", pipfile)
+    val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
+
+    if (canManage) {
+      PropertiesComponent.getInstance().pipenvPath = pipEnvExecutable.pathString
+      val envPath = runPipEnv(
+        module.baseDir?.path?.toNioPathOrNull(),
+        "--venv",
+        transformer = ZeroCodeStdoutParserTransformer { PyResult.success(Path.of(it)) }
+      ).successOrNull
+      val path = envPath?.resolvePythonBinary()
+      val envExists = path?.let {
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(it.pathString) != null
+      } ?: false
+      if (envExists) {
+        path.findEnvOrNull(intentionName) ?: envNotFound
+      }
+      else envNotFound
+    }
+    else EnvCheckerResult.CannotConfigure
+  }
+
+  private suspend fun createAndAddSdk(module: Module): PyResult<Sdk> {
+    LOGGER.debug("Creating pipenv environment")
+    return withBackgroundProgress(module.project, PyBundle.message("python.sdk.using.pipenv.sentence")) {
+      val basePath = module.baseDir?.path
+                     ?: return@withBackgroundProgress PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid",
+                                                                                               module.baseDir?.path))
+      val pipEnv = setupPipEnv(Path.of(basePath), null, true).getOr {
+        PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATION_FAILURE)
+        return@withBackgroundProgress it
+      }
+
+      val path = withContext(Dispatchers.IO) { VirtualEnvReader().findPythonInPythonRoot(Path.of(pipEnv)) }
+      if (path == null) {
+        return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", pipEnv))
+      }
+
+      val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.toString())
+      if (file == null) {
+        return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", path))
+      }
+
+      PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATED)
+      LOGGER.debug("Setting up associated pipenv environment: $path, $basePath")
+
+      val sdk = SdkConfigurationUtil.setupSdk(
+        PythonSdkUtil.getAllSdks().toTypedArray(),
+        file,
+        PythonSdkType.getInstance(),
+        PyPipEnvSdkAdditionalData(),
+        suggestedSdkName(basePath)
+      )
+
+      withContext(Dispatchers.EDT) {
+        LOGGER.debug("Adding associated pipenv environment: $path, $basePath")
+        sdk.setAssociationToModule(module)
+        SdkConfigurationUtil.addSdk(sdk)
+        module.project.pySdkService.persistSdk(sdk)
+      }
+
+      PyResult.success(sdk)
+    }
+  }
+}

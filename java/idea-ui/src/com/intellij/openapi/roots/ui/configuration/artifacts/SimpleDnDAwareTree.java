@@ -6,8 +6,8 @@ import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 
 public class SimpleDnDAwareTree extends SimpleTree implements DnDAware {

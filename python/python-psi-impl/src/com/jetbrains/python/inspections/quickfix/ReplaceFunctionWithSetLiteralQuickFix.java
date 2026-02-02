@@ -21,7 +21,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.PySetFunctionToLiteralInspection;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpressionStatement;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -124,6 +124,12 @@ c:com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 com.intellij.codeInsight.completion.CompletionPhaseListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:completionPhaseChanged(Z):V
+f:com.intellij.codeInsight.completion.WordCompletionContributor
+- com.intellij.codeInsight.completion.CompletionContributor
+- com.intellij.openapi.project.DumbAware
+- <init>():V
+- s:addWordCompletionVariants(com.intellij.codeInsight.completion.CompletionResultSet,com.intellij.codeInsight.completion.CompletionParameters,java.util.Set):V
+- s:addWordCompletionVariants(com.intellij.codeInsight.completion.CompletionResultSet,com.intellij.codeInsight.completion.CompletionParameters,java.util.Set,Z):V
 f:com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$AutoRestarting
 - b:<init>(com.intellij.codeInsight.completion.PrefixMatcher,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 pe:com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$MatchingOutcome
@@ -545,6 +551,19 @@ com.intellij.find.actions.ShowUsagesActionHandler
 com.intellij.find.editorHeaderActions.ContextAwareShortcutProvider
 - a:getShortcut(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.ShortcutSet
 com.intellij.find.editorHeaderActions.Embeddable
+a:com.intellij.find.impl.FindManagerBase
+- com.intellij.find.FindManager
+- pf:myFindInFileModel:com.intellij.find.FindModel
+- pf:myFindInProjectModel:com.intellij.find.FindModel
+- pf:myProject:com.intellij.openapi.project.Project
+- <init>(com.intellij.openapi.project.Project):V
+- findString(java.lang.CharSequence,I,com.intellij.find.FindModel):com.intellij.find.FindResult
+- findString(java.lang.CharSequence,I,com.intellij.find.FindModel,com.intellij.openapi.vfs.VirtualFile):com.intellij.find.FindResult
+- getFindInFileModel():com.intellij.find.FindModel
+- getFindInProjectModel():com.intellij.find.FindModel
+- getStringToReplace(java.lang.String,com.intellij.find.FindModel,I,java.lang.CharSequence):java.lang.String
+f:com.intellij.find.impl.FindManagerImpl
+- com.intellij.find.impl.FindManagerBase
 com.intellij.find.impl.FindPopupScopeUI
 - a:applyTo(com.intellij.find.FindModel,com.intellij.find.impl.FindPopupScopeUI$ScopeType):V
 - a:applyTo(com.intellij.find.FindSettings,com.intellij.find.impl.FindPopupScopeUI$ScopeType):V
@@ -1142,6 +1161,10 @@ f:com.intellij.tools.ToolManager$Companion
 - f:getInstance():com.intellij.tools.ToolManager
 com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory
 - a:createConsoleComponent(com.intellij.execution.ui.ConsoleView,com.intellij.openapi.actionSystem.DefaultActionGroup):javax.swing.JComponent
+c:com.intellij.util.indexing.IndexInfrastructureVersionBase
+- s:getAllLanguageStubDescriptors():java.util.List
+- s:getStubFileElementBaseVersion(com.intellij.psi.stubs.LanguageStubDescriptor):I
+- s:getStubFileElementTypeKey(com.intellij.psi.stubs.LanguageStubDescriptor):java.lang.String
 com.intellij.util.indexing.UnindexedFilesUpdaterListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:updateFinished(com.intellij.openapi.project.Project):V

@@ -3,9 +3,11 @@
 package org.jetbrains.kotlin.j2k.ast
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.j2k.append
 
+@K1Deprecation
 class MethodCallExpression(
         val methodExpression: Expression,
         val argumentList: ArgumentList,

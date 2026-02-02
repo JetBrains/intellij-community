@@ -4,7 +4,7 @@ package com.intellij.openapi.fileTypes.ex;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public abstract class FakeFileType implements FileTypeIdentifiableByVirtualFile {
   protected FakeFileType() {

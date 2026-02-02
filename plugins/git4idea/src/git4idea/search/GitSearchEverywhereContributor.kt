@@ -2,7 +2,11 @@
 package git4idea.search
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
+import com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersAction
+import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
@@ -35,7 +39,11 @@ import git4idea.GitVcs
 import git4idea.i18n.GitBundle
 import git4idea.log.GitRefManager
 import git4idea.repo.GitRepositoryManager
-import git4idea.search.GitSearchEverywhereItemType.*
+import git4idea.search.GitSearchEverywhereItemType.COMMIT_BY_HASH
+import git4idea.search.GitSearchEverywhereItemType.COMMIT_BY_MESSAGE
+import git4idea.search.GitSearchEverywhereItemType.LOCAL_BRANCH
+import git4idea.search.GitSearchEverywhereItemType.REMOTE_BRANCH
+import git4idea.search.GitSearchEverywhereItemType.TAG
 import java.util.function.Function
 import javax.swing.ListCellRenderer
 

@@ -15,7 +15,12 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.endOffset
 import com.jetbrains.python.PythonTokenSetContributor
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyRecursiveElementVisitor
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PySubscriptionExpression
 
 class PythonLineCompletionVisitorFactory : LineCompletionVisitorFactory {
   override val language: Language = Language.PYTHON

@@ -29,7 +29,7 @@ import com.jetbrains.python.pyi.PyiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class PyElementPresentation implements ColoredItemPresentation {
   private final @NotNull PyElement myElement;

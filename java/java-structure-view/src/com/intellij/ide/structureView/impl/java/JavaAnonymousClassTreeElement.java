@@ -7,7 +7,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Konstantin Bulenkov

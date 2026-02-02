@@ -1,28 +1,42 @@
 package com.intellij.database.run.ui
 
-import com.intellij.CommonBundle
 import com.intellij.database.DataGridBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.CopyProvider
 import com.intellij.ide.TextCopyProvider
 import com.intellij.openapi.MnemonicHelper
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Cursor
+import java.awt.Dimension
+import java.awt.FlowLayout
+import java.awt.Graphics
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import java.awt.font.TextAttribute
-import javax.swing.*
+import javax.swing.Box
+import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTextArea
+import javax.swing.UIManager
 
 private const val HORIZONTAL_LAYOUT_THRESHOLD = 2
 private const val VERTICAL_MARGINS = 10
@@ -285,7 +299,7 @@ class ErrorNotificationPanel private constructor(
   ) : MouseListener {
     private val originalFont = component.font
     private val underlinedFont = originalFont.deriveFont(mapOf(TextAttribute.UNDERLINE to TextAttribute.UNDERLINE_ON))
-    override fun mouseClicked(e: MouseEvent?) = onClickAction()
+    override fun mouseClicked(e: MouseEvent?) = WriteIntentReadAction.run { onClickAction() }
     override fun mousePressed(e: MouseEvent?) = Unit
     override fun mouseReleased(e: MouseEvent?) = Unit
     override fun mouseEntered(e: MouseEvent?) {

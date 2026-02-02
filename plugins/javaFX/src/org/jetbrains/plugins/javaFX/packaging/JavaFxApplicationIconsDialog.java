@@ -15,7 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.io.File;
 
 public final class JavaFxApplicationIconsDialog extends DialogWrapper {

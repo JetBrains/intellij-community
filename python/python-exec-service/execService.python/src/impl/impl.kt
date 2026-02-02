@@ -5,7 +5,13 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
-import com.intellij.python.community.execService.*
+import com.intellij.python.community.execService.Args
+import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.BinOnTarget
+import com.intellij.python.community.execService.ExecOptions
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.ZeroCodeStdoutTransformerBool
+import com.intellij.python.community.execService.ZeroCodeStdoutTransformerTyped
 import com.intellij.python.community.execService.impl.transformerToHandler
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.executePythonAdvanced

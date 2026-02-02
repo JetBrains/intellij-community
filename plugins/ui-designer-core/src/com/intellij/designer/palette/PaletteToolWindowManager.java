@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.palette;
 
-import com.intellij.designer.*;
+import com.intellij.designer.AbstractToolWindowManager;
+import com.intellij.designer.DesignerBundle;
+import com.intellij.designer.DesignerCustomizations;
+import com.intellij.designer.DesignerEditorPanelFacade;
+import com.intellij.designer.LightToolWindow;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;

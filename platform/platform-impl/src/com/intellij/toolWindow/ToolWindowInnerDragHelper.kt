@@ -2,11 +2,13 @@
 package com.intellij.toolWindow
 
 import com.intellij.ide.DataManager
-import com.intellij.idea.AppModeAssertions
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.impl.EditorWindow
+import com.intellij.openapi.ui.popup.PopupCornerType
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeGlassPaneUtil
@@ -15,6 +17,7 @@ import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createDropTargetHi
 import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createThumbnailDragImage
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.MouseDragHelper
+import com.intellij.ui.WindowRoundedCornersManager
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.Content.TEMPORARY_REMOVED_KEY
@@ -59,7 +62,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       val decorator = InternalDecoratorImpl.findTopLevelDecorator(child)
       val editorSupport = getEditorSupport(decorator)
       if (decorator != null &&
-          (canReorderTabs() || decorator.toolWindow.canSplitTabs()) &&
+          (canReorderTabs(decorator) || decorator.toolWindow.canSplitTabs()) &&
           child is ContentTabLabel &&
           (child.parent is ToolWindowContentUi.TabPanel ||
            Registry.`is`("debugger.new.tool.window.layout.dnd", false) && child.parent is SingleContentLayout.TabAdapter) &&
@@ -79,7 +82,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     return when (curLocation) {
       is DropLocation.ToolWindow -> {
         val component = curLocation.decorator
-        val canDrop = currentDropIndex != -1 && canReorderTabs() || curLocation.decorator.toolWindow.canSplitTabs()
+        val canDrop = currentDropIndex != -1 && canReorderTabs(component) || curLocation.decorator.toolWindow.canSplitTabs()
         component.contains(point.getPoint(component)) && canDrop
       }
       is DropLocation.Editor -> {
@@ -393,7 +396,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
 
     val content = myDraggingTab?.content
     curDropLocation = when {
-      decorator != null && decorator == sourceDecorator && canReorderTabs() -> {
+      decorator != null && decorator == sourceDecorator && canReorderTabs(decorator) -> {
         // Drop into the same tool window decorator - always allowed.
         DropLocation.ToolWindow(decorator)
       }
@@ -426,7 +429,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
 
   private fun highlightToolWindowDropArea(decorator: InternalDecoratorImpl, point: RelativePoint) {
     currentDropIndex = getTabIndex(point)
-    if (currentDropIndex != -1 && (canReorderTabs() || decorator.toolWindow.canSplitTabs())) {
+    if (currentDropIndex != -1 && (canReorderTabs(decorator) || decorator.toolWindow.canSplitTabs())) {
       decorator.setDropInfoIndex(currentDropIndex, dragImageView!!.size.width)
       currentDropSide = -1
       highlighter.bounds = Rectangle()
@@ -470,8 +473,11 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     else null
   }
 
-  private fun canReorderTabs(): Boolean {
-    return AppModeAssertions.isMonolith() && Registry.`is`("ide.allow.tool.window.tabs.reorder", false)
+  private fun canReorderTabs(decorator: InternalDecoratorImpl): Boolean {
+    return AppMode.isMonolith()
+           && Registry.`is`("ide.allow.tool.window.tabs.reorder", false)
+           && (Registry.`is`("ide.allow.tool.window.tabs.reorder.vcs", true)
+               || decorator.toolWindow.id !in VCS_TOOLWINDOW_IDS)
   }
 
   private sealed interface DropLocation {
@@ -500,6 +506,19 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
         }
       })
       pack()
+
+      if (WindowRoundedCornersManager.isAvailable() && InternalUICustomization.getInstance()?.isRoundedTabDuringDrag == true) {
+        WindowRoundedCornersManager.setRoundedCorners(this, PopupCornerType.RoundedWindow)
+      }
     }
+  }
+
+  companion object {
+    private val VCS_TOOLWINDOW_IDS = listOf(
+      "Commit",
+      "Version Control",
+      "Pull Requests",
+      "Merge Requests",
+    )
   }
 }

@@ -28,7 +28,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.vcs.test.UtilsKt.assertNotification;
-import static git4idea.push.GitPushNativeResult.Type.*;
+import static git4idea.push.GitPushNativeResult.Type.ERROR;
+import static git4idea.push.GitPushNativeResult.Type.FORCED_UPDATE;
+import static git4idea.push.GitPushNativeResult.Type.NEW_REF;
+import static git4idea.push.GitPushNativeResult.Type.REJECTED;
+import static git4idea.push.GitPushNativeResult.Type.SUCCESS;
+import static git4idea.push.GitPushNativeResult.Type.UP_TO_DATE;
 import static git4idea.push.GitPushRepoResult.convertFromNative;
 import static git4idea.push.GitPushResultNotification.emulateTitle;
 import static java.util.Arrays.asList;

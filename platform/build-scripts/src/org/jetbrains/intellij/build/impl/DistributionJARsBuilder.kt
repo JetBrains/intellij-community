@@ -310,6 +310,7 @@ fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout:
     if (toPublish && layouts.size == 2 && layouts.get(0).bundlingRestrictions != layouts.get(1).bundlingRestrictions) {
       layouts.retainAll { it.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE }
     }
+    layouts.retainAll { it.bundlingRestrictions.includeInDistribution != PluginDistribution.CROSS_PLATFORM_DIST_ONLY }
     for (layout in layouts) {
       check(result.add(layout)) {
         "Plugin layout for module $moduleName is already added (duplicated module name?)"
@@ -473,6 +474,10 @@ internal fun satisfiesBundlingRequirements(plugin: PluginLayout, osFamily: OsFam
     return false
   }
 
+  if (bundlingRestrictions.includeInDistribution == PluginDistribution.CROSS_PLATFORM_DIST_ONLY) {
+    return false
+  }
+
   if (context.options.useReleaseCycleRelatedBundlingRestrictionsForContentReport) {
     val isNightly = context.isNightlyBuild
     val isEap = context.applicationInfo.isEAP
@@ -481,6 +486,7 @@ internal fun satisfiesBundlingRequirements(plugin: PluginLayout, osFamily: OsFam
       PluginDistribution.ALL -> true
       PluginDistribution.NOT_FOR_RELEASE -> isNightly || isEap
       PluginDistribution.NOT_FOR_PUBLIC_BUILDS -> isNightly
+      PluginDistribution.CROSS_PLATFORM_DIST_ONLY -> false
     }
     if (!distributionCondition) {
       return false

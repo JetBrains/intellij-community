@@ -13,11 +13,11 @@ import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.StackFrame
 import com.sun.jdi.Value
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableValueDescriptorImpl
 import org.jetbrains.kotlin.idea.debugger.base.util.safeStackFrame
 import org.jetbrains.kotlin.idea.debugger.base.util.safeThreadProxy
 import org.jetbrains.kotlin.idea.debugger.base.util.wrapEvaluateException
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrameProxyImpl
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableValueDescriptorImpl
 
 class SkipCoroutineStackFrameProxyImpl(
     threadProxy: ThreadReferenceProxyImpl,

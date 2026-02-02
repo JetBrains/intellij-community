@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlin-test",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/gradle/gradle-java",
+    "//plugins/repository-search/common",
   ]
 )
 
@@ -25,6 +26,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
+    "//jps/model-api:model",
     "@lib//:kotlin-stdlib",
     "//plugins/gradle:gradle-tests_test_lib",
     "//platform/analysis-api:analysis",
@@ -36,7 +38,6 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/indexing-api:indexing",
-    "//jps/model-api:model",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
@@ -107,8 +108,8 @@ jvm_library(
     "//java/java-runtime:rt",
     "//platform/execution",
     "//plugins/junit",
-    "//plugins/repository-search",
-    "//plugins/repository-search:repository-search_test_lib",
+    "//plugins/repository-search/common",
+    "//plugins/repository-search/common:common_test_lib",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
     "//platform/util/text-matching",
     "//platform/util/text-matching:text-matching_test_lib",

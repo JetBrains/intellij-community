@@ -9,8 +9,8 @@ import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.util.ui.UIUtil;
 
 public abstract class LiveTemplateTestCase extends LightJavaCodeInsightFixtureTestCase {
   @Override
@@ -48,7 +48,7 @@ public abstract class LiveTemplateTestCase extends LightJavaCodeInsightFixtureTe
 
   public void startTemplate(Template template) {
     TemplateManager.getInstance(getProject()).startTemplate(getEditor(), template);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
   }
 
   public void startTemplate(String name, String group) {

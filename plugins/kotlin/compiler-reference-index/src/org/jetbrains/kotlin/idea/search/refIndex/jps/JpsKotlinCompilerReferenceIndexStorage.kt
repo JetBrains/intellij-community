@@ -21,8 +21,6 @@ import org.jetbrains.kotlin.incremental.storage.CollectionExternalizer
 import org.jetbrains.kotlin.name.FqName
 import java.nio.file.Path
 import java.util.concurrent.Future
-import kotlin.collections.component1
-import kotlin.collections.component2
 import kotlin.io.path.forEachDirectoryEntry
 import kotlin.io.path.isDirectory
 import kotlin.io.path.notExists

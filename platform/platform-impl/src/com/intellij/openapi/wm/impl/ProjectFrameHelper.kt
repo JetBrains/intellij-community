@@ -94,6 +94,7 @@ abstract class ProjectFrameHelper internal constructor(
 
   private val glassPane: IdeGlassPaneImpl
   private val frameHeaderHelper: ProjectFrameCustomHeaderHelper
+  private val centerComponent: JComponent
 
   @Internal
   @JvmField
@@ -113,6 +114,7 @@ abstract class ProjectFrameHelper internal constructor(
     frame.addWindowListener(WindowCloseListener)
 
     val rootPane = IdeRootPane()
+    centerComponent = createCenterComponent()
     contentPane = createContentPane()
     rootPane.contentPane = contentPane
 
@@ -222,7 +224,7 @@ abstract class ProjectFrameHelper internal constructor(
       putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, true)
     }
 
-    contentPane.add(createCenterComponent(), BorderLayout.CENTER)
+    contentPane.add(centerComponent, BorderLayout.CENTER)
     return contentPane
   }
 
@@ -299,6 +301,7 @@ abstract class ProjectFrameHelper internal constructor(
 
     fun updateStatusBarVisibility(uiSettings: UISettings = UISettings.shadowInstance) {
       statusBar.isVisible = uiSettings.showStatusBar && !uiSettings.presentationMode
+      InternalUICustomization.getInstance()?.onStatusBarVisibilityChanged(centerComponent, statusBar.isVisible)
     }
     ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(UISettingsListener.TOPIC, UISettingsListener(::updateStatusBarVisibility))
     updateStatusBarVisibility()

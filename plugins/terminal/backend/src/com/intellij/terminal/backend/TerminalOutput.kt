@@ -6,12 +6,28 @@ import com.intellij.util.asDisposable
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.block.ui.withLock
-import org.jetbrains.plugins.terminal.session.impl.*
+import org.jetbrains.plugins.terminal.session.impl.TerminalAliasesReceivedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalBeepEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCommandFinishedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCommandStartedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCompletionFinishedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalPromptFinishedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalPromptStartedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalState
+import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.toDto
 
 @OptIn(ExperimentalCoroutinesApi::class)

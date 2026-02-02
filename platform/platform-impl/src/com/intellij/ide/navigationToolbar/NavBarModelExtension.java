@@ -51,22 +51,8 @@ public interface NavBarModelExtension {
   default void uiDataSnapshot(@NotNull DataSink sink, @NotNull DataSnapshot snapshot) {
   }
 
-  /**
-   * @noinspection unused
-   * @deprecated Unused. Use {@link #uiDataSnapshot} instead
-   */
-  @Deprecated(forRemoval = true)
-  default @Nullable Object getData(@NotNull String dataId, @NotNull DataProvider provider) { return null; }
-
   /** @noinspection LambdaUnfriendlyMethodOverload*/
   default @Nullable String getPopupMenuGroup(@NotNull DataContext dataContext) { return null; }
-
-  /**
-   * @noinspection LambdaUnfriendlyMethodOverload, unused
-   * @deprecated Unused. Use {@link #uiDataSnapshot} instead
-   */
-  @Deprecated(forRemoval = true)
-  default @Nullable String getPopupMenuGroup(@NotNull DataProvider provider) { return null; }
 
   /** @noinspection LambdaUnfriendlyMethodOverload*/
   default PsiElement getLeafElement(@NotNull DataMap dataProvider) {

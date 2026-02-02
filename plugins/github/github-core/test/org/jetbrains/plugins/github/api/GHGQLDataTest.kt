@@ -17,7 +17,27 @@
 package org.jetbrains.plugins.github.api
 
 import com.apollographql.apollo.annotations.ApolloExperimental
-import com.apollographql.apollo.ast.*
+import com.apollographql.apollo.ast.GQLEnumTypeDefinition
+import com.apollographql.apollo.ast.GQLField
+import com.apollographql.apollo.ast.GQLFieldDefinition
+import com.apollographql.apollo.ast.GQLFragmentDefinition
+import com.apollographql.apollo.ast.GQLFragmentSpread
+import com.apollographql.apollo.ast.GQLInlineFragment
+import com.apollographql.apollo.ast.GQLInterfaceTypeDefinition
+import com.apollographql.apollo.ast.GQLListType
+import com.apollographql.apollo.ast.GQLNamedType
+import com.apollographql.apollo.ast.GQLNonNullType
+import com.apollographql.apollo.ast.GQLObjectTypeDefinition
+import com.apollographql.apollo.ast.GQLOperationDefinition
+import com.apollographql.apollo.ast.GQLResult
+import com.apollographql.apollo.ast.GQLSelection
+import com.apollographql.apollo.ast.GQLType
+import com.apollographql.apollo.ast.GQLTypeDefinition
+import com.apollographql.apollo.ast.GQLUnionTypeDefinition
+import com.apollographql.apollo.ast.Issue
+import com.apollographql.apollo.ast.fieldDefinitions
+import com.apollographql.apollo.ast.parseAsGQLDocument
+import com.apollographql.apollo.ast.validateAsExecutable
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.exc.InvalidNullException
 import com.fasterxml.jackson.databind.introspect.AnnotatedClass
@@ -39,7 +59,7 @@ import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.assertThrows
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import java.util.*
+import java.util.Date
 import kotlin.reflect.full.primaryConstructor
 
 typealias PluginQuery<T> = GQLQuery<T>

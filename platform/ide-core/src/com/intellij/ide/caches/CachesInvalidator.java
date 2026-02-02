@@ -40,4 +40,18 @@ public abstract class CachesInvalidator {
    * if the check-box is checked
    */
   public @Nullable Boolean optionalCheckboxDefaultValue() { return null; }
+
+  /**
+   * Controls whether this invalidator is shown in the "Invalidate Caches" dialog ({@code InvalidateCachesDialog}).
+   * This method affects only the presentation in the dialog UI and does not impact whether
+   * {@link #invalidateCaches()} is executed during the invalidation process.
+   * <p>
+   * This can be used to hide invalidators that are only relevant when a certain feature
+   * is active (e.g., at least one open project uses a specific technology).
+   * <p>
+   * The implementation should be fast and should not trigger expensive operations.
+   *
+   * @return {@code false} if the invalidator should not be shown in the dialog.
+   */
+  public boolean isVisible() { return true; }
 }

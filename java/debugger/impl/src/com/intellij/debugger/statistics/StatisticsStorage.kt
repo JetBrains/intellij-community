@@ -4,9 +4,6 @@ package com.intellij.debugger.statistics
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.SteppingAction
 import com.intellij.debugger.ui.breakpoints.Breakpoint
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.Key
 import java.util.concurrent.ConcurrentHashMap
@@ -121,48 +118,36 @@ enum class ThreadDumpStatus {
   PLATFORM_DUMP_EXTENDED_DUMP_DISABLED,
 }
 
-class ThreadDumpTriggeringExceptionValidator : CustomValidationRule() {
-  override fun getRuleId(): String {
-    return "thread.dump.triggering.exception"
-  }
+val THREAD_DUMP_TRIGGERING_EXCEPTIONS_TO_LOG = listOf(
+  "java.io.InterruptedIOException",
+  "java.lang.IllegalMonitorStateException",
+  "java.sql.SQLTransientConnectionException",
+  "java.net.SocketTimeoutException",
+  "java.util.ConcurrentModificationException",
+  "java.util.concurrent.TimeoutException",
+  "java.util.concurrent.RejectedExecutionException",
 
-  override fun doValidate(data: String, context: EventContext): ValidationResultType {
-    return if (EXCEPTIONS_TO_LOG.contains(data)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
-  }
+  // Spring
+  "org.springframework.dao.ConcurrencyFailureException",
 
-  companion object {
-    private val EXCEPTIONS_TO_LOG = hashSetOf(
-      "java.io.InterruptedIOException",
-      "java.lang.IllegalMonitorStateException",
-      "java.sql.SQLTransientConnectionException",
-      "java.net.SocketTimeoutException",
-      "java.util.ConcurrentModificationException",
-      "java.util.concurrent.TimeoutException",
-      "java.util.concurrent.RejectedExecutionException",
+  "org.springframework.dao.PessimisticLockingFailureException",
+  "org.springframework.dao.DeadlockLoserDataAccessException",
+  "org.springframework.dao.CannotSerializeTransactionException",
+  "org.springframework.dao.CannotAcquireLockException",
 
-      // Spring
-      "org.springframework.dao.ConcurrencyFailureException",
+  "org.springframework.dao.OptimisticLockingFailureException",
+  "org.springframework.orm.ObjectOptimisticLockingFailureException",
+  "org.springframework.orm.jdo.JdoOptimisticLockingFailureException",
+  "org.springframework.orm.jpa.JpaOptimisticLockingFailureException",
+  "org.springframework.orm.toplink.TopLinkOptimisticLockingFailureException",
+  "org.springframework.orm.hibernate3.HibernateOptimisticLockingFailureException",
 
-      "org.springframework.dao.PessimisticLockingFailureException",
-      "org.springframework.dao.DeadlockLoserDataAccessException",
-      "org.springframework.dao.CannotSerializeTransactionException",
-      "org.springframework.dao.CannotAcquireLockException",
+  "org.springframework.core.task.TaskRejectedException",
+  "org.springframework.transaction.TransactionTimedOutException",
+  "org.springframework.web.context.request.async.AsyncRequestTimeoutException",
 
-      "org.springframework.dao.OptimisticLockingFailureException",
-      "org.springframework.orm.ObjectOptimisticLockingFailureException",
-      "org.springframework.orm.jdo.JdoOptimisticLockingFailureException",
-      "org.springframework.orm.jpa.JpaOptimisticLockingFailureException",
-      "org.springframework.orm.toplink.TopLinkOptimisticLockingFailureException",
-      "org.springframework.orm.hibernate3.HibernateOptimisticLockingFailureException",
+  "org.hibernate.StaleObjectStateException",
 
-      "org.springframework.core.task.TaskRejectedException",
-      "org.springframework.transaction.TransactionTimedOutException",
-      "org.springframework.web.context.request.async.AsyncRequestTimeoutException",
-
-      "org.hibernate.StaleObjectStateException",
-
-      // Kotlin
-      "kotlinx.coroutines.TimeoutCancellationException",
-    )
-  }
-}
+  // Kotlin
+  "kotlinx.coroutines.TimeoutCancellationException",
+)

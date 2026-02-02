@@ -14,11 +14,13 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.util.Processor
-import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FilesDeque
 import com.intellij.util.text.matching.MatchingMode
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
@@ -112,61 +114,33 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
     // We want to send good matches first, and only send others later if didn't find enough
     val suboptimalMatches = mutableListOf<VirtualFile>()
 
-    fun processFile(file: VirtualFile, alreadyInReadAction: Boolean): Boolean {
+    val filesDeque = ReadAction.nonBlocking<FilesDeque> {
+      FilesDeque.nonIndexableDequeue(project)
+    }.executeSynchronously()
+    while (true) {
+      progressIndicator.checkCanceled()
+      val file = filesDeque.computeNext()
+      if (file == null) break
+
       val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
-      val nonIndexableRoot = runReadActionIfNeeded(alreadyInReadAction) { workspaceFileIndex.findNonIndexableFileSet(file) }?.root
+      val nonIndexableRoot = runReadAction { workspaceFileIndex.findNonIndexableFileSet(file) }?.root
       // path includes root
       val pathFromNonIndexableRoot = file.path.removePrefix(nonIndexableRoot?.parent?.path ?: "").removePrefix("/")
 
       if (!pathMatcher.matches(pathFromNonIndexableRoot)) {
-        return true // file doesn't match pattern, skip
+        continue // file doesn't match pattern, skip
       }
 
       val matchingDegree = nameMatcher.matchingDegree(file.name)
       if (matchingDegree <= 0) {
         suboptimalMatches.add(file)
-        return true // suboptimal match, process later, after "optimal" matches
+        continue // suboptimal match, process later, after "optimal" matches
       }
 
-      val psiItem = PsiManager.getInstance(project).getPsiFileSystemItem(file, alreadyInReadAction) ?: return true
+      val psiItem = PsiManager.getInstance(project).getPsiFileSystemItem(file) ?: continue
       val itemDescriptor = FoundItemDescriptor<Any>(psiItem, matchingDegree)
-      return ReadAction.nonBlocking <Boolean> { consumer.process(itemDescriptor) }.executeSynchronously()
+      if (!ReadAction.nonBlocking<Boolean> { consumer.process(itemDescriptor) }.executeSynchronously()) break
     }
-
-    val useBfs = Registry.`is`("se.enable.non.indexable.files.use.bfs")
-    val useBfsUnderOneReadAction = !Registry.`is`("se.enable.non.indexable.files.use.bfs.blocking.read.actions")
-    if (useBfs && useBfsUnderOneReadAction) {
-      // BFS under one big cancellable read action
-      val filesDeque = ReadAction.nonBlocking<FilesDeque> {
-        FilesDeque.nonIndexableDequeue(project, true)
-      }.executeSynchronously()
-      ReadAction.nonBlocking<Unit> {
-        while (true) {
-          progressIndicator.checkCanceled()
-          val file = filesDeque.computeNext()
-          if (file == null || !processFile(file, alreadyInReadAction = true)) break
-        }
-      }.executeSynchronously()
-    }
-    else if (useBfs) {
-      // BFS with many small blocking read actions
-      val filesDeque = ReadAction.nonBlocking<FilesDeque> {
-        FilesDeque.nonIndexableDequeue(project, false)
-      }.executeSynchronously()
-      while (true) {
-        progressIndicator.checkCanceled()
-        val file = filesDeque.computeNext()
-        if (file == null || !processFile(file, alreadyInReadAction = false)) break
-      }
-    }
-    else {
-      // DFS with many small blocking read actions
-      FileBasedIndex.getInstance().iterateNonIndexableFiles(project, null) { file ->
-        progressIndicator.checkCanceled()
-        processFile(file = file, alreadyInReadAction = false)
-      }
-    }
-
 
     if (suboptimalMatches.isEmpty() || namePattern.length < 2) return
 
@@ -182,12 +156,12 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
         val matcher = otherNameMatchers[i]
         val matchingDegree = matcher.matchingDegree(file.name)
         if (matchingDegree > 0) {
-          val psiItem = PsiManager.getInstance(project).getPsiFileSystemItem(file, alreadyInReadAction = false) ?: continue
+          val psiItem = PsiManager.getInstance(project).getPsiFileSystemItem(file) ?: continue
           val weight = matchingDegree * (otherNameMatchers.size - i) / (otherNameMatchers.size + 1)
           val itemDescriptor = FoundItemDescriptor<Any>(psiItem, weight)
-          if (!ReadAction.nonBlocking <Boolean> {
-            consumer.process(itemDescriptor)
-          }.executeSynchronously()) return
+          if (!ReadAction.nonBlocking<Boolean> {
+              consumer.process(itemDescriptor)
+            }.executeSynchronously()) return
           break
         }
       }
@@ -217,12 +191,9 @@ private fun WorkspaceFileIndexEx.findNonIndexableFileSet(
   file: VirtualFile,
 ): WorkspaceFileSet? = findFileSet(file, true, false, true, false, false, false)
 
-private fun PsiManager.getPsiFileSystemItem(file: VirtualFile, alreadyInReadAction: Boolean) = when {
-  file.isDirectory -> runReadActionIfNeeded(alreadyInReadAction) { findDirectory(file) }
-  else -> runReadActionIfNeeded(alreadyInReadAction) { findFile(file) }
+private fun PsiManager.getPsiFileSystemItem(file: VirtualFile): PsiFileSystemItem? = when {
+  file.isDirectory -> ReadAction.nonBlocking<PsiDirectory?> { findDirectory(file) }.executeSynchronously()
+  else -> ReadAction.nonBlocking<PsiFile?> { findFile(file) }.executeSynchronously()
 }
 
 private fun isGotoFileToNonIndexableEnabled(): Boolean = Registry.`is`("se.enable.non.indexable.files.contributor")
-
-private inline fun <T> runReadActionIfNeeded(alreadyInReadAction: Boolean, crossinline action: () -> T): T =
-  if (alreadyInReadAction) action() else runReadAction { action() }

@@ -4,13 +4,17 @@ package com.intellij.platform.util.progress.impl
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.StepState
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicInteger
 
 internal class ScalingStep(

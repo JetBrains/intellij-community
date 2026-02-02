@@ -3,14 +3,21 @@
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.usages
 
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.getAffectedCallables
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.isCaller
 import org.jetbrains.kotlin.idea.refactoring.isInsideOfCallerBody
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.createPrimaryConstructorParameterListIfAbsent
 
+@K1Deprecation
 class KotlinCallerUsage(element: KtNamedDeclaration) : KotlinUsageInfo<KtNamedDeclaration>(element) {
     override fun processUsage(changeInfo: KotlinChangeInfo, element: KtNamedDeclaration, allUsages: Array<out UsageInfo>): Boolean {
         // Do not process function twice
@@ -35,6 +42,7 @@ class KotlinCallerUsage(element: KtNamedDeclaration) : KotlinUsageInfo<KtNamedDe
     }
 }
 
+@K1Deprecation
 class KotlinCallerCallUsage(element: KtCallElement) : KotlinUsageInfo<KtCallElement>(element) {
     override fun processUsage(changeInfo: KotlinChangeInfo, element: KtCallElement, allUsages: Array<out UsageInfo>): Boolean {
         val argumentList = element.valueArgumentList ?: return true

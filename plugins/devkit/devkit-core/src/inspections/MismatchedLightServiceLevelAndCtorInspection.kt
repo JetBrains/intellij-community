@@ -2,7 +2,14 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.IntentionWrapper
-import com.intellij.lang.jvm.*
+import com.intellij.lang.jvm.DefaultJvmElementVisitor
+import com.intellij.lang.jvm.JvmAnnotation
+import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmClassKind
+import com.intellij.lang.jvm.JvmElementVisitor
+import com.intellij.lang.jvm.JvmMethod
+import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.JvmParameter
 import com.intellij.lang.jvm.actions.constantAttribute
 import com.intellij.lang.jvm.actions.createChangeAnnotationAttributeActions
 import com.intellij.lang.jvm.actions.createChangeParametersActions

@@ -6,7 +6,15 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -24,9 +32,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-import static com.intellij.psi.CommonClassNames.*;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_COMPARABLE;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTIONS;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COMPARATOR;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP_ENTRY;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_STREAM;
 import static com.intellij.util.ObjectUtils.tryCast;
-import static com.siyeh.ig.callMatcher.CallMatcher.*;
+import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
+import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
+import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
 public final class RedundantComparatorComparingInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher THEN_COMPARING_COMPARATOR = instanceCall(JAVA_UTIL_COMPARATOR, "thenComparing")

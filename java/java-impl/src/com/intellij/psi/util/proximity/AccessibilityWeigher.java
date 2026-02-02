@@ -6,7 +6,12 @@ import com.intellij.codeInsight.StaticAnalysisAnnotationManager;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.util.ProximityLocation;
 import org.jetbrains.annotations.NotNull;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.openapi.project.Project
@@ -16,7 +16,7 @@ interface NewKotlinProjectTestUtils {
     fun getTestFolderName(): String
 
     private fun getTestDataFolder(): File {
-        val testRoot = TestMetadataUtil.getTestRoot(GradleKotlinNewProjectWizardTest::class.java)
+        val testRoot = TestMetadataUtil.getTestRoot(MavenNewKotlinModuleTest::class.java)
         return File(testRoot, "$testDirectory/${getTestFolderName()}")
     }
 

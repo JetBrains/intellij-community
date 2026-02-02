@@ -91,6 +91,8 @@ open class InternalUICustomization {
 
   open val isTabOccupiesWholeHeight: Boolean = true
 
+  open val isRoundedTabDuringDrag: Boolean = false
+
   internal open fun configureToolWindowPane(toolWindowPaneParent: JComponent, buttonManager: ToolWindowButtonManager) {}
 
   /**
@@ -207,4 +209,10 @@ open class InternalUICustomization {
   open fun getTabLayoutStart(layout: ContentLayout): Int = 0
 
   open fun getSingleRowTabInsets(tabsPosition: JBTabsPosition): Insets? = null
+
+  open fun calculateTabWidth(widthWithInsets: Int, insetsWidth: Int): Int = widthWithInsets
+
+  open fun onStatusBarVisibilityChanged(centerComponent: JComponent, isStatusBarVisible: Boolean) {}
+
+  open fun getTabHOffsetUnscaled(compactMode: Boolean, position: JBTabsPosition): Int = 0
 }

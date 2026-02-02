@@ -13,7 +13,15 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.roots.libraries.Library;
@@ -31,12 +39,12 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.testFramework.JavaModuleTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.SimpleMessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
@@ -83,7 +91,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
     myModuleRootListener.reset();
 
     ModuleRootModificationUtil.addContentRoot(moduleA, vDir1.getPath());
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     myModuleRootListener.assertEventsCount(1);
     assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir1);
@@ -494,13 +502,13 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
   private void checkRootChangedOnDirCreationDeletion(VirtualFile contentRoot, String dirUrl, int mustGenerateEvents) {
     myModuleRootListener.reset();
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     VirtualFile dir = createChildDirectory(contentRoot, new File(dirUrl).getName());
     myModuleRootListener.assertEventsCount(mustGenerateEvents);
 
     myModuleRootListener.reset();
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     delete(dir);
     myModuleRootListener.assertEventsCount(mustGenerateEvents);
   }
@@ -533,13 +541,15 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
     File iParent = new File(ioRoot, "parent");
     assertTrue(iParent.mkdirs());
+    TimeoutUtil.sleep(1000); // wait for fsnotifier to pick up the change
     vRoot.refresh(true, true);
 
     TimeoutUtil.sleep(1000); // hope that now async refresh has found "parent" and is waiting for EDT to fire events
 
     File ioExcluded = new File(iParent, "excluded");
     assertTrue(ioExcluded.mkdirs());
-    UIUtil.dispatchAllInvocationEvents(); // now events are fired
+    TimeoutUtil.sleep(1000); // wait for fsnotifier to pick up the change
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // now events are fired
 
     assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioExcluded));
 

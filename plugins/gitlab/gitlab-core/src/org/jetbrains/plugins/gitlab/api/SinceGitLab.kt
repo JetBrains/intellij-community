@@ -3,7 +3,11 @@ package org.jetbrains.plugins.gitlab.api
 
 import org.jetbrains.plugins.gitlab.api.GitLabEdition.Community
 import org.jetbrains.plugins.gitlab.api.GitLabEdition.Enterprise
-import kotlin.annotation.AnnotationTarget.*
+import kotlin.annotation.AnnotationTarget.CLASS
+import kotlin.annotation.AnnotationTarget.FIELD
+import kotlin.annotation.AnnotationTarget.FUNCTION
+import kotlin.annotation.AnnotationTarget.PROPERTY
+import kotlin.annotation.AnnotationTarget.VALUE_PARAMETER
 
 /**
  * (Currently) aesthetic annotation meant to document that a DTO, its field, or a function

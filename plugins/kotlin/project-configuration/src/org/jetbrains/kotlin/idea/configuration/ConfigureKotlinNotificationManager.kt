@@ -17,7 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootMap
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.ConfigureKotlinNotification
-import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
+import org.jetbrains.kotlin.idea.statistics.KotlinProjectSetupFUSCollector
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
@@ -30,7 +30,7 @@ object ConfigureKotlinNotificationManager : KotlinSingleNotificationManager<Conf
 
         withContext(Dispatchers.EDT) {
             notificationState?.let {
-                KotlinJ2KOnboardingFUSCollector.logShowConfigureKtNotification(project)
+                KotlinProjectSetupFUSCollector.logShowConfigureKtNotification(project)
                 notify(project, ConfigureKotlinNotification(project, excludeModules, it))
             }
         }

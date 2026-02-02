@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -20,7 +20,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -95,7 +94,7 @@ public final class PluginManagerConfigurable
   }
 
   @Override
-  public @Nullable JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     PluginManagerConfigurablePanel panel = createPanelIfNeeded();
 
     try {
@@ -108,11 +107,11 @@ public final class PluginManagerConfigurable
     return panel.getComponent();
   }
 
-  private PluginManagerConfigurablePanel createPanelIfNeeded() {
+  private @NotNull PluginManagerConfigurablePanel createPanelIfNeeded() {
     return createPanelIfNeeded(null);
   }
 
-  private PluginManagerConfigurablePanel createPanelIfNeeded(@Nullable String searchQuery) {
+  private @NotNull PluginManagerConfigurablePanel createPanelIfNeeded(@Nullable String searchQuery) {
     if (myPanel == null) {
       myPanel = new PluginManagerConfigurablePanel();
       myPanel.init(searchQuery);
@@ -122,10 +121,6 @@ public final class PluginManagerConfigurable
 
   public static <T extends Component> @NotNull T setTinyFont(@NotNull T component) {
     return SystemInfo.isMac ? RelativeFont.TINY.install(component) : component;
-  }
-
-  public static int offset5() {
-    return JBUIScale.scale(5);
   }
 
   @Messages.YesNoResult

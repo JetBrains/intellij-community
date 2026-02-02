@@ -27,4 +27,37 @@ jvm_library(
     "//platform/lang-api:lang",
   ]
 )
+
+jvm_library(
+  name = "common_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  associates = [":common"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/kernel/shared:kernel",
+    "//platform/lang-impl",
+    "//platform/core-api:core",
+    "//platform/platform-impl:ide-impl",
+    "//platform/project/shared:project",
+    "//libraries/kotlinx/serialization/core",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-impl/rpc",
+    "//platform/lang-api:lang",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//libraries/kotlinx/serialization/json",
+    "@lib//:junit5",
+  ]
+)
 ### auto-generated section `build intellij.platform.completion.common` end
+
+### auto-generated section `test intellij.platform.completion.common` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "common_test",
+  runtime_deps = [":common_test_lib"]
+)
+### auto-generated section `test intellij.platform.completion.common` end

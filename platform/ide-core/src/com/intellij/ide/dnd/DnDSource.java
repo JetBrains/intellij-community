@@ -5,7 +5,8 @@ import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Image;
+import java.awt.Point;
 import java.awt.dnd.DragSourceDropEvent;
 
 /**

@@ -15,8 +15,15 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.executeOnPooledThreadInReadAction
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.MockLibraryFacility
+import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.util.slashedPath
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.idea.test.withRegistry
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.nio.file.Paths

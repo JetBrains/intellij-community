@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 
+@K1Deprecation
 abstract class GenerateMembersHandler(final override val toImplement: Boolean) :
     AbstractGenerateMembersHandler<OverrideMemberChooserObject>() {
 

@@ -3,7 +3,12 @@
 package org.jetbrains.kotlin.ide.konan
 
 import com.intellij.openapi.components.service
-import org.jetbrains.kotlin.analyzer.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
+import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.analyzer.PlatformAnalysisParameters
+import org.jetbrains.kotlin.analyzer.ResolverForModuleFactory
+import org.jetbrains.kotlin.analyzer.ResolverForProject
 import org.jetbrains.kotlin.base.fe10.analysis.decompiler.konan.CachingIdeKlibMetadataLoader
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -16,7 +21,11 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentProvider
 import org.jetbrains.kotlin.descriptors.impl.CompositePackageFragmentProvider
 import org.jetbrains.kotlin.ide.konan.analyzer.NativeResolverForModuleFactory
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NativeKlibLibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.compatibilityInfo
 import org.jetbrains.kotlin.idea.caches.resolve.BuiltInsCacheKey
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.library.KotlinLibrary
@@ -31,6 +40,7 @@ import org.jetbrains.kotlin.resolve.KlibCompilerDeserializationConfiguration
 import org.jetbrains.kotlin.resolve.TargetEnvironment
 import org.jetbrains.kotlin.storage.StorageManager
 
+@K1Deprecation
 class NativePlatformKindResolution : IdePlatformKindResolution {
     override fun createKlibPackageFragmentProvider(
         moduleInfo: ModuleInfo,

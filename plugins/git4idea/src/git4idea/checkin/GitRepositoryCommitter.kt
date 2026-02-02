@@ -25,7 +25,7 @@ import git4idea.commit.signing.GpgAgentConfigurationNotificator
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import java.io.File
-import java.util.*
+import java.util.Date
 
 data class GitCommitOptions(
   val isAmend: Boolean = false,

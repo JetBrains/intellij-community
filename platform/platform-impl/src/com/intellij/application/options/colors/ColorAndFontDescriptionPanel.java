@@ -60,6 +60,7 @@ public final class ColorAndFontDescriptionPanel extends JPanel implements Option
     map.put(ApplicationBundle.message("combobox.effect.bordered"), EffectType.BOXED);
     map.put(ApplicationBundle.message("combobox.effect.strikeout"), EffectType.STRIKEOUT);
     map.put(ApplicationBundle.message("combobox.effect.bold.dottedline"), EffectType.BOLD_DOTTED_LINE);
+    map.put(ApplicationBundle.message("combobox.effect.faded"), EffectType.FADED);
     myEffectsMap = Collections.unmodifiableMap(map);
   }
   private JComboBox<String> myEffectsCombo;

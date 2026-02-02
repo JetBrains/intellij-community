@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.terminal.block.session
 
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 /**
  * @see ShellCommandExecutionManagerImpl

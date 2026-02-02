@@ -16,10 +16,10 @@ import com.intellij.ui.PanelWithAnchor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle;
-import org.jetbrains.kotlin.idea.runConfigurations.jvm.script.KotlinStandaloneScriptRunConfiguration;
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor<KotlinStandaloneScriptRunConfiguration> implements PanelWithAnchor {
     private JPanel mainPanel;

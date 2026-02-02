@@ -4,9 +4,6 @@ package org.jetbrains.kotlin.idea.core.script.k2.highlighting
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.findPsiFile
-import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinScriptEditorListener : FileEditorManagerListener {
     override fun fileOpened(source: FileEditorManager, file: VirtualFile) {

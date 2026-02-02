@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus
 
@@ -43,7 +42,6 @@ interface JpsGlobalModelSynchronizer {
   }
 
   companion object {
-    @RequiresBlockingContext
     fun getInstance(): JpsGlobalModelSynchronizer = service()
   }
 }

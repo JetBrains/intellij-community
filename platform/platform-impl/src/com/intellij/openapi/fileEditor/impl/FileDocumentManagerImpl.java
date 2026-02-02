@@ -237,7 +237,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       saveDocumentsOnEdt(isExplicit, filter);
     }
     else {
-      runWithBackgroundWriteActionAllowed(() -> doSave(null, isExplicit, filter));
+      doSave(null, isExplicit, filter);
     }
   }
 
@@ -260,15 +260,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     finally {
       myProgress.popState();
     }
-  }
-
-  @RequiresBackgroundThread
-  private static void runWithBackgroundWriteActionAllowed(Runnable runnable) {
-    ThreadContext.installThreadContext(
-      ThreadContext.currentThreadContext().plus(InternalThreading.RunInBackgroundWriteActionMarker.INSTANCE), true, () -> {
-        runnable.run();
-        return Unit.INSTANCE;
-      });
   }
 
   private void doSave(@Nullable PotemkinProgress myProgress, boolean isExplicit, @Nullable Predicate<? super Document> filter) {
@@ -326,9 +317,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       saveDocumentInWriteSafeEnvironment(document, explicit);
     }
     else {
-      runWithBackgroundWriteActionAllowed(() -> {
-        saveDocumentInWriteSafeEnvironment(document, explicit);
-      });
+      saveDocumentInWriteSafeEnvironment(document, explicit);
     }
   }
 

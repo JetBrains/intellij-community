@@ -10,9 +10,11 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 
 // Allow searching java classes in jars in script dependencies, this is needed for stuff like completion and autoimport
+@K1Deprecation
 class JavaClassesInScriptDependenciesShortNameCache(private val project: Project) : PsiShortNamesCache() {
     override fun getAllClassNames() = emptyArray<String>()
 

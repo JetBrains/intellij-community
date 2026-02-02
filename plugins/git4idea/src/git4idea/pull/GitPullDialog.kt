@@ -1,11 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.pull
 
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.dvcs.DvcsUtil.sortRepositories
 import com.intellij.ide.actions.RefreshAction
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.service
 import com.intellij.openapi.keymap.KeymapUtil
@@ -37,7 +41,11 @@ import git4idea.i18n.GitBundle
 import git4idea.merge.GIT_REF_PROTOTYPE_VALUE
 import git4idea.merge.createRepositoryField
 import git4idea.merge.createSouthPanelWithOptionsDropDown
-import git4idea.merge.dialog.*
+import git4idea.merge.dialog.CmdLabel
+import git4idea.merge.dialog.FlatComboBoxUI
+import git4idea.merge.dialog.GitOptionsPanel
+import git4idea.merge.dialog.GitOptionsPopupBuilder
+import git4idea.merge.dialog.OptionInfo
 import git4idea.merge.validateBranchExists
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
@@ -167,7 +175,7 @@ class GitPullDialog(private val project: Project,
 
   private fun validateBranchField() = validateBranchExists(branchField, GitBundle.message("pull.branch.not.selected.error"))
 
-  private fun getSelectedRepository(): GitRepository? = repositoryField.item
+  fun getSelectedRepository(): GitRepository? = repositoryField.item
 
   private fun updateRemotesField() {
     val repository = getSelectedRepository()

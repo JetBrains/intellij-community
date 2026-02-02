@@ -7,8 +7,8 @@ import com.intellij.util.JBHiDPIScaledImage;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Image;
 import java.awt.image.BaseMultiResolutionImage;
 import java.awt.image.MultiResolutionImage;
 import java.util.Objects;

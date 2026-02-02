@@ -8,7 +8,12 @@ import com.intellij.util.io.delete
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.createDirectory
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.walk
 
 /**
  * Saves FUS logs of the action that will be passed in [invokeRememberingLogs] to [finalStorageDir].

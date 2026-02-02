@@ -12,7 +12,7 @@ import java.net.ConnectException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.rmi.ServerException
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
 import kotlin.time.Duration

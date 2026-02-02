@@ -17,7 +17,7 @@ package com.intellij.execution.util;
 
 import com.intellij.ui.components.JBTextField;
 
-import javax.swing.*;
+import javax.swing.DefaultCellEditor;
 import javax.swing.text.Document;
 
 public class StringWithNewLinesCellEditor extends DefaultCellEditor {

@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.async
 
+import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.isCancellation
 import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
@@ -160,50 +162,6 @@ object CompletableFutureUtil {
       }
       @Suppress("UNCHECKED_CAST")
       result as T
-    }
-
-  /**
-   * Handle the cancellation on EDT
-   *
-   * @see [CompletableFuture.exceptionally]
-   * @param handler invoked when computation throws an exception which IS [isCancellation]
-   */
-  @ApiStatus.Internal
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Deprecated with migration to coroutines")
-  fun <T> CompletableFuture<T>.cancellationOnEdt(modalityState: ModalityState? = null,
-                                                 handler: (ProcessCanceledException) -> Unit): CompletableFuture<T> =
-    handleOnEdt(modalityState) { result, error ->
-      if (error != null) {
-        val actualError = extractError(error)
-        if (isCancellation(actualError)) handler(ProcessCanceledException())
-        throw actualError
-      }
-      @Suppress("UNCHECKED_CAST")
-      result as T
-    }
-
-  /**
-   * Handled the completion of async computation on EDT
-   *
-   * @see [CompletableFuture.whenComplete]
-   * @param handler invoked when computation completes successfully or throws an exception which IS NOT [isCancellation]
-   */
-  @ApiStatus.Internal
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Deprecated with migration to coroutines")
-  fun <T> CompletableFuture<T>.completionOnEdt(modalityState: ModalityState? = null,
-                                               handler: () -> Unit): CompletableFuture<T> =
-    handleOnEdt(modalityState) { result, error ->
-      @Suppress("UNCHECKED_CAST")
-      if (error != null) {
-        if (!isCancellation(error)) handler()
-        throw extractError(error)
-      }
-      else {
-        handler()
-        result as T
-      }
     }
 
   private fun getEDTExecutor(modalityState: ModalityState? = null) = Executor { runnable -> runInEdt(modalityState) { runnable.run() } }

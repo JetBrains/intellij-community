@@ -15,7 +15,7 @@ import com.intellij.util.ui.CalendarView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -23,7 +23,9 @@ import java.util.Date;
 import java.util.EventObject;
 import java.util.Objects;
 
-import static com.intellij.database.extractors.FormatterCreator.*;
+import static com.intellij.database.extractors.FormatterCreator.getDateKey;
+import static com.intellij.database.extractors.FormatterCreator.getTimeKey;
+import static com.intellij.database.extractors.FormatterCreator.getTimestampKey;
 
 public class DefaultTimestampEditorFactory extends DefaultTemporalEditorFactory {
   private final CalendarView.Mode myCalendarMode;

@@ -28,7 +28,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.dsl.DescriptorsKt.*;
+import static org.jetbrains.plugins.groovy.dsl.DescriptorsKt.parseClosure;
+import static org.jetbrains.plugins.groovy.dsl.DescriptorsKt.parseMethod;
+import static org.jetbrains.plugins.groovy.dsl.DescriptorsKt.parseNamedParameter;
+import static org.jetbrains.plugins.groovy.dsl.DescriptorsKt.parseVariable;
 
 public class CustomMembersGenerator extends GroovyObjectSupport implements GdslMembersHolderConsumer {
   private static final GdslMembersProvider[] PROVIDERS = GdslMembersProvider.EP_NAME.getExtensions();

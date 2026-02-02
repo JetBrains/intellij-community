@@ -613,7 +613,6 @@ c:com.intellij.ide.util.treeView.FileNameComparator
 - s:getInstance():java.util.Comparator
 f:com.intellij.ide.util.treeView.IndexComparator
 - java.util.Comparator
-- sf:INSTANCE:com.intellij.ide.util.treeView.IndexComparator
 - compare(com.intellij.ide.util.treeView.NodeDescriptor,com.intellij.ide.util.treeView.NodeDescriptor):I
 - s:getInstance():com.intellij.ide.util.treeView.IndexComparator
 com.intellij.ide.util.treeView.InplaceCommentAppender
@@ -1488,7 +1487,6 @@ com.intellij.openapi.editor.EditorSettings
 - a:isAdditionalPageAtBottom():Z
 - a:isAllSoftWrapsShown():Z
 - a:isAllowSingleLogicalLineFolding():Z
-- a:isAnimatedCaret():Z
 - a:isAnimatedScrolling():Z
 - a:isAutoCodeFoldingEnabled():Z
 - a:isBlinkCaret():Z
@@ -2249,7 +2247,6 @@ com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 com.intellij.openapi.editor.markup.GutterDraggableObject
 - sf:flavor:java.awt.datatransfer.DataFlavor
 - a:copy(I,com.intellij.openapi.vfs.VirtualFile,I):Z
-- getCursor(I,I):java.awt.Cursor
 - getCursor(I,com.intellij.openapi.vfs.VirtualFile,I):java.awt.Cursor
 - s:getFlavors():java.awt.datatransfer.DataFlavor[]
 - remove():V

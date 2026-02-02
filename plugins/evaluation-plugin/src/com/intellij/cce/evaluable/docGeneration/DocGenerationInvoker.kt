@@ -1,6 +1,10 @@
 package com.intellij.cce.evaluable.docGeneration
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.DocumentationProperties
+import com.intellij.cce.core.Language
+import com.intellij.cce.core.Lookup
+import com.intellij.cce.core.Session
+import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.evaluable.common.getEditorSafe
 import com.intellij.cce.evaluation.SuggestionsProvider
 import com.intellij.cce.interpreter.FeatureInvoker

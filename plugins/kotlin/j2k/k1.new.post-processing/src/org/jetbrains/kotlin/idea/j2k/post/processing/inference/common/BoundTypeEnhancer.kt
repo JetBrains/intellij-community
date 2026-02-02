@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.common
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 abstract class BoundTypeEnhancer {
     abstract fun enhance(
         expression: KtExpression,

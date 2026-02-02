@@ -3,7 +3,11 @@ package com.intellij.platform.vcs.impl.shared.rhizome
 
 import com.intellij.platform.kernel.EntityTypeProvider
 import com.intellij.platform.project.ProjectEntity
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.EntityType
+import com.jetbrains.rhizomedb.Mixin
+import com.jetbrains.rhizomedb.RefFlags
 import com.jetbrains.rhizomedb.get
 import fleet.kernel.DurableEntityType
 import kotlinx.serialization.Serializable

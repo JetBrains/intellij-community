@@ -30,7 +30,13 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.branch.GitBranchUtil
-import git4idea.config.*
+import git4idea.config.GitConfigUtil
+import git4idea.config.GitExecutableManager
+import git4idea.config.GitSaveChangesPolicy
+import git4idea.config.GitVcsApplicationSettings
+import git4idea.config.GitVcsSettings
+import git4idea.config.GitVersion
+import git4idea.config.UpdateMethod
 import git4idea.index.getStatus
 import git4idea.repo.GitCommitTemplateTracker
 import git4idea.repo.GitRemote

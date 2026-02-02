@@ -5,7 +5,15 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -21,7 +29,16 @@ import java.util.function.Predicate;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
-import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.GET_CONSTRUCTOR;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.GET_DECLARED_CONSTRUCTOR;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.GET_DECLARED_METHOD;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.GET_METHOD;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.NEW_INSTANCE;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveType;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.findDefinition;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getReflectiveType;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getVarargs;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.isCallToMethod;
 
 public final class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalInspectionTool {
 

@@ -3,7 +3,14 @@ package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiContinueStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiLabeledStatement;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 

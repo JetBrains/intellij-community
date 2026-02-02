@@ -6,12 +6,12 @@ import com.intellij.codeInspection.util.InspectionMessage
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.idea.codeinsight.utils.RangeKtExpressionType
-import org.jetbrains.kotlin.idea.codeinsight.utils.getRangeBinaryExpressionType
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractRangeInspection.ContextWrapper
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.RangeKtExpressionType
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.getRangeBinaryExpressionType
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression

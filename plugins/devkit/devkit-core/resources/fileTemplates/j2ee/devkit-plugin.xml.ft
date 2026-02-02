@@ -82,4 +82,9 @@
                     icon="AllIcons.Toolwindows.ToolWindowPalette"/>
 #end
     </extensions>
+#if ($context.hasLibrary("kotlin"))
+    <extensions defaultExtensionNs="org.jetbrains.kotlin">
+        <supportsKotlinPluginMode supportsK2="true" />
+    </extensions>
+#end
 </idea-plugin>

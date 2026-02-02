@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.util.graph.sortTopologically
  * Tests:
  * [org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated.ReorderParameters]
  */
+@K1Deprecation
 class ReorderParametersFix(
     element: KtNamedFunction,
     private val newParametersOrder: List<String>,

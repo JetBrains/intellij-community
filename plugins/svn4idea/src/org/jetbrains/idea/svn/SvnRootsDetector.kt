@@ -8,7 +8,9 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.idea.svn.SvnUtil.*
+import org.jetbrains.idea.svn.SvnUtil.getRepositoryRoot
+import org.jetbrains.idea.svn.SvnUtil.getStatus
+import org.jetbrains.idea.svn.SvnUtil.isAncestor
 import org.jetbrains.idea.svn.api.Url
 import java.io.File
 

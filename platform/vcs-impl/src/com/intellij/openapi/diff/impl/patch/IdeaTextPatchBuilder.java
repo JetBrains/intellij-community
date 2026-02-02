@@ -10,7 +10,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.BinaryContentRevision;
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListChange;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.ex.PartialCommitHelper;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
@@ -102,19 +108,6 @@ public final class IdeaTextPatchBuilder {
       }
     }
     return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch);
-  }
-
-  /**
-   * @deprecated Use {@link #buildPatch}
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull List<FilePatch> buildPatch(@Nullable Project project,
-                                                    @NotNull Collection<? extends Change> changes,
-                                                    @NotNull Path basePath,
-                                                    boolean reversePatch,
-                                                    boolean honorExcludedFromCommit,
-                                                    @Nullable Runnable ignoredParameter) throws VcsException {
-    return buildPatch(project, changes, basePath, reversePatch, honorExcludedFromCommit);
   }
 
   private static @Nullable AirContentRevision convertRevision(@Nullable ContentRevision cr) {

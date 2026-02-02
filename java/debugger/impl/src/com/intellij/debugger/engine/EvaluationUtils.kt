@@ -4,9 +4,18 @@ package com.intellij.debugger.engine
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
+import com.intellij.debugger.impl.instanceOf
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties
+import com.intellij.xdebugger.impl.breakpoints.BreakpointState
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import com.sun.jdi.ObjectReference
 import com.sun.jdi.event.LocatableEvent
 import com.sun.jdi.request.EventRequest
 import kotlinx.coroutines.CompletableDeferred
@@ -14,6 +23,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.completeWith
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
 import kotlin.time.Duration
 
 /**
@@ -23,7 +33,8 @@ import kotlin.time.Duration
  * Throws [kotlinx.coroutines.TimeoutCancellationException] if fails to get proper context in the given amount of [timeToSuspend].
  */
 @ApiStatus.Experimental
-internal suspend fun <R> suspendAllAndEvaluate(
+@ApiStatus.Internal
+suspend fun <R> suspendAllAndEvaluate(
   context: DebuggerContextImpl,
   timeToSuspend: Duration,
   action: suspend (SuspendContextImpl) -> R,
@@ -134,4 +145,53 @@ private suspend fun <R> tryToBreakOnAnyMethodAndEvaluate(
   }
 
   return actionResult.await()
+}
+
+@ApiStatus.Internal
+fun <Self : XBreakpoint<P>, P : XBreakpointProperties<*>, S : BreakpointState> shouldInstrumentBreakpoint(xB: XBreakpointBase<Self, P, S>): Boolean {
+  if (!XBreakpointUtil.isBreakpointInstrumentationSwitchedOn()) {
+    return false
+  }
+  if (xB.isLogMessage || xB.isLogStack) return false
+  val properties = xB.properties
+  if (properties !is JavaLineBreakpointProperties) return false
+
+  // Do not use instrumentation for non-standard breakpoints: any filters will back up to the old behavior
+  if (JavaLineBreakpointProperties() != properties) return false
+
+  val isLoggingBp = xB.logExpressionObject != null && xB.suspendPolicy == SuspendPolicy.NONE
+  val isConditionalBp = xB.conditionExpression != null && xB.isConditionEnabled
+  return (isLoggingBp || isConditionalBp) && !(isLoggingBp && isConditionalBp)
+}
+
+@ApiStatus.Internal
+enum class ClientEvaluationExceptionType {
+  USER_EXCEPTION,
+  MISCOMPILED,
+  ERROR_DURING_PARSING_EXCEPTION
+}
+
+@ApiStatus.Internal
+fun extractTypeFromClientException(exceptionFromCodeFragment: ObjectReference, hasCast: Boolean): ClientEvaluationExceptionType {
+  try {
+    val type = exceptionFromCodeFragment.type()
+    if (type.signature().equals("Ljava/lang/IllegalArgumentException;")) {
+      if (DebuggerUtils.tryExtractExceptionMessage(exceptionFromCodeFragment) == "argument type mismatch") {
+        return ClientEvaluationExceptionType.MISCOMPILED
+      }
+    }
+    if (type.signature().startsWith("Ljava/lang/invoke/")
+        || type.instanceOf("java.lang.ReflectiveOperationException")
+        || type.instanceOf("java.lang.LinkageError")
+    ) {
+      return ClientEvaluationExceptionType.MISCOMPILED
+    }
+    if (type.instanceOf("java.lang.ClassCastException")) {
+      return if (hasCast) ClientEvaluationExceptionType.USER_EXCEPTION else ClientEvaluationExceptionType.MISCOMPILED
+    }
+    return ClientEvaluationExceptionType.USER_EXCEPTION
+  } catch (e: Throwable) {
+    logger<DebugProcessImpl>().error("Can't extract error type from InvocationException", e)
+    return ClientEvaluationExceptionType.ERROR_DURING_PARSING_EXCEPTION
+  }
 }

@@ -7,7 +7,10 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.io.Reader
-import java.util.*
+import java.util.Collections
+import java.util.Enumeration
+import java.util.Properties
+import java.util.ResourceBundle
 
 @ApiStatus.Internal
 class IntelliJResourceBundle internal constructor(reader: Reader) : ResourceBundle() {

@@ -12,8 +12,8 @@ import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.ReturnKeywordHandler.isReturnAtHighlyLikelyPosition
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinCallableLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.factories.OperatorNameLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject
+import org.jetbrains.kotlin.idea.completion.lookups.factories.OperatorNameLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.factories.PackagePartLookupObject
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty

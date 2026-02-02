@@ -13,8 +13,10 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.AdjustComponentWhenShown;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
 import java.util.List;
 
 public class ChangesBrowserDialog extends DialogWrapper {

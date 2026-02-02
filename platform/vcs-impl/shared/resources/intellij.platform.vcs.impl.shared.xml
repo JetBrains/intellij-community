@@ -35,8 +35,11 @@
 
     <projectCustomDataSynchronizer implementation="com.intellij.platform.vcs.impl.shared.ProjectBasePathSynchronizer"/>
 
-    <registryKey key="vcs.rd.local.changes.enabled" defaultValue="false" restartRequired="true"
-                 description="RD-friendly local changes view"/>
+    <registryKey key="vcs.rd.local.changes.forced.mode"
+                 defaultValue=""
+                 restartRequired="true"
+                 description="Overrides default value ('true' in RemDev mode, 'false' otherwise) for enabling RemDev-native view for local changes.
+                 Note that in RemDev mode this setting should be set for both client and backend."/>
 
     <projectService serviceInterface="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings"
                     serviceImplementation="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettingsImpl"/>

@@ -5,8 +5,8 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 import static com.intellij.database.csv.CsvFormatEditor.CSV_FORMAT_EDITOR_KEY;
 

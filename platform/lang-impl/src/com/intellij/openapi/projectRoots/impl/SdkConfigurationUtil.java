@@ -62,7 +62,14 @@ public final class SdkConfigurationUtil {
     }
 
     FileChooserDescriptor descriptor = createCompositeDescriptor(sdkTypes);
-    VirtualFile suggestedDir = getSuggestedSdkRoot(sdkTypes[0]);
+    VirtualFile suggestedDir;
+
+    if (project != null && project.getProjectFilePath() != null) {
+      suggestedDir = getSuggestedSdkRoot(sdkTypes[0], Path.of(project.getProjectFilePath()));
+    }
+    else {
+      suggestedDir = getSuggestedSdkRoot(sdkTypes[0]);
+    }
     FileChooser.chooseFiles(descriptor, project, suggestedDir, new FileChooser.FileChooserConsumer() {
       @Override
       public void consume(List<VirtualFile> selectedFiles) {

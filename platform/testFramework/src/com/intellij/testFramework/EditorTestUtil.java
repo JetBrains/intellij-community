@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
@@ -35,7 +34,6 @@ import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManage
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
-import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -45,15 +43,15 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.testFramework.common.EditorCaretTestUtil;
-import com.intellij.testFramework.common.EditorCaretTestUtil.CaretInfo;
-import com.intellij.testFramework.common.EditorCaretTestUtil.CaretAndSelectionState;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.testFramework.common.EditorCaretTestUtil;
+import com.intellij.testFramework.common.EditorCaretTestUtil.CaretAndSelectionState;
+import com.intellij.testFramework.common.EditorCaretTestUtil.CaretInfo;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
@@ -72,7 +70,6 @@ import java.awt.geom.Rectangle2D;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.application.ActionsKt.invokeAndWaitIfNeeded;
@@ -674,7 +671,7 @@ public final class EditorTestUtil {
     UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(project);
     undoManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
       @Override
-      public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
+      public FileEditor getCurrentEditor(@Nullable Project project) {
         return fileEditor;
       }
     });
@@ -883,28 +880,26 @@ public final class EditorTestUtil {
       }
     }
   }
-
   public static void buildInitialFoldingsInBackground(@NotNull Editor editor) {
     ThreadingAssertions.assertEventDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
-    CodeFoldingState foldingState = PlatformTestUtil.waitForFuture(ReadAction.nonBlocking(() -> {
-        Project project = editor.getProject();
-        if (project == null || editor.isDisposed()) {
-          return null;
-        }
-        if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) {
-          return null;
-        }
-        Document document = editor.getDocument();
-        PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-        if (psiFile == null || !supportsDumbModeFolding(psiFile)) {
-          return null;
-        }
-        return CodeFoldingManager.getInstance(project).buildInitialFoldings(document);
-      })
-                                                                     .submit(AppExecutorUtil.getAppExecutorService()));
+    Runnable foldingState = PlatformTestUtil.waitForFuture(ReadAction.nonBlocking(() -> {
+      Project project = editor.getProject();
+      if (project == null || editor.isDisposed()) {
+        return null;
+      }
+      if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) {
+        return null;
+      }
+      Document document = editor.getDocument();
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (psiFile == null || !supportsDumbModeFolding(psiFile)) {
+        return null;
+      }
+      return CodeFoldingManager.getInstance(project).updateFoldRegionsAsync(editor, true);
+    }).submit(AppExecutorUtil.getAppExecutorService()));
     if (foldingState != null) {
-      foldingState.setToEditor(editor);
+      foldingState.run();
     }
   }
   private static boolean supportsDumbModeFolding(@NotNull PsiFile file) {

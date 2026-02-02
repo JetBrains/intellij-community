@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.completion
 
+import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer
+import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerTestImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.eel.provider.LocalEelDescriptor
@@ -8,8 +10,6 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.scripting.k2.K2GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.service.cache.GradleLocalRepositoryIndexer
-import org.jetbrains.plugins.gradle.service.cache.GradleLocalRepositoryIndexerTestImpl
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.junit.jupiter.params.ParameterizedTest
 

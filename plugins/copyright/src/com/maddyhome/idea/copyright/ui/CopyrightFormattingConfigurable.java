@@ -14,7 +14,7 @@ import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;

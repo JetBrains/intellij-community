@@ -6,7 +6,13 @@ package org.jetbrains.uast
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiParameter
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.SmartList
 import one.util.streamex.StreamEx

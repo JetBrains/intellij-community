@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.PluginUtil
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
@@ -108,7 +107,7 @@ class DialogAppender : Handler() {
   private fun findPlugin(throwable: Throwable): IdeaPluginDescriptor? {
     val plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(throwable))
     if (plugin != null && !plugin.isBundled && !pluginUpdateScheduled.getAndSet(true) && UpdateSettings.getInstance().isPluginsCheckNeeded) {
-      service<UpdateCheckerFacade>().updateAndShowResult()
+      UpdateCheckerFacade.getInstance().updateAndShowResult()
     }
     return plugin
   }

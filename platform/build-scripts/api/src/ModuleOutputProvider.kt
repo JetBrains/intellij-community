@@ -6,6 +6,8 @@ import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 
 interface ModuleOutputProvider {
+  val useTestCompilationOutput: Boolean
+
   fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean = false): ByteArray?
 
   fun findModule(name: String): JpsModule?

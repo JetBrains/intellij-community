@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.contextModality
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
@@ -13,13 +12,12 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.application
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
-import kotlin.time.DurationUnit.SECONDS
-import kotlin.time.toDuration
 
 object DumbModeTestUtils {
   private val projectsWithEternalDumbTask = ConcurrentHashMap<Project, MutableSet<EternalTaskShutdownToken>>()
@@ -74,17 +72,18 @@ object DumbModeTestUtils {
   fun startEternalDumbModeTask(project: Project): EternalTaskShutdownToken {
     val finishDumbTask = CompletableDeferred<Boolean>()
     try {
-      runModalIfEdt(project) {
-        val dumbTaskStarted = CompletableDeferred<Boolean>()
-        val context = coroutineContext.contextModality()?.asContextElement()?.let { it + Job() } ?: Job()
-        CoroutineScope(context).launch {
-          DumbService.getInstance(project).runInDumbMode {
-            dumbTaskStarted.complete(true)
-            finishDumbTask.await()
-          }
+      val dumbTaskStarted = CompletableDeferred<Boolean>()
+      GlobalScope.launch(currentThreadContext().minusKey(Job.Key), start = CoroutineStart.UNDISPATCHED) {
+        DumbService.getInstance(project).runInDumbMode {
+          dumbTaskStarted.complete(true)
+          finishDumbTask.await()
         }
-        withTimeout(10.toDuration(SECONDS)) {
-          dumbTaskStarted.await()
+      }
+      if (EDT.isCurrentThreadEdt() && !dumbTaskStarted.isCompleted) {
+        PlatformTestUtil.waitWithEventsDispatching("Dumb task didn't start", { dumbTaskStarted.isCompleted }, 10)
+      } else {
+        while (!dumbTaskStarted.isCompleted) {
+          Thread.sleep(1)
         }
       }
       assertTrue("Dumb mode didn't start", DumbService.isDumb(project))

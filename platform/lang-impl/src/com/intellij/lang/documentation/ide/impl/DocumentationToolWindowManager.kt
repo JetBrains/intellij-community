@@ -6,7 +6,11 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.gotoByName.ChooseByNameBase
 import com.intellij.ide.util.propComponentProperty
-import com.intellij.lang.documentation.ide.actions.*
+import com.intellij.lang.documentation.ide.actions.AdjustFontSizeAction
+import com.intellij.lang.documentation.ide.actions.TOGGLE_AUTO_SHOW_ACTION_ID
+import com.intellij.lang.documentation.ide.actions.TOGGLE_AUTO_UPDATE_ACTION_ID
+import com.intellij.lang.documentation.ide.actions.TOGGLE_SHOW_IN_POPUP_ACTION_ID
+import com.intellij.lang.documentation.ide.actions.navigationActions
 import com.intellij.lang.documentation.ide.ui.DocumentationToolWindowUI
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.isReusable

@@ -5,11 +5,13 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.intellij.bazelEnvironment.BazelLabel
+import org.jetbrains.intellij.bazelEnvironment.BazelRunfiles
+import org.jetbrains.intellij.build.BuildOptions.Companion.USE_TEST_COMPILATION_OUTPUT_DEFAULT_VALUE
+import org.jetbrains.intellij.build.BuildOptions.Companion.USE_TEST_COMPILATION_OUTPUT_PROPERTY
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
-import org.jetbrains.intellij.bazelEnvironment.BazelLabel
-import org.jetbrains.intellij.bazelEnvironment.BazelRunfiles
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import java.nio.file.Files
@@ -21,6 +23,7 @@ internal class BazelModuleOutputProvider(
   private val projectHome: Path,
   val bazelOutputRoot: Path,
   scope: CoroutineScope?,
+  override val useTestCompilationOutput: Boolean,
 ) : ModuleOutputProvider {
   private val nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
 
@@ -118,6 +121,15 @@ internal class BazelModuleOutputProvider(
 
   private fun getModuleOutputRootsImpl(module: JpsModule, forTests: Boolean): List<Path> {
     val moduleDescription = bazelTargetsMap.modules[module.name] ?: error("Cannot find module '${module.name}' in the project")
+
+    if (forTests && !useTestCompilationOutput) {
+      error(
+        "Cannot find test sources for module '${module.name}' because 'useTestSourceEnabled' is false.\n" +
+        "System property '${USE_TEST_COMPILATION_OUTPUT_PROPERTY}' value: ${System.getProperty(USE_TEST_COMPILATION_OUTPUT_PROPERTY)}, " +
+        "BazelModuleOutputProvider.useTestCompilationOutput (from BuildOptions.useTestCompilationOutput) value: $useTestCompilationOutput, " +
+        "default value: $USE_TEST_COMPILATION_OUTPUT_DEFAULT_VALUE"
+      )
+    }
 
     return if (BazelRunfiles.isRunningFromBazel) {
       val targets = if (forTests) moduleDescription.testTargets else moduleDescription.productionTargets

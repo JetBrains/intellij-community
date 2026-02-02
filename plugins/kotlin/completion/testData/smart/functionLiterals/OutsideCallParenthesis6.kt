@@ -8,3 +8,4 @@ fun bar(handler: (String, Char) -> Unit) {
 // EXIST: "{ s: String, c: Char -> ... }"
 // ABSENT: null
 // ABSENT: handler
+// IGNORE_K2

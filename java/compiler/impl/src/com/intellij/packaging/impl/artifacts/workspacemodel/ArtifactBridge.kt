@@ -1,14 +1,24 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
-import com.intellij.java.workspace.entities.*
+import com.intellij.java.workspace.entities.ArchivePackagingElementEntity
+import com.intellij.java.workspace.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.ArtifactId
+import com.intellij.java.workspace.entities.ArtifactPropertiesEntity
+import com.intellij.java.workspace.entities.CompositePackagingElementEntity
+import com.intellij.java.workspace.entities.modifyArtifactEntity
+import com.intellij.java.workspace.entities.modifyArtifactPropertiesEntity
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.packaging.artifacts.*
+import com.intellij.packaging.artifacts.ArtifactListener
+import com.intellij.packaging.artifacts.ArtifactProperties
+import com.intellij.packaging.artifacts.ArtifactPropertiesProvider
+import com.intellij.packaging.artifacts.ArtifactType
+import com.intellij.packaging.artifacts.ModifiableArtifact
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.impl.artifacts.InvalidArtifactType
@@ -23,10 +33,14 @@ import com.intellij.platform.diagnostic.telemetry.Compiler
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.ide.toExternalSource
 import io.opentelemetry.api.metrics.Meter

@@ -18,7 +18,10 @@ package org.jetbrains.jps.model.java;
 import java.util.Arrays;
 import java.util.EnumSet;
 
-import static org.jetbrains.jps.model.java.JpsJavaClasspathKind.*;
+import static org.jetbrains.jps.model.java.JpsJavaClasspathKind.PRODUCTION_COMPILE;
+import static org.jetbrains.jps.model.java.JpsJavaClasspathKind.PRODUCTION_RUNTIME;
+import static org.jetbrains.jps.model.java.JpsJavaClasspathKind.TEST_COMPILE;
+import static org.jetbrains.jps.model.java.JpsJavaClasspathKind.TEST_RUNTIME;
 
 public enum JpsJavaDependencyScope {
   COMPILE(PRODUCTION_COMPILE, PRODUCTION_RUNTIME, TEST_COMPILE, TEST_RUNTIME),

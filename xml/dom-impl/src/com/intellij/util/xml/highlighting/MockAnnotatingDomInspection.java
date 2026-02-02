@@ -3,8 +3,8 @@ package com.intellij.util.xml.highlighting;
 
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("InspectionDescriptionNotFoundInspection")
 public final class MockAnnotatingDomInspection<T extends DomElement> extends BasicDomElementsInspection<T>{

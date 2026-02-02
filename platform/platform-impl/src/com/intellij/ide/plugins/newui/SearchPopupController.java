@@ -21,6 +21,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public abstract class SearchPopupController {
   protected final PluginSearchTextField myTextField;
   @ApiStatus.Internal

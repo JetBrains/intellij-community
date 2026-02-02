@@ -4,9 +4,18 @@
 
 package org.jetbrains.kotlin.idea.highlighter
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.diagnostics.rendering.*
+import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers
+import org.jetbrains.kotlin.diagnostics.rendering.ContextDependentRenderer
+import org.jetbrains.kotlin.diagnostics.rendering.LegacyRenderingContextApi
+import org.jetbrains.kotlin.diagnostics.rendering.Renderer
+import org.jetbrains.kotlin.diagnostics.rendering.Renderers
+import org.jetbrains.kotlin.diagnostics.rendering.RenderingContext
+import org.jetbrains.kotlin.diagnostics.rendering.SmartTypeRenderer
+import org.jetbrains.kotlin.diagnostics.rendering.asRenderer
+import org.jetbrains.kotlin.diagnostics.rendering.withAnnotationsWhitelist
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.KotlinBaseFe10HighlightingBundle
 import org.jetbrains.kotlin.idea.highlighter.renderersUtil.renderResolvedCall
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
@@ -16,6 +25,7 @@ import org.jetbrains.kotlin.resolve.calls.inference.InferenceErrorData
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ConflictingJvmDeclarationsData
 
+@K1Deprecation
 object IdeRenderers {
 
     @JvmField

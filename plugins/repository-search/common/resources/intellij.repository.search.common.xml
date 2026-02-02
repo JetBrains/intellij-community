@@ -1,0 +1,40 @@
+<idea-plugin visibility="public">
+  <!-- public because it's used in com.intellij.gradle plugin -->
+  <dependencies>
+    <module name="intellij.libraries.ktor.client"/>
+    <module name="intellij.libraries.kotlinx.io"/>
+    <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
+    <module name="intellij.libraries.kotlinx.coroutines.slf4j"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.idea.reposearch.provider"
+                    interface="org.jetbrains.idea.reposearch.DependencySearchProvidersFactory" dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.idea.reposearch.contributor"
+                    interface="org.jetbrains.idea.completion.api.DependencyCompletionContributor" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="maven.packagesearch.enabled" defaultValue="false"
+                 description="Enable package search dependency via https://package-search.services.jetbrains.com"/>
+
+    <registryKey key="packagesearch.config.url.override" defaultValue="false"
+                 description="Package search service config URL override to maven index labs" restartRequired="true"/>
+
+    <registryKey id="org.jetbrains.idea.reposearch.log.debug"
+                 key="org.jetbrains.idea.reposearch.log.debug"
+                 defaultValue="false"
+                 description="Emit in-depth debug logging (warning: very spammy, only useful for debugging data flow issues). Make sure you have this line in Help | Diagnostic Tools | Debug Log Settings: '#org.jetbrains.idea.reposearch:trace'."
+                 restartRequired="false"/>
+
+    <statistics.validation.customValidationRule implementation="org.jetbrains.idea.reposearch.statistics.TopPackageIdValidationRule"/>
+
+    <applicationService serviceInterface="org.jetbrains.idea.completion.api.DependencyCompletionService"
+                        serviceImplementation="org.jetbrains.idea.completion.impl.DependencyCompletionServiceImpl"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
+    <provider implementation="org.jetbrains.idea.packagesearch.PackageSearchProviderFactory"/>
+  </extensions>
+</idea-plugin>

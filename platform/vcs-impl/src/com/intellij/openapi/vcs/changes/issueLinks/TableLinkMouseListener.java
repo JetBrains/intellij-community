@@ -6,9 +6,9 @@ import com.intellij.ui.dualView.TableCellRendererWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
 

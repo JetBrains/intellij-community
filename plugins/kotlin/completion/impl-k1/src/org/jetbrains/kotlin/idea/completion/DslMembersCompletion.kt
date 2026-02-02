@@ -3,12 +3,14 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.PrefixMatcher
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.ReceiverType
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.collectAnnotationEntriesFromStubOrPsi
 
+@K1Deprecation
 class DslMembersCompletion(
     private val prefixMatcher: PrefixMatcher,
     private val elementFactory: LookupElementFactory,

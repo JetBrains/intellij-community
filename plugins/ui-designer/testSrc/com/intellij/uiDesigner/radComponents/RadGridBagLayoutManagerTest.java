@@ -18,8 +18,13 @@ package com.intellij.uiDesigner.radComponents;
 
 import junit.framework.TestCase;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public class RadGridBagLayoutManagerTest extends TestCase {
   private RadGridBagLayoutManager myManager;

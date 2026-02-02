@@ -1,7 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl.toplevel.scopes;
 
-import com.intellij.patterns.*;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.PsiClassPattern;
+import com.intellij.patterns.PsiFilePattern;
+import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.SyntheticElement;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter;

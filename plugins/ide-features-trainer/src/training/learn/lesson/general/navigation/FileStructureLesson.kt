@@ -6,7 +6,11 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.ui.speedSearch.SpeedSearchSupply
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
+import training.dsl.TaskRuntimeContext
+import training.dsl.restoreAfterStateBecomeFalse
+import training.dsl.sdkConfigurationTasks
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.learn.course.LessonType

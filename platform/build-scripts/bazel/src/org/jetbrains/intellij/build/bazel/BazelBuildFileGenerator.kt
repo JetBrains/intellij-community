@@ -81,6 +81,7 @@ internal class BazelBuildFileGenerator(
   val ultimateRoot: Path?,
   val communityRoot: Path,
   private val project: JpsProject,
+  private val projectDir: Path,
   val urlCache: UrlCache,
   val customModules: Map<String, CustomModuleDescription>,
 ) {
@@ -144,7 +145,10 @@ internal class BazelBuildFileGenerator(
     for (element in module.dependenciesList.dependencies) {
       if (element is JpsModuleDependency) {
         val ref = element.moduleReference
-        getModuleDescriptor(requireNotNull(ref.resolve()) { "Cannot resolve module ${ref.moduleName}" })
+        val resolved = requireNotNull(ref.resolve()) {
+          "Cannot resolve module ${ref.moduleName} (dependency of '${module.name}') in $projectDir/.idea/modules.xml"
+        }
+        getModuleDescriptor(resolved)
       }
     }
 

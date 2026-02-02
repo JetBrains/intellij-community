@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.inline
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiReference
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.codeInliner.TypeAliasUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.codeInliner.unwrapSpecialUsageOrNull
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
+@K1Deprecation
 class KotlinInlineTypeAliasProcessor(
     declaration: KtTypeAlias,
     reference: PsiReference?,

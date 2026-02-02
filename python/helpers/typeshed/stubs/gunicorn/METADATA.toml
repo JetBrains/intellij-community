@@ -1,4 +1,4 @@
-version = "23.0.*"
+version = "24.1.0"
 upstream_repository = "https://github.com/benoitc/gunicorn"
 requires = ["types-gevent"]
 

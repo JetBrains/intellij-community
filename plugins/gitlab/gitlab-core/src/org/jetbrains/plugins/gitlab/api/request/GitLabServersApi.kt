@@ -7,11 +7,16 @@ import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CancellationException
-import org.jetbrains.plugins.gitlab.api.*
+import org.jetbrains.plugins.gitlab.api.GitLabApi
+import org.jetbrains.plugins.gitlab.api.GitLabEdition
 import org.jetbrains.plugins.gitlab.api.GitLabEdition.Community
 import org.jetbrains.plugins.gitlab.api.GitLabEdition.Enterprise
+import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
+import org.jetbrains.plugins.gitlab.api.GitLabRestJsonDataDeSerializer
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabServerMetadataDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabServerVersionDTO
+import org.jetbrains.plugins.gitlab.api.gitLabQuery
 import org.jsoup.Jsoup
 import java.net.http.HttpResponse
 

@@ -7,7 +7,8 @@ import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.javac.JavacMain;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;

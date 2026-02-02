@@ -31,6 +31,8 @@ internal class ShellOptionSpecImpl(
 
   override val isHidden: Boolean = false
 
+  override val shouldEscape: Boolean = true
+
   init {
     if (priority !in 0..100) {
       error("Priority must be between 0 and 100")

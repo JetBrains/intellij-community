@@ -14,13 +14,23 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.*
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.EntryChunk
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.LiteralChunk
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.NewLineChunk
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.TemplateChunk
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.TemplateTokenSequence
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.canBeStartOfIdentifierOrBlock
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtEscapeStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.getContentRange
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
+import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 private val PsiElement.templateContentRange: TextRange?
     get() = this.getParentOfType<KtStringTemplateExpression>(false)?.let {

@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 abstract class AddItemPopupAction<ItemType> extends ChooseAndAddAction<ItemType> {
   private final @Nls(capitalization = Nls.Capitalization.Title) String myTitle;

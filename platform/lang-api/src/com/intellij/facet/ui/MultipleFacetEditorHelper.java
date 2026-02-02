@@ -21,7 +21,9 @@ import com.intellij.util.ui.ThreeStateCheckBox;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JTextField;
 
 /**
  * Use {@link com.intellij.facet.ui.FacetEditorsFactory#createMultipleFacetEditorHelper()} to create instance of this class.

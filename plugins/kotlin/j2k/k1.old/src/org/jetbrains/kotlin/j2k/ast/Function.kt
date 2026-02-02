@@ -2,8 +2,10 @@
 
 package org.jetbrains.kotlin.j2k.ast
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 
+@K1Deprecation
 abstract class FunctionLike(
         annotations: Annotations,
         modifiers: Modifiers,
@@ -14,6 +16,7 @@ abstract class FunctionLike(
     protected open fun presentationModifiers(): Modifiers = modifiers
 }
 
+@K1Deprecation
 class Function(
         val name: Identifier,
         annotations: Annotations,
@@ -61,6 +64,7 @@ class Function(
     }
 }
 
+@K1Deprecation
 class AnonymousFunction(
         returnType: Type,
         typeParameterList: TypeParameterList,

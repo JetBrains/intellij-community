@@ -2,7 +2,14 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;

@@ -13,7 +13,28 @@
     </extensionPoint>
   </extensionPoints>
 
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+
+    <storageComponentContainerContributor
+            implementation="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.IdeSamWithReceiverComponentContributor"/>
+
+    <declarationAttributeAltererExtension
+            implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.IdeAllOpenDeclarationAttributeAltererExtension"/>
+    <ultraLightClassModifierExtension
+            implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.AllOpenUltraLightClassModifierExtension"/>
+
+    <storageComponentContainerContributor
+            implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.IdeNoArgComponentContainerContributor"/>
+    <ultraLightClassModifierExtension
+            implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.NoArgUltraLightClassModifierExtension"/>
+
+    <!--suppress KotlinObjectExtensionRegistration -->
+    <defaultErrorMessages implementation="org.jetbrains.kotlin.noarg.diagnostic.DefaultErrorMessagesNoArg"/>
+
+  </extensions>
+
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="org.jetbrains.kotlin.console.KotlinConsoleKeeper"/>
     <fileEditorProvider id="KtsScratchFileEditorProvider"
                         implementation="org.jetbrains.kotlin.idea.jvm.k1.scratch.K1ScratchFileEditorProvider"/>
 

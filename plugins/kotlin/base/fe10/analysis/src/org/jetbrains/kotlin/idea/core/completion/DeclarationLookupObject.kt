@@ -3,9 +3,11 @@ package org.jetbrains.kotlin.idea.core.completion
 
 import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.name.Name
 
+@K1Deprecation
 interface DeclarationLookupObject : Iconable {
     val psiElement: PsiElement?
     val name: Name?

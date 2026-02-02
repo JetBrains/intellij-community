@@ -12,12 +12,10 @@ abstract class AbstractParcelizeK2QuickFixTest : AbstractK2QuickFixTest() {
     override fun setUp() {
         super.setUp()
         addParcelizeLibraries(module)
-        if (!project.extensionArea.hasExtensionPoint(FirExtensionRegistrarAdapter.extensionPointName)) {
-            FirExtensionRegistrarAdapter.registerExtensionPoint(project)
-        }
-        FirExtensionRegistrarAdapter.registerExtension(
-            project,
-            FirParcelizeExtensionRegistrar(ParcelizeNames.PARCELIZE_CLASS_FQ_NAMES)
+        val extensionPoint = project.extensionArea.getExtensionPoint<FirExtensionRegistrarAdapter>(FirExtensionRegistrarAdapter.name)
+        extensionPoint.registerExtension(
+            FirParcelizeExtensionRegistrar(ParcelizeNames.PARCELIZE_CLASS_FQ_NAMES),
+            project
         )
     }
 
@@ -25,10 +23,9 @@ abstract class AbstractParcelizeK2QuickFixTest : AbstractK2QuickFixTest() {
         runAll(
             {
                 project.extensionArea
-                    .getExtensionPoint(FirExtensionRegistrarAdapter.extensionPointName)
+                    .getExtensionPoint<FirExtensionRegistrarAdapter>(FirExtensionRegistrarAdapter.name)
                     .unregisterExtension(FirParcelizeExtensionRegistrar::class.java)
             },
-            { project.extensionArea.unregisterExtensionPoint(FirExtensionRegistrarAdapter.extensionPointName.name) },
             { removeParcelizeLibraries(module) },
             { super.tearDown() },
         )

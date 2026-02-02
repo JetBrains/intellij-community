@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extends XBreakpointProperties<T> {
   private boolean COUNT_FILTER_ENABLED = false;
@@ -67,6 +68,10 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
       return true;
     }
     return Arrays.equals(a, b);
+  }
+
+  protected static int filtersHashCode(Object[] filters) {
+    return filters == null || filters.length == 0 ? 0 : Arrays.hashCode(filters);
   }
 
   @XCollection(propertyElementName = "class-exclusion-filters")
@@ -202,5 +207,30 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
     boolean changed = this.TRACING_END != TRACING_END;
     this.TRACING_END = TRACING_END;
     return changed;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof JavaBreakpointProperties<?> that)) return false;
+    return COUNT_FILTER_ENABLED == that.COUNT_FILTER_ENABLED &&
+           COUNT_FILTER == that.COUNT_FILTER &&
+           CLASS_FILTERS_ENABLED == that.CLASS_FILTERS_ENABLED &&
+           INSTANCE_FILTERS_ENABLED == that.INSTANCE_FILTERS_ENABLED &&
+           CALLER_FILTERS_ENABLED == that.CALLER_FILTERS_ENABLED &&
+           TRACING_START == that.TRACING_START &&
+           TRACING_END == that.TRACING_END &&
+           filtersEqual(myClassFilters, that.myClassFilters) &&
+           filtersEqual(myClassExclusionFilters, that.myClassExclusionFilters) &&
+           filtersEqual(myInstanceFilters, that.myInstanceFilters) &&
+           filtersEqual(myCallerFilters, that.myCallerFilters) &&
+           filtersEqual(myCallerExclusionFilters, that.myCallerExclusionFilters);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(COUNT_FILTER_ENABLED, COUNT_FILTER, CLASS_FILTERS_ENABLED, filtersHashCode(myClassFilters),
+                        filtersHashCode(myClassExclusionFilters), INSTANCE_FILTERS_ENABLED, filtersHashCode(myInstanceFilters),
+                        CALLER_FILTERS_ENABLED, filtersHashCode(myCallerFilters), filtersHashCode(myCallerExclusionFilters), TRACING_START,
+                        TRACING_END);
   }
 }

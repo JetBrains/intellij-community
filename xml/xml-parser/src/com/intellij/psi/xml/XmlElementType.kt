@@ -4,7 +4,6 @@ package com.intellij.psi.xml
 import com.intellij.html.embedding.HtmlRawTextElementType
 import com.intellij.lang.dtd.DTDLanguage
 import com.intellij.lang.xhtml.XHTMLLanguage
-import com.intellij.lang.xml.XMLLanguage
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.xml.IXmlElementType

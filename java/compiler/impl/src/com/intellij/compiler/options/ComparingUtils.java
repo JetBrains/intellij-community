@@ -4,7 +4,8 @@ package com.intellij.compiler.options;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.RawCommandLineEditor;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JTextField;
 
 /**
  * @author Eugene Zhuravlev

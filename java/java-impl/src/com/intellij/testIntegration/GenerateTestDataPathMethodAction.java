@@ -17,7 +17,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;

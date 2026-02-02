@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
@@ -36,7 +37,23 @@ import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtIsExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtThrowExpression
+import org.jetbrains.kotlin.psi.buildExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -53,13 +70,16 @@ import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.constant
 
+@K1Deprecation
 fun KtExpression?.isTrivialStatementBody(): Boolean = when (this?.getSingleUnwrappedStatementOrThis()) {
     is KtIfExpression, is KtBlockExpression -> false
     else -> true
 }
 
+@K1Deprecation
 fun KtExpression?.isNullExpression(): Boolean = isNullExpression()
 
+@K1Deprecation
 fun KtThrowExpression.throwsNullPointerExceptionWithNoArguments(): Boolean {
     val thrownExpression = this.thrownExpression as? KtCallExpression ?: return false
 
@@ -77,12 +97,14 @@ fun KtThrowExpression.throwsNullPointerExceptionWithNoArguments(): Boolean {
     } && thrownExpression.valueArguments.isEmpty()
 }
 
+@K1Deprecation
 fun KtExpression.anyArgumentEvaluatesTo(argument: KtExpression): Boolean {
     val callExpression = this as? KtCallExpression ?: return false
     val arguments = callExpression.valueArguments.map { it.getArgumentExpression() }
     return arguments.any { it?.isSimplifiableTo(argument) == true } && arguments.all { it is KtNameReferenceExpression }
 }
 
+@K1Deprecation
 fun KtExpression.convertToIfNotNullExpression(
     conditionLhs: KtExpression,
     thenClause: KtExpression,
@@ -92,14 +114,17 @@ fun KtExpression.convertToIfNotNullExpression(
     return this.convertToIfStatement(condition, thenClause, elseClause)
 }
 
+@K1Deprecation
 fun KtExpression.convertToIfNullExpression(conditionLhs: KtExpression, thenClause: KtExpression): KtIfExpression {
     val condition = KtPsiFactory(project).createExpressionByPattern("$0 == null", conditionLhs)
     return this.convertToIfStatement(condition, thenClause)
 }
 
+@K1Deprecation
 fun KtExpression.convertToIfStatement(condition: KtExpression, thenClause: KtExpression, elseClause: KtExpression? = null): KtIfExpression =
     replaced(KtPsiFactory(project).createIf(condition, thenClause, elseClause))
 
+@K1Deprecation
 fun KtIfExpression.introduceValueForCondition(occurrenceInThenClause: KtExpression, editor: Editor?) {
     val occurrenceInConditional = when (val condition = condition) {
         is KtBinaryExpression -> condition.left
@@ -117,6 +142,7 @@ fun KtIfExpression.introduceValueForCondition(occurrenceInThenClause: KtExpressi
     )
 }
 
+@K1Deprecation
 fun KtNameReferenceExpression.inlineIfDeclaredLocallyAndOnlyUsedOnce(editor: Editor?, withPrompt: Boolean) {
     val declaration = this.mainReference.resolve() as? KtProperty ?: return
 
@@ -143,16 +169,19 @@ fun KtNameReferenceExpression.inlineIfDeclaredLocallyAndOnlyUsedOnce(editor: Edi
     }
 }
 
+@K1Deprecation
 fun KtSafeQualifiedExpression.inlineReceiverIfApplicable(editor: Editor?, withPrompt: Boolean) {
     (this.receiverExpression as? KtNameReferenceExpression)?.inlineIfDeclaredLocallyAndOnlyUsedOnce(editor, withPrompt)
 }
 
+@K1Deprecation
 fun KtBinaryExpression.inlineLeftSideIfApplicable(editor: Editor?, withPrompt: Boolean) {
     (this.left as? KtNameReferenceExpression)?.inlineIfDeclaredLocallyAndOnlyUsedOnce(editor, withPrompt)
 }
 
 // I.e. stable val/var/receiver
 // We exclude stable complex expressions here, because we don't do smartcasts on them (even though they are stable)
+@K1Deprecation
 fun KtExpression.isStableSimpleExpression(context: BindingContext = this.safeAnalyzeNonSourceRootCode()): Boolean {
     val dataFlowValue = this.toDataFlowValue(context)
     return dataFlowValue?.isStable == true &&
@@ -160,6 +189,7 @@ fun KtExpression.isStableSimpleExpression(context: BindingContext = this.safeAna
 
 }
 
+@K1Deprecation
 fun elvisPattern(newLine: Boolean): String = if (newLine) "$0\n?: $1" else "$0 ?: $1"
 
 private fun KtExpression.toDataFlowValue(context: BindingContext): DataFlowValue? {
@@ -297,6 +327,7 @@ internal fun IfThenTransformationData.conditionHasIncompatibleTypes(context: Bin
 internal fun KtExpression?.isClauseTransformableToLetOnly(receiver: KtExpression?) =
     this is KtCallExpression && (resolveToCall()?.getImplicitReceiverValue() == null || receiver !is KtThisExpression)
 
+@K1Deprecation
 fun KtIfExpression.shouldBeTransformed(): Boolean = when (val condition = condition) {
     is KtBinaryExpression -> {
         val baseClause = (if (condition.operationToken == KtTokens.EQEQ) `else` else then)?.getSingleUnwrappedStatementOrThis()
@@ -305,6 +336,7 @@ fun KtIfExpression.shouldBeTransformed(): Boolean = when (val condition = condit
     else -> false
 }
 
+@K1Deprecation
 fun KtIfExpression.fromIfKeywordToRightParenthesisTextRangeInThis(): TextRange {
     val rightOffset = rightParenthesis?.endOffset ?: return ifKeyword.textRangeIn(this)
     return TextRange(ifKeyword.startOffset, rightOffset).shiftLeft(startOffset)

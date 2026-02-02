@@ -1,8 +1,8 @@
 package com.intellij.database.run.actions
 
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.database.datagrid.color.TableHeatmapColorLayer
 import com.intellij.database.datagrid.setHeatmapColoringEnable
+import com.intellij.openapi.actionSystem.AnActionEvent
 
 class ToggleTableViewColoringModeDivergingAction : ToggleTableViewBaseAction() {
   override fun isSelected(e: AnActionEvent): Boolean {

@@ -10,7 +10,14 @@ import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.util.ui.UIUtil
-import com.intellij.vcs.commit.*
+import com.intellij.vcs.commit.CommitAuthorTracker
+import com.intellij.vcs.commit.CommitChecksResult
+import com.intellij.vcs.commit.CommitProjectPanelAdapter
+import com.intellij.vcs.commit.CommitSessionInfo
+import com.intellij.vcs.commit.NonModalAmendCommitHandler
+import com.intellij.vcs.commit.NonModalCommitWorkflowHandler
+import com.intellij.vcs.commit.NonModalCommitWorkflowUi
+import com.intellij.vcs.commit.fixUnderscoreMnemonic
 import git4idea.i18n.GitBundle
 import git4idea.index.ui.GitStageCommitPanel
 import org.jetbrains.annotations.Nls

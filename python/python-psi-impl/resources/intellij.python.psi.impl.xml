@@ -17,6 +17,8 @@
                     dynamic="true"/>
 
     <extensionPoint qualifiedName="Pythonid.typeHintProvider" interface="com.jetbrains.python.codeInsight.typing.PyTypeHintProvider" dynamic="true"/>
+
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -560,8 +562,10 @@
                  description="Allows narrowing types exhaustively to Never"/>
     <registryKey key="python.lsp.tools.enabled" defaultValue="true" restartRequired="true"
                  description="Enables lsp tools"/>
-    <registryKey key="python.typing.soft.keys.type.eval.context" defaultValue="true"
+    <registryKey key="python.typing.soft.keys.type.eval.context" defaultValue="false"
                  description="Enable soft-key caching for TypeEvalContext"/>
+    <registryKey key="python.typing.weak.keys.type.eval.context" defaultValue="true"
+                 description="Enable weak-key caching for TypeEvalContext"/>
 
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.formatter.PyCodeStyleSettingsProvider"/>
   </extensions>

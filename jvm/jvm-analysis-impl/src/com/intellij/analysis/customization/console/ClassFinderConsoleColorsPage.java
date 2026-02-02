@@ -19,7 +19,7 @@ import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.ui.EditorCustomization;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Map;
 
 import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE;

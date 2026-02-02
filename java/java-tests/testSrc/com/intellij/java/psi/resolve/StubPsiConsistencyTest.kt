@@ -2,8 +2,8 @@
 package com.intellij.java.psi.resolve
 
 import com.intellij.find.ngrams.TrigramIndex
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager

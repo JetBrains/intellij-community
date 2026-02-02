@@ -4,7 +4,7 @@ package com.jetbrains.python.run;
 import com.intellij.ui.PanelWithAnchor;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.awt.event.ActionListener;
 import java.util.function.Consumer;
 

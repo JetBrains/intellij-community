@@ -11,13 +11,13 @@ import com.intellij.python.sdk.ui.evolution.tool.pip.sdk.VenvEvoSdkProvider
 import com.intellij.python.sdk.ui.evolution.tool.pip.sdk.getPythonVersion
 import com.intellij.python.sdk.ui.evolution.tool.poetry.sdk.PoetryEvoSdkProvider
 import com.jetbrains.python.PythonBinary
-import java.nio.file.Path
-import javax.swing.Icon
+import com.jetbrains.python.errorProcessing.MessageError
 import io.github.z4kn4fein.semver.Version
 import io.github.z4kn4fein.semver.toVersionOrNull
 import kotlinx.coroutines.runBlocking
+import java.nio.file.Path
+import javax.swing.Icon
 import kotlin.io.path.isExecutable
-import com.jetbrains.python.errorProcessing.MessageError
 
 fun Path.resolvePythonExecutable(): Path? {
   val possibleExecutablePaths: List<Path> = if (SystemInfo.isWindows) {

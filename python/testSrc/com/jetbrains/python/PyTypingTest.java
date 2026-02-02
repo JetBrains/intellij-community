@@ -24,7 +24,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyCollectionType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypedDictType;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -2630,7 +2634,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicsIntersectsSameName() {
-    doTest("tuple[int, str, bool, Any]",
+    doTest("tuple[int, str, bool, list[str], dict[str, int]]",
            """
              from typing import Tuple, TypeVarTuple, TypeVar
 
@@ -2640,7 +2644,7 @@ public class PyTypingTest extends PyTestCase {
              MyType = Tuple[int, T, *Ts]
              MyType1 = MyType[str, bool, *Ts]
 
-             t: MyType1[list[str], dict[str, int]]  # first place \s
+             t: MyType1[list[str], dict[str, int]]
              expr = t
              """);
   }
@@ -6856,6 +6860,40 @@ public class PyTypingTest extends PyTestCase {
           return x.method()
       
       expr = expects_generic(Impl())
+      """);
+  }
+
+  // PY-87012
+  public void testLegacyTypeAliasesWithQuotedUnionTypesPreservedInStubs() {
+    doMultiFileStubAwareTest("list[int | str]", """
+      from mod import x
+      
+      expr = x
+      """);
+  }
+
+  // PY-87012
+  public void testLegacyTypeAliasWithFullyQuotedTypeIsNotAllowed() {
+    doMultiFileStubAwareTest("Any", """
+      from mod import x
+      
+      expr = x
+      """);
+  }
+
+  // PY-76922
+  public void testIntersectionTypeParsing() {
+    doTest("int & str", """
+      expr: int & str
+      """);
+  }
+
+  // PY-76922
+  public void testLegacyTypeAliasesWithQuotedIntersectionTypesPreservedInStubs() {
+    doMultiFileStubAwareTest("list[int & str]", """
+      from mod import x
+      
+      expr = x
       """);
   }
 

@@ -4,11 +4,19 @@ package com.jetbrains.python.refactoring.classes.membersManager;
 import com.google.common.collect.Lists;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Plugin that moves superclasses from one class to another

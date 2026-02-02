@@ -15,7 +15,11 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.regexp.RegExpModifierProvider;

@@ -9,7 +9,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
@@ -19,7 +26,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-import static com.siyeh.ig.junit.JUnitCommonClassNames.*;
+import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_PLATFORM_SUITE_API_AFTERSUITE;
+import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_PLATFORM_SUITE_API_BEFORESUITE;
+import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_PLATFORM_SUITE_API_SUITE;
 
 public class JUnit5Framework extends JUnitTestFramework {
 

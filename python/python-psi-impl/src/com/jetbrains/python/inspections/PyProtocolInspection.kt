@@ -12,9 +12,18 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.inspectProtocolSubclass
 import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.codeInsight.typing.isRuntimeCheckable
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyClassPattern
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyQualifiedNameOwner
+import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.resolve.PyResolveUtil
-import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.psi.types.PyClassLikeType
+import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeMember
+import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyProtocolInspection : PyInspection() {
 

@@ -608,18 +608,4 @@ public abstract class StatusText {
                                ActionListener listener) {
     return appendText(isPrimaryColumn ? 0 : 1, row, null, text, attrs, listener);
   }
-
-  /**
-   * @deprecated There are no primary and secondary columns anymore, they're 0 and 1.
-   * Use {@link #appendText(int, int, Icon, String, SimpleTextAttributes, ActionListener)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public StatusText appendText(boolean isPrimaryColumn,
-                               int row,
-                               @Nullable Icon icon,
-                               @NlsContexts.StatusText String text,
-                               SimpleTextAttributes attrs,
-                               ActionListener listener) {
-    return appendText(isPrimaryColumn ? 0 : 1, row, icon, text, attrs, listener);
-  }
 }

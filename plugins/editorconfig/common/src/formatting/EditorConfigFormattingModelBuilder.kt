@@ -3,7 +3,11 @@ package com.intellij.editorconfig.common.formatting
 
 import com.intellij.editorconfig.common.syntax.EditorConfigLanguage
 import com.intellij.editorconfig.common.syntax.psi.EditorConfigElementTypes
-import com.intellij.formatting.*
+import com.intellij.formatting.FormattingContext
+import com.intellij.formatting.FormattingModel
+import com.intellij.formatting.FormattingModelBuilder
+import com.intellij.formatting.FormattingModelProvider
+import com.intellij.formatting.SpacingBuilder
 import com.intellij.psi.codeStyle.CodeStyleSettings
 
 class EditorConfigFormattingModelBuilder : FormattingModelBuilder {

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 
+@K1Deprecation
 class KotlinTypeHierarchyProviderBySuperTypeCallEntry : JavaTypeHierarchyProvider() {
     override fun getTarget(dataContext: DataContext): PsiClass? {
         val project = PlatformDataKeys.PROJECT.getData(dataContext) ?: return null

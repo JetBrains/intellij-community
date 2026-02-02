@@ -17,3 +17,5 @@ fun bar() {
 // EXIST: { lookupString: "minOf", tailText:"(a: Boolean, b: Boolean, c: Boolean) (kotlin.comparisons)", typeText:"Boolean"}
 // EXIST: {"lookupString":"equals","tailText":"(other: Any?) (kotlin)","typeText":"Boolean"}
 // NOTHING_ELSE
+
+// IGNORE_K2

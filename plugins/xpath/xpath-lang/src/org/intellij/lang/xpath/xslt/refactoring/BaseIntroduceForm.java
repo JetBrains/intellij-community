@@ -17,7 +17,9 @@ package org.intellij.lang.xpath.xslt.refactoring;
 
 import com.intellij.ui.TextFieldWithHistory;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 public class BaseIntroduceForm {
     JPanel myContentPane;

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.intentions.tests;
 
@@ -11695,6 +11695,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("ifElseSwallowTail.kt")
             public void testIfElseSwallowTail() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifElseSwallowTail.kt");
+            }
+
+            @TestMetadata("ifIfSwallowComments.kt")
+            public void testIfIfSwallowComments() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifIfSwallowComments.kt");
             }
 
             @TestMetadata("ifThenReturn.kt")

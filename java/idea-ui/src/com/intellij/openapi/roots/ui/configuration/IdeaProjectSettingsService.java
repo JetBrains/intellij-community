@@ -4,6 +4,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.compiler.actions.ArtifactAwareProjectSettingsService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -13,7 +14,14 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import static com.intellij.workspaceModel.ide.legacyBridge.LibraryBridgesKt.findLibraryBridge;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridges;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,6 +97,19 @@ public final class IdeaProjectSettingsService extends ProjectSettingsService imp
   }
 
   @Override
+  public boolean canOpenLibrarySettings(LibraryEntity library) {
+    ImmutableEntityStorage snapshot = WorkspaceModel.getInstance(myProject).getCurrentSnapshot();
+    var moduleEntity = SequencesKt.firstOrNull(snapshot.referrers(library.getSymbolicId(), ModuleEntity.class));
+    if (moduleEntity != null) {
+      var module = ModuleBridges.findModule(moduleEntity, snapshot);
+      if (module != null) {
+        return getLibrarySettingsConfigurable(library, module.getProject(),  snapshot) != null;
+      }
+    }
+    return false;
+  }
+
+  @Override
   public void openLibraryOrSdkSettings(final @NotNull OrderEntry orderEntry) {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(myProject);
     ShowSettingsUtil.getInstance().editConfigurable(myProject, config, () -> {
@@ -160,5 +181,11 @@ public final class IdeaProjectSettingsService extends ProjectSettingsService imp
   @Override
   public void openArtifactSettings(@Nullable Artifact artifact) {
     ModulesConfigurator.showArtifactSettings(myProject, artifact);
+  }
+
+  private static @Nullable Configurable getLibrarySettingsConfigurable(LibraryEntity libraryEntity, Project project, ImmutableEntityStorage storage) {
+    var lib = findLibraryBridge(libraryEntity, storage);
+    if (lib == null) return null;
+    return getLibrarySettingsConfigurable(lib, project);
   }
 }

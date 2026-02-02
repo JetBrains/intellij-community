@@ -2,12 +2,20 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.interpret
 
-import com.intellij.debugger.streams.core.trace.*
+import com.intellij.debugger.streams.core.trace.ArrayReference
+import com.intellij.debugger.streams.core.trace.BooleanValue
+import com.intellij.debugger.streams.core.trace.CallTraceInterpreter
+import com.intellij.debugger.streams.core.trace.IntegerValue
+import com.intellij.debugger.streams.core.trace.TraceElement
+import com.intellij.debugger.streams.core.trace.TraceInfo
+import com.intellij.debugger.streams.core.trace.Value
 import com.intellij.debugger.streams.core.trace.impl.TraceElementImpl
 import com.intellij.debugger.streams.core.trace.impl.interpret.ValuesOrderInfo
 import com.intellij.debugger.streams.core.trace.impl.interpret.ex.UnexpectedValueTypeException
 import com.intellij.debugger.streams.core.wrapper.StreamCall
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class FilterTraceInterpreter(private val predicateValueToAccept: Boolean) : CallTraceInterpreter {
     override fun resolve(call: StreamCall, value: Value): TraceInfo {
         if (value !is ArrayReference) throw UnexpectedValueTypeException("array reference excepted, but actual: ${value.typeName()}")

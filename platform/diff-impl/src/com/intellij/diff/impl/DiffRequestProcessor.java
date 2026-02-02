@@ -4,17 +4,27 @@ package com.intellij.diff.impl;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.diff.*;
+import com.intellij.diff.DiffContext;
+import com.intellij.diff.DiffContextEx;
+import com.intellij.diff.DiffExtension;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffManagerEx;
+import com.intellij.diff.DiffTool;
+import com.intellij.diff.EditorDiffViewer;
+import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.actions.impl.DiffNextFileAction;
 import com.intellij.diff.actions.impl.DiffPreviousFileAction;
-import com.intellij.diff.actions.impl.OpenInEditorAction;
 import com.intellij.diff.editor.DiffViewerVirtualFile;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.impl.ui.DiffToolChooser;
 import com.intellij.diff.lang.DiffIgnoredRangeProvider;
 import com.intellij.diff.lang.DiffLangSpecificProvider;
-import com.intellij.diff.requests.*;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.ErrorDiffRequest;
+import com.intellij.diff.requests.LoadingDiffRequest;
+import com.intellij.diff.requests.MessageDiffRequest;
+import com.intellij.diff.requests.NoDiffRequest;
 import com.intellij.diff.tools.ErrorDiffTool;
 import com.intellij.diff.tools.combined.CombinedDiffViewer;
 import com.intellij.diff.tools.external.ExternalDiffSettings;
@@ -30,7 +40,23 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineRange;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -54,11 +80,22 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.CheckedDisposable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.ui.*;
+import com.intellij.ui.GuiUtils;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.JBSplitter;
+import com.intellij.ui.LightweightHint;
+import com.intellij.ui.RemoteTransferUIManager;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.touchbar.Touchbar;
@@ -72,10 +109,25 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.SwingUtilities;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Window;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -1536,16 +1588,6 @@ public abstract class DiffRequestProcessor
     public void uiDataSnapshot(@NotNull DataSink sink) {
       sink.set(DiffDataKeys.WRAPPING_DIFF_VIEWER, myWrapperViewer);
       sink.set(DiffDataKeys.DIFF_VIEWER, myViewer);
-    }
-  }
-
-  /**
-   * @deprecated use {@link OpenInEditorAction}
-   */
-  @SuppressWarnings("InnerClassMayBeStatic") // left non-static for plugin compatibility
-  @Deprecated(forRemoval = true)
-  protected class MyOpenInEditorAction extends OpenInEditorAction {
-    public MyOpenInEditorAction() {
     }
   }
 

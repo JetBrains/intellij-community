@@ -10,7 +10,10 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurrounder
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement.KotlinTryFinallySurrounder.moveCaretToBlockCenter
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.utils.sure
 
 class KotlinWithIfExpressionSurrounder(val withElse: Boolean) : KotlinExpressionSurrounder() {

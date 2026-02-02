@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProductInfoGenerator")
 package org.jetbrains.intellij.build.impl.productInfo
 
@@ -17,6 +17,7 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.impl.Git
 import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
 import java.nio.file.Files
 import java.nio.file.Path
@@ -67,6 +68,7 @@ internal fun generateProductInfoJson(
     svgIconPath = if (appInfo.svgRelativePath == null) null else "${relativePathToBin}/${productProperties.baseFileName}.svg",
     productVendor = appInfo.shortCompanyName,
     majorVersionReleaseDate = LocalDate.parse(appInfo.majorReleaseDate, DateTimeFormatter.ofPattern("yyyyMMdd")),
+    minRequiredJavaVersion = getProjectLanguageLevel(context),
     launch = launch,
     customProperties = listOfNotNull(generateGitRevisionProperty(context)) + productProperties.generateCustomPropertiesForProductInfo(),
     bundledPlugins = builtinModules?.plugins ?: emptyList(),
@@ -76,6 +78,14 @@ internal fun generateProductInfoJson(
     flavors = jbrFlavors + productFlavors,
   )
   return jsonEncoder.encodeToString<ProductInfoData>(json)
+}
+
+private fun getProjectLanguageLevel(context: BuildContext): Int? {
+  val projectLanguageLevel = JpsJavaExtensionService.getInstance().getProjectExtension(context.project)?.languageLevel?.feature()
+  if (projectLanguageLevel == null) {
+    context.messages.logErrorAndThrow("Cannot find project language level for '${context.paths.projectHome}'")
+  }
+  return projectLanguageLevel
 }
 
 private fun generateGitRevisionProperty(context: BuildContext): CustomProperty? {

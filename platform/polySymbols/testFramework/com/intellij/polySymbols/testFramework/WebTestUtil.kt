@@ -38,6 +38,7 @@ import com.intellij.polySymbols.impl.canUnwrapSymbols
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.utils.PolySymbolDeclaredInPsi
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -107,9 +108,10 @@ fun CodeInsightTestFixture.checkLookupItems(
   namedLocations: List<Pair<String, String>> = emptyList(),
   fileName: String = InjectedLanguageManager.getInstance(project).getTopLevelFile(file).virtualFile.nameWithoutExtension,
   expectedDataLocation: String = "",
+  expectedItemsLocation: String = expectedDataLocation,
   lookupItemFilter: (item: LookupElementInfo) -> Boolean = { true },
 ) {
-  val hasDir = expectedDataLocation.isNotEmpty()
+  val hasDir = expectedItemsLocation.isNotEmpty()
 
   fun checkLookupDocumentation(fileSuffix: String = "") {
     if (!checkDocumentation) return
@@ -137,10 +139,17 @@ fun CodeInsightTestFixture.checkLookupItems(
     if (locations.isEmpty() && namedLocations.isEmpty()) {
       completeBasic()
       checkListByFile(
-        renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderDisplayText, renderDisplayEffects,
-                          lookupItemFilter),
-        expectedDataLocation + (if (hasDir) "/items" else "$fileName.items") + ".txt",
-        containsCheck
+        actualList = renderLookupItems(
+          renderPriority = renderPriority,
+          renderTypeText = renderTypeText,
+          renderTailText = renderTailText,
+          renderProximity = renderProximity,
+          renderDisplayText = renderDisplayText,
+          renderDisplayEffects = renderDisplayEffects,
+          lookupFilter = lookupItemFilter,
+        ),
+        expectedFile = expectedItemsLocation + (if (hasDir) "/items" else "$fileName.items") + ".txt",
+        containsCheck = containsCheck,
       )
       checkLookupDocumentation()
     }
@@ -153,10 +162,17 @@ fun CodeInsightTestFixture.checkLookupItems(
           completeBasic()
           try {
             checkListByFile(
-              renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderDisplayText, renderDisplayEffects,
-                                lookupItemFilter),
-              expectedDataLocation + (if (hasDir) "/items" else "$fileName.items") + ".$index.txt",
-              containsCheck
+              actualList = renderLookupItems(
+                renderPriority = renderPriority,
+                renderTypeText = renderTypeText,
+                renderTailText = renderTailText,
+                renderProximity = renderProximity,
+                renderDisplayText = renderDisplayText,
+                renderDisplayEffects = renderDisplayEffects,
+                lookupFilter = lookupItemFilter,
+              ),
+              expectedFile = expectedItemsLocation + (if (hasDir) "/items" else "$fileName.items") + ".$index.txt",
+              containsCheck = containsCheck
             )
           }
           catch (e: FileComparisonFailedError) {
@@ -370,7 +386,11 @@ fun CodeInsightTestFixture.polySymbolAtCaret(): PolySymbol? =
 
 
 fun CodeInsightTestFixture.polySymbolSourceAtCaret(): PsiElement? =
-  polySymbolAtCaret()?.let { it as? PsiSourcedPolySymbol }?.source
+  when (val symbol = polySymbolAtCaret()) {
+    is PsiSourcedPolySymbol -> symbol.source
+    is PolySymbolDeclaredInPsi -> symbol.sourceElement
+    else -> null
+  }
 
 fun CodeInsightTestFixture.resolvePolySymbolReference(signature: String): PolySymbol {
   val symbols = multiResolvePolySymbolReference(signature)
@@ -547,7 +567,12 @@ fun CodeInsightTestFixture.checkJumpToSource(fromSignature: String?, sourceSigna
   checkEditorNavigation("EditSource", fromSignature, sourceSignature, expectedFileName)
 }
 
-private fun CodeInsightTestFixture.checkEditorNavigation(action: String, fromSignature: String?, targetSignature: String, expectedFileName: String?) {
+private fun CodeInsightTestFixture.checkEditorNavigation(
+  action: String,
+  fromSignature: String?,
+  targetSignature: String,
+  expectedFileName: String?,
+) {
   val actualSignature = fromSignature ?: editor.currentPositionSignature
   performEditorAction(action)
   val targetEditor = FileEditorManager.getInstance(project).selectedTextEditor?.topLevelEditor
@@ -563,13 +588,16 @@ private fun CodeInsightTestFixture.checkEditorNavigation(action: String, fromSig
       targetSignature) != targetEditor.caretModel.offset) {
     assertEquals("For go to from: $actualSignature",
                  targetSignature + if (!targetSignature.contains("<caret>")) ""
-                 else (" [" + InjectedLanguageManager.getInstance(project).getTopLevelFile(file)
-                   .findOffsetBySignature(targetSignature) + "]"),
+                 else (" [" + targetFile.findOffsetBySignature(targetSignature) + "]"),
                  targetEditor.currentPositionSignature + "[${targetEditor.caretModel.offset}]")
   }
 }
 
-fun CodeInsightTestFixture.checkListByFile(actualList: List<String>, @TestDataFile expectedFile: String, containsCheck: Boolean) {
+fun CodeInsightTestFixture.checkListByFile(
+  actualList: List<String>,
+  @TestDataFile expectedFile: String,
+  containsCheck: Boolean,
+) {
   val path = "$testDataPath/$expectedFile"
   val file = File(path)
   if (!file.exists() && file.createNewFile()) {
@@ -676,8 +704,15 @@ fun doCompletionItemsTest(
       fixture.completeBasic()
 
       fixture.checkListByFile(
-        fixture.renderLookupItems(true, true, true, renderDisplayText = renderDisplayText),
-        "gold/${if (goldFileWithExtension) fileName else fileNameNoExt}.${index}.txt", !strict)
+        actualList = fixture.renderLookupItems(
+          renderPriority = true,
+          renderTypeText = true,
+          renderTailText = true,
+          renderDisplayText = renderDisplayText,
+        ),
+        expectedFile = "gold/${if (goldFileWithExtension) fileName else fileNameNoExt}.${index}.txt",
+        containsCheck = !strict,
+      )
 
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     }

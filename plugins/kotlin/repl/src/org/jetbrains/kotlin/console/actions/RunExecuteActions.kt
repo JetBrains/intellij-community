@@ -12,18 +12,22 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.console.KotlinConsoleKeeper
 import org.jetbrains.kotlin.console.KotlinConsoleRunner
 
+@K1Deprecation
 fun errorNotification(project: Project?, @NlsContexts.NotificationContent message: String) {
     val errorTag = "KOTLIN REPL ERROR"
     val errorTitle = KotlinIdeaReplBundle.message("kotlin.repl.configuration.error")
     Notifications.Bus.notify(Notification(errorTag, errorTitle, message, NotificationType.ERROR), project)
 }
 
+@K1Deprecation
 fun logError(cl: Class<*>, message: String, t: Throwable? = null) = with(Logger.getInstance(cl)) { error(message, t) }
 
+@K1Deprecation
 class RunKotlinConsoleAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return errorNotification(null, KotlinIdeaReplBundle.message("project.not.found"))
@@ -32,6 +36,7 @@ class RunKotlinConsoleAction : AnAction() {
     }
 }
 
+@K1Deprecation
 class KtExecuteCommandAction(private val consoleFile: VirtualFile) : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return errorNotification(null, KotlinIdeaReplBundle.message("cannot.find.project"))
@@ -41,6 +46,7 @@ class KtExecuteCommandAction(private val consoleFile: VirtualFile) : AnAction() 
     }
 }
 
+@K1Deprecation
 class BuildAndRestartConsoleAction(
     private val runner: KotlinConsoleRunner
 ) : AnAction(

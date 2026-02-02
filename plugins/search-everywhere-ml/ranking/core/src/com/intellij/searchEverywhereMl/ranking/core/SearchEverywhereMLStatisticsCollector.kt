@@ -8,7 +8,16 @@ import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsag
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.ClassListEventField
+import com.intellij.internal.statistic.eventLog.events.DoubleEventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.IntEventField
+import com.intellij.internal.statistic.eventLog.events.IntListEventField
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData
+import com.intellij.internal.statistic.eventLog.events.ObjectEventField
+import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager

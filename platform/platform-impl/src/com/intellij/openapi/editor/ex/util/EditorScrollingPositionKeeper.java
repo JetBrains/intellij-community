@@ -90,7 +90,9 @@ public final class EditorScrollingPositionKeeper implements Disposable {
   }
 
   private void disposeMarker() {
-    if (myTopLeftCornerMarker != null) myTopLeftCornerMarker.dispose();
+    if (myTopLeftCornerMarker != null) {
+      myTopLeftCornerMarker.dispose();
+    }
   }
 
   /**

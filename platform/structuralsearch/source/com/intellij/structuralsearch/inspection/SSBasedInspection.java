@@ -72,6 +72,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
   public static final @NonNls String SHORT_NAME = "SSBasedInspection";
   private final List<Configuration> myConfigurations = ContainerUtil.createLockFreeCopyOnWriteList();
+  private volatile List<LocalInspectionToolWrapper> myChildrenCached = null;
 
   private final Set<String> myProblemsReported = new HashSet<>(1);
   private InspectionProfileImpl mySessionProfile;
@@ -100,6 +101,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     myProblemsReported.clear();
     myConfigurations.clear();
+    myChildrenCached = null;
     ConfigurationManager.readConfigurations(node, myConfigurations);
     Configuration previous = null;
     boolean sorted = true;
@@ -153,7 +155,8 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   }
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, 
+                                                 @NotNull LocalInspectionToolSession session) {
     if (myConfigurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
     final PsiFile file = holder.getFile();
     final FileType fileType = file.getFileType();
@@ -208,10 +211,13 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
   @Override
   public @NotNull List<LocalInspectionToolWrapper> getChildren() {
-    return getConfigurations().stream()
-      .filter(configuration -> configuration.getOrder() == 0)
-      .map(configuration -> new StructuralSearchInspectionToolWrapper(getConfigurationsWithUuid(configuration.getUuid())))
-      .collect(Collectors.toList());
+    if (myChildrenCached == null) {
+      myChildrenCached = myConfigurations.stream()
+        .filter(configuration -> configuration.getOrder() == 0)
+        .map(configuration -> new StructuralSearchInspectionToolWrapper(getConfigurationsWithUuid(configuration.getUuid())))
+        .collect(Collectors.toList());
+    }
+    return myChildrenCached;
   }
 
   private static LocalQuickFix createQuickFix(@NotNull Project project, @NotNull MatchResult matchResult, @NotNull Configuration configuration) {
@@ -241,6 +247,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       return false;
     }
     myConfigurations.add(configuration);
+    myChildrenCached = null;
     return true;
   }
 
@@ -253,11 +260,15 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   }
 
   public boolean removeConfiguration(@NotNull Configuration configuration) {
-    return myConfigurations.remove(configuration);
+    boolean removed = myConfigurations.remove(configuration);
+    if (removed) myChildrenCached = null;
+    return removed;
   }
 
   public boolean removeConfigurationsWithUuid(@NotNull String uuid) {
-    return myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
+    boolean removed = myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
+    if (removed) myChildrenCached = null;
+    return removed;
   }
 
   public InspectionMetaDataDialog createMetaDataDialog(Project project, @NotNull String profileName, @Nullable Configuration configuration) {

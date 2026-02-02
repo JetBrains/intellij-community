@@ -12,7 +12,11 @@ import git4idea.conflicts.GitConflictsUtil.getConflictOperationLock
 import git4idea.conflicts.GitConflictsUtil.showMergeWindow
 import git4idea.conflicts.GitMergeHandler
 import git4idea.i18n.GitBundle
-import git4idea.index.ui.*
+import git4idea.index.ui.GitFileStatusNode
+import git4idea.index.ui.GitStageDataKeys
+import git4idea.index.ui.NodeKind
+import git4idea.index.ui.createConflict
+import git4idea.index.ui.createMergeHandler
 import git4idea.repo.GitConflict
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier

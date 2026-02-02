@@ -19,7 +19,12 @@ import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import com.intellij.spellchecker.settings.SpellCheckerSettings
 import com.intellij.spellchecker.util.SpellCheckerBundle
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.selected
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent

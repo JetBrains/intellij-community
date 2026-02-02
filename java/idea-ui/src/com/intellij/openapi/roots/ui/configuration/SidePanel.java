@@ -4,7 +4,12 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.*;
+import com.intellij.ui.AbstractExpandableItemsHandler;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ExpandableItemsHandler;
+import com.intellij.ui.Gray;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.navigation.Place;
@@ -19,10 +24,19 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.CellRendererPane;
+import javax.swing.DefaultListModel;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Rectangle;
 
 public final class SidePanel extends JPanel {
   private final JList<SidePanelItem> myList;

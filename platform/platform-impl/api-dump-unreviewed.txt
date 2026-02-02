@@ -3250,7 +3250,6 @@ f:com.intellij.ide.plugins.PluginNode
 - getSuggestedCommercialIde():java.lang.String
 - getSuggestedFeatures():java.util.Collection
 - getTags():java.util.List
-- getTrialPeriod():java.lang.Integer
 - getUntilBuild():java.lang.String
 - getUrl():java.lang.String
 - getVendor():java.lang.String
@@ -3304,7 +3303,6 @@ f:com.intellij.ide.plugins.PluginNode
 - setSuggestedCommercialIde(java.lang.String):V
 - setSuggestedFeatures(java.util.Collection):V
 - setTags(java.util.List):V
-- setTrialPeriod(java.lang.Integer):V
 - setUntilBuild(java.lang.String):V
 - setUrl(java.lang.String):V
 - setVendor(java.lang.String):V
@@ -3328,7 +3326,6 @@ f:com.intellij.ide.plugins.PluginStateManager
 a:com.intellij.ide.plugins.PluginUpdateStatus
 - sf:Companion:com.intellij.ide.plugins.PluginUpdateStatus$Companion
 - f:getTimestamp():J
-- f:mergeWith(com.intellij.ide.plugins.PluginUpdateStatus):com.intellij.ide.plugins.PluginUpdateStatus
 f:com.intellij.ide.plugins.PluginUpdateStatus$CheckFailed
 - com.intellij.ide.plugins.PluginUpdateStatus
 - <init>(java.lang.String,java.lang.String):V
@@ -3340,16 +3337,8 @@ f:com.intellij.ide.plugins.PluginUpdateStatus$Companion
 f:com.intellij.ide.plugins.PluginUpdateStatus$LatestVersionInstalled
 - com.intellij.ide.plugins.PluginUpdateStatus
 - sf:INSTANCE:com.intellij.ide.plugins.PluginUpdateStatus$LatestVersionInstalled
-f:com.intellij.ide.plugins.PluginUpdateStatus$Unverified
-- com.intellij.ide.plugins.PluginUpdateStatus
-- <init>(java.lang.String,java.lang.String,com.intellij.ide.plugins.PluginUpdateStatus$Update):V
-- f:getReason():java.lang.String
-- f:getUpdateStatus():com.intellij.ide.plugins.PluginUpdateStatus$Update
-- f:getVerifierName():java.lang.String
 f:com.intellij.ide.plugins.PluginUpdateStatus$Update
 - com.intellij.ide.plugins.PluginUpdateStatus
-- <init>(com.intellij.ide.plugins.IdeaPluginDescriptor,java.lang.String):V
-- f:getHostToInstallFrom():java.lang.String
 - f:getPluginDescriptor():com.intellij.ide.plugins.IdeaPluginDescriptor
 f:com.intellij.ide.plugins.RepositoryHelper
 - <init>():V
@@ -3366,16 +3355,13 @@ c:com.intellij.ide.plugins.StandalonePluginUpdateChecker
 - dispose():V
 - psf:getCACHED_REQUEST_DELAY():J
 - getCurrentVersion():java.lang.String
-- pf:getLastUpdateStatus():com.intellij.ide.plugins.PluginUpdateStatus
 - f:getPluginId():com.intellij.openapi.extensions.PluginId
 - f:installPluginUpdate(com.intellij.ide.plugins.PluginUpdateStatus$Update,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0):V
 - bs:installPluginUpdate$default(com.intellij.ide.plugins.StandalonePluginUpdateChecker,com.intellij.ide.plugins.PluginUpdateStatus$Update,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,I,java.lang.Object):V
 - f:pluginUsed():V
 - pf:queueUpdateCheck(kotlin.jvm.functions.Function1):V
-- pf:setLastUpdateStatus(com.intellij.ide.plugins.PluginUpdateStatus):V
 - skipUpdateCheck():Z
 - pf:updateCheck(kotlin.jvm.functions.Function1):V
-- verifyUpdate(com.intellij.ide.plugins.PluginUpdateStatus$Update):com.intellij.ide.plugins.PluginUpdateStatus
 f:com.intellij.ide.plugins.StandalonePluginUpdateChecker$Companion
 f:com.intellij.ide.plugins.UIComponentFileEditor
 - com.intellij.openapi.util.UserDataHolderBase
@@ -3397,41 +3383,6 @@ a:com.intellij.ide.plugins.UIComponentVirtualFile
 - <init>(java.lang.String,javax.swing.Icon):V
 - a:createContent(com.intellij.ide.plugins.UIComponentFileEditor):com.intellij.ide.plugins.UIComponentVirtualFile$Content
 - getPath():java.lang.String
-e:com.intellij.ide.plugins.enums.PluginsGroupType
-- java.lang.Enum
-- sf:BUNDLED_UPDATE:com.intellij.ide.plugins.enums.PluginsGroupType
-- sf:CUSTOM_REPOSITORY:com.intellij.ide.plugins.enums.PluginsGroupType
-- sf:INSTALLED:com.intellij.ide.plugins.enums.PluginsGroupType
-- sf:INSTALLING:com.intellij.ide.plugins.enums.PluginsGroupType
-- sf:INTERNAL:com.intellij.ide.plugins.enums.PluginsGroupType
-- sf:NEW_AND_UPDATED:com.intellij.ide.plugins.enums.PluginsGroupType
-- sf:SEARCH:com.intellij.ide.plugins.enums.PluginsGroupType
-- sf:SEARCH_INSTALLED:com.intellij.ide.plugins.enums.PluginsGroupType
-- sf:STAFF_PICKS:com.intellij.ide.plugins.enums.PluginsGroupType
-- sf:SUGGESTED:com.intellij.ide.plugins.enums.PluginsGroupType
-- sf:TOP_DOWNLOADS:com.intellij.ide.plugins.enums.PluginsGroupType
-- sf:TOP_RATED:com.intellij.ide.plugins.enums.PluginsGroupType
-- sf:UPDATE:com.intellij.ide.plugins.enums.PluginsGroupType
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.ide.plugins.enums.PluginsGroupType
-- s:values():com.intellij.ide.plugins.enums.PluginsGroupType[]
-e:com.intellij.ide.plugins.enums.SortBy
-- java.lang.Enum
-- sf:Companion:com.intellij.ide.plugins.enums.SortBy$Companion
-- sf:DOWNLOADS:com.intellij.ide.plugins.enums.SortBy
-- sf:NAME:com.intellij.ide.plugins.enums.SortBy
-- sf:RATING:com.intellij.ide.plugins.enums.SortBy
-- sf:RELEVANCE:com.intellij.ide.plugins.enums.SortBy
-- sf:UPDATE_DATE:com.intellij.ide.plugins.enums.SortBy
-- sf:getByQueryOrNull(java.lang.String):com.intellij.ide.plugins.enums.SortBy
-- s:getEntries():kotlin.enums.EnumEntries
-- f:getMpParameter():java.lang.String
-- f:getPresentableNameSupplier():java.util.function.Supplier
-- f:getQuery():java.lang.String
-- s:valueOf(java.lang.String):com.intellij.ide.plugins.enums.SortBy
-- s:values():com.intellij.ide.plugins.enums.SortBy[]
-f:com.intellij.ide.plugins.enums.SortBy$Companion
-- f:getByQueryOrNull(java.lang.String):com.intellij.ide.plugins.enums.SortBy
 f:com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 - sf:Companion:com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate$Companion
 - <init>():V
@@ -3496,16 +3447,6 @@ c:com.intellij.ide.plugins.newui.LinkComponent
 - com.intellij.ui.components.labels.LinkLabel
 - <init>():V
 - p:getTextColor():java.awt.Color
-c:com.intellij.ide.plugins.newui.OneLineProgressIndicator
-- com.intellij.openapi.wm.impl.status.InlineProgressIndicator
-- <init>():V
-- <init>(java.lang.String,Z):V
-- <init>(Z):V
-- <init>(Z,Z):V
-- p:cancelRequest():V
-- createBaselineWrapper():javax.swing.JComponent
-- setCancelRunnable(java.lang.Runnable):V
-- s:task(java.lang.String):com.intellij.openapi.progress.TaskInfo
 f:com.intellij.ide.plugins.newui.PluginLogo
 - sf:INSTANCE:com.intellij.ide.plugins.newui.PluginLogo
 - sf:endBatchMode():V
@@ -3534,81 +3475,11 @@ c:com.intellij.ide.plugins.newui.PluginUpdatesService
 - s:isNeedUpdate(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
 - s:reapplyFilter():V
 - recalculateUpdates():V
-a:com.intellij.ide.plugins.newui.SearchPopupController
-- pf:myTextField:com.intellij.ide.plugins.newui.PluginSearchTextField
-- <init>(com.intellij.ide.plugins.newui.PluginSearchTextField):V
-- pa:getAttributes():java.util.List
-- pa:getValues(java.lang.String):java.util.Collection
-- p:handleEnter():V
-- handleEnter(java.awt.event.KeyEvent):Z
-- p:handlePopupListFirstSelection():V
-- handleShowPopup():V
-- handleUpDown(java.awt.event.KeyEvent):Z
-- hidePopup():V
-- isPopupShow():Z
-- showAttributesPopup(java.lang.String,I):V
-- pa:showPopupForQuery():V
-a:com.intellij.ide.plugins.newui.SearchQueryParser
-- searchQuery:java.lang.String
-- <init>():V
-- p:addToSearchQuery(java.lang.String):V
-- s:getTagQuery(java.lang.String):java.lang.String
-- ps:splitQuery(java.lang.String):java.util.List
-- s:wrapAttribute(java.lang.String):java.lang.String
-c:com.intellij.ide.plugins.newui.SearchQueryParser$Installed
-- com.intellij.ide.plugins.newui.SearchQueryParser
-- attributes:Z
-- bundled:Z
-- disabled:Z
-- downloaded:Z
-- enabled:Z
-- invalid:Z
-- needUpdate:Z
-- f:tags:java.util.Set
-- f:vendors:java.util.Set
-- <init>(java.lang.String):V
-- p:handleAttribute(java.lang.String,java.lang.String):V
-c:com.intellij.ide.plugins.newui.SearchQueryParser$Marketplace
-- com.intellij.ide.plugins.newui.SearchQueryParser
-- internal:Z
-- f:repositories:java.util.Set
-- sortBy:com.intellij.ide.plugins.enums.SortBy
-- staffPicks:Z
-- suggested:Z
-- f:tags:java.util.Set
-- f:vendors:java.util.Set
-- <init>(java.lang.String):V
-- p:addToSearchQuery(java.lang.String):V
-- getUrlQuery():java.lang.String
-- p:handleAttribute(java.lang.String,java.lang.String):V
-com.intellij.ide.plugins.newui.TabHeaderListener
-- a:selectionChanged(I):V
 f:com.intellij.ide.plugins.newui.TagComponent
 - com.intellij.ide.plugins.newui.LinkComponent
 - <init>():V
 - <init>(java.lang.String):V
 - setText(java.lang.String):V
-e:com.intellij.ide.plugins.newui.Tags
-- java.lang.Enum
-- sf:EAP:com.intellij.ide.plugins.newui.Tags
-- sf:Freemium:com.intellij.ide.plugins.newui.Tags
-- sf:Paid:com.intellij.ide.plugins.newui.Tags
-- sf:Pro:com.intellij.ide.plugins.newui.Tags
-- sf:Purchased:com.intellij.ide.plugins.newui.Tags
-- sf:Trial:com.intellij.ide.plugins.newui.Tags
-- sf:Ultimate:com.intellij.ide.plugins.newui.Tags
-- s:valueOf(java.lang.String):com.intellij.ide.plugins.newui.Tags
-- s:values():com.intellij.ide.plugins.newui.Tags[]
-c:com.intellij.ide.plugins.newui.TextHorizontalLayout
-- com.intellij.ide.plugins.newui.HorizontalLayout
-- sf:FIX_LABEL:java.lang.String
-- <init>(I):V
-- addLayoutComponent(java.awt.Component,java.lang.Object):V
-- layoutContainer(java.awt.Container):V
-f:com.intellij.ide.plugins.newui.TwoLineProgressIndicator
-- com.intellij.ide.plugins.newui.OneLineProgressIndicator
-- <init>():V
-- <init>(Z):V
 f:com.intellij.ide.plugins.newui.UpdateButton
 - com.intellij.ide.plugins.newui.ColorButton
 - <init>():V
@@ -3876,11 +3747,6 @@ c:com.intellij.ide.ui.laf.IntelliJLaf
 - sf:NAME:java.lang.String
 - <init>():V
 - getName():java.lang.String
-f:com.intellij.ide.ui.laf.IntelliJLookAndFeelInfo
-- javax.swing.UIManager$LookAndFeelInfo
-- <init>():V
-- equals(java.lang.Object):Z
-- hashCode():I
 f:com.intellij.ide.ui.laf.LafManagerImpl
 - com.intellij.ide.ui.LafManager
 - com.intellij.openapi.components.PersistentStateComponent
@@ -4891,12 +4757,6 @@ f:com.intellij.notification.EventLog
 - s:getEventLog(com.intellij.openapi.project.Project):com.intellij.openapi.wm.ToolWindow
 - s:getLogModel(com.intellij.openapi.project.Project):com.intellij.notification.LogModel
 - s:toggleLog(com.intellij.openapi.project.Project,com.intellij.notification.Notification):V
-f:com.intellij.notification.EventLogToolWindowFactory
-- com.intellij.openapi.project.DumbAware
-- com.intellij.openapi.wm.ToolWindowFactory
-- <init>():V
-- createToolWindowContent(com.intellij.openapi.project.Project,com.intellij.openapi.wm.ToolWindow):V
-- isApplicable(com.intellij.openapi.project.Project):Z
 f:com.intellij.notification.LogModel
 - getNotifications():java.util.ArrayList
 f:com.intellij.notification.SingletonNotificationManager
@@ -6928,7 +6788,6 @@ f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbar
 - com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 - <init>(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.Disposable):V
 f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$Companion
-- f:createExtensionDisposable(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider,com.intellij.openapi.Disposable):com.intellij.openapi.Disposable
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$DefaultImpls
 - s:getAutoHideable(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider):Z
@@ -9509,9 +9368,6 @@ f:com.intellij.openapi.wm.ex.ToolWindowEx$ToolWindowDecoration
 - <init>(javax.swing.Icon,com.intellij.openapi.actionSystem.ActionGroup):V
 - getActionGroup():com.intellij.openapi.actionSystem.ActionGroup
 - getIcon():javax.swing.Icon
-a:com.intellij.openapi.wm.ex.ToolWindowManagerAdapter
-- com.intellij.openapi.wm.ex.ToolWindowManagerListener
-- <init>():V
 a:com.intellij.openapi.wm.ex.ToolWindowManagerEx
 - com.intellij.openapi.wm.ToolWindowManager
 - sf:Companion:com.intellij.openapi.wm.ex.ToolWindowManagerEx$Companion
@@ -9898,29 +9754,6 @@ a:com.intellij.openapi.wm.impl.VisibilityWatcher
 - f:install(java.awt.Component):V
 - f:propertyChange(java.beans.PropertyChangeEvent):V
 - a:visibilityChanged():V
-f:com.intellij.openapi.wm.impl.WindowButtonsConfiguration
-- com.intellij.openapi.components.PersistentStateComponent
-- sf:Companion:com.intellij.openapi.wm.impl.WindowButtonsConfiguration$Companion
-- <init>(kotlinx.coroutines.CoroutineScope):V
-- getState():com.intellij.openapi.wm.impl.WindowButtonsConfiguration$State
-- f:getStateFlow():kotlinx.coroutines.flow.StateFlow
-- loadState(com.intellij.openapi.wm.impl.WindowButtonsConfiguration$State):V
-- noStateLoaded():V
-- f:scheduleUpdateFromOs():V
-f:com.intellij.openapi.wm.impl.WindowButtonsConfiguration$Companion
-- f:getInstance():com.intellij.openapi.wm.impl.WindowButtonsConfiguration
-f:com.intellij.openapi.wm.impl.WindowButtonsConfiguration$State
-- buttons:java.util.List
-- rightPosition:Z
-- <init>():V
-e:com.intellij.openapi.wm.impl.WindowButtonsConfiguration$WindowButton
-- java.lang.Enum
-- sf:CLOSE:com.intellij.openapi.wm.impl.WindowButtonsConfiguration$WindowButton
-- sf:MAXIMIZE:com.intellij.openapi.wm.impl.WindowButtonsConfiguration$WindowButton
-- sf:MINIMIZE:com.intellij.openapi.wm.impl.WindowButtonsConfiguration$WindowButton
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.openapi.wm.impl.WindowButtonsConfiguration$WindowButton
-- s:values():com.intellij.openapi.wm.impl.WindowButtonsConfiguration$WindowButton[]
 f:com.intellij.openapi.wm.impl.WindowInfoImpl
 - com.intellij.openapi.components.BaseState
 - com.intellij.openapi.wm.WindowInfo
@@ -12437,7 +12270,6 @@ c:com.intellij.ui.TreeSpeedSearch
 c:com.intellij.ui.TreeTableSpeedSearch
 - com.intellij.ui.SpeedSearchBase
 - p:myCanExpand:Z
-- <init>(com.intellij.ui.treeStructure.treetable.TreeTable):V
 - <init>(com.intellij.ui.treeStructure.treetable.TreeTable,com.intellij.util.containers.Convertor):V
 - p:<init>(com.intellij.ui.treeStructure.treetable.TreeTable,java.lang.Void):V
 - p:<init>(com.intellij.ui.treeStructure.treetable.TreeTable,java.lang.Void,com.intellij.util.containers.Convertor):V
@@ -13751,7 +13583,6 @@ c:com.intellij.ui.popup.PopupFactoryImpl$ActionGroupPopup
 - com.intellij.ui.popup.list.ListPopupImpl
 - p:<init>(com.intellij.ui.popup.WizardPopup,com.intellij.openapi.ui.popup.ListPopupStep,java.lang.Runnable,com.intellij.openapi.actionSystem.DataContext,I):V
 - <init>(com.intellij.ui.popup.WizardPopup,java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.ui.popup.ActionPopupOptions,java.lang.Runnable):V
-- <init>(com.intellij.ui.popup.WizardPopup,java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z):V
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String):V
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z):V
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String,Z):V

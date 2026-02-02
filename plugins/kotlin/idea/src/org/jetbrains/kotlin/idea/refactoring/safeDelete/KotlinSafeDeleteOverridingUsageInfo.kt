@@ -5,8 +5,10 @@ package org.jetbrains.kotlin.idea.refactoring.safeDelete
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteCustomUsageInfo
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteUsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.psi.KtPsiUtil
 
+@K1Deprecation
 class KotlinSafeDeleteOverridingUsageInfo(
     overridingElement: PsiElement, superElement: PsiElement
 ) : SafeDeleteUsageInfo(overridingElement, superElement), SafeDeleteCustomUsageInfo {

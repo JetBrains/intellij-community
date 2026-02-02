@@ -151,6 +151,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
   override val isTabOccupiesWholeHeight: Boolean
     get() = !isManyIslandEnabled
 
+  override val isRoundedTabDuringDrag: Boolean
+    get() = isManyIslandEnabled
+
   override val toolWindowUIDecorator: ToolWindowUIDecorator = object : ToolWindowUIDecorator() {
     override fun decorateAndReturnHolder(
       divider: JComponent,
@@ -168,7 +171,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
         if (isManyIslandEnabled) {
           background = JBUI.CurrentTheme.ToolWindow.background()
           createToolWindowBorderPainter(toolWindow, this)
-          configureBackgroundPainting(child, recursive = false)
+          if (!isColorIslandGradient()) {
+            configureBackgroundPainting(child, recursive = false)
+          }
         }
         else {
           border = originalBorderBuilder()
@@ -430,8 +435,10 @@ internal class IslandsUICustomization : InternalUICustomization() {
     createToolWindowBorderPainter(toolwindow, holder)
     clearParentNoBackground(holder)
 
-    for (child in holder.components) {
-      configureBackgroundPainting(child as JComponent, recursive = true)
+    if (!isColorIslandGradient()) {
+      for (child in holder.components) {
+        configureBackgroundPainting(child as JComponent, recursive = true)
+      }
     }
   }
 
@@ -487,7 +494,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
           return@addVisibleToolbarsListener
         }
 
-        if (leftVisible && rightVisible || DistractionFreeModeController.isDistractionFreeModeEnabled()) {
+        if (DistractionFreeModeController.isDistractionFreeModeEnabled()) {
           if (toolWindowPaneParent.border != null) {
             toolWindowPaneParent.border = null
           }
@@ -503,7 +510,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
           else {
             val insets = border.getBorderInsets(toolWindowPaneParent)
             if (insets.left != left || insets.right != right) {
-              toolWindowPaneParent.border = JBUI.Borders.empty(0, left, 0, right)
+              val top = JBUI.unscale(insets.top)
+              val bottom = JBUI.unscale(insets.bottom)
+              toolWindowPaneParent.border = JBUI.Borders.empty(top, left, bottom, right)
             }
           }
         }
@@ -1212,6 +1221,41 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
 
     return true
+  }
+
+  override fun calculateTabWidth(widthWithInsets: Int, insetsWidth: Int): Int {
+    val minWidth = JBUI.scale(JBUI.getInt("TabbedPane.tabContentMinWidth", 24))
+    val contentWidth = (widthWithInsets - insetsWidth).coerceAtLeast(minWidth)
+    return contentWidth + insetsWidth
+  }
+
+  override fun onStatusBarVisibilityChanged(centerComponent: JComponent, isStatusBarVisible: Boolean) {
+    if (!isManyIslandEnabled || DistractionFreeModeController.isDistractionFreeModeEnabled()) {
+      if (centerComponent.border != null) {
+        centerComponent.border = null
+      }
+    }
+    else {
+      val insets = centerComponent.border?.getBorderInsets(centerComponent) ?: JBUI.emptyInsets()
+
+      centerComponent.border = JBUI.Borders.empty(
+        JBUI.unscale(insets.top),
+        JBUI.unscale(insets.left),
+        if (isStatusBarVisible) {
+          0
+        }
+        else {
+          JBUI.getInt("Islands.emptyGap", 4)
+        },
+        JBUI.unscale(insets.right)
+      )
+    }
+    centerComponent.revalidate()
+    centerComponent.repaint()
+  }
+
+  override fun getTabHOffsetUnscaled(compactMode: Boolean, position: JBTabsPosition): Int {
+    return IslandsTabPainter.getHOffsetUnscaled(compactMode, position)
   }
 }
 

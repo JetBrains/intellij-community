@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.application.options.CodeStyle
@@ -7,7 +7,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
-import com.intellij.idea.IJIgnore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -50,9 +49,10 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     override fun runInDispatchThread() = false
 
     override fun tearDown() {
-        runAll({ CodeStyle.getDefaultSettings().clearCodeStyleSettings() },
-               { KotlinSdkType.removeKotlinSdkInTests() },
-               { super.tearDown() })
+        runAll(
+            { CodeStyle.getDefaultSettings().clearCodeStyleSettings() },
+            { KotlinSdkType.removeKotlinSdkInTests() },
+            { super.tearDown() })
     }
 
     @Test
@@ -73,10 +73,8 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
             Assert.assertEquals(ignoredPoms, mavenProjectsManager.ignoredFilesPaths)
 
             // create module
-            runBlocking {
-                waitForModuleCreation {
-                    createKotlinModuleFromTemplate(project)
-                }
+            waitForModuleCreation {
+                createKotlinModuleFromTemplate(project)
             }
             assertModules(project, "project", newModuleName)
 
@@ -98,10 +96,8 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
             Assert.assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
 
             // create module
-            runBlocking {
-                waitForModuleCreation {
-                    createKotlinModuleFromTemplate(project)
-                }
+            waitForModuleCreation {
+                createKotlinModuleFromTemplate(project)
             }
             assertModules(project, "project", newModuleName)
 
@@ -113,7 +109,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     }
 
     @Test
-    @IJIgnore(issue = "KTIJ-35262")
     fun testNewModuleInJavaProject() = runBlocking {
         waitForProjectCreation {
             createProjectFromTemplate(JAVA) {
@@ -129,10 +124,8 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
             val mavenProjectsManager = MavenProjectsManager.getInstance(project)
             Assert.assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
 
-            runBlocking {
-                waitForModuleCreation {
-                    createKotlinModuleFromTemplate(project, addSampleCode = true)
-                }
+            waitForModuleCreation {
+                createKotlinModuleFromTemplate(project, addSampleCode = true)
             }
 
             assertModules(project, listOf("project", newModuleName))
@@ -143,7 +136,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     }
 
     @Test
-    @IJIgnore(issue = "KTIJ-35262")
     fun testNewModuleInKotlinProjectIndependentHierarchy() {
         runNewProjectAndModuleTestCase(
             independentHierarchy = true
@@ -170,15 +162,13 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
             val mavenProjectsManager = MavenProjectsManager.getInstance(project)
             Assert.assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
 
-            runBlocking {
-                waitForModuleCreation {
-                    createKotlinModuleFromTemplate(
-                        project, groupId = groupId,
-                        version = version,
-                        addSampleCode = addSampleCodeToModule,
-                        independentHierarchy = independentHierarchy
-                    )
-                }
+            waitForModuleCreation {
+                createKotlinModuleFromTemplate(
+                    project, groupId = groupId,
+                    version = version,
+                    addSampleCode = addSampleCodeToModule,
+                    independentHierarchy = independentHierarchy
+                )
             }
 
             assertModules(project, expectedModules)
@@ -190,7 +180,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     }
 
     @Test
-    @IJIgnore(issue = "KTIJ-35262")
     fun testCreateNewProject() {
         runBlocking {
             waitForProjectCreation {
@@ -203,19 +192,16 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     }
 
     @Test
-    @IJIgnore(issue = "KTIJ-35262")
     fun testSimpleProject() {
         runNewProjectAndModuleTestCase()
     }
 
     @Test
-    @IJIgnore(issue = "KTIJ-35262")
     fun testAddSampleCodeEverywhere() {
         runNewProjectAndModuleTestCase(addSampleCodeToProject = true, addSampleCodeToModule = true)
     }
 
     @Test
-    @IJIgnore(issue = "KTIJ-35262")
     fun testAddSampleCodeOnlyInModule() {
         runNewProjectAndModuleTestCase(addSampleCodeToProject = false, addSampleCodeToModule = true)
     }
@@ -311,8 +297,9 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     }
 
     override fun postprocessOutputFile(relativePath: String, fileContents: String): String {
-        val result = substituteCompilerSourceAndTargetLevels(fileContents)
-        return substituteArtifactsVersions(result)
+        val fileContentWithSubstitutedCompilerSourceAndTarget = substituteCompilerSourceAndTargetLevels(fileContents)
+        val fileContentWithSubstitutedKotlinVersion = substituteKotlinVersion(fileContentWithSubstitutedCompilerSourceAndTarget)
+        return substituteArtifactsVersions(fileContentWithSubstitutedKotlinVersion)
     }
 
     override fun getTestFolderName(): String {
@@ -323,8 +310,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
         var result = str
 
         result = substituteVersionForArtifact(result, "kotlin-maven-plugin", needMoreSpaces = true)
-        result = substituteVersionForArtifact(result, "kotlin-test-junit5")
-        result = substituteVersionForArtifact(result, "kotlin-stdlib")
         result = substituteVersionForArtifact(result, "maven-surefire-plugin", needMoreSpaces = true)
         result = substituteVersionForArtifact(result, "maven-failsafe-plugin", needMoreSpaces = true)
         result = substituteVersionForArtifact(result, "junit-jupiter")
@@ -333,10 +318,10 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
         return result
     }
 
-    private fun substituteVersionForArtifact(str: String, artifactId: String, needMoreSpaces: Boolean = false): String {
+    private fun substituteVersionForArtifact(fileContents: String, artifactId: String, needMoreSpaces: Boolean = false): String {
         val regex =
-            Regex("<artifactId>$artifactId</artifactId>\n( )*<version>(([a-zA-Z]|(\\.)|(\\d)|-)+)")
-        var result = str
+            Regex("<artifactId>$artifactId</artifactId>\n( )*<version>(([a-zA-Z]|(\\.)|(\\d)|-)+)</version>")
+        var result = fileContents
         if (result.contains(regex)) {
             val additionalSpaces = if (needMoreSpaces) {
                 "    "
@@ -345,21 +330,32 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
             }
             result = result.replace(
                 regex, "<artifactId>$artifactId</artifactId>\n" +
-                        "$additionalSpaces            <version>VERSION"
+                        "$additionalSpaces            <version>VERSION</version>"
+            )
+        }
+        return result
+    }
+
+    private fun substituteKotlinVersion(fileContents: String): String {
+        val kotlinVersionRegex = Regex("<kotlin.version>\\d\\.\\d\\.(\\d)+</kotlin.version>")
+        var result = fileContents
+        if (result.contains(kotlinVersionRegex)) {
+            result = result.replace(
+                kotlinVersionRegex, "<kotlin.version>VERSION</kotlin.version>"
             )
         }
         return result
     }
 
     private fun substituteCompilerSourceAndTargetLevels(fileContents: String): String {
-        val compilerSourceRegex = Regex("<maven.compiler.source>(\\d\\d)")
-        val compilerTargetRegex = Regex("<maven.compiler.target>(\\d\\d)")
+        val compilerSourceRegex = Regex("<maven.compiler.source>(\\d\\d)</maven.compiler.source>")
+        val compilerTargetRegex = Regex("<maven.compiler.target>(\\d\\d)</maven.compiler.target>")
         var result = fileContents
         if (result.contains(compilerSourceRegex)) {
-            result = result.replace(compilerSourceRegex, "<maven.compiler.source>VERSION")
+            result = result.replace(compilerSourceRegex, "<maven.compiler.source>VERSION</maven.compiler.source>")
         }
         if (result.contains(compilerTargetRegex)) {
-            result = result.replace(compilerTargetRegex, "<maven.compiler.target>VERSION")
+            result = result.replace(compilerTargetRegex, "<maven.compiler.target>VERSION</maven.compiler.target>")
         }
         return result
     }

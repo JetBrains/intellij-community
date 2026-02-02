@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.completion.common.protocol
 
 import com.intellij.openapi.editor.impl.EditorId
@@ -13,7 +13,10 @@ sealed interface RpcLookupElementEvent {
   @Serializable
   data class SelectedItem(
     val requestId: RpcCompletionRequestId,
-    val itemId: RpcCompletionItemId,
+    val arrangementId: RpcCompletionArrangementId,
+    val itemId: RpcCompletionItemId?,
+    val itemPattern: String,
+    val prefixLength: Int,
   ) : RpcLookupElementEvent {
     override fun toString(): String = buildToString("SelectedItem") {
       field("requestId", requestId)

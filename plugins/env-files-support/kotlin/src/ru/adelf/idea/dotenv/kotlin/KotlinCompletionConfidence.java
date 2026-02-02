@@ -1,6 +1,7 @@
 package ru.adelf.idea.dotenv.kotlin;
 
 import com.intellij.codeInsight.completion.CompletionConfidence;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
@@ -9,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry;
 
 public class KotlinCompletionConfidence extends CompletionConfidence {
     @Override
-    public @NotNull ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+    public @NotNull ThreeState shouldSkipAutopopup(@NotNull Editor editor, @NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
         PsiElement literal = contextElement.getContext();
         if (!(literal instanceof KtLiteralStringTemplateEntry)) {
             return ThreeState.UNSURE;

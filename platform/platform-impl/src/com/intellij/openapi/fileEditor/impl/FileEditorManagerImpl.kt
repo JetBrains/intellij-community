@@ -1179,22 +1179,20 @@ open class FileEditorManagerImpl(
     }
 
     if (EDT.isCurrentThreadEdt()) {
-      return WriteIntentReadAction.compute(Computable {
-        val composite = open()
-        if (composite is EditorComposite) {
-          if (options.waitForCompositeOpen) {
-            blockingWaitForCompositeFileOpen(composite)
-            if (composite.providerSequence.none()) {
-              closeFile(window = window, composite = composite, runChecks = false)
-              return@Computable FileEditorComposite.EMPTY
-            }
-          }
-          else {
-            scheduleCloseIfEmpty(window, composite)
+      val composite = open()
+      if (composite is EditorComposite) {
+        if (options.waitForCompositeOpen) {
+          blockingWaitForCompositeFileOpen(composite)
+          if (composite.providerSequence.none()) {
+            closeFile(window = window, composite = composite, runChecks = false)
+            return FileEditorComposite.EMPTY
           }
         }
-        return@Computable composite
-      })
+        else {
+          scheduleCloseIfEmpty(window, composite)
+        }
+      }
+      return composite
     }
     else {
       return runBlockingCancellable {
@@ -1278,55 +1276,53 @@ open class FileEditorManagerImpl(
     options: FileEditorOpenOptions,
     forceCompositeCreation: Boolean = false,
   ): EditorComposite? {
-    return WriteIntentReadAction.compute(Computable {
-      var composite = if (forceCompositeCreation) null else window.getComposite(file)
-      val isNewEditor = composite == null
-      if (composite == null) {
-        // IJPL-183875: Explicitly set a composite to open a backend supplied composite
-        composite = createCompositeAndModel(file = file, window = window, fileEntry = fileEntry, hint = options.internalHint)
-                    ?: return@Computable null
-        openedCompositeEntries.add(EditorCompositeEntry(composite = composite, delayedState = null))
-      }
+    var composite = if (forceCompositeCreation) null else window.getComposite(file)
+    val isNewEditor = composite == null
+    if (composite == null) {
+      // IJPL-183875: Explicitly set a composite to open a backend supplied composite
+      composite = createCompositeAndModel(file = file, window = window, fileEntry = fileEntry, hint = options.internalHint)
+                  ?: return null
+      openedCompositeEntries.add(EditorCompositeEntry(composite = composite, delayedState = null))
+    }
 
-      window.addComposite(
-        composite = composite,
-        file = composite.file,
-        options = options,
-        isNewEditor = isNewEditor,
-      )
-      if (isNewEditor) {
-        openFileSetModificationCount.increment()
-      }
-      else if (fileEntry != null) {
-        for (editorWithProvider in composite.allEditorsWithProviders) {
-          val state = fileEntry.providers.get(editorWithProvider.provider.editorTypeId)
-            ?.let { editorWithProvider.provider.readState(it, project, file) }
-          if (state != null && state != FileEditorState.INSTANCE) {
-            restoreEditorState(
-              fileEditorWithProvider = editorWithProvider,
-              state = state,
-              exactState = options.isExactState,
-              project = project,
-            )
-          }
+    window.addComposite(
+      composite = composite,
+      file = composite.file,
+      options = options,
+      isNewEditor = isNewEditor,
+    )
+    if (isNewEditor) {
+      openFileSetModificationCount.increment()
+    }
+    else if (fileEntry != null) {
+      for (editorWithProvider in composite.allEditorsWithProviders) {
+        val state = fileEntry.providers.get(editorWithProvider.provider.editorTypeId)
+          ?.let { editorWithProvider.provider.readState(it, project, file) }
+        if (state != null && state != FileEditorState.INSTANCE) {
+          restoreEditorState(
+            fileEditorWithProvider = editorWithProvider,
+            state = state,
+            exactState = options.isExactState,
+            project = project,
+          )
         }
-
-        // restore selected editor
-        val provider = (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl)
-          .getSelectedFileEditorProvider(composite = composite, project = project)
-        if (provider != null) {
-          composite.setSelectedEditor(provider)
-        }
-
-        window.owner.afterFileOpen(file)
       }
 
-      selectionHistory.addRecord(file to window)
+      // restore selected editor
+      val provider = (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl)
+        .getSelectedFileEditorProvider(composite = composite, project = project)
+      if (provider != null) {
+        composite.setSelectedEditor(provider)
+      }
 
-      // update frame and tab title
-      scheduleUpdateFileName(file)
-      return@Computable composite
-    })
+      window.owner.afterFileOpen(file)
+    }
+
+    selectionHistory.addRecord(file to window)
+
+    // update frame and tab title
+    scheduleUpdateFileName(file)
+    return composite
   }
 
   @RequiresEdt

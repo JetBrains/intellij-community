@@ -14,8 +14,12 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 import static com.intellij.util.ui.UIUtil.ComponentStyle.SMALL;
 import static com.intellij.util.ui.UIUtil.FontColor.BRIGHTER;

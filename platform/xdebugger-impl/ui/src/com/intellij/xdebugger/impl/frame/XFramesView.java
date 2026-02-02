@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.debugger.impl.shared.XDebuggerActionsCollector;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.platform.debugger.impl.ui.DebuggerUIUtilShared;
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
@@ -42,7 +43,6 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.platform.debugger.impl.shared.XDebuggerActionsCollector;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
 import one.util.streamex.StreamEx;
@@ -195,7 +195,7 @@ public final class XFramesView extends XDebugView {
             XDebugSessionProxy session = getSession();
             if (session != null) {
               myRefresh = false;
-              updateFrames((XExecutionStack)item, session, null, false);
+              updateFrames((XExecutionStack)item, null, false);
               XDebuggerActionsCollector.threadSelected.log(XDebuggerActionsCollector.PLACE_FRAMES_VIEW);
             }
           }
@@ -397,8 +397,8 @@ public final class XFramesView extends XDebugView {
     return toolbar;
   }
 
-  private StackFramesListBuilder getOrCreateBuilder(XExecutionStack executionStack, XDebugSessionProxy sessionProxy) {
-    return myBuilders.computeIfAbsent(executionStack, k -> new StackFramesListBuilder(executionStack, sessionProxy));
+  private StackFramesListBuilder getOrCreateBuilder(XExecutionStack executionStack) {
+    return myBuilders.computeIfAbsent(executionStack, k -> new StackFramesListBuilder(executionStack));
   }
 
   private void withCurrentBuilder(Consumer<? super StackFramesListBuilder> consumer) {
@@ -492,7 +492,6 @@ public final class XFramesView extends XDebugView {
         myThreadsPanel.revalidate();
       }
       updateFrames(activeExecutionStack,
-                   session,
                    event == SessionEvent.FRAME_CHANGED ? currentStackFrame : null,
                    shouldRefresh);
     });
@@ -533,7 +532,6 @@ public final class XFramesView extends XDebugView {
   }
 
   private void updateFrames(XExecutionStack executionStack,
-                            @NotNull XDebugSessionProxy sessionProxy,
                             @Nullable XStackFrame frameToSelect,
                             boolean refresh) {
     if (mySelectedStack != null) {
@@ -543,7 +541,7 @@ public final class XFramesView extends XDebugView {
     mySelectedStack = executionStack;
     if (executionStack != null) {
       mySelectedFrame = myExecutionStacksWithSelection.get(executionStack);
-      StackFramesListBuilder builder = getOrCreateBuilder(executionStack, sessionProxy);
+      StackFramesListBuilder builder = getOrCreateBuilder(executionStack);
       builder.setRefresh(refresh);
       builder.setToSelect(frameToSelect != null ? frameToSelect : mySelectedFrame);
       myListenersEnabled = false;
@@ -580,7 +578,7 @@ public final class XFramesView extends XDebugView {
     withCurrentBuilder(b -> b.setToSelect(null));
 
     if (myFramesList.getSelectedValue() instanceof XStackFrame frame && sessionProxy != null) {
-      if (force || (!refresh && sessionProxy.getCurrentStackFrame() != myFramesList.getSelectedValue())) {
+      if (force || (!refresh && sessionProxy.getCurrentStackFrame() != frame)) {
         int selectedIndex = myFramesList.getSelectedIndex();
         sessionProxy.setCurrentStackFrame(mySelectedStack, frame, selectedIndex == 0);
         if (force) {
@@ -598,13 +596,11 @@ public final class XFramesView extends XDebugView {
     private volatile boolean myRunning;
     private long myStartTimeMs;
     private boolean myAllFramesLoaded;
-    private final XDebugSessionProxy mySessionProxy;
     private Object myToSelect;
     private boolean myRefresh;
 
-    private StackFramesListBuilder(final XExecutionStack executionStack, XDebugSessionProxy sessionProxy) {
+    private StackFramesListBuilder(final XExecutionStack executionStack) {
       myExecutionStack = executionStack;
-      mySessionProxy = sessionProxy;
       myStackFrames = new ArrayList<>();
     }
 
@@ -728,7 +724,7 @@ public final class XFramesView extends XDebugView {
     private boolean selectCurrentFrame() {
       if (selectFrame(myToSelect)) {
         myListenersEnabled = true;
-        processFrameSelection(mySessionProxy, false, myRefresh);
+        processFrameSelection(getSession(), false, myRefresh);
         return true;
       }
       return false;

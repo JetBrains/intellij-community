@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,7 +15,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.CollectionFactory;
-import com.jetbrains.python.psi.*;
+import com.intellij.util.containers.HashingStrategy;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionCodeFragment;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyInstantTypeProvider;
+import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -60,11 +68,14 @@ public sealed class TypeEvalContext {
   protected final Map<Pair<PyExpression, Object>, PyType> contextTypeCache = getConcurrentMapForCaching();
 
   private static <T> @NotNull ConcurrentMap<@NotNull T, @NotNull PyType> getConcurrentMapForCaching() {
-    if (Registry.is("python.typing.soft.keys.type.eval.context")) {
-      // In the current implementation, this value is only used to initialize the map and is basically ignored
-      // Just in case, set it to a reasonable value
-      // `Runtime.availableProcessors` shouldn't be called here, as that is a potentially expensive operation
-      int concurrencyLevel = 4;
+    // In the current implementation, this value is only used to initialize the map and is basically ignored
+    // Just in case, set it to a reasonable value
+    // `Runtime.availableProcessors` shouldn't be called here, as that is a potentially expensive operation
+    int concurrencyLevel = 4;
+    if (Registry.is("python.typing.weak.keys.type.eval.context")) {
+      return CollectionFactory.createConcurrentWeakKeySoftValueMap(10, 0.75f, concurrencyLevel, HashingStrategy.canonical());
+    }
+    else if (Registry.is("python.typing.soft.keys.type.eval.context")) {
       return CollectionFactory.createConcurrentSoftKeySoftValueMap(10, 0.75f, concurrencyLevel);
     }
     else {
@@ -273,13 +284,14 @@ public sealed class TypeEvalContext {
   }
 
   private @NotNull TypeEvalContext getLibraryContext(@NotNull Project project) {
+    // code completion will always have a new PsiFile, use the original file instead
+    PsiFile origin = myConstraints.myOrigin != null
+                     ? myConstraints.myOrigin.getOriginalFile()
+                     : null;
     TypeEvalConstraints constraints = new TypeEvalConstraints(myConstraints.myAllowDataFlow,
                                                               myConstraints.myAllowStubToAST,
                                                               myConstraints.myAllowCallContext,
-                                                              // code completion will always have a new PsiFile, use original file instead
-                                                              myConstraints.myOrigin != null
-                                                              ? myConstraints.myOrigin.getOriginalFile()
-                                                              : null);
+                                                              origin);
     return project.getService(TypeEvalContextCache.class).getLibraryContext(new LibraryTypeEvalContext(constraints));
   }
 
@@ -310,7 +322,7 @@ public sealed class TypeEvalContext {
         PyType type;
 
         if (externalTypeResolver != null && externalTypeResolver.isSupportedForResolve(element)) {
-          type = externalTypeResolver.resolveType(element, this instanceof LibraryTypeEvalContext);
+          type = Ref.deref(externalTypeResolver.resolveType(element, this instanceof LibraryTypeEvalContext));
         }
         else {
           type = element.getType(this, Key.INSTANCE);

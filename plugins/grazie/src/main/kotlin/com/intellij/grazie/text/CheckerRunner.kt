@@ -2,7 +2,6 @@
 
 package com.intellij.grazie.text
 
-import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.tokenizer.Tokenizer
 import ai.grazie.nlp.tokenizer.sentence.StandardSentenceTokenizer
 import ai.grazie.utils.toLinkedSet
@@ -12,15 +11,22 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.seemsCloudConnected
 import com.intellij.grazie.ide.fus.AcceptanceRateTracker
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
-import com.intellij.grazie.ide.inspection.grammar.quickfix.*
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieAddExceptionQuickFix
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieCustomFixWrapper
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieEnableCloudAction
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieMassApplyAction
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
+import com.intellij.grazie.spellcheck.TypoProblem
 import com.intellij.grazie.text.TextChecker.ProofreadingContext
-import com.intellij.grazie.utils.HighlightingUtil
-import com.intellij.grazie.utils.NaturalTextDetector.seemsNatural
 import com.intellij.grazie.utils.getTextDomain
+import com.intellij.grazie.utils.isGrammar
+import com.intellij.grazie.utils.isSpelling
 import com.intellij.grazie.utils.toProofreadingContext
 import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.diagnostic.Logger
@@ -36,6 +42,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.startOffset
+import com.intellij.spellchecker.inspections.SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -60,12 +67,13 @@ class CheckerRunner(val text: TextContent) {
     return ranges.map { Tokenizer.Token(text.substring(it.start, it.endExclusive), it.start..it.endExclusive) }
   }
 
-  fun run(): List<TextProblem> {
-    if (text.isBlank() || !seemsNatural(text)) return emptyList()
+  fun run(): List<TextProblem> = run(TextChecker.allCheckers(), TextContent.TextDomain.ALL)
 
-    val context = text.toProofreadingContext()
-    if (context.language == Language.UNKNOWN || HighlightingUtil.findInstalledLang(context.language) == null) return emptyList()
-    return filter(doRun(TextChecker.allCheckers(), context))
+  fun run(allCheckers: List<TextChecker>, checkedDomains: Set<TextContent.TextDomain>): List<TextProblem> {
+    if (text.isBlank() || allCheckers.isEmpty()) return emptyList()
+    val checkers = if (text.domain !in checkedDomains) allCheckers.filterNot { it.isGrammar() } else allCheckers
+    val languageDetectionRequired = checkers.any { it.isGrammar() } || checkers.any { it.isSpelling() } && seemsCloudConnected()
+    return filter(doRun(checkers, text.toProofreadingContext(languageDetectionRequired)))
   }
 
   @Suppress("unused")
@@ -89,7 +97,7 @@ class CheckerRunner(val text: TextContent) {
    * In the end, we still collect the results in the checker registration order
    * so that problems from the first checkers can override intersecting problems from others.
    */
-  private fun doRun(checkers: List<TextChecker>, context: ProofreadingContext): List<TextProblem> {
+  private fun doRun(checkers: List<TextChecker>, context: ProofreadingContext): Collection<TextProblem> {
     return runBlockingCancellable {
       val deferred = checkers.map { checker ->
         when (checker) {
@@ -105,7 +113,7 @@ class CheckerRunner(val text: TextContent) {
     }
   }
 
-  private fun filter(problems: List<TextProblem>): List<TextProblem> =
+  private fun filter(problems: Collection<TextProblem>): List<TextProblem> =
     TextProblemAggregator.aggregate(text.toString(), problems.filterNot { shouldBeIgnored(it) })
 
   private fun shouldBeIgnored(problem: TextProblem): Boolean =
@@ -115,32 +123,20 @@ class CheckerRunner(val text: TextContent) {
     ProblemFilter.allIgnoringFilters(problem).findAny().isPresent
 
   fun toProblemDescriptors(problem: TextProblem, isOnTheFly: Boolean): List<ProblemDescriptor> {
-    val parent = text.commonParent
+    val parent = problem.text.commonParent
     val tooltip = problem.tooltipTemplate
     val description = problem.getDescriptionTemplate(isOnTheFly)
-    return fileHighlightRanges(problem).map { range ->
+    return problem.fileHighlightRanges.mapNotNull { range ->
       val rangeInElement = range.shiftLeft(parent.startOffset)
       validateRangeInElement(parent, rangeInElement, problem)
       val grazieDescriptor = GrazieProblemDescriptor(parent, description, rangeInElement, isOnTheFly, tooltip)
       if (isOnTheFly) {
         grazieDescriptor.quickFixes = toFixes(problem, grazieDescriptor)
       }
-      val shortName = if (problem.isStyleLike) GrazieInspection.STYLE_INSPECTION else GrazieInspection.GRAMMAR_INSPECTION
+      val shortName = getShortName(problem)
       val descriptor = ProblemDescriptorWithReporterName(grazieDescriptor, shortName)
       descriptor.problemGroup = ProblemGroup { shortName }
       descriptor
-    }
-  }
-
-  private fun validateRangeInElement(psi: PsiElement, rangeInElement: TextRange?, problem: TextProblem) {
-    if (rangeInElement != null && psi.textRange != null) {
-      TextRange.assertProperRange(rangeInElement)
-      val psiTextLength = psi.textRange.length
-      if (rangeInElement.endOffset > psiTextLength) {
-        LOG.error("Argument rangeInElement ($rangeInElement) endOffset must not exceed descriptor text range " +
-                  "(${psi.textRange.startOffset}, ${psi.textRange.endOffset}) length ($psiTextLength). " +
-                  "PSI language: ${psi.language.id}, TextContent.fileRanges: ${problem.text.rangesInFile}")
-      }
     }
   }
 
@@ -160,6 +156,7 @@ class CheckerRunner(val text: TextContent) {
   }
 
   private fun isIgnoredByStrategies(descriptor: TextProblem): Boolean {
+    if (descriptor is TypoProblem) return false
     for (root in text.findPsiElementAt(0).parents(withSelf = true)) {
       for (strategy in LanguageGrammarChecking.allForLanguage(root.language)) {
         if (strategy.isMyContextRoot(root)) {
@@ -178,6 +175,7 @@ class CheckerRunner(val text: TextContent) {
   }
 
   private fun hasIgnoredCategory(problem: TextProblem): Boolean {
+    if (problem is TypoProblem) return false
     val ignored = ignoredRules(problem)
     return ignored.rules.isNotEmpty() && problem.fitsGroup(ignored)
   }
@@ -203,6 +201,7 @@ class CheckerRunner(val text: TextContent) {
   }
 
   private fun isSuppressed(problem: TextProblem): Boolean {
+    if (problem is TypoProblem) return false
     val sentence = findSentence(problem)
     if (defaultSuppressionPattern(problem, sentence).isSuppressed()) {
       return true
@@ -223,23 +222,25 @@ class CheckerRunner(val text: TextContent) {
     val file = text.containingFile
     val result = arrayListOf<LocalQuickFix>()
     val spm = SmartPointerManager.getInstance(file.project)
-    val underline = fileHighlightRanges(problem).map { spm.createSmartPsiFileRangePointer(file, it) }
+    val underline = problem.fileHighlightRanges.map { spm.createSmartPsiFileRangePointer(file, it) }
 
-    if (problem.suggestions.isNotEmpty()) {
+    if (problem !is TypoProblem && problem.suggestions.isNotEmpty()) {
       GrazieFUSCounter.typoFound(problem)
       result.addAll(GrazieReplaceTypoQuickFix.getReplacementFixes(problem, underline))
     }
 
     problem.customFixes.forEachIndexed { index, fix -> result.add(GrazieCustomFixWrapper(problem, fix, descriptor, index)) }
 
-    val suppressionPattern = defaultSuppressionPattern(problem, findSentence(problem))
-    result.add(object : GrazieAddExceptionQuickFix(suppressionPattern, underline) {
-      override fun applyFix(project: Project, psiFile: PsiFile, editor: Editor?) {
-        GrazieFUSCounter.exceptionAdded(project, AcceptanceRateTracker(problem))
-        super.applyFix(project, psiFile, editor)
-      }
-    })
-    result.add(GrazieRuleSettingsAction(problem.rule, problem.text.getTextDomain()))
+    if (problem !is TypoProblem) {
+      val suppressionPattern = defaultSuppressionPattern(problem, findSentence(problem))
+      result.add(object : GrazieAddExceptionQuickFix(suppressionPattern, underline) {
+        override fun applyFix(project: Project, psiFile: PsiFile, editor: Editor?) {
+          GrazieFUSCounter.exceptionAdded(project, AcceptanceRateTracker(problem))
+          super.applyFix(project, psiFile, editor)
+        }
+      })
+      result.add(GrazieRuleSettingsAction(problem.rule, problem.text.getTextDomain()))
+    }
     result.add(GrazieMassApplyAction())
     result.add(GrazieEnableCloudAction())
     return result.toTypedArray()
@@ -261,12 +262,30 @@ class CheckerRunner(val text: TextContent) {
 
   companion object {
     @JvmStatic
+    @Deprecated("Use TextProblem#getFileHighlightRanges instead")
     fun fileHighlightRanges(problem: TextProblem): List<TextRange> {
       return problem.highlightRanges.asSequence()
         .map { problem.text.textRangeToFile(it) }
         .flatMap { range -> problem.text.intersection(range) }
         .filterNot { it.isEmpty }
         .toList()
+    }
+
+    private fun getShortName(problem: TextProblem): String =
+      if (problem.isStyleLike) GrazieInspection.STYLE_INSPECTION
+      else if (problem is TypoProblem) SPELL_CHECKING_INSPECTION_TOOL_NAME
+      else GrazieInspection.GRAMMAR_INSPECTION
+
+    private fun validateRangeInElement(psi: PsiElement, rangeInElement: TextRange?, problem: TextProblem) {
+      if (rangeInElement != null && psi.textRange != null) {
+        TextRange.assertProperRange(rangeInElement)
+        val psiTextLength = psi.textRange.length
+        if (rangeInElement.endOffset > psiTextLength) {
+          LOG.error("Argument rangeInElement ($rangeInElement) endOffset must not exceed descriptor text range " +
+                    "(${psi.textRange.startOffset}, ${psi.textRange.endOffset}) length ($psiTextLength). " +
+                    "PSI language: ${psi.language.id}, TextContent.fileRanges: ${problem.text.rangesInFile}")
+        }
+      }
     }
   }
 }

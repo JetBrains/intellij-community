@@ -17,7 +17,13 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.expressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 
 internal class PreferCurrentCoroutineContextToCoroutineContextInspection : KotlinApplicableInspectionBase.Simple<KtExpression, Unit>() {

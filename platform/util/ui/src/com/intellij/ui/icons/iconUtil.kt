@@ -12,7 +12,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.LazyIcon
 import com.intellij.ui.RetrievableIcon
-import com.intellij.ui.scale.*
+import com.intellij.ui.scale.DerivedScaleType
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleType
+import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
 import com.intellij.ui.svg.renderSvg
 import com.intellij.util.ImageLoader
 import com.intellij.util.JBHiDPIScaledImage

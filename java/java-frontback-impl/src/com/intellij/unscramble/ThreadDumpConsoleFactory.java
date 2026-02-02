@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.threadDumpParser.ThreadState;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 public class ThreadDumpConsoleFactory implements AnalyzeStacktraceUtil.ConsoleFactory {

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable
 
 import com.intellij.ide.DataManager
@@ -16,7 +16,14 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsDirectoryMapping
+import com.intellij.openapi.vcs.VcsRootChecker
+import com.intellij.openapi.vcs.VcsRootError
+import com.intellij.openapi.vcs.VcsSharedProjectSettings
 import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
@@ -24,16 +31,30 @@ import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.*
+import com.intellij.ui.ColoredTableCellRenderer
+import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.LightColors
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.TableSpeedSearch
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBLoadingPanel
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.progress.ProgressUIUtil
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.ui.table.TableView
 import com.intellij.util.FontUtil
 import com.intellij.util.UriUtil
-import com.intellij.util.ui.*
+import com.intellij.util.ui.AbstractTableCellEditor
+import com.intellij.util.ui.ColumnInfo
+import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.ListTableModel
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
@@ -211,10 +232,10 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : Di
   }
 
   private fun addMapping() {
-    val dlg = VcsMappingConfigurationDialog(project, VcsBundle.message("directory.mapping.add.title"))
+    val dlg = VcsMappingConfigurationDialog(project, VcsBundle.message("directory.mapping.title"))
     if (dlg.showAndGet()) {
       val items = mappingTableModel.items.toMutableList()
-      items.add(createRegisteredInfo(dlg.mapping))
+      items.add(createRegisteredInfo(dlg.getMapping()))
       setDisplayedMappings(items)
     }
   }
@@ -245,11 +266,11 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : Di
     val row = mappingTable.selectedRow
     val info = mappingTable.getRow(row) as? RecordInfo.RegisteredMappingInfo ?: return
 
-    val dlg = VcsMappingConfigurationDialog(project, VcsBundle.message("directory.mapping.remove.title"))
-    dlg.mapping = info.mapping
+    val dlg = VcsMappingConfigurationDialog(project, VcsBundle.message("directory.mapping.title"))
+    dlg.setMapping(info.mapping)
     if (dlg.showAndGet()) {
       val items = mappingTableModel.items.toMutableList()
-      items[row] = createRegisteredInfo(dlg.mapping)
+      items[row] = createRegisteredInfo(dlg.getMapping())
       setDisplayedMappings(items)
     }
   }

@@ -7,7 +7,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
-import com.intellij.idea.AppModeAssertions
+import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.application.ApplicationBundle
@@ -45,7 +45,22 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.MutableProperty
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
@@ -195,7 +210,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         }.bottomGap(BottomGap.NONE)
           .visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED)
                        .and(shellPathField.shellWithIntegrationSelected())
-                       .and(ComponentPredicate.fromValue(AppModeAssertions.isMonolith()))
+                       .and(ComponentPredicate.fromValue(AppMode.isMonolith()))
                        .and(ComponentPredicate.fromValue(commandCompletionAvailable || inlineCompletionAvailable)))
 
         indent {

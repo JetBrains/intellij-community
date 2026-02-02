@@ -6,7 +6,14 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.execService.BinOnEel
-import com.intellij.python.test.env.core.*
+import com.intellij.python.test.env.core.CacheKey
+import com.intellij.python.test.env.core.PyEnvDownloadCache
+import com.intellij.python.test.env.core.PyEnvironment
+import com.intellij.python.test.env.core.PyEnvironmentProvider
+import com.intellij.python.test.env.core.PyEnvironmentSpec
+import com.intellij.python.test.env.core.executeProcess
+import com.intellij.python.test.env.core.extractIfNecessary
+import com.intellij.python.test.env.core.markExecutable
 import com.intellij.util.io.awaitExit
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
@@ -23,7 +30,9 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.exists
+import kotlin.io.path.pathString
 
 /**
  * Specification for Conda Python environment with mandatory version pinning.

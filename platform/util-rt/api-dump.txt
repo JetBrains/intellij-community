@@ -355,7 +355,6 @@ c:com.intellij.util.containers.Stack
 - peek():java.lang.Object
 - pop():java.lang.Object
 - push(java.lang.Object):V
-- search(java.lang.Object):I
 - tryPop():java.lang.Object
 c:com.intellij.util.io.LimitedInputStream
 - java.io.FilterInputStream

@@ -384,17 +384,17 @@ public class GroovyPositionManager extends PositionManagerEx {
 
       if (sourceImage instanceof GrTypeDefinition && !((GrTypeDefinition)sourceImage).isAnonymous()) {
         String qName = getClassNameForJvm((GrTypeDefinition)sourceImage);
-        if (qName != null) return myDebugProcess.getVirtualMachineProxy().classesByName(qName);
+        if (qName != null) return VirtualMachineProxy.getCurrent().classesByName(qName);
       }
       else if (sourceImage == null) {
         final String scriptName = getScriptQualifiedName(position);
-        if (scriptName != null) return myDebugProcess.getVirtualMachineProxy().classesByName(scriptName);
+        if (scriptName != null) return VirtualMachineProxy.getCurrent().classesByName(scriptName);
       }
       else {
         String enclosingName = findEnclosingName(position);
         if (enclosingName == null) return null;
 
-        final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(enclosingName);
+        final List<ReferenceType> outers = VirtualMachineProxy.getCurrent().classesByName(enclosingName);
         final List<ReferenceType> result1 = new ArrayList<>(outers.size());
         for (ReferenceType outer : outers) {
           final ReferenceType nested = findNested(outer, sourceImage, position);
@@ -435,7 +435,7 @@ public class GroovyPositionManager extends PositionManagerEx {
   }
 
   private @Nullable ReferenceType findNested(ReferenceType fromClass, final GroovyPsiElement toFind, SourcePosition classPosition) {
-    final VirtualMachineProxy vmProxy = myDebugProcess.getVirtualMachineProxy();
+    final VirtualMachineProxy vmProxy = VirtualMachineProxy.getCurrent();
     if (fromClass.isPrepared()) {
 
       final List<ReferenceType> nestedTypes = vmProxy.nestedTypes(fromClass);

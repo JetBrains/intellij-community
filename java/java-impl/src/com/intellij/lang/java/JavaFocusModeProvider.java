@@ -3,7 +3,13 @@ package com.intellij.lang.java;
 
 import com.intellij.codeInsight.daemon.impl.focusMode.FocusModeProvider;
 import com.intellij.openapi.util.Segment;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.SyntaxTraverser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 

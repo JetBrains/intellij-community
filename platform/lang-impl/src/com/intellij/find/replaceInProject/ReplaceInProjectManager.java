@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.replaceInProject;
 
-import com.intellij.find.*;
+import com.intellij.find.FindBundle;
+import com.intellij.find.FindManager;
+import com.intellij.find.FindModel;
+import com.intellij.find.FindResult;
+import com.intellij.find.FindSettings;
+import com.intellij.find.FindUsagesCollector;
 import com.intellij.find.actions.FindInPathAction;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.impl.FindAndReplaceExecutor;
@@ -41,7 +46,14 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewContentManager;
-import com.intellij.usages.*;
+import com.intellij.usages.FindUsagesProcessPresentation;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageSearcher;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageDocumentProcessor;
 import com.intellij.usages.rules.UsageInFile;
@@ -53,11 +65,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public class ReplaceInProjectManager {
   private static final NotificationGroup NOTIFICATION_GROUP = FindInPathAction.NOTIFICATION_GROUP;

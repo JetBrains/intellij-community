@@ -17,8 +17,10 @@ import org.intellij.images.editor.actionSystem.ImageEditorActionUtil;
 import org.intellij.images.ui.ImageComponentDecorator;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
 
 final class ChangeBackgroundAction extends DumbAwareAction {
   private final MyBackgroundIcon myIcon = new MyBackgroundIcon();

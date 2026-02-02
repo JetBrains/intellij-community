@@ -5,7 +5,20 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.hints.ExcludeListDialog
 import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.ParameterNameHintsSuppressor
-import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.declarative.CollapseState
+import com.intellij.codeInsight.hints.declarative.CollapsiblePresentationTreeBuilder
+import com.intellij.codeInsight.hints.declarative.HintColorKind
+import com.intellij.codeInsight.hints.declarative.HintFontSize
+import com.intellij.codeInsight.hints.declarative.HintFormat
+import com.intellij.codeInsight.hints.declarative.InlayActionData
+import com.intellij.codeInsight.hints.declarative.InlayActionPayload
+import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
+import com.intellij.codeInsight.hints.declarative.InlayPayload
+import com.intellij.codeInsight.hints.declarative.InlayTreeSink
+import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
+import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHandler
+import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.codeInsight.hints.parameters.AbstractDeclarativeParameterHintsCustomSettingsProvider
 import com.intellij.codeInsight.hints.parameters.ParameterHintsExcludeListConfigProvider
 import com.intellij.codeInsight.hints.parameters.ParameterHintsExcludeListService
@@ -19,26 +32,46 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.createSmartPointer
+import com.intellij.psi.util.endOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.contextParameters
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_COMPILED_PARAMETERS
+import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_CONTEXT_PARAMETERS
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_EXCLUDED_PARAMETERS
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.ArgumentNameCommentInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExpectedArgumentNameComment
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtLabeledExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -50,9 +83,8 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         element: PsiElement,
         sink: InlayTreeSink
     ) {
-        val valueArgumentList = element as? KtValueArgumentList ?: return
-        val callElement = valueArgumentList.parent as? KtCallElement ?: return
-        analyze(valueArgumentList) {
+        val callElement = element as? KtCallElement ?: return
+        analyze(callElement) {
             collectFromParameters(callElement, sink)
         }
     }
@@ -63,7 +95,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         callElement: KtCallElement,
         sink: InlayTreeSink
     ) {
-        val functionCall = callElement.resolveToCall()?.singleFunctionCallOrNull() ?: return
+        val functionCall: KaFunctionCall<*> = callElement.resolveToCall()?.singleFunctionCallOrNull() ?: return
         val functionSymbol: KaFunctionSymbol = functionCall.symbol
         val valueParameters: List<KaValueParameterSymbol> = functionSymbol.valueParameters
 
@@ -89,7 +121,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                 val valueParametersWithNames =
                     session.calculateValueParametersWithNames(functionSymbol, callElement, valueParameters) ?: return@whenOptionEnabled
 
-                collectFromParameters(callElement, functionCall.argumentMapping, valueParametersWithNames, contextMenuPayloads, sink)
+                collectFromParameters(callElement, functionCall, valueParametersWithNames, contextMenuPayloads, sink)
             }
         }
 
@@ -105,10 +137,10 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
 
         if (compiledSource) {
             sink.whenOptionEnabled(SHOW_COMPILED_PARAMETERS.name) {
-                collectFromParameters(callElement, functionCall.argumentMapping, valueParametersWithNames, contextMenuPayloads, sink)
+                collectFromParameters(callElement, functionCall, valueParametersWithNames, contextMenuPayloads, sink)
             }
         } else {
-            collectFromParameters(callElement, functionCall.argumentMapping, valueParametersWithNames, contextMenuPayloads, sink)
+            collectFromParameters(callElement, functionCall, valueParametersWithNames, contextMenuPayloads, sink)
         }
     }
 
@@ -142,14 +174,27 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         return valueParametersWithNames
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun collectFromParameters(
         callElement: KtCallElement,
-        args: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
+        functionCall: KaFunctionCall<*>,
         valueParametersWithNames: List<Pair<KaValueParameterSymbol, Name?>>,
         contextMenuPayloads: List<InlayPayload>?,
         sink: InlayTreeSink
     ) {
+        val functionSymbol: KaFunctionSymbol = functionCall.symbol
+        val contextParameters = functionSymbol.contextParameters
+        val contextArguments: List<KaReceiverValue> = functionCall.contextArguments
+
+        val contextParameterPairs =
+            contextParameters.zip(contextArguments).filter { !it.first.name.isSpecial }
+
+        sink.whenOptionEnabled(SHOW_CONTEXT_PARAMETERS.name) {
+            collectContextParameters(callElement, sink, contextMenuPayloads, contextParameterPairs, valueParametersWithNames)
+        }
+
+        val args: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>> = functionCall.argumentMapping
         val referencedName = (callElement.calleeExpression as? KtNameReferenceExpression)?.getReferencedName()
         for (indexedValue in valueParametersWithNames.withIndex()) {
             val (symbol, name) = indexedValue.value
@@ -186,20 +231,120 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                 sink.addPresentation(
                     InlineInlayPosition(element.startOffset, true),
                     payloads = contextMenuPayloads,
-                    hintFormat = HintFormat.default
+                    hintFormat = PARAMETER_HINT_FORMAT
                 ) {
                     if (symbol.isVararg) text(Typography.ellipsis.toString())
-                    text(stringName,
-                         symbol.psi?.createSmartPointer()?.let {
-                             InlayActionData(
-                                 PsiPointerInlayActionPayload(it),
-                                 PsiPointerInlayActionNavigationHandler.HANDLER_ID
-                             )
-                         })
+                    text(stringName, symbol.asNavigatablePsiLoad())
                     text(" =")
                 }
             }
         }
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession)
+    private fun collectContextParameters(
+        callElement: KtCallElement,
+        sink: InlayTreeSink,
+        contextMenuPayloads: List<InlayPayload>?,
+        contextParameterPairs: List<Pair<KaContextParameterSymbol, KaReceiverValue>>,
+        valueParametersWithNames: List<Pair<KaValueParameterSymbol, Name?>>
+    ) {
+        if (contextParameterPairs.isEmpty()) return
+
+        val valueArgumentList = callElement.valueArgumentList
+
+        val offset = valueArgumentList?.endOffset?.let { it - 1 }
+            ?: callElement.lambdaArguments.firstOrNull()?.startOffset
+            ?: callElement.endOffset
+
+        val lambdaOnly = valueArgumentList == null
+
+        sink.addPresentation(
+            InlineInlayPosition(offset, true),
+            payloads = contextMenuPayloads,
+            hintFormat = CONTEXT_HINT_FORMAT
+        ) {
+            collapsibleList(
+                state = if (isUnitTestMode()) CollapseState.Expanded else CollapseState.Collapsed,
+
+                expandedState = {
+                    if (lambdaOnly){
+                        text("(")
+                    } else {
+                        addParametersSeparator(valueParametersWithNames)
+                    }
+
+                    for ((index, pair) in contextParameterPairs.withIndex()) {
+                        val (parameterSymbol, receiverValue) = pair
+                        if (index > 0) text(" , ")
+                        addContextParameter(callElement, parameterSymbol, receiverValue)
+                    }
+
+                    // a unicode char <<
+                    toggleButton { text(" \u00AB ") }
+                    if (lambdaOnly){
+                        text(")")
+                    }
+                },
+
+                collapsedState = {
+                    toggleButton { text(Typography.ellipsis.toString()) }
+                })
+        }
+    }
+
+    private fun CollapsiblePresentationTreeBuilder.addParametersSeparator(
+        valueParametersWithNames: List<Pair<KaValueParameterSymbol, Name?>>
+    ) {
+        if (valueParametersWithNames.isNotEmpty()) text(", ")
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession)
+    private fun CollapsiblePresentationTreeBuilder.addContextParameter(
+        originalCallElement: KtCallElement,
+        parameterSymbol: KaContextParameterSymbol,
+        receiverValue: KaReceiverValue
+    ) {
+        val value = receiverValue as? KaImplicitReceiverValue ?: return
+        val valueSymbol = value.symbol
+        val name = parameterSymbol.name
+
+        text(name.asString(), parameterSymbol.asNavigatablePsiLoad())
+        text(" = ")
+
+        val symbolPsi = when (val psi = valueSymbol.psi) {
+            is KtParameter -> psi.name
+            is KtFunctionLiteral -> {
+                val receiverParameterSymbol = valueSymbol as? KaReceiverParameterSymbol ?: return
+                val callExpression = receiverParameterSymbol.psi?.getParentOfType<KtCallExpression>(false, KtBlockExpression::class.java)
+                val capturedFunctionLiteral = originalCallElement.getParentOfType<KtFunctionLiteral>(false, KtNamedDeclaration::class.java)
+                val referenceName =
+                    if (callExpression != null && capturedFunctionLiteral != psi) {
+                        (callExpression.parent as? KtLabeledExpression)?.getLabelName()
+                            ?: (callExpression.calleeExpression as? KtNameReferenceExpression)?.getReferencedName()
+                    } else {
+                        null
+                    }
+                val owningCallableSymbol = receiverParameterSymbol.owningCallableSymbol
+
+                owningCallableSymbol.receiverParameter?.let {
+                    buildString {
+                        append("this")
+                        referenceName?.let { append("@$it") }
+                    }
+                } ?: return
+            }
+            else -> null
+        } ?: return
+
+        val targetPsi = when(valueSymbol) {
+            is KaReceiverParameterSymbol -> valueSymbol.owningCallableSymbol.psi
+            else -> valueSymbol.psi
+        }
+
+        text(symbolPsi, targetPsi?.asNavigatablePsiLoad())
     }
 
     private fun KtValueArgument.isArgumentNamed(symbol: KaValueParameterSymbol): Boolean {
@@ -235,7 +380,24 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         } else {
             false
         }
+
+    private fun KaSymbol.asNavigatablePsiLoad(): InlayActionData? =
+        psi?.asNavigatablePsiLoad()
+
+    private fun PsiElement.asNavigatablePsiLoad(): InlayActionData =
+        InlayActionData(
+            PsiPointerInlayActionPayload(createSmartPointer()),
+            PsiPointerInlayActionNavigationHandler.HANDLER_ID
+        )
+
 }
+
+private val CONTEXT_HINT_FORMAT = HintFormat.default
+    .withFontSize(HintFontSize.ABitSmallerThanInEditor)
+    .withColorKind(HintColorKind.Parameter)
+
+private val PARAMETER_HINT_FORMAT = HintFormat.default
+    .withColorKind(HintColorKind.Parameter)
 
 context(_: KaSession)
 internal fun isExcludeListed(callableFqName: String, parameterNames: List<String>): Boolean {

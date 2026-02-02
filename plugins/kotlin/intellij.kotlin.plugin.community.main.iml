@@ -214,6 +214,7 @@
     <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.onboarding" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.onboarding.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.onboarding.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight.minimal" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting.minimal" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.formatter.minimal" exported="" />

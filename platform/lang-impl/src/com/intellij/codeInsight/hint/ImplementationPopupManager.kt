@@ -7,6 +7,7 @@ import com.intellij.codeInsight.navigation.BackgroundUpdaterTaskBase
 import com.intellij.codeInsight.navigation.ImplementationSearcher
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -89,7 +90,9 @@ class ImplementationPopupManager {
   ): JBPopup {
     val updateProcessor: PopupUpdateProcessor = object : PopupUpdateProcessor(session.project) {
       override fun updatePopup(lookupItemObject: Any?) {
-        updatePopup(lookupItemObject)
+        WriteIntentReadAction.run {
+          updatePopup(lookupItemObject)
+        }
       }
 
       override fun onClosed(event: LightweightWindowEvent) {

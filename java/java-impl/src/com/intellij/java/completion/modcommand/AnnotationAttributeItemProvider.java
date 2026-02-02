@@ -7,12 +7,20 @@ import com.intellij.codeInsight.lookup.EqTailType;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemPresentation;
-import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiAnnotationMethod;
+import com.intellij.psi.PsiAnnotationParameterList;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.JavaDeprecationUtils;
@@ -23,7 +31,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 @NotNullByDefault
-final class AnnotationAttributeItemProvider implements ModCompletionItemProvider {
+final class AnnotationAttributeItemProvider extends JavaModCompletionItemProvider {
 
   @Override
   public void provideItems(CompletionContext context, Consumer<ModCompletionItem> sink) {

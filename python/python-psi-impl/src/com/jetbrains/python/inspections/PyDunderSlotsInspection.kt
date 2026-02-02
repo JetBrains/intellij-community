@@ -14,7 +14,14 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.parseDataclassParameters
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PySequenceExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.TypeEvalContext

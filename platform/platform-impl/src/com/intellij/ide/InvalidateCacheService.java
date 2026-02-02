@@ -20,7 +20,7 @@ public final class InvalidateCacheService {
 
     var dialog = new InvalidateCachesDialog(project,
                                             canRestart,
-                                            CachesInvalidator.EP_NAME.getExtensionList()
+                                            CachesInvalidator.EP_NAME.getExtensionList().stream().filter(CachesInvalidator::isVisible).toList()
     );
 
     dialog.show();

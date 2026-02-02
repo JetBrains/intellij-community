@@ -15,9 +15,19 @@ import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
 import java.security.DigestInputStream
 import java.security.MessageDigest
-import java.util.*
+import java.util.Base64
+import java.util.UUID
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.*
+import kotlin.io.path.copyTo
+import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.inputStream
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.name
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getProperty("user.dir")).resolve(".diff"),
                                 private val tempDir: Path = Files.createTempDirectory(this::class.java.simpleName)) {

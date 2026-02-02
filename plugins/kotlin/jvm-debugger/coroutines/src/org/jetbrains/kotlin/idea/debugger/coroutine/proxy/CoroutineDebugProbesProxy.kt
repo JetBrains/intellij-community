@@ -11,10 +11,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.callMethodFromHelper
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoCache
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.executionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.CoroutineInfo
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.executionContext
 
 class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
     /**

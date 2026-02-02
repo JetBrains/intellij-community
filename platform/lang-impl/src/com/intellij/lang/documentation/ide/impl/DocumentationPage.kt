@@ -15,7 +15,15 @@ import com.intellij.platform.backend.documentation.LinkData
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.documentation.impl.computeDocumentation
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 
 internal class DocumentationPage(val requests: List<DocumentationRequest>, val project: Project) {
 

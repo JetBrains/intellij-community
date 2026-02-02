@@ -12,7 +12,6 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 class CodexClientTest {
-
   @TempDir
   lateinit var tempDir: Path
 
@@ -96,6 +95,99 @@ class CodexClientTest {
     val expectedUrl = """url = "http://localhost:8888/stream""""
     val occurrences = result.split(expectedUrl).size - 1
     assertTrue(1 == occurrences)
+  }
+
+  @Test
+  fun `isConfigured returns false when config file does not exist`() {
+    val configPath = tempDir.resolve("missing.toml")
+    val client = CodexClient(McpClientInfo.Scope.GLOBAL, configPath)
+    assertFalse(client.isConfigured() == true)
+  }
+
+  @Test
+  fun `isConfigured returns false for non-stream url`() {
+    val configPath = tempDir.resolve("config.toml")
+    configPath.writeText(
+      """
+      [mcp_servers.test]
+      url = "http://localhost:8123/api"
+      """.trimIndent()
+    )
+
+    val client = CodexClient(McpClientInfo.Scope.GLOBAL, configPath)
+    assertFalse(client.isConfigured() == true)
+  }
+
+  @Test
+  fun `isConfigured returns false for malformed url`() {
+    val configPath = tempDir.resolve("config.toml")
+    configPath.writeText(
+      """
+      [mcp_servers.test]
+      url = "not-a-url"
+      """.trimIndent()
+    )
+
+    val client = CodexClient(McpClientInfo.Scope.GLOBAL, configPath)
+    assertFalse(client.isConfigured() == true)
+  }
+
+  @Test
+  fun `isConfigured returns false when mcp_servers section is missing`() {
+    val configPath = tempDir.resolve("config.toml")
+    configPath.writeText(
+      """
+      [other_section]
+      url = "http://localhost:8123/stream"
+      """.trimIndent()
+    )
+
+    val client = CodexClient(McpClientInfo.Scope.GLOBAL, configPath)
+    assertFalse(client.isConfigured() == true)
+  }
+
+  @Test
+  fun `configure overwrites existing product-specific section`() {
+    val configPath = tempDir.resolve("config.toml")
+    configPath.writeText(
+      """
+      [mcp_servers.codextest]
+      url = "http://localhost:1111/stream"
+      """.trimIndent()
+    )
+
+    McpClient.overrideProductSpecificServerKeyForTests("codextest")
+    McpClient.overrideWriteLegacyForTests(false)
+
+    val client = TestCodexClient(McpClientInfo.Scope.GLOBAL, configPath, "http://localhost:2222/stream")
+    client.configure()
+
+    val result = configPath.readText()
+    assertTrue(result.contains("""url = "http://localhost:2222/stream""""))
+    assertFalse(result.contains("""url = "http://localhost:1111/stream""""))
+  }
+
+  @Test
+  fun `configure preserves unrelated content`() {
+    val configPath = tempDir.resolve("config.toml")
+    configPath.writeText(
+      """
+      # comment
+      [random.section]
+      value = 42
+      """.trimIndent()
+    )
+
+    McpClient.overrideProductSpecificServerKeyForTests("codextest")
+    McpClient.overrideWriteLegacyForTests(false)
+
+    val client = TestCodexClient(McpClientInfo.Scope.GLOBAL, configPath, "http://localhost:3333/stream")
+    client.configure()
+
+    val result = configPath.readText()
+    assertTrue(result.contains("[random.section]"))
+    assertTrue(result.contains("value = 42"))
+    assertTrue(result.contains("[mcp_servers.codextest]"))
   }
 }
 

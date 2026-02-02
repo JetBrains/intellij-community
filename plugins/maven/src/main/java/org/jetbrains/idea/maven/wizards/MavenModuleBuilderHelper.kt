@@ -50,7 +50,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.NioFiles
 import java.io.IOException
 import java.nio.file.Path
-import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
 open class MavenModuleBuilderHelper(

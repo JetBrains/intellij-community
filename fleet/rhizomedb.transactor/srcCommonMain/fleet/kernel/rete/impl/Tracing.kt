@@ -3,14 +3,14 @@ package fleet.kernel.rete.impl
 
 import com.jetbrains.rhizomedb.Attribute
 import com.jetbrains.rhizomedb.EID
+import fleet.fastutil.longs.LongSet
+import fleet.fastutil.longs.toLongArray
 import fleet.kernel.rete.DatomPort
+import fleet.kernel.rete.Many
 import fleet.kernel.rete.Producer
 import fleet.kernel.rete.Query
 import fleet.kernel.rete.RevalidationPort
 import fleet.util.logging.KLogger
-import fleet.fastutil.longs.LongSet
-import fleet.fastutil.longs.toLongArray
-import fleet.kernel.rete.Many
 import kotlin.coroutines.CoroutineContext
 
 data class QueryTracingKey(

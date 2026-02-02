@@ -2,11 +2,20 @@
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.branch.DvcsSyncSettings;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsLogRefManager;
+import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.VcsRef;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
@@ -21,7 +30,12 @@ import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static git4idea.ui.branch.GitBranchPopupActions.LocalBranchActions;
 import static git4idea.ui.branch.GitBranchPopupActions.RemoteBranchActions;

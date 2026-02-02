@@ -6,7 +6,11 @@ import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.platform.runtime.product.ProductMode.*;
+import java.util.List;
+
+import static com.intellij.platform.runtime.product.ProductMode.BACKEND;
+import static com.intellij.platform.runtime.product.ProductMode.FRONTEND;
+import static com.intellij.platform.runtime.product.ProductMode.MONOLITH;
 
 /**
  * This class is used to determine whether a module should be loaded based on the current {@link ProductMode}.
@@ -19,18 +23,20 @@ public final class ProductModeLoadingRules {
   }
 
   /**
-   * Returns the module which presence in the dependencies indicates that a module isn't compatible with the given {@code mode}.
+   * Returns the modules which presence in the dependencies indicates that a module isn't compatible with the given {@code mode}.
    */
-  public static @NotNull RuntimeModuleId getIncompatibleRootModule(@NotNull ProductMode mode) {
+  public static @NotNull List<RuntimeModuleId> getIncompatibleRootModules(@NotNull ProductMode mode) {
     if (mode.equals(FRONTEND)) {
-      return RuntimeModuleId.module("intellij.platform.backend");
+      return List.of(RuntimeModuleId.module("intellij.platform.backend"),
+                     RuntimeModuleId.module("intellij.platform.jps.build"),
+                     RuntimeModuleId.module("intellij.platform.jps.build.dependencyGraph"));
     }
     else if (mode.equals(MONOLITH)) {
       //currently we use the same modules in 'backend' and 'monolith' modes, in the future we may disable some UI-only modules in 'backend' mode
-      return RuntimeModuleId.module("intellij.platform.frontend.split");
+      return List.of(RuntimeModuleId.module("intellij.platform.frontend.split"));
     }
     else if (mode.equals(BACKEND)) {
-      return RuntimeModuleId.module("intellij.platform.frontend.split");
+      return List.of(RuntimeModuleId.module("intellij.platform.frontend.split"));
     }
     else {
       throw new AssertionError("Unexpected value: " + mode);

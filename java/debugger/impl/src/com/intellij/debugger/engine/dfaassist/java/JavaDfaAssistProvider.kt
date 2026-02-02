@@ -14,11 +14,40 @@ import com.intellij.debugger.engine.evaluation.expression.CaptureTraverser
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyEx
 import com.intellij.openapi.application.readAction
-import com.intellij.psi.*
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiBlockStatement
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassInitializer
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiIfStatement
+import com.intellij.psi.PsiLambdaExpression
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiPolyadicExpression
+import com.intellij.psi.PsiResolveHelper
+import com.intellij.psi.PsiReturnStatement
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiSwitchExpression
+import com.intellij.psi.PsiSwitchLabelStatementBase
+import com.intellij.psi.PsiSwitchLabeledRuleStatement
+import com.intellij.psi.PsiTryStatement
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.PsiYieldStatement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.ContainerUtil
-import com.sun.jdi.*
-import java.util.*
+import com.sun.jdi.ArrayReference
+import com.sun.jdi.ClassType
+import com.sun.jdi.Location
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.Value
+import java.util.IdentityHashMap
 
 internal class JavaDfaAssistProvider : DfaAssistProvider {
   override suspend fun locationMatches(element: PsiElement, location: Location): Boolean {

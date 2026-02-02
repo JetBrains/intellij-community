@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.project
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.cfg.ControlFlowInformationProviderImpl
 import org.jetbrains.kotlin.container.StorageComponentContainer
 import org.jetbrains.kotlin.container.useImpl
@@ -8,6 +9,7 @@ import org.jetbrains.kotlin.container.useInstance
 import org.jetbrains.kotlin.idea.compiler.IdeMainFunctionDetectorFactory
 import org.jetbrains.kotlin.resolve.TargetEnvironment
 
+@K1Deprecation
 object IdeaEnvironment : TargetEnvironment("Idea") {
     override fun configure(container: StorageComponentContainer) {
         container.useImpl<ResolveElementCache>()

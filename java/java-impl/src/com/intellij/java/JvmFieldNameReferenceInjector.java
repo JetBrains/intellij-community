@@ -4,7 +4,12 @@ package com.intellij.java;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.util.ProcessingContext;
 import one.util.streamex.StreamEx;
@@ -16,7 +21,7 @@ import org.jetbrains.uast.UField;
 import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.expressions.UInjectionHost;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class JvmFieldNameReferenceInjector extends ReferenceInjector {
   @Override

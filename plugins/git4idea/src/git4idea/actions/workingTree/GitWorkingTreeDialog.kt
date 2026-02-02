@@ -6,9 +6,10 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.observable.properties.AtomicLazyProperty
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
@@ -19,13 +20,26 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.git.ui.GitBranchesTreeIconProvider
 import com.intellij.vcsUtil.VcsUtil
-import git4idea.*
+import git4idea.GitBranch
+import git4idea.GitReference
+import git4idea.GitRemoteBranch
+import git4idea.GitStandardLocalBranch
+import git4idea.GitWorkingTree
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.workingTrees.GitWorkingTreesService
@@ -37,14 +51,16 @@ import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Dimension
-import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.Vector
+import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 import javax.swing.JList
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
+import kotlin.math.min
 
 internal class GitWorkingTreeDialog(
   private val data: GitWorkingTreePreDialogData,
@@ -58,19 +74,25 @@ internal class GitWorkingTreeDialog(
   private lateinit var parentPathCell: Cell<TextFieldWithBrowseButton>
   private lateinit var projectNameCell: Cell<JBTextField>
 
-  private val existingBranchWithWorkingTree: ObservableMutableProperty<BranchWithWorkingTree?> = AtomicLazyProperty {
-    data.initialExistingBranch?.toBranchWithWorkingTree()
-  }
-  private val projectName: ObservableMutableProperty<String> = AtomicLazyProperty { "" }
-  private val parentPath: ObservableMutableProperty<String> = AtomicLazyProperty { data.initialParentPath?.path ?: "" }
-  private val createNewBranch: ObservableMutableProperty<Boolean> = AtomicLazyProperty { false }
-  private val newBranchName: ObservableMutableProperty<String> = AtomicLazyProperty { "" }
+  private val existingBranchWithWorkingTree: GraphProperty<BranchWithWorkingTree?>
+  private val projectName: GraphProperty<String>
+  private val parentPath: GraphProperty<String>
+  private val createNewBranch: GraphProperty<Boolean>
+  private val newBranchName: GraphProperty<String>
 
-  private var lastSuggestedProjectName: String = ""
-  private var projectNameEdited: Boolean = false
   private val lastPathValidationChannel = Channel<PathValidationMessage>(Channel.CONFLATED)
 
   init {
+    val propertyGraph = PropertyGraph("Git Working Tree Dialog")
+    existingBranchWithWorkingTree = propertyGraph.property(data.initialExistingBranch?.toBranchWithWorkingTree())
+    createNewBranch = propertyGraph.property(false)
+    newBranchName = propertyGraph.property("")
+    projectName = propertyGraph.property("")
+    parentPath = propertyGraph.property(data.initialParentPath?.path ?: "")
+    propertyGraph.dependsOn(projectName, existingBranchWithWorkingTree, true, ::suggestProjectName)
+    propertyGraph.dependsOn(projectName, createNewBranch, true, ::suggestProjectName)
+    propertyGraph.dependsOn(projectName, newBranchName, true, ::suggestProjectName)
+
     init()
     title = GitBundle.message("working.tree.dialog.title")
     setOKButtonText(GitBundle.message("working.tree.dialog.button.ok"))
@@ -95,29 +117,21 @@ internal class GitWorkingTreeDialog(
   override fun createCenterPanel(): JComponent {
     return panel {
       row(GitBundle.message("working.tree.dialog.label.existing.branch")) {
-        val localBranchesWithTrees: List<BranchWithWorkingTree?> = computeBranchesWithWorkingTrees()
-        val comboBox = comboBox(localBranchesWithTrees, BranchWithTreeCellRenderer(data.project, data.repository))
-        comboBox.bindItem(existingBranchWithWorkingTree).align(Align.FILL).validationOnApply { validateBranchOnApply() }
-        comboBox.component.isSwingPopup = false
-        existingBranchWithWorkingTree.afterChange { updateSuggestedProjectName() }
+        createBranchComboBox()
+          .bindItem(existingBranchWithWorkingTree).align(Align.FILL).validationOnApply { validateExistingBranchOnApply() }
       }
 
       row {
         checkBox(GitBundle.message("working.tree.dialog.checkbox.new.branch")).bindSelected(createNewBranch).gap(RightGap.SMALL)
-        createNewBranch.afterChange { updateSuggestedProjectName() }
 
-        textField().bindText(newBranchName).align(Align.FILL).validationOnApply { validateBranchNameOnApply() }
-          .comment(getNewBranchComment())
+        textField().bindText(newBranchName).align(Align.FILL).validationOnApply { validateNewBranchNameOnApply() }
           .enabledIf(createNewBranch)
-        newBranchName.afterChange { updateSuggestedProjectName() }
       }
         .bottomGap(BottomGap.MEDIUM)
         .layout(RowLayout.LABEL_ALIGNED)
 
       row(GitBundle.message("working.tree.dialog.label.name")) {
         projectNameCell = textField().bindText(projectName).align(Align.FILL).validationOnApply { validateProjectNameOnApply() }
-        lastSuggestedProjectName = projectNameCell.component.text
-        updateSuggestedProjectName()
       }
       row(GitBundle.message("working.tree.dialog.label.location")) {
         val descriptor = FileChooserDescriptorFactory.singleDir()
@@ -131,12 +145,29 @@ internal class GitWorkingTreeDialog(
     }
   }
 
-  private fun ValidationInfoBuilder.validateBranchOnApply(): ValidationInfo? {
+  private fun Row.createBranchComboBox(): Cell<ComboBox<BranchWithWorkingTree?>> {
+    val localBranchesWithTrees: List<BranchWithWorkingTree?> = computeBranchesWithWorkingTrees()
+    val model = DefaultComboBoxModel(Vector(localBranchesWithTrees))
+    val component = object : ComboBox<BranchWithWorkingTree?>(model) {
+      override fun getPreferredSize(): Dimension? {
+        val dimension = super.getPreferredSize()
+        dimension.width = min(dimension.width, JBUI.scale(300))
+        return dimension
+      }
+    }
+    component.isSwingPopup = false
+    component.isUsePreferredSizeAsMinimum = false
+    component.renderer = BranchWithTreeCellRenderer(data.project, data.repository)
+
+    return cell(component)
+  }
+
+  private fun ValidationInfoBuilder.validateExistingBranchOnApply(): ValidationInfo? {
     val value = existingBranchWithWorkingTree.get()
     if (value == null) {
       return error(GitBundle.message("working.tree.dialog.location.validation.select.branch"))
     }
-    if (value.workingTree != null) {
+    if (value.workingTree != null && !createNewBranch.get()) {
       return error(GitBundle.message("working.tree.dialog.branch.validation.already.checked.out.in.working.tree",
                                      value.branch.name, value.workingTree.path.name))
     }
@@ -164,7 +195,7 @@ internal class GitWorkingTreeDialog(
     }
   }
 
-  private fun ValidationInfoBuilder.validateBranchNameOnApply(): ValidationInfo? {
+  private fun ValidationInfoBuilder.validateNewBranchNameOnApply(): ValidationInfo? {
     val name = newBranchName.get()
     return when {
       !createNewBranch.get() -> null
@@ -215,34 +246,16 @@ internal class GitWorkingTreeDialog(
     return result
   }
 
-  private fun getNewBranchComment(): @NlsContexts.DetailedDescription String {
-    val name = existingBranchWithWorkingTree.get()?.branch?.name
-    return if (name == null) {
-      GitBundle.message("working.tree.dialog.label.new.branch.detached.comment")
-    }
-    else {
-      GitBundle.message("working.tree.dialog.label.new.branch.comment", name)
-    }
-  }
+  private fun suggestProjectName(): String {
+    val branchNameToCreate = newBranchName.get()
+    val existingBranchName = existingBranchWithWorkingTree.get()?.branch?.name
+    val branchToUse = if (createNewBranch.get() && branchNameToCreate.isNotEmpty()) branchNameToCreate else existingBranchName
 
-  fun updateSuggestedProjectName() {
-    if (projectNameEdited) return
-    if (lastSuggestedProjectName != projectNameCell.component.text) {
-      projectNameEdited = true
-      return
-    }
-    val branchToUse = if (createNewBranch.get()) newBranchName.get() else existingBranchWithWorkingTree.get()?.branch?.name
-    val newName = createInitialWorkingTreeName(data.projectNameBase, branchToUse)
-    projectName.set(newName)
-    lastSuggestedProjectName = newName
-  }
-
-  private fun createInitialWorkingTreeName(root: Path, branchName: String?): String {
-    return if (branchName.isNullOrEmpty()) {
+    return if (branchToUse.isNullOrEmpty()) {
       ""
     }
     else {
-      root.name + "-" + branchName.substringAfterLast("/")
+      data.projectNameBase.name + "-" + branchToUse.substringAfterLast("/")
     }
   }
 
@@ -276,18 +289,21 @@ internal class GitWorkingTreeDialog(
         append(GitBundle.message("working.tree.dialog.existing.branch.combo.box.empty.text"))
         return
       }
-      val branch = value.branch
-      append(branch.name)
 
+      val branch = value.branch
       val isCurrent = repositoryModel?.state?.isCurrentRef(branch) ?: false
       val isFavorite = repositoryModel?.favoriteRefs?.contains(branch) ?: false
+      icon = GitBranchesTreeIconProvider.forRef(branch,
+                                                current = isCurrent,
+                                                favorite = isFavorite,
+                                                favoriteToggleOnClick = false,
+                                                selected = selected)
 
-      icon = GitBranchesTreeIconProvider.forRef(branch, current = isCurrent, favorite = isFavorite,
-                                                favoriteToggleOnClick = false, selected = selected)
-
-      val workingTreeName = value.workingTree?.path?.name ?: return
-      append("   ")
-      append(workingTreeName, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      append(branch.name)
+      value.workingTree?.path?.name?.apply {
+        append("   ")
+        append(this, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      }
     }
   }
 

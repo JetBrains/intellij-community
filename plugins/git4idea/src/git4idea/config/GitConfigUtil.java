@@ -22,7 +22,12 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
@@ -134,22 +139,6 @@ public final class GitConfigUtil {
     if (ContainerUtil.newHashSet("true", "yes", "on", "1").contains(value)) return true;
     if (ContainerUtil.newHashSet("false", "no", "off", "0", "").contains(value)) return false;
     return null;
-  }
-
-  /**
-   * @deprecated Use {@link #getCommitEncodingCharset(Project, VirtualFile)}
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull String getCommitEncoding(@NotNull Project project, @NotNull VirtualFile root) {
-    return getCommitEncodingCharset(project, root).name();
-  }
-
-  /**
-   * @deprecated Use {@link #getLogEncodingCharset(Project, VirtualFile)}
-   */
-  @Deprecated(forRemoval = true)
-  public static String getLogEncoding(@NotNull Project project, @NotNull VirtualFile root) {
-    return getLogEncodingCharset(project, root).name();
   }
 
   /**

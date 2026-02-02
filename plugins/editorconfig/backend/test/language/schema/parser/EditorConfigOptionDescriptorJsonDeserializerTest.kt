@@ -2,7 +2,14 @@
 package org.editorconfig.language.schema.parser
 
 import com.google.gson.Gson
-import org.editorconfig.language.schema.descriptors.impl.*
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigConstantDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclarationDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigListDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigNumberDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigPairDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigQualifiedKeyDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigUnionDescriptor
 import org.editorconfig.mock.EditorConfigMockLogger
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals

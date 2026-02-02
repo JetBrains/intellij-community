@@ -4,7 +4,12 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.PsiType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtClassLiteralExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.DEFAULT_EXPRESSION_TYPES_LIST
+import org.jetbrains.uast.UClassLiteralExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 class KotlinUClassLiteralExpression(

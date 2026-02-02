@@ -20,7 +20,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 public class JarApplicationConfigurable extends SettingsEditor<JarApplicationConfiguration> implements PanelWithAnchor {
   private CommonJavaParametersPanel myCommonProgramParameters;

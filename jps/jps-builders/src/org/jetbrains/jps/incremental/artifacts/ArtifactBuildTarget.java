@@ -6,13 +6,22 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetHashSupplier;
+import org.jetbrains.jps.builders.BuildTargetRegistry;
+import org.jetbrains.jps.builders.ModuleBasedTarget;
+import org.jetbrains.jps.builders.TargetOutputIndex;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.builders.LayoutElementBuildersRegistry;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
-import org.jetbrains.jps.incremental.artifacts.instructions.*;
+import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructionsBuilderContext;
+import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructionsBuilderContextImpl;
+import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructionsBuilderImpl;
+import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
+import org.jetbrains.jps.incremental.artifacts.instructions.CopyToDirectoryInstructionCreator;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
@@ -21,7 +30,11 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsArtifactOutputPackagingElement;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 @ApiStatus.Internal
 public final class ArtifactBuildTarget extends ArtifactBasedBuildTarget implements BuildTargetHashSupplier {

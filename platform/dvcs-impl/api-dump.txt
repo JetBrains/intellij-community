@@ -230,8 +230,7 @@ f:com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase$Waiter
 com.intellij.dvcs.push.PrePushHandler
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getPresentableName():java.lang.String
-- handle(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.progress.ProgressIndicator):com.intellij.dvcs.push.PrePushHandler$Result
-- handle(java.util.List,com.intellij.openapi.progress.ProgressIndicator):com.intellij.dvcs.push.PrePushHandler$Result
+- a:handle(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.progress.ProgressIndicator):com.intellij.dvcs.push.PrePushHandler$Result
 e:com.intellij.dvcs.push.PrePushHandler$Result
 - java.lang.Enum
 - sf:ABORT:com.intellij.dvcs.push.PrePushHandler$Result
@@ -242,6 +241,7 @@ e:com.intellij.dvcs.push.PrePushHandler$Result
 f:com.intellij.dvcs.push.PushController
 - com.intellij.openapi.Disposable
 - <init>(com.intellij.openapi.project.Project,com.intellij.dvcs.push.ui.VcsPushDialog,java.util.Collection,java.util.List,com.intellij.dvcs.repo.Repository,com.intellij.dvcs.push.PushSource):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.dvcs.push.ui.VcsPushDialog,java.util.Collection,java.util.List,com.intellij.dvcs.repo.Repository,com.intellij.dvcs.push.PushSource,com.intellij.dvcs.push.PushTarget):V
 - createAdditionalPanels():java.util.Map
 - createTopPanel():javax.swing.JComponent
 - dispose():V
@@ -351,6 +351,7 @@ c:com.intellij.dvcs.push.ui.VcsPushDialog
 - pf:myController:com.intellij.dvcs.push.PushController
 - pf:myProject:com.intellij.openapi.project.Project
 - <init>(com.intellij.openapi.project.Project,java.util.Collection,java.util.List,com.intellij.dvcs.repo.Repository,com.intellij.dvcs.push.PushSource):V
+- <init>(com.intellij.openapi.project.Project,java.util.Collection,java.util.List,com.intellij.dvcs.repo.Repository,com.intellij.dvcs.push.PushSource,com.intellij.dvcs.push.PushTarget):V
 - <init>(com.intellij.openapi.project.Project,java.util.List,com.intellij.dvcs.repo.Repository):V
 - canPush():Z
 - p:createActions():javax.swing.Action[]

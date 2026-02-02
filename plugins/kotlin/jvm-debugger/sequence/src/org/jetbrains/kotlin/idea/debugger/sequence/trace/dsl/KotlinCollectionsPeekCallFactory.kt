@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 
 import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.OnEachCall
 
+@K1Deprecation
 class KotlinCollectionsPeekCallFactory : PeekCallFactory {
     override fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall =
         OnEachCall(elementsType, lambda)

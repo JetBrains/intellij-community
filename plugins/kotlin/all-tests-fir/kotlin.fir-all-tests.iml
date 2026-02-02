@@ -43,7 +43,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.compilerReferenceIndex.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.uast.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.common.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.copyright.tests" />
     <orderEntry type="module" module-name="intellij.kotlin.injection.tests" scope="RUNTIME" />
@@ -71,5 +71,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.indices.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.coverage.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.maven.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="RUNTIME" />
   </component>
 </module>

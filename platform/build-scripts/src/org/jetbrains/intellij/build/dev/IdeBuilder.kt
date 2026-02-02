@@ -426,6 +426,7 @@ private suspend fun createBuildContext(
           logDir = buildDir.resolve("log"),
 
           isUnpackedDist = request.isUnpackedDist,
+          useTestCompilationOutput = buildOptionsTemplate?.useTestCompilationOutput ?: BuildOptions().useTestCompilationOutput,
         )
         options.setTargetOsAndArchToCurrent()
         options.buildStepsToSkip += listOf(

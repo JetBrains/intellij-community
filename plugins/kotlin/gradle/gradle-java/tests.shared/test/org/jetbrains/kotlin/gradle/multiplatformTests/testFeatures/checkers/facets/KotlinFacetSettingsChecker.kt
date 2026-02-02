@@ -3,9 +3,15 @@ package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.fac
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
-import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.CompilerSettings
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
+import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
-import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.*
+import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.ModuleReportData
+import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.PrinterContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.WorkspaceModelChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.joinToStringWithSorting
 import org.jetbrains.kotlin.platform.TargetPlatform
 import kotlin.reflect.KProperty1
 

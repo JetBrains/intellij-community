@@ -14,7 +14,13 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.frame.XStackFrame
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonSample
+import training.dsl.TaskContext
+import training.dsl.TaskTestContext
+import training.dsl.parseLessonSample
+import training.dsl.restoreChangedSettingsInformer
+import training.dsl.subscribeForMessageBus
 import training.learn.CourseManager
 import training.learn.lesson.general.run.CommonDebugLesson
 import training.statistic.LessonStartingWay

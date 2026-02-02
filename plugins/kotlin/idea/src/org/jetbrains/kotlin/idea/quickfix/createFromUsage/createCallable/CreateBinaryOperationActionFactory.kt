@@ -2,17 +2,23 @@
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.project.builtIns
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.CallableInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.FunctionInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.ParameterInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.noSubstitutions
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
-import java.util.*
+import java.util.Collections
 
+@K1Deprecation
 object CreateBinaryOperationActionFactory : CreateCallableMemberFromUsageFactory<KtBinaryExpression>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtBinaryExpression? {
         return diagnostic.psiElement.parent as? KtBinaryExpression

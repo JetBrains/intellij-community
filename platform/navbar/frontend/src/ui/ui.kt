@@ -6,7 +6,11 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.Gray
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import java.awt.Font
 import java.awt.Insets

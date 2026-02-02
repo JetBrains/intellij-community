@@ -18,12 +18,23 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.*
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureUsageProcessor
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinTypeInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.fromJavaChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinConstructorDelegationCallUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinFunctionCallUsage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.types.Variance
 

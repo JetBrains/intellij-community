@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.FocusWatcher;
@@ -19,8 +20,13 @@ import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
 
@@ -89,7 +95,9 @@ public final class InplaceEditingLayer extends JComponent{
       myInplaceComponent != null &&
       (MouseEvent.MOUSE_PRESSED == e.getID() || MouseEvent.MOUSE_RELEASED == e.getID())
     ){
-      finishInplaceEditing();
+      WriteIntentReadAction.run(() -> {
+        finishInplaceEditing();
+      });
     }
     // [vova] this is very important! Without this code Swing doen't close popup menu on our
     // layered pane. Swing adds MouseListeners to all component to close popup. If we do not

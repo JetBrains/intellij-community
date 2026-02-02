@@ -4,6 +4,7 @@
 
 package org.jetbrains.kotlin.idea.util
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.psi.KtPsiUtil
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.types.typeUtil.nullability
 
+@K1Deprecation
 fun <TCallable : CallableDescriptor> TCallable.substituteExtensionIfCallable(
     receiverTypes: Collection<KotlinType>,
     callType: CallType<*>,
@@ -57,6 +59,7 @@ fun <TCallable : CallableDescriptor> TCallable.substituteExtensionIfCallable(
     }
 }
 
+@K1Deprecation
 fun ReceiverValue?.getThisReceiverOwner(bindingContext: BindingContext): DeclarationDescriptor? {
     return when (this) {
         is ExpressionReceiver -> {
@@ -68,6 +71,7 @@ fun ReceiverValue?.getThisReceiverOwner(bindingContext: BindingContext): Declara
     }
 }
 
+@K1Deprecation
 fun ReceiverValue?.getReceiverTargetDescriptor(bindingContext: BindingContext): DeclarationDescriptor? {
     return when (this) {
         is ExpressionReceiver -> {

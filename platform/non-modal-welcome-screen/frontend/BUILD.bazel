@@ -24,6 +24,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/project/shared:project",
     "//fleet/rpc",
+    "//platform/platform-impl:ide-impl",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

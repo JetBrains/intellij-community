@@ -12,7 +12,14 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 
 import java.util.List;
 
-import static org.jetbrains.org.objectweb.asm.Opcodes.*;
+import static org.jetbrains.org.objectweb.asm.Opcodes.H_INVOKEINTERFACE;
+import static org.jetbrains.org.objectweb.asm.Opcodes.H_INVOKESPECIAL;
+import static org.jetbrains.org.objectweb.asm.Opcodes.H_INVOKESTATIC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.H_INVOKEVIRTUAL;
+import static org.jetbrains.org.objectweb.asm.Opcodes.INVOKEINTERFACE;
+import static org.jetbrains.org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.jetbrains.org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.jetbrains.org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 
 final class LambdaIndy {
   private static final String LAMBDA_METAFACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";

@@ -17,7 +17,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiFile;
@@ -122,15 +121,7 @@ public final class LiveTemplateCompletionContributor extends CompletionContribut
                                            boolean isAutopopup) {
     if (!templatesShown.getAndSet(true)) {
       var templateKeys = ContainerUtil.map(availableTemplates, template -> template.getKey());
-
-      result.restartCompletionOnPrefixChange(StandardPatterns.string().with(new PatternCondition<>("type after non-identifier") {
-        @Override
-        public boolean accepts(@NotNull String s, ProcessingContext context) {
-          return s.length() > 1 &&
-                 !Character.isJavaIdentifierPart(s.charAt(s.length() - 2)) &&
-                 ContainerUtil.exists(templateKeys, template -> s.endsWith(template));
-        }
-      }));
+      result.restartCompletionOnPrefixChange(StandardPatterns.string().afterNonJavaIdentifierPart().endsWithOneOf(templateKeys));
       for (final Map.Entry<TemplateImpl, String> entry : templates.entrySet()) {
         ProgressManager.checkCanceled();
         if (isAutopopup && entry.getKey().getShortcutChar() == TemplateSettings.NONE_CHAR) continue;

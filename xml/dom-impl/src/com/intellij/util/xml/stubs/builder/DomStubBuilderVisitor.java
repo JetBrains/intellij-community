@@ -29,7 +29,6 @@ import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.stubs.AttributeStub;
 import com.intellij.util.xml.stubs.ElementStub;
 import com.intellij.util.xml.stubs.XIncludeStub;
-import com.intellij.xml.util.XmlIncludeHandler;
 import com.intellij.xml.util.XmlPsiUtil;
 
 import java.util.HashMap;

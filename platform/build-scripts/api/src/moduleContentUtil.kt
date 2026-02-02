@@ -20,7 +20,6 @@ import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 
 const val PLUGIN_XML_RELATIVE_PATH: String = "META-INF/plugin.xml"
-val useTestSourceEnabled: Boolean = System.getProperty("idea.build.pack.test.source.enabled", "true").toBoolean()
 
 fun getUnprocessedPluginXmlContent(module: JpsModule, outputProvider: ModuleOutputProvider): ByteArray {
   return requireNotNull(findUnprocessedDescriptorContent(module = module, path = PLUGIN_XML_RELATIVE_PATH, outputProvider = outputProvider)) {
@@ -31,7 +30,7 @@ fun getUnprocessedPluginXmlContent(module: JpsModule, outputProvider: ModuleOutp
 fun findUnprocessedDescriptorContent(module: JpsModule, path: String, outputProvider: ModuleOutputProvider): ByteArray? {
   try {
     val result = outputProvider.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = false)
-    if (result == null && useTestSourceEnabled) {
+    if (result == null && outputProvider.useTestCompilationOutput) {
       return outputProvider.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = true)
     }
     return result

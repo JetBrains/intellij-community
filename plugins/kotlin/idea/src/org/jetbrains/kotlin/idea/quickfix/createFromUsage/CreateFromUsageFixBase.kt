@@ -2,10 +2,12 @@
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.psi.KtElement
 
+@K1Deprecation
 abstract class CreateFromUsageFixBase<T : KtElement>(element: T) : KotlinQuickFixAction<T>(element) {
     override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
 }

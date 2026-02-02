@@ -11,10 +11,17 @@ import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.codeInsight.guess.GuessManager;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupElementRenderer;
+import com.intellij.codeInsight.lookup.PackageLookupItem;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.codeInsight.lookup.TypedLookupItem;
+import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -22,13 +29,68 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.module.JdkApiCompatibilityService;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NullableLazyKey;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.HierarchicalMethodSignature;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiImportStaticReferenceElement;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiJavaReference;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeMapper;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -43,7 +105,11 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.proximity.ReferenceListWeigher;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IncorrectOperationException;
@@ -60,7 +126,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -291,8 +363,7 @@ public final class JavaCompletionUtil {
     }
 
     PsiElement refQualifier = javaReference.getQualifier();
-    if (!ModCompletionItemProvider.modCommandCompletionEnabled() && 
-        refQualifier == null && PsiTreeUtil.getParentOfType(element, PsiPackageStatement.class, PsiImportStatementBase.class) == null) {
+    if (refQualifier == null && PsiTreeUtil.getParentOfType(element, PsiPackageStatement.class, PsiImportStatementBase.class) == null) {
       StaticMemberProcessor memberProcessor = new JavaStaticMemberProcessor(parameters);
       memberProcessor.processMembersOfRegisteredClasses(nameCondition, (member, psiClass) -> {
         if (!mentioned.contains(member) && processor.satisfies(member, ResolveState.initial())) {
@@ -540,7 +611,7 @@ public final class JavaCompletionUtil {
         return Collections.singletonList(JavaLookupElementBuilder.forMethod((PsiMethod)completion, PsiSubstitutor.EMPTY));
       }
 
-      if (completion instanceof PsiClass && !ModCompletionItemProvider.modCommandCompletionEnabled()) {
+      if (completion instanceof PsiClass) {
         List<JavaPsiClassReferenceElement> classItems = JavaClassNameCompletionContributor.createClassLookupItems(
           CompletionUtil.getOriginalOrSelf((PsiClass)completion),
           JavaClassNameCompletionContributor.AFTER_NEW.accepts(reference),
@@ -552,13 +623,13 @@ public final class JavaCompletionUtil {
 
     PsiSubstitutor substitutor = completionElement.getSubstitutor();
     if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
-    if (completion instanceof PsiClass && !ModCompletionItemProvider.modCommandCompletionEnabled()) {
+    if (completion instanceof PsiClass) {
       JavaPsiClassReferenceElement classItem =
         JavaClassNameCompletionContributor.createClassLookupItem((PsiClass)completion, true).setSubstitutor(substitutor);
       return JavaConstructorCallElement.wrap(classItem, reference.getElement());
     }
     if (completion instanceof PsiMethod) {
-      if (reference instanceof PsiMethodReferenceExpression && !ModCompletionItemProvider.modCommandCompletionEnabled()) {
+      if (reference instanceof PsiMethodReferenceExpression) {
         return Collections.singleton((LookupElement)new JavaMethodReferenceElement(
           (PsiMethod)completion, (PsiMethodReferenceExpression)reference, completionElement.getMethodRefType()));
       }
@@ -567,14 +638,14 @@ public final class JavaCompletionUtil {
       item.setForcedQualifier(completionElement.getQualifierText());
       return Collections.singletonList(item);
     }
-    if (completion instanceof PsiVariable && !ModCompletionItemProvider.modCommandCompletionEnabled()) {
+    if (completion instanceof PsiVariable) {
       if (completion instanceof PsiEnumConstant enumConstant &&
           PsiTreeUtil.isAncestor(enumConstant.getArgumentList(), reference.getElement(), true)) {
         return Collections.emptyList();
       }
       return Collections.singletonList(new VariableLookupItem((PsiVariable)completion).setSubstitutor(substitutor).qualifyIfNeeded(reference, null));
     }
-    if (completion instanceof PsiPackage && !ModCompletionItemProvider.modCommandCompletionEnabled()) {
+    if (completion instanceof PsiPackage) {
       return Collections.singletonList(new PackageLookupItem((PsiPackage)completion, reference.getElement()));
     }
 

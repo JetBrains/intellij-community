@@ -8,7 +8,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifierList
-import com.intellij.psi.util.PropertyUtilBase.*
+import com.intellij.psi.util.PropertyUtilBase.findPropertyGetter
+import com.intellij.psi.util.PropertyUtilBase.getPropertyName
+import com.intellij.psi.util.PropertyUtilBase.isSimplePropertyGetter
+import com.intellij.psi.util.PropertyUtilBase.isSimplePropertySetter
 import com.intellij.usages.impl.rules.UsageType
 import com.intellij.util.Processor
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASKS_ACTION

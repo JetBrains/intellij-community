@@ -3,7 +3,12 @@ package org.jetbrains.plugins.gradle.codeInspection.groovy
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.OriginInfoAwareElement
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle

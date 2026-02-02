@@ -17,7 +17,12 @@ import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitCommitShaWithPatches
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.GitCodeReviewUtils
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.fold
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates

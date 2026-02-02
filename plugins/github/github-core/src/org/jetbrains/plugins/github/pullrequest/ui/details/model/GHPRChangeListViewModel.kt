@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.ui.codereview.details.model.*
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeDetails
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeList
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModelBase
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesContainer
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
 import com.intellij.collaboration.util.getOrNull
@@ -12,8 +16,14 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcsUtil.VcsFileUtil.relativePath
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings

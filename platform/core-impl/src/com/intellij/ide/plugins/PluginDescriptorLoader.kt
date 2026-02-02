@@ -12,7 +12,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.platform.plugins.parser.impl.*
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
+import com.intellij.platform.plugins.parser.impl.XIncludeLoader
+import com.intellij.platform.plugins.parser.impl.consume
+import com.intellij.platform.plugins.parser.impl.readBasicDescriptorData
 import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -23,15 +27,33 @@ import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.lang.ZipEntryResolverPool
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.util.xml.dom.createXmlStreamReader
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.*
+import java.io.ByteArrayInputStream
+import java.io.Closeable
+import java.io.DataInputStream
+import java.io.File
+import java.io.IOException
+import java.io.InputStream
 import java.net.URL
-import java.nio.file.*
-import java.util.*
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.NotDirectoryException
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.Collections
+import java.util.StringTokenizer
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicReferenceArray
@@ -970,6 +992,7 @@ private fun loadContentModuleDescriptors(
           readContext = loadingContext.readContext,
           xIncludeLoader = createXIncludeLoader(pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, dataLoader = dataLoader),
         )
+        //this is needed to be able to start the frontend process from sources without 'dev build'
         val data =
           if (isRunningFromSourcesWithoutDevBuild && jarFileForModule.isDirectory()) {
             Files.readAllBytes(jarFileForModule.resolve(subDescriptorFile))

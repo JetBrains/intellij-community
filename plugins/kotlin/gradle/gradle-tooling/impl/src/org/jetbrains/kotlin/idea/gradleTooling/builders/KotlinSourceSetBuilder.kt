@@ -2,10 +2,15 @@
 package org.jetbrains.kotlin.idea.gradleTooling.builders
 
 import org.gradle.api.Named
-import org.jetbrains.kotlin.idea.gradleTooling.*
-import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinAndroidSourceSetInfoBuilder.buildKotlinAndroidSourceSetInfo
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinSourceSetReflection
 import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinExtras
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinSourceSetImpl
+import org.jetbrains.kotlin.idea.gradleTooling.MultiplatformModelImportingContext
+import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinAndroidSourceSetInfoBuilder.buildKotlinAndroidSourceSetInfo
+import org.jetbrains.kotlin.idea.gradleTooling.isHMPPEnabled
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinSourceSetReflection
+import org.jetbrains.kotlin.idea.gradleTooling.supportsKotlinAndroidSourceSetInfo
+import org.jetbrains.kotlin.idea.gradleTooling.useKgpDependencyResolution
 import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.tooling.core.withClosure

@@ -10,7 +10,17 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.ExporterToTextFile
 import com.intellij.ide.ui.UISettings
 import com.intellij.notification.NotificationGroup
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.event.DocumentListener
@@ -23,7 +33,14 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.ui.*
+import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.ListSpeedSearch
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SearchTextField
+import com.intellij.ui.SideBorder
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.SpeedSearchComparator
 import com.intellij.ui.components.JBList
 import com.intellij.unscramble.AnalyzeStacktraceUtil
 import com.intellij.util.PlatformIcons
@@ -33,7 +50,11 @@ import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.datatransfer.StringSelection
 import java.io.File
-import javax.swing.*
+import javax.swing.DefaultListModel
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListSelectionModel
 import javax.swing.event.DocumentEvent
 
 /**

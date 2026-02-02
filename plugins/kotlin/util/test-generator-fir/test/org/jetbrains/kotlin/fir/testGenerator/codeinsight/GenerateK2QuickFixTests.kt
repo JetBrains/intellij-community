@@ -1,11 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.*
-import org.jetbrains.kotlin.testGenerator.model.*
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixMultiFileTest
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixMultiModuleTest
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixTest
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelWithPostponedQuickFixMultiModuleTest
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractK2KDocUnresolvedReferenceTest
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.QUICKFIXES
+import org.jetbrains.kotlin.testGenerator.model.MutableTWorkspace
+import org.jetbrains.kotlin.testGenerator.model.Patterns
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
+import org.jetbrains.kotlin.testGenerator.model.model
+import org.jetbrains.kotlin.testGenerator.model.testClass
+import org.jetbrains.kotlin.testGenerator.model.testGroup
 
 internal fun MutableTWorkspace.generateK2FixTests() {
     val idea = "idea/tests/testData/"
@@ -210,6 +218,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/wrongLongSuffix", pattern = pattern)
             model("$idea/quickfix/yieldUnsupported", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/overridingIgnorableWithMustUse", pattern = pattern)
+            model("$idea/quickfix/replaceArrayEqualityOpWithArraysEquals", pattern = pattern)
         }
 
         testClass<AbstractHighLevelQuickFixMultiFileTest> {

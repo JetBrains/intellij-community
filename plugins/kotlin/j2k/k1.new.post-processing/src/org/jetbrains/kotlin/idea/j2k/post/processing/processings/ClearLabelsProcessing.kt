@@ -8,7 +8,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiRecursiveVisitor
 import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInEdt
-import org.jetbrains.kotlin.j2k.*
+import org.jetbrains.kotlin.j2k.ConverterContext
+import org.jetbrains.kotlin.j2k.PostProcessing
+import org.jetbrains.kotlin.j2k.PostProcessingApplier
+import org.jetbrains.kotlin.j2k.PostProcessingTarget
+import org.jetbrains.kotlin.j2k.elements
 import org.jetbrains.kotlin.nj2k.asExplicitLabel
 import org.jetbrains.kotlin.nj2k.asInferenceLabel
 

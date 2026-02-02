@@ -5,7 +5,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 public class EditMavenIndexDialog extends DialogWrapper {
   private JPanel myMainPanel;

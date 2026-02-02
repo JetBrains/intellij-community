@@ -3,15 +3,38 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.wrongPackageStatement.AdjustPackageNameFix;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandService;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.SingleFileSourcesTracker;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.ImplicitlyImportedElement;
+import com.intellij.psi.ImplicitlyImportedModule;
+import com.intellij.psi.ImplicitlyImportedStaticMember;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportModuleStatement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiPackageStatement;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
@@ -55,20 +78,25 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
         if (identifier == null) {
           return;
         }
+        ReplaceWithExplicitClassFix fix = new ReplaceWithExplicitClassFix(aClass);
+        LocalQuickFix localQuickFix = ModCommandService.getInstance().wrapToQuickFix(fix);
         if (InspectionProjectProfileManager.isInformationLevel(getShortName(), identifier)) {
           TextRange textRange =
             TextRange.create(0, method.getParameterList().getTextRange().getEndOffset() - method.getTextRange().getStartOffset());
-          holder.registerProblem(method, textRange, message, new ReplaceWithExplicitClassFix());
+          holder.registerProblem(method, textRange, message, localQuickFix);
         }
         else {
-          holder.registerProblem(identifier, message, new ReplaceWithExplicitClassFix());
+          holder.registerProblem(identifier, message, localQuickFix);
         }
       }
     };
   }
 
+  public static class ReplaceWithExplicitClassFix extends PsiUpdateModCommandAction<PsiImplicitClass> {
 
-  private static class ReplaceWithExplicitClassFix extends PsiUpdateModCommandQuickFix {
+    protected ReplaceWithExplicitClassFix(@NotNull PsiImplicitClass element) {
+      super(element);
+    }
 
     @Override
     public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
@@ -76,24 +104,15 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      PsiImplicitClass implicitClass;
-      PsiFile originalFile = updater.getOriginalFile(element.getContainingFile());
-      if (element instanceof PsiImplicitClass elementAsClass) {
-        implicitClass = elementAsClass;
-      }
-      else {
-        implicitClass = PsiTreeUtil.getParentOfType(element, PsiImplicitClass.class);
-      }
-      if (implicitClass == null) {
-        return;
-      }
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiImplicitClass implicitClass, @NotNull ModPsiUpdater updater) {
+      PsiFile originalFile = updater.getOriginalFile(implicitClass.getContainingFile());
       String text = implicitClass.getText();
       String qualifiedName = implicitClass.getQualifiedName();
       if (qualifiedName == null) {
         return;
       }
-      PsiClass newClass = PsiElementFactory.getInstance(element.getProject()).createClassFromText(text, implicitClass);
+      Project project = implicitClass.getProject();
+      PsiClass newClass = PsiElementFactory.getInstance(project).createClassFromText(text, implicitClass);
       newClass.setName(qualifiedName);
       //user probably mostly wants to use it somewhere
       PsiModifierList modifierList = newClass.getModifierList();

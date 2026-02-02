@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.ActionListener;
 import java.util.function.Supplier;
 

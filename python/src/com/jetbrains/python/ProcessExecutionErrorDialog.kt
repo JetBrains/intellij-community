@@ -24,7 +24,12 @@ import com.jetbrains.python.errorProcessing.PyError
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Font
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JTextPane
+import javax.swing.ScrollPaneConstants
+import javax.swing.SwingConstants
 import javax.swing.text.StyleConstants
 
 

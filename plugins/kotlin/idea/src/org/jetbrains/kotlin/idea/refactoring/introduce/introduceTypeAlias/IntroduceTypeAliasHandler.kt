@@ -11,11 +11,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.util.ElementKind.TYPE_CONSTRUCTOR
-import org.jetbrains.kotlin.idea.util.ElementKind.TYPE_ELEMENT
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSupportProvider
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractIntroduceAction
@@ -23,11 +22,23 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.processD
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.ui.KotlinIntroduceTypeAliasDialog
 import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetSibling
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
+import org.jetbrains.kotlin.idea.util.ElementKind.TYPE_CONSTRUCTOR
+import org.jetbrains.kotlin.idea.util.ElementKind.TYPE_ELEMENT
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtTypeElement
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getOutermostParentContainedIn
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isDoubleColonReceiver
+import org.jetbrains.kotlin.psi.psiUtil.isTypeConstructorReference
 
+@K1Deprecation
 open class KotlinIntroduceTypeAliasHandler : RefactoringActionHandler {
     companion object {
         @JvmStatic
@@ -132,6 +143,7 @@ open class KotlinIntroduceTypeAliasHandler : RefactoringActionHandler {
     }
 }
 
+@K1Deprecation
 class IntroduceTypeAliasAction : AbstractIntroduceAction() {
     override fun getRefactoringHandler(provider: RefactoringSupportProvider): RefactoringActionHandler? {
         return if (provider is KotlinRefactoringSupportProvider) KotlinIntroduceTypeAliasHandler.INSTANCE else null

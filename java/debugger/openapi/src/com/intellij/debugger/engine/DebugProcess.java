@@ -13,7 +13,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.sun.jdi.*;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ArrayType;
+import com.sun.jdi.ClassLoaderReference;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +42,8 @@ public interface DebugProcess extends UserDataHolder {
   /**
    * Get the current VM proxy connected to the process.
    * The VM can change due to a single debug process can be connected to several VMs.
-   * Prefer {@link SuspendContextImpl#getVirtualMachineProxy()} when possible.
+   * <p>
+   * Use {@link VirtualMachineProxy#getCurrent()}
    */
   @ApiStatus.Obsolete
   VirtualMachineProxy getVirtualMachineProxy();

@@ -1,8 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.common
 
-import com.jetbrains.python.packaging.*
+import com.jetbrains.python.packaging.PyPackage
+import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.management.findPackageSpecification
+import com.jetbrains.python.packaging.pyRequirement
+import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import org.jetbrains.annotations.ApiStatus

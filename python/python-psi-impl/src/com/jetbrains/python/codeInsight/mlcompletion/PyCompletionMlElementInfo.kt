@@ -3,7 +3,11 @@ package com.jetbrains.python.codeInsight.mlcompletion
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
-import com.jetbrains.python.psi.impl.*
+import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.impl.PyClassImpl
+import com.jetbrains.python.psi.impl.PyFileImpl
+import com.jetbrains.python.psi.impl.PyFunctionImpl
+import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 
 enum class PyCompletionMlElementKind {
   NAMED_ARG,

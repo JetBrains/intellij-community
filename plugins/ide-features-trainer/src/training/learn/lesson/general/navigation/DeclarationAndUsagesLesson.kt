@@ -13,8 +13,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.ui.UIBundle
 import com.intellij.ui.table.JBTable
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskRuntimeContext
+import training.dsl.checkToolWindowState
+import training.dsl.closeAllFindTabs
+import training.dsl.sdkConfigurationTasks
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.util.isToStringContains

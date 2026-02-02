@@ -6,6 +6,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -15,15 +16,20 @@ import com.intellij.openapi.util.NlsContexts.LinkLabel;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.ContextHelpLabel;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.LightColors;
+import com.intellij.ui.TextFieldWithHistory;
+import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.function.Supplier;
@@ -95,11 +101,13 @@ public class EmmetAbbreviationBalloon {
     final DocumentAdapter documentListener = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        if (!isValid(customTemplateCallback)) {
-          balloon.hide();
-          return;
-        }
-        validateTemplateKey(field, balloon, field.getText(), customTemplateCallback);
+        WriteIntentReadAction.run(() -> {
+          if (!isValid(customTemplateCallback)) {
+            balloon.hide();
+            return;
+          }
+          validateTemplateKey(field, balloon, field.getText(), customTemplateCallback);
+        });
       }
     };
     field.addDocumentListener(documentListener);
@@ -115,13 +123,15 @@ public class EmmetAbbreviationBalloon {
 
           switch (e.getKeyCode()) {
             case KeyEvent.VK_ENTER -> {
-              final String abbreviation = field.getText();
-              if (validateTemplateKey(field, balloon, abbreviation, customTemplateCallback)) {
-                myCallback.onEnter(abbreviation);
-                PropertiesComponent.getInstance().setValue(myLastAbbreviationKey, abbreviation);
-                field.addCurrentTextToHistory();
-                balloon.hide();
-              }
+              WriteIntentReadAction.run(() -> {
+                final String abbreviation = field.getText();
+                if (validateTemplateKey(field, balloon, abbreviation, customTemplateCallback)) {
+                  myCallback.onEnter(abbreviation);
+                  PropertiesComponent.getInstance().setValue(myLastAbbreviationKey, abbreviation);
+                  field.addCurrentTextToHistory();
+                  balloon.hide();
+                }
+              });
             }
             case KeyEvent.VK_ESCAPE -> balloon.hide(false);
           }

@@ -12,7 +12,12 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.data.getLogProvider
-import com.intellij.vcs.log.data.index.*
+import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
+import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
+import com.intellij.vcs.log.data.index.isIndexingEnabled
+import com.intellij.vcs.log.data.index.isIndexingPausedFor
+import com.intellij.vcs.log.data.index.isScheduledForIndexing
+import com.intellij.vcs.log.data.index.toggleIndexing
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys

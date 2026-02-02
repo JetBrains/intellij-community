@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeInliner
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.OptionalParametersHelper
@@ -36,16 +37,8 @@ import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.model.isReallySuccess
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.utils.addIfNotNull
-import java.util.ArrayList
-import java.util.LinkedHashSet
-import kotlin.collections.asReversed
-import kotlin.collections.dropWhile
-import kotlin.collections.isNotEmpty
-import kotlin.collections.mapNotNull
-import kotlin.collections.orEmpty
-import kotlin.let
-import kotlin.to
 
+@K1Deprecation
 object InlinePostProcessor: AbstractInlinePostProcessor() {
     override fun shortenReferences(pointers: List<SmartPsiElementPointer<KtElement>>): List<KtElement> {
         val shortenFilter = { element: PsiElement ->

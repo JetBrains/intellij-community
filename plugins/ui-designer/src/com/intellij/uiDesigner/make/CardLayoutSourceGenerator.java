@@ -5,7 +5,7 @@ package com.intellij.uiDesigner.make;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
 
-import java.awt.*;
+import java.awt.CardLayout;
 
 
 public class CardLayoutSourceGenerator extends LayoutSourceGenerator {

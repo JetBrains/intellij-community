@@ -11,7 +11,22 @@ import com.jetbrains.python.codeInsight.PyInjectionUtil
 import com.jetbrains.python.codeInsight.PyInjectorBase
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintDialect
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyAnnotation
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyAssignmentStatement
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PySubscriptionExpression
+import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyTypeParameter
+import com.jetbrains.python.psi.PyTypeParameterListOwner
+import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType
+import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
@@ -45,8 +60,7 @@ class PyTypingAnnotationInjector : PyInjectorBase() {
 
   override fun getInjectedLanguage(context: PsiElement): Language? {
     if (context is PyStringLiteralExpression) {
-      val typeEvalContext = TypeEvalContext.codeAnalysis(context.project, context.containingFile)
-      if (isTypingLiteralArgument(context, typeEvalContext) || isTypingAnnotatedMetadataArgument(context, typeEvalContext)) {
+      if (isTypingLiteralArgument(context) || isTypingAnnotatedMetadataArgument(context)) {
         return null
       }
       if (PsiTreeUtil.getParentOfType(context, PyAnnotation::class.java, true, PyCallExpression::class.java) != null &&
@@ -60,16 +74,16 @@ class PyTypingAnnotationInjector : PyInjectorBase() {
       if (isInsideNewStyleTypeVarBound(context)) {
         return PyTypeHintDialect.INSTANCE
       }
-      if (isTypingCastTypeArgument(context, typeEvalContext)) {
+      if (isTypingCastTypeArgument(context)) {
         return PyTypeHintDialect.INSTANCE
       }
-      if (isTypingTypeVarTypeArgument(context, typeEvalContext)) {
+      if (isTypingTypeVarTypeArgument(context)) {
         return PyTypeHintDialect.INSTANCE
       }
-      if (isTypingNewTypeTypeArgument(context, typeEvalContext)) {
+      if (isTypingNewTypeTypeArgument(context)) {
         return PyTypeHintDialect.INSTANCE
       }
-      if (isTypingAssertTypeTypeArgument(context, typeEvalContext)) {
+      if (isTypingAssertTypeTypeArgument(context)) {
         return PyTypeHintDialect.INSTANCE
       }
     }
@@ -77,18 +91,6 @@ class PyTypingAnnotationInjector : PyInjectorBase() {
   }
 
   companion object {
-    val RE_TYPING_ANNOTATION: Regex = Regex(
-      """(?x)
-      \s*
-      \S+(\[.*])?   # initial type like: "list[int]"
-      (\s*\|\s*     # union operator: " | "
-        \S+(\[.*])? # type between union operator
-      )*            # repeating
-      \s*
-      """.trimIndent(),
-      RegexOption.DOT_MATCHES_ALL,
-    )
-
     private fun isInsideValueOfExplicitTypeAnnotation(expr: PyStringLiteralExpression): Boolean {
       val assignment = PsiTreeUtil.getParentOfType(expr, PyAssignmentStatement::class.java)
       if (assignment == null || !PsiTreeUtil.isAncestor(assignment.assignedValue, expr, false)) {
@@ -124,28 +126,30 @@ class PyTypingAnnotationInjector : PyInjectorBase() {
       return PyInjectionUtil.InjectionResult.EMPTY
     }
 
-    private fun isTypingLiteralArgument(element: PsiElement, context: TypeEvalContext): Boolean {
+    private fun isTypingLiteralArgument(element: PsiElement): Boolean {
       var parent = element.parent
       if (parent is PyTupleExpression) parent = parent.parent
       val subscription = parent as? PySubscriptionExpression ?: return false
       val operand = subscription.operand as? PyReferenceExpression ?: return false
-      val resolvedNames = PyTypingTypeProvider.resolveToQualifiedNames(operand, context)
+      val resolvedNames = resolveLocally(operand)
       return resolvedNames.any {
         PyTypingTypeProvider.LITERAL == it || PyTypingTypeProvider.LITERAL_EXT == it
       }
     }
 
+    private fun resolveLocally(operand: PyReferenceExpression): List<String> =
+      PyResolveUtil.resolveImportedElementQNameLocally(operand).map { it.toString() }
+
     private fun isTypingAnnotatedMetadataArgument(
       element: PsiElement,
-      context: TypeEvalContext,
     ): Boolean {
       val tuple = PyUtil.`as`(element.parent, PyTupleExpression::class.java)
       if (tuple == null) return false
       val parent = PyUtil.`as`(tuple.parent, PySubscriptionExpression::class.java)
       if (parent == null) return false
 
-      val operand = parent.operand
-      val resolvedNames = PyTypingTypeProvider.resolveToQualifiedNames(operand, context)
+      val operand = parent.operand as? PyReferenceExpression ?: return false
+      val resolvedNames = resolveLocally(operand)
       if (resolvedNames.any { PyTypingTypeProvider.ANNOTATED == it || PyTypingTypeProvider.ANNOTATED_EXT == it }) {
         return tuple.elements[0] !== element
       }
@@ -162,20 +166,19 @@ class PyTypingAnnotationInjector : PyInjectorBase() {
                                          PyTypeParameterListOwner::class.java) != null
     }
 
-    private fun isTypingAnnotation(s: String): Boolean {
-      return RE_TYPING_ANNOTATION matches s
+    fun isTypingAnnotation(s: String): Boolean {
+      return PyTypingAliasStubType.RE_TYPE_HINT_LIKE_STRING.toRegex() matches s
     }
   }
 
   private fun isTypingCastTypeArgument(
     expr: PyStringLiteralExpression,
-    context: TypeEvalContext,
   ): Boolean {
     val argList = PsiTreeUtil.getParentOfType(expr, PyArgumentList::class.java) ?: return false
     val call = argList.getParent() as? PyCallExpression ?: return false
-    val callee = call.callee ?: return false
+    val callee = call.callee as? PyReferenceExpression ?: return false
 
-    val resolvedNames = PyTypingTypeProvider.resolveToQualifiedNames(callee, context)
+    val resolvedNames = resolveLocally(callee)
     if (PyTypingTypeProvider.CAST !in resolvedNames && PyTypingTypeProvider.CAST_EXT !in resolvedNames) {
       return false
     }
@@ -192,13 +195,12 @@ class PyTypingAnnotationInjector : PyInjectorBase() {
 
   private fun isTypingTypeVarTypeArgument(
     expr: PyStringLiteralExpression,
-    context: TypeEvalContext,
   ): Boolean {
     val argList = PsiTreeUtil.getParentOfType(expr, PyArgumentList::class.java) ?: return false
     val call = argList.getParent() as? PyCallExpression ?: return false
-    val callee = call.callee ?: return false
+    val callee = call.callee as? PyReferenceExpression ?: return false
 
-    val resolvedNames = PyTypingTypeProvider.resolveToQualifiedNames(callee, context)
+    val resolvedNames = resolveLocally(callee)
     if (PyTypingTypeProvider.TYPE_VAR !in resolvedNames && PyTypingTypeProvider.TYPE_VAR_EXT !in resolvedNames) {
       return false
     }
@@ -228,13 +230,12 @@ class PyTypingAnnotationInjector : PyInjectorBase() {
 
   private fun isTypingNewTypeTypeArgument(
     expr: PyStringLiteralExpression,
-    context: TypeEvalContext,
   ): Boolean {
     val argList = PsiTreeUtil.getParentOfType(expr, PyArgumentList::class.java) ?: return false
     val call = argList.getParent() as? PyCallExpression ?: return false
-    val callee = call.callee ?: return false
+    val callee = call.callee as? PyReferenceExpression ?: return false
 
-    val resolvedNames = PyTypingTypeProvider.resolveToQualifiedNames(callee, context)
+    val resolvedNames = resolveLocally(callee)
     if (PyTypingTypeProvider.NEW_TYPE !in resolvedNames) {
       return false
     }
@@ -248,13 +249,12 @@ class PyTypingAnnotationInjector : PyInjectorBase() {
 
   private fun isTypingAssertTypeTypeArgument(
     expr: PyStringLiteralExpression,
-    context: TypeEvalContext,
   ): Boolean {
     val argList = PsiTreeUtil.getParentOfType(expr, PyArgumentList::class.java) ?: return false
     val call = argList.parent as? PyCallExpression ?: return false
-    val callee = call.callee ?: return false
+    val callee = call.callee as? PyReferenceExpression ?: return false
 
-    val resolvedNames = PyTypingTypeProvider.resolveToQualifiedNames(callee, context)
+    val resolvedNames = resolveLocally(callee)
     if (PyTypingTypeProvider.ASSERT_TYPE !in resolvedNames) {
       return false
     }

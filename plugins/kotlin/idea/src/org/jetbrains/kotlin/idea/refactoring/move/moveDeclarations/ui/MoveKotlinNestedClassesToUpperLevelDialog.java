@@ -36,8 +36,11 @@ import org.jetbrains.kotlin.psi.KtClassOrObject;
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode;
 import org.jetbrains.kotlin.types.KotlinType;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;

@@ -9,9 +9,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.wayland.WaylandUtilKt;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.TimerUtil;
-import com.intellij.util.ui.WaylandUtilKt;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -354,7 +355,15 @@ public class JBPopupMenu extends JPopupMenu {
       }
       if (configuration == null) return Short.MAX_VALUE;
       Rectangle screenRectangle = ScreenUtil.getScreenRectangle(configuration);
-      WaylandUtilKt.addFakeScreenInsets(screenRectangle);
+      if (StartupUiUtil.isWaylandToolkit()) {
+        var screenHeight = WaylandUtilKt.getFakeScreenHeight(invoker);
+        if (screenHeight != null) {
+          screenRectangle.height = screenHeight;
+        }
+        else {
+          screenRectangle.height = 600;
+        }
+      }
 
       if (invoker != null && invoker.getParent() instanceof JMenuBar) {
         var menuItemHeight = invoker.getSize().height;

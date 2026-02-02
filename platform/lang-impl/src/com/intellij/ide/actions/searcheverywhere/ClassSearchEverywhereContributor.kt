@@ -7,7 +7,11 @@ import com.intellij.ide.actions.GotoClassPresentationUpdater.getTabTitlePluraliz
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.LangFilterCollector
 import com.intellij.ide.actions.searcheverywhere.footer.createPsiExtendedInfo
 import com.intellij.ide.structureView.StructureViewTreeElement
-import com.intellij.ide.util.gotoByName.*
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup
+import com.intellij.ide.util.gotoByName.FilteringGotoByModel
+import com.intellij.ide.util.gotoByName.GotoClassModel2
+import com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration
+import com.intellij.ide.util.gotoByName.LanguageRef
 import com.intellij.ide.util.gotoByName.LanguageRef.Companion.forAllLanguages
 import com.intellij.lang.LanguageStructureViewBuilder
 import com.intellij.openapi.actionSystem.AnAction

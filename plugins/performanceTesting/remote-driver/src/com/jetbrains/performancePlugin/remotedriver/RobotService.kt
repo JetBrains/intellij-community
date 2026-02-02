@@ -3,10 +3,10 @@ package com.jetbrains.performancePlugin.remotedriver
 
 import com.intellij.openapi.components.Service
 import com.jetbrains.performancePlugin.remotedriver.robot.SmoothRobot
-import org.jetbrains.annotations.ApiStatus
 import com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelCreator
 import com.jetbrains.performancePlugin.remotedriver.xpath.convertToHtml
-import java.nio.file.*
+import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Paths
 
 @Suppress("unused")
 @Service(Service.Level.APP)

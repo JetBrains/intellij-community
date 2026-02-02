@@ -1,8 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k1
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.defaultImports
+import kotlin.script.experimental.api.dependencies
+import kotlin.script.experimental.api.dependenciesSources
+import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.util.toClassPathOrEmpty
@@ -10,6 +15,7 @@ import kotlin.script.experimental.jvm.util.toClassPathOrEmpty
 /**
  * For using in DefaultScriptConfigurationManager and in tests only
  */
+@K1Deprecation
 fun areSimilar(old: ScriptCompilationConfigurationWrapper, new: ScriptCompilationConfigurationWrapper): Boolean {
     if (old.script != new.script) return false
 

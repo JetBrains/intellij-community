@@ -23,7 +23,11 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -38,7 +42,12 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.xdebugger.XDebugSession
-import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.CompilerSettings
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
+import org.jetbrains.kotlin.config.JvmDefaultMode
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
@@ -50,15 +59,30 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgu
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator
-import org.jetbrains.kotlin.idea.debugger.test.preference.*
+import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
+import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
+import org.jetbrains.kotlin.idea.debugger.test.preference.OldValuesStorage
+import org.jetbrains.kotlin.idea.debugger.test.preference.SettingsMutators
+import org.jetbrains.kotlin.idea.debugger.test.preference.mutate
 import org.jetbrains.kotlin.idea.debugger.test.util.BreakpointCreator
 import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
 import org.jetbrains.kotlin.idea.debugger.test.util.LogPropagator
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.Directives
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.IgnorableTestCase
+import org.jetbrains.kotlin.idea.test.KotlinBaseTest
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.assertEqualsToFile
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestsRoot
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.tmpDir
+import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.test.TestFiles.TestFileFactory
 import org.jetbrains.kotlin.idea.test.TestFiles.createTestFiles
+import org.jetbrains.kotlin.idea.test.addRoot
+import org.jetbrains.kotlin.idea.test.createFacet
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -73,7 +97,7 @@ import java.io.File
 internal const val KOTLIN_LIBRARY_NAME = "KotlinJavaRuntime"
 internal const val TEST_LIBRARY_NAME = "TestLibrary"
 internal const val COMMON_SOURCES_DIR = "commonSrc"
-internal const val SCRIPT_SOURCES_DIR = "scripts"
+const val SCRIPT_SOURCES_DIR = "scripts"
 internal const val JVM_MODULE_NAME_START = "jvm"
 
 private const val MULTI_MODULES = "multiModules"
@@ -342,7 +366,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
         )
         val sourcesKtFilesForModule = compilerFacility.creatKtFiles(jvmSrcDir, commonSourcesOutputDirectory, scriptSourcesOutputDirectory)
 
-        return getMainClassNameOrNull(compilerFacility, sourcesKtFilesForModule.jvmKtFiles)
+        return getMainClassNameOrNull(sourcesKtFilesForModule.jvmKtFiles)
     }
 
     private fun getOutputDirectoryForModule(debuggerTestModule: DebuggerTestModule): File =
@@ -505,16 +529,10 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
     }
 
     protected open fun getMainClassName(compilerFacility: DebuggerTestCompilerFacility): String {
-        return getMainClassNameOrNull(compilerFacility, sourcesKtFiles.jvmKtFiles) ?: error("Cannot find a 'main()' function")
+        return getMainClassNameOrNull(sourcesKtFiles.jvmKtFiles) ?: error("Cannot find a 'main()' function")
     }
 
-    private fun getMainClassNameOrNull(compilerFacility: DebuggerTestCompilerFacility, jvmKtFiles: List<KtFile>): String? {
-        if (pluginMode == KotlinPluginMode.K1) {
-            // Although the implementation below is frontend-agnostic, K1 tests seem to depend on resolution ordering.
-            // Some evaluation tests fail if not all files are analyzed at this point.
-            return compilerFacility.analyzeAndFindMainClass(jvmKtFiles)
-        }
-
+    private fun getMainClassNameOrNull(jvmKtFiles: List<KtFile>): String? {
         return runReadAction {
             val mainFunctionDetector = KotlinMainFunctionDetector.getInstance()
             val candidates = mutableListOf<ClassId>()

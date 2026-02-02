@@ -1,9 +1,7 @@
-from _typeshed import Incomplete
-
 from authlib.oauth1.rfc5849.base_server import BaseServer
 
 class AuthorizationServer(BaseServer):
-    TOKEN_RESPONSE_HEADER: Incomplete
+    TOKEN_RESPONSE_HEADER: list[tuple[str, str]]
     TEMPORARY_CREDENTIALS_METHOD: str
     def create_oauth1_request(self, request): ...
     def handle_response(self, status_code, payload, headers): ...

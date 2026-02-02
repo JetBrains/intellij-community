@@ -61,7 +61,7 @@ suspend fun walkFileSystemNoTomlContent(
 
           // default name is popular enough to make a shortcut
           if (dirName == VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME
-              || VirtualEnvReader.Instance.findPythonInPythonRoot(directory) != null) {
+              || VirtualEnvReader().findPythonInPythonRoot(directory) != null) {
             // Venv: exclude and skip
             excludedDirs.add(directory)
             FileVisitResult.SKIP_SUBTREE

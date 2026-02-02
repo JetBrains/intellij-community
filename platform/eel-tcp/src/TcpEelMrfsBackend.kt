@@ -2,43 +2,49 @@
 package com.intellij.platform.eel.tcp
 
 import com.intellij.execution.ijent.nio.IjentEphemeralRootAwareFileSystemProvider
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.impl.fs.telemetry.TracingFileSystemProvider
 import com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend
 import com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemPosixApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
+import kotlinx.coroutines.CoroutineScope
 import java.net.URI
-import java.nio.file.*
+import java.nio.file.FileStore
+import java.nio.file.FileSystem
+import java.nio.file.FileSystemAlreadyExistsException
+import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 
 
-class TcpEelMrfsBackend : MultiRoutingFileSystemBackend {
+class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRoutingFileSystemBackend {
   companion object {
     private val LOG = logger<TcpEelMrfsBackend>()
   }
 
   private val cache = ConcurrentHashMap<String, FileSystem>()
+
   override fun compute(localFS: FileSystem, sanitizedPath: String): FileSystem? {
-    val parsedInternalName = TcpEelPathParser.extractInternalMachineId(sanitizedPath) ?: return null
-    val tcpDescriptor = TcpEelRegistry.getInstance().get(parsedInternalName) ?: return null
-    val localPath = localFS.getPath(tcpDescriptor.rootPathString)
-    if (Files.exists(localPath)) {
-      LOG.warn("A file system for a path already exists: $localPath")
-    }
-    return cache.computeIfAbsent(parsedInternalName) { createFilesystem(it, tcpDescriptor, localPath, localFS) }
+    val internalName = TcpEelPathParser.extractInternalMachineId(sanitizedPath) ?: return null
+    val descriptor = TcpEelPathParser.toDescriptor(internalName) ?: return null
+
+    return cache.computeIfAbsent(internalName) { createFilesystem(internalName, localFS, descriptor) }
   }
 
-  private fun createFilesystem(internalName: String, descriptor: TcpEelDescriptor, localPath: Path, localFS: FileSystem): FileSystem {
+  private fun createFilesystem(internalName: String, localFS: FileSystem, descriptor: TcpEelDescriptor): FileSystem {
+    val localPath = localFS.getPath(descriptor.rootPathString)
+    if (Files.exists(localPath)) {
+      LOG.warn("Cannot create TCP filesystem: local path already exists: $localPath")
+    }
+
     val ijentUri = URI("ijent", "tcp", "/$internalName", null, null)
     val ijentDefaultProvider = TracingFileSystemProvider(IjentNioFileSystemProvider.getInstance())
-    val scope = service<TcpEelScopeHolder>().coroutineScope
 
     try {
       val ijentFs = IjentFailSafeFileSystemPosixApi(scope, descriptor, checkIsIjentInitialized = null)
       ijentDefaultProvider.newFileSystem(ijentUri, IjentNioFileSystemProvider.newFileSystemMap(ijentFs))
-    } catch (_: FileSystemAlreadyExistsException) {
+    }
+    catch (_: FileSystemAlreadyExistsException) {
       // Nothing.
     }
     LOG.info("New FileSystem initialized for $internalName at $localPath and URI=$ijentUri")

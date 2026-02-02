@@ -2,7 +2,11 @@
 
 package com.intellij.java.refactoring;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import junit.framework.Assert;
 

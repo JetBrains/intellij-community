@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.test.env.common
 
+import com.intellij.python.test.env.conda.CondaPyEnvironmentProvider
+import com.intellij.python.test.env.conda.CondaPyEnvironmentSpec
 import com.intellij.python.test.env.core.CachingPyEnvironmentFactory
 import com.intellij.python.test.env.core.DefaultPyEnvironmentFactory
 import com.intellij.python.test.env.core.PyEnvironmentSpec
-import com.intellij.python.test.env.conda.CondaPyEnvironmentProvider
-import com.intellij.python.test.env.conda.CondaPyEnvironmentSpec
 import com.intellij.python.test.env.plain.PlainPyEnvironmentProvider
 import com.intellij.python.test.env.plain.PlainPyEnvironmentSpec
 import com.intellij.python.test.env.plain.VirtualenvPyEnvironmentProvider

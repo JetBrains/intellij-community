@@ -18,6 +18,13 @@ public interface BuildContext extends DiagnosticSink {
   boolean isCanceled();
 
   Map<CLFlags, List<String>> getFlags();
+
+  /**
+   * @return Cumulative digest for all inputs that the worker does not handle.
+   * in unmanaged inputs digest has changed since last build, the target should be fully rebuilt
+   */
+  long getUntrackedInputsDigest();
+
   /**
    * @return the BazelWorker working dir (can be a sandbox dir)
    * Source and library inputs should be resolved against the base dir
@@ -45,6 +52,8 @@ public interface BuildContext extends DiagnosticSink {
   NodeSourceSnapshot getBinaryDependencies();
 
   Iterable<ResourceGroup> getResources();
+
+  Iterable<String> getUnexpectedInputs();
 
   BuilderOptions getBuilderOptions();
 

@@ -7,7 +7,9 @@
 // and that's why this code is in the com.jetbrains.jdi package.
 package com.jetbrains.jdi
 
-import com.sun.jdi.*
+import com.sun.jdi.LocalVariable
+import com.sun.jdi.StackFrame
+import com.sun.jdi.VirtualMachine
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockLocation
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockMethod
 

@@ -33,6 +33,9 @@ import java.util.function.Predicate;
 
 @ApiStatus.Internal
 public abstract class PluginsTab {
+  private static final int DEFAULT_PANEL = 0;
+  private static final int SEARCH_PANEL = 1;
+
   private final SingleEdtTaskScheduler searchUpdateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
 
   private PluginDetailsPageComponent detailsPage;
@@ -60,7 +63,7 @@ public abstract class PluginsTab {
   };
 
   private final Consumer<PluginsGroupComponent> mySelectionListener = panel -> {
-    int key = searchPanel.getPanel() == panel ? 1 : 0;
+    int key = searchPanel.getPanel() == panel ? SEARCH_PANEL : DEFAULT_PANEL;
     if (cardPanel.getKey() == key) {
       detailsPage.showPlugins(panel.getSelection());
     }
@@ -80,10 +83,10 @@ public abstract class PluginsTab {
 
       @Override
       protected JComponent create(Integer key) {
-        if (key == 0) {
+        if (key == DEFAULT_PANEL) {
           return createPluginsPanel(mySelectionListener);
         }
-        if (key == 1) {
+        if (key == SEARCH_PANEL) {
           return searchPanel.createVScrollPane();
         }
         return super.create(key);
@@ -108,7 +111,7 @@ public abstract class PluginsTab {
 
     searchPanel = createSearchPanel(mySelectionListener);
 
-    cardPanel.select(0, true);
+    cardPanel.select(DEFAULT_PANEL, true);
 
     return splitter;
   }
@@ -121,20 +124,18 @@ public abstract class PluginsTab {
         int id = event.getID();
 
         if (keyCode == KeyEvent.VK_ENTER || event.getKeyChar() == '\n') {
-          if (id == KeyEvent.KEY_PRESSED &&
-              (searchPanel.controller == null || !searchPanel.controller.handleEnter(event))) {
+          if (id == KeyEvent.KEY_PRESSED && !searchPanel.controller.handleEnter(event)) {
             String text = getText();
             if (!text.isEmpty()) {
-              if (searchPanel.controller != null) {
-                searchPanel.controller.hidePopup();
-              }
+              searchPanel.controller.hidePopup();
               showSearchPanel(text);
             }
           }
           return true;
         }
-        if ((keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_UP) && id == KeyEvent.KEY_PRESSED &&
-            searchPanel.controller != null && searchPanel.controller.handleUpDown(event)) {
+        if ((keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_UP) &&
+            id == KeyEvent.KEY_PRESSED &&
+            searchPanel.controller.handleUpDown(event)) {
           return true;
         }
         return super.preprocessEventForTextField(event);
@@ -159,7 +160,7 @@ public abstract class PluginsTab {
 
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            if (searchPanel.controller != null && searchPanel.controller.isPopupShow()) {
+            if (searchPanel.controller.isPopupShow()) {
               searchPanel.controller.hidePopup();
             }
             else {
@@ -177,7 +178,7 @@ public abstract class PluginsTab {
 
       @Override
       protected void showCompletionPopup() {
-        if (searchPanel.controller != null && !searchPanel.controller.isPopupShow()) {
+        if (!searchPanel.controller.isPopupShow()) {
           showSearchPopup();
         }
       }
@@ -195,9 +196,6 @@ public abstract class PluginsTab {
         String text = searchTextField.getText();
         if (StringUtil.isEmptyOrSpaces(text)) {
           hideSearchPanel();
-        }
-        else if (searchPanel.controller == null) {
-          showSearchPanel(text);
         }
         else {
           searchPanel.controller.handleShowPopup();
@@ -247,7 +245,7 @@ public abstract class PluginsTab {
 
   public void showSearchPanel(@NotNull String query) {
     if (searchPanel.isEmpty()) {
-      cardPanel.select(1, true);
+      cardPanel.select(SEARCH_PANEL, true);
       detailsPage.showPlugin(null);
     }
     searchPanel.setQuery(query);
@@ -257,25 +255,21 @@ public abstract class PluginsTab {
   public void hideSearchPanel() {
     if (!searchPanel.isEmpty()) {
       onSearchReset();
-      cardPanel.select(0, true);
+      cardPanel.select(DEFAULT_PANEL, true);
       searchPanel.setQuery("");
       updateMainSelection(mySelectionListener);
     }
-    if (searchPanel.controller != null) {
-      searchPanel.controller.hidePopup();
-    }
+    searchPanel.controller.hidePopup();
   }
 
   protected abstract void onSearchReset();
 
   private void showSearchPopup() {
-    if (searchPanel.controller != null) {
-      if (StringUtil.isEmptyOrSpaces(searchTextField.getText())) {
-        searchPanel.controller.showAttributesPopup(null, 0);
-      }
-      else {
-        searchPanel.controller.handleShowPopup();
-      }
+    if (StringUtil.isEmptyOrSpaces(searchTextField.getText())) {
+      searchPanel.controller.showAttributesPopup(null, 0);
+    }
+    else {
+      searchPanel.controller.handleShowPopup();
     }
   }
 

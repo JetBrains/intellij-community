@@ -20,7 +20,7 @@ import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * A lookup element representing a type. Must extend {@link LookupElement}

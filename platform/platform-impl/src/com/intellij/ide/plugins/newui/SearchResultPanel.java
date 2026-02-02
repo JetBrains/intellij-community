@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.enums.PluginsGroupType;
+import com.intellij.ide.plugins.PluginsGroupType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @ApiStatus.Internal
 public abstract class SearchResultPanel {
-  public final SearchPopupController controller;
+  public final @NotNull SearchPopupController controller;
   public final int tabIndex;
   public final int backTabIndex;
 
@@ -38,7 +38,7 @@ public abstract class SearchResultPanel {
 
   protected Runnable myPostFillGroupCallback;
 
-  public SearchResultPanel(@Nullable SearchPopupController controller,
+  public SearchResultPanel(@NotNull SearchPopupController controller,
                            @NotNull PluginsGroupComponent panel,
                            boolean isMarketplace,
                            int tabIndex,
@@ -192,11 +192,11 @@ public abstract class SearchResultPanel {
     PluginsGroupComponentWithProgress panel = (PluginsGroupComponentWithProgress)myPanel;
     if (start) {
       isLoading = true;
-      panel.startLoading();
+      panel.showLoadingIcon();
     }
     else {
       isLoading = false;
-      panel.stopLoading();
+      panel.hideLoadingIcon();
     }
   }
 

@@ -9,7 +9,8 @@ import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.util.waitForProjectActivity
 import org.assertj.core.api.Assertions
 import org.jetbrains.plugins.gradle.importing.GradleSettingsImportingTestCase
-import org.jetbrains.plugins.gradle.testFramework.util.*
+import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
+import org.jetbrains.plugins.gradle.testFramework.util.withThreadDumpEvery
 import kotlin.time.Duration.Companion.minutes
 
 /**

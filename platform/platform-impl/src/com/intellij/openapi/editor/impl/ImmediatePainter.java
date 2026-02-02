@@ -291,12 +291,12 @@ public final class ImmediatePainter {
   }
 
   private void paintCaretBar(final Graphics2D g, final Rectangle2D r, final Color color) {
-    int arc = JBUIScale.scale(Registry.intValue("editor.caret.corner.radius"));
+    double w = r.getWidth();
 
     var old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setColor(color);
-    g.fill(new RoundRectangle2D.Double(r.getX(), r.getY(), r.getWidth(), r.getHeight(), arc, arc));
+    g.fill(new RoundRectangle2D.Double(r.getX(), r.getY(), w, r.getHeight(), w, w));
     if (old != null) {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
     }

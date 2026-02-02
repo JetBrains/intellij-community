@@ -3,7 +3,12 @@ package org.jetbrains.kotlin.tools.projectWizard.settings.version
 
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.core.*
+import org.jetbrains.kotlin.tools.projectWizard.core.ParseError
+import org.jetbrains.kotlin.tools.projectWizard.core.Parser
+import org.jetbrains.kotlin.tools.projectWizard.core.mapFailure
+import org.jetbrains.kotlin.tools.projectWizard.core.parseAs
+import org.jetbrains.kotlin.tools.projectWizard.core.safe
+import org.jetbrains.kotlin.tools.projectWizard.core.valueParser
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 
 data class Version(@NonNls override val text: String) : DisplayableSettingItem {

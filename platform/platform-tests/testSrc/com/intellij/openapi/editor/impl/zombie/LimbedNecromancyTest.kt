@@ -24,8 +24,8 @@ internal class LimbedNecromancyTest {
   private class TestLimbedZombie(limbs: List<Int>) : LimbedZombie<Int>(limbs)
 
   private object TestLimbedNecromancy : LimbedNecromancy<TestLimbedZombie, Int>(0) {
-    override fun buryLimb(grave: DataOutput, limb: Int) = writeInt(grave, limb)
-    override fun exhumeLimb(grave: DataInput): Int = readInt(grave)
     override fun formZombie(limbs: List<Int>): TestLimbedZombie = TestLimbedZombie(limbs)
+    override fun Out.writeLimb(limb: Int) = writeInt(limb)
+    override fun In.readLimb(): Int = readInt()
   }
 }

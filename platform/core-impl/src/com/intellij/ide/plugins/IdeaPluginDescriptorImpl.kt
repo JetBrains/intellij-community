@@ -21,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
-import java.util.*
+import java.util.Date
 
 private val LOG: Logger
   get() = PluginManagerCore.logger

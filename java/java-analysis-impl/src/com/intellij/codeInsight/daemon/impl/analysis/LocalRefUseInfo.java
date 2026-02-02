@@ -12,20 +12,67 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiAnchor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiCompiledFile;
+import com.intellij.psi.PsiConstructorCall;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiImportStaticReferenceElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaReference;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ServerPageFile;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiMatcherImpl;
+import com.intellij.psi.util.PsiMatchers;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Contains the information about references used locally in a given file.
@@ -377,7 +424,7 @@ public final class LocalRefUseInfo {
       if (resolveResult.getCurrentFileResolveScope() instanceof PsiImportStatementBase importStatement) {
         registerImportStatement(importStatement);
       } else if (ref instanceof PsiJavaCodeReferenceElement javaRef &&
-                 isMethodCallResolvedToLocalVariable(refElement, javaRef)) {
+                 isMethodCallResolvedToVariable(refElement, javaRef)) {
         for (PsiImportStatementBase potentialImport : IncompleteModelUtil.getPotentialImports(javaRef, false)) {
           registerImportStatement(potentialImport);
         }
@@ -469,9 +516,13 @@ public final class LocalRefUseInfo {
       registerConstructorCall(enumConstant);
     }
 
-    private static boolean isMethodCallResolvedToLocalVariable(@Nullable PsiElement refElement, @NotNull PsiJavaCodeReferenceElement javaRef) {
+    private static boolean isMethodCallResolvedToVariable(@Nullable PsiElement refElement, @NotNull PsiJavaCodeReferenceElement javaRef) {
       return javaRef.getParent() instanceof PsiMethodCallExpression &&
-             refElement instanceof PsiLocalVariable;
+             (
+               refElement instanceof PsiLocalVariable ||
+               refElement instanceof PsiField ||
+               refElement instanceof PsiParameter
+             );
     }
 
     private void registerConstructorCall(@NotNull PsiConstructorCall constructorCall) {

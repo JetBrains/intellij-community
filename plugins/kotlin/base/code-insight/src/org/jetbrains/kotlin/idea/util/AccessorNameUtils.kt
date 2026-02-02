@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtPsiUtil
-import java.util.*
+import java.util.Collections
 
 /**
  * Takes getter and setter names for a property. If there are no getters/setters, returns an empty list.

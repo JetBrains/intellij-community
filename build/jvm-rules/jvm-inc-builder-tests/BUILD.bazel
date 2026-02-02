@@ -1,10 +1,10 @@
+load("//:jvm-args.bzl", "get_jvm_flags")
 load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
 load("@rules_java//java:defs.bzl", "java_test")
 load("@rules_jvm//:jvm.bzl", "jvm_import")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-load("//:src/jvm-args.bzl", "get_jvm_flags")
 
-JUNIT5_JVM_FLAGS = [
+ADD_OPENS_JVM_FLAGS = [
     # Core
     "--add-opens=java.base/java.lang=ALL-UNNAMED",
     "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
@@ -19,7 +19,6 @@ JUNIT5_JVM_FLAGS = [
 
 java_test(
   name = "jvm-inc-builder-tests",
-  main_class = "com.intellij.tools.build.bazel.SimpleJUnit5Launcher",
 
   jvm_flags = [
     # Uncomment for debugging
@@ -30,17 +29,17 @@ java_test(
     "-Djvm-inc-builder.test.cleanup=false",
 
     "-Djvm-inc-builder.bazel.executable=$(rlocationpath @test_bazel_tool//:bazel)",
-
-  ] + JUNIT5_JVM_FLAGS,
-
-  args = ["com.intellij.tools.build.bazel.AllTests"],
+    "-Djvm-inc-builder.module.bazel.txt=$(rlocationpath :testData/MODULE.bazel.txt)",
+    "-Djvm-inc-builder.rules.jvm.zip=$(rlocationpath //:rules_jvm_zip)",
+  ] + ADD_OPENS_JVM_FLAGS,
+  timeout = "long",
   test_class = "com.intellij.tools.build.bazel.AllTests",
-  timeout = "eternal",
   runtime_deps = [
     ":jvm-inc-builder-test-lib",
-    "//:junit5Launcher",
   ],
-  data = glob(["testData/**/*"]) + [
+  data = glob(["testData/**/*"]) +
+   [
+     "//:rules_jvm_zip",
      "@test_bazel_tool//:bazel",
   ],
 )
@@ -73,16 +72,14 @@ kt_jvm_library(
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     visibility = ["//visibility:public"],
     deps = [
-        "//jvm-inc-builder:jvm-inc-builder-lib",
-        "//:asm-all_import",
+        "@bazel_tools//tools/java/runfiles",
         "//:annotations_import",
+        "//:asm-all_import",
+        "//:junit4",
         "//dependency-graph",
         "//jps-builders-6:build-javac-rt",
-        "//:junit5",
-        "//:junit5Launcher",
-        "@bazel_tools//tools/java/runfiles",
+        "//jvm-inc-builder:jvm-inc-builder-lib",
     ],
-    #runtime_deps = ["//jvm-inc-builder:jvm-inc-builder-lib"],
 )
 
 ### skip generation section `build intellij.tools.build.bazel.jvmIncBuilderTests`

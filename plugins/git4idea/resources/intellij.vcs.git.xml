@@ -309,6 +309,7 @@
 
     <group id="Git.FileHistory.ContextMenu">
       <reference ref="Git.Revert.In.Log"/>
+      <reference ref="Git.Fixup.To.Commit"/>
       <separator/>
       <reference ref="Git.CreateNewTag"/>
       <separator/>
@@ -334,6 +335,9 @@
       <reference ref="Git.Squash.Commits"/>
       <reference ref="Git.Interactive.Rebase"/>
       <reference ref="Git.PushUpToCommit"/>
+      <action id="Git.AddCommitToRemoteBranch"
+              class="git4idea.actions.addCommit.GitAddCommitToRemoteBranchAction"
+              internal="true"/>
       <separator/>
       <reference ref="Git.BranchOperationGroup"/>
       <action id="Git.CreateNewBranch.FromCommit"
@@ -557,6 +561,8 @@
     <group id="Git.WorkingTrees.ToolwindowGroup.Toolbar">
       <reference ref="Git.CreateNewWorkingTree"/>
       <reference ref="Git.WorkingTrees.Remove"/>
+      <separator/>
+      <reference ref="ContextHelp"/>
     </group>
 
     <group id="Git.WorkingTrees.ToolwindowGroup.Popup" popup="true">

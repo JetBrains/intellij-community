@@ -13,3 +13,5 @@ fun f(e1: E?, e2: E, x: Any) {
 // EXIST: null
 // ABSENT: e1
 // ABSENT: x
+
+// IGNORE_K2

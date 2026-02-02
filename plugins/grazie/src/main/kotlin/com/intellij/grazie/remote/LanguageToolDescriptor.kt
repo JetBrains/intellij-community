@@ -42,7 +42,7 @@ enum class LanguageToolDescriptor(
   val langsClasses: List<String>,
   override val size: Int,
   override val iso: LanguageISO,
-  val checksum: String,
+  override val checksum: String,
 ) : RemoteLangDescriptor {
   ARABIC(listOf("Arabic"), 13, LanguageISO.AR, AR_CHECKSUM),
   ASTURIAN(listOf("Asturian"), 1, LanguageISO.AST, AST_CHECKSUM),

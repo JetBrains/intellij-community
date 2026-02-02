@@ -90,7 +90,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
                                                  @NotNull @Nls String content,
                                                  boolean enabled) {
     String title = IdeBundle.message(enabled ? "plugins.auto.enabled.notification.title" : "plugins.auto.disabled.notification.title");
-    Notification switchNotification = ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).getNotificationGroupForPluginUpdateResults()
+    Notification switchNotification = UpdateCheckerFacade.getInstance().getNotificationGroupForPluginUpdateResults()
       .createNotification(content, NotificationType.INFORMATION)
       .setDisplayId("plugin.auto.switch")
       .setTitle(title)
@@ -184,7 +184,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
       }
     }
 
-    Notification newNotification = ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).getNotificationGroupForIdeUpdateResults()
+    Notification newNotification = UpdateCheckerFacade.getInstance().getNotificationGroupForIdeUpdateResults()
       .createNotification(
         IdeBundle.message("plugins.changed.notification.content", ApplicationNamesInfo.getInstance().getFullProductName()),
         NotificationType.INFORMATION)

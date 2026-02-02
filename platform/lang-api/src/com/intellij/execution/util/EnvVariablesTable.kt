@@ -4,7 +4,14 @@ package com.intellij.execution.util
 import com.intellij.execution.ExecutionBundle
 import com.intellij.ide.CopyProvider
 import com.intellij.ide.PasteProvider
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ide.CopyPasteManager
@@ -15,7 +22,11 @@ import com.intellij.util.ui.ListTableModel
 import java.awt.GridLayout
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
-import javax.swing.*
+import javax.swing.DefaultCellEditor
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JTextField
 import javax.swing.table.TableCellEditor
 
 open class EnvVariablesTable : ListTableWithButtons<EnvironmentVariable>() {

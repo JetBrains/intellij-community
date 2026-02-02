@@ -26,7 +26,7 @@ internal class K2SuperEntryContributor : K2SimpleCompletionContributor<KotlinSup
             LookupElementBuilder.create(SuperLookupObject(superType.name, superType.classId), superType.name.asString())
                 .withTailText(tailText)
                 .withInsertHandler(SuperCallInsertionHandler)
-                .let { context.addElement(it) }
+                .let { addElement(it) }
         }
     }
 }

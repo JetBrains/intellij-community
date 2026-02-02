@@ -4,13 +4,30 @@ package org.jetbrains.uast.java
 
 import com.intellij.codeInsight.AnnotationTargetUtil
 import com.intellij.openapi.project.DumbService
-import com.intellij.psi.*
 import com.intellij.psi.PsiAnnotation.TargetType.CONSTRUCTOR
 import com.intellij.psi.PsiAnnotation.TargetType.METHOD
+import com.intellij.psi.PsiAnnotationMethod
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.PsiRecordHeader
 import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnchorOwner
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UAnnotationMethod
+import org.jetbrains.uast.UDeclarationEx
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UTypeReferenceExpression
+import org.jetbrains.uast.UastFacade
+import org.jetbrains.uast.UastLanguagePlugin
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.internal.convertOrReport
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 

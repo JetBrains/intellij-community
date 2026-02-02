@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.slicer
 
 import com.intellij.slicer.SliceUsage
 import com.intellij.slicer.SliceUsageCellRendererBase
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 object KotlinSliceUsageCellRenderer : SliceUsageCellRendererBase() {
     override fun customizeCellRendererFor(sliceUsage: SliceUsage) {
         if (sliceUsage !is KotlinSliceUsage) return

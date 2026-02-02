@@ -5,11 +5,41 @@ import com.intellij.psi.util.parentOfType
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore.flattenParens
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyAssignmentExpression
+import com.jetbrains.python.psi.PyAssignmentStatement
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyCallSiteExpression
+import com.jetbrains.python.psi.PyDictLiteralExpression
+import com.jetbrains.python.psi.PyDoubleStarExpression
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyKeyValueExpression
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyLambdaExpression
+import com.jetbrains.python.psi.PyListLiteralExpression
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyParameter
+import com.jetbrains.python.psi.PyParameterList
+import com.jetbrains.python.psi.PyParenthesizedExpression
+import com.jetbrains.python.psi.PyReturnStatement
+import com.jetbrains.python.psi.PySequenceExpression
+import com.jetbrains.python.psi.PySetLiteralExpression
+import com.jetbrains.python.psi.PySliceItem
+import com.jetbrains.python.psi.PyStarArgument
+import com.jetbrains.python.psi.PyStarExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PySubscriptionExpression
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyTypedElement
+import com.jetbrains.python.psi.PyYieldExpression
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.mapArguments
 import com.jetbrains.python.psi.resolve.PyResolveContext
-import com.jetbrains.python.psi.types.PyTypeChecker.*
+import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
+import com.jetbrains.python.psi.types.PyTypeChecker.substitute
+import com.jetbrains.python.psi.types.PyTypeChecker.unifyGenericCall
 
 
 object PyExpectedTypeJudgement {

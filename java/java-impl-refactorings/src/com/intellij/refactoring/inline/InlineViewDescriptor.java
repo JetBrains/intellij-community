@@ -3,7 +3,11 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiVariable;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;

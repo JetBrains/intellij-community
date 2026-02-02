@@ -5,18 +5,18 @@ import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.python.hatch.HatchConfiguration
 import com.intellij.python.hatch.getHatchService
 import com.intellij.python.hatch.icons.PythonHatchIcons
-import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.intellij.python.sdk.ui.evolution.SelectEnvAction
 import com.intellij.python.sdk.ui.evolution.sdk.EvoModuleSdk
 import com.intellij.python.sdk.ui.evolution.sdk.EvoSdk
 import com.intellij.python.sdk.ui.evolution.sdk.resolvePythonExecutable
-import com.intellij.python.sdk.ui.evolution.SelectEnvAction
 import com.intellij.python.sdk.ui.evolution.tool.hatch.sdk.HatchEvoSdkManager.buildEvoSdk
 import com.intellij.python.sdk.ui.evolution.ui.EvoSelectSdkProvider
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLazyNodeElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLeafElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeSection
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyError
 
 internal class HatchSelectSdkProvider : EvoSelectSdkProvider {
   override fun getTreeElement(evoModuleSdk: EvoModuleSdk): EvoTreeElement =

@@ -1,9 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl
 
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.DebugProcess
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebugProcessListener
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.impl.ClassLoaderInfo.DefinedInCompanionClassLoader
 import com.intellij.debugger.impl.ClassLoaderInfo.LoadFailedMarker
 import com.sun.jdi.ClassLoaderReference
@@ -236,7 +241,7 @@ private fun defineClass(
         throw EvaluateException("Unable to find $name class bytes in idea-rt.jar: $ideaRtPath")
       }
       try {
-        ClassLoadingUtils.defineClass(name, stream.readAllBytes(), evaluationContext, evaluationContext.debugProcess, classLoader)
+        ClassLoadingUtils.defineClass(name, stream.readAllBytes(), evaluationContext, classLoader)
       }
       catch (e: EvaluateException) {
         throw ClassDefineTrialException(listOf(e))

@@ -9,7 +9,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class PsiElementMemberChooserObject extends MemberChooserObjectBase {
   private final @NotNull PsiElement myPsiElement;

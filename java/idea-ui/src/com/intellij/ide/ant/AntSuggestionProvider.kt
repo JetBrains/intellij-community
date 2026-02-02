@@ -4,7 +4,7 @@ package com.intellij.ide.ant
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestion
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.buildSuggestionIfNeeded
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.buildSuggestionForFileIfNeeded
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlFile
@@ -21,11 +21,11 @@ internal class AntSuggestionProvider : PluginSuggestionProvider {
       return null
     }
 
-    return buildSuggestionIfNeeded(project,
-                                   pluginId = ANT_PLUGIN_ID,
-                                   pluginName = ANT_PLUGIN_NAME,
-                                   fileLabel = "Ant",
-                                   suggestionDismissKey = ANT_SUGGESTION_DISMISSED_KEY)
+    return buildSuggestionForFileIfNeeded(project,
+                                          pluginId = ANT_PLUGIN_ID,
+                                          pluginName = ANT_PLUGIN_NAME,
+                                          fileLabel = "Ant",
+                                          suggestionDismissKey = ANT_SUGGESTION_DISMISSED_KEY)
   }
 
   private fun isAntBuild(project: Project, file: VirtualFile): Boolean {

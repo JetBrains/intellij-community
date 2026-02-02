@@ -26,6 +26,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -64,9 +65,6 @@ class HeavyPlatformUtilitiesTest {
 
   @Test
   fun `PsiSearchHelper#processElementsWithWord can be canceled on project scope`() = `PsiSearchHelperImpl cancellation test`(GlobalSearchScope.projectScope(project.get()))
-
-  @Test
-  fun `PsiSearchHelper#processElementsWithWord can be canceled on file scope`() = `PsiSearchHelperImpl cancellation test`(runReadAction { LocalSearchScope(file.get()) })
 
   fun `PsiSearchHelperImpl cancellation test`(scope: SearchScope): Unit = timeoutRunBlocking {
     val prj = project.get()

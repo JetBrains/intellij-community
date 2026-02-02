@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 import junit.framework.AssertionFailedError
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsLinker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.buildGradleModel
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.buildKotlinMPPGradleModel
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker

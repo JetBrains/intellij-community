@@ -20,11 +20,12 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.LanguageTextField;
-import java.util.Objects;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
+
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import java.util.Objects;
 
 public class XmlAttributePanel extends AbstractInjectionPanel<XmlAttributeInjection> {
 

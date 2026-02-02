@@ -8,8 +8,16 @@ import com.intellij.psi.PsiMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.util.GrInnerClassConstructorUtil.enclosingClass
 import org.jetbrains.plugins.groovy.lang.resolve.DiamondResolveResult
-import org.jetbrains.plugins.groovy.lang.resolve.api.*
-import org.jetbrains.plugins.groovy.lang.resolve.impl.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCachingReference
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference
+import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument
+import org.jetbrains.plugins.groovy.lang.resolve.impl.WithArguments
+import org.jetbrains.plugins.groovy.lang.resolve.impl.chooseConstructors
+import org.jetbrains.plugins.groovy.lang.resolve.impl.getAllConstructors
+import org.jetbrains.plugins.groovy.lang.resolve.impl.toResolveResults
+import org.jetbrains.plugins.groovy.lang.resolve.impl.withArguments
 
 abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachingReference<T>(element),
                                                                     GroovyConstructorReference {

@@ -17,7 +17,8 @@ package com.intellij.designer.componentTree;
 
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.TransferHandler;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;

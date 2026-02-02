@@ -5,9 +5,11 @@ import com.intellij.platform.debugger.impl.rpc.XSuspendContextId
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -17,11 +19,24 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 class XSuspendContextModel internal constructor(
-  val coroutineScope: CoroutineScope,
+  parentScope: CoroutineScope,
   val suspendContext: XSuspendContext,
   val session: XDebugSessionImpl,
 ) {
+  private val contextCoroutineScope = suspendContext.coroutineScope
+  val coroutineScope: CoroutineScope = contextCoroutineScope
+                                       ?: parentScope.childScope("XDebuggerSuspendContext Scope: ${suspendContext}")
+
   val id: XSuspendContextId = storeValueGlobally(coroutineScope, this, type = XSuspendContextValueIdType)
+
+  fun cancel() {
+    // If the scope is not provided by an XSuspendContent implementation,
+    // then a default scope, provided by this session is used,
+    // and it must be canceled manually
+    if (contextCoroutineScope == null) {
+      coroutineScope.cancel()
+    }
+  }
 }
 
 @ApiStatus.Internal

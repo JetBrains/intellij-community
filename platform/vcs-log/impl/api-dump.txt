@@ -123,7 +123,6 @@ a:com.intellij.vcs.log.data.SingleTaskController
 - com.intellij.openapi.Disposable
 - psf:LOG:com.intellij.openapi.diagnostic.Logger
 - <init>(java.lang.String,com.intellij.openapi.Disposable,java.util.function.Consumer):V
-- <init>(java.lang.String,com.intellij.util.Consumer,com.intellij.openapi.Disposable):V
 - cancelCurrentTask():V
 - p:cancelRunningTasks(java.util.List):Z
 - dispose():V
@@ -306,7 +305,6 @@ c:com.intellij.vcs.log.history.FileHistoryUi
 - com.intellij.vcs.log.ui.AbstractVcsLogUi
 - s:getFileHistoryLogId(com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash):java.lang.String
 - getMainComponent():javax.swing.JComponent
-- getPathInCommit(com.intellij.vcs.log.Hash):com.intellij.openapi.vcs.FilePath
 - getTable():com.intellij.vcs.log.ui.table.VcsLogGraphTable
 - getToolbar():javax.swing.JComponent
 - p:handleCommitNotFound(java.lang.Object,Z,java.util.function.BiFunction):V
@@ -595,7 +593,6 @@ f:com.intellij.vcs.log.impl.VcsProjectLog$Companion
 - f:runWhenLogIsReady(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
 - f:showRevisionInMainLog(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash):V
 - f:showRevisionInMainLog(com.intellij.openapi.project.Project,com.intellij.vcs.log.Hash):V
-- f:waitWhenLogIsReady(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.vcs.log.impl.VcsProjectLog$ProjectLogListener
 - a:logCreated(com.intellij.vcs.log.impl.VcsLogManager):V
 - a:logDisposed(com.intellij.vcs.log.impl.VcsLogManager):V
@@ -714,17 +711,6 @@ c:com.intellij.vcs.log.ui.actions.VcsRefCompletionProvider
 - p:collectAsync(com.intellij.codeInsight.completion.CompletionResultSet):java.util.stream.Stream
 - p:collectSync(com.intellij.codeInsight.completion.CompletionResultSet):java.util.stream.Stream
 - p:filterRefs(java.util.stream.Stream):java.util.stream.Stream
-a:com.intellij.vcs.log.ui.actions.history.FileHistorySingleCommitAction
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- pa:getDetailsGetter(com.intellij.vcs.log.history.FileHistoryUi):com.intellij.vcs.log.data.DataGetter
-- pa:getSelection(com.intellij.vcs.log.history.FileHistoryUi):java.util.List
-- p:isEnabled(com.intellij.vcs.log.history.FileHistoryUi,com.intellij.vcs.log.VcsCommitMetadata,com.intellij.openapi.actionSystem.AnActionEvent):Z
-- pa:performAction(com.intellij.openapi.project.Project,com.intellij.vcs.log.history.FileHistoryUi,com.intellij.vcs.log.VcsCommitMetadata,com.intellij.openapi.actionSystem.AnActionEvent):V
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.vcs.log.ui.details.CommitDetailsListPanel
 - com.intellij.util.ui.components.BorderLayoutPanel
 - com.intellij.openapi.editor.colors.EditorColorsListener

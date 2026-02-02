@@ -19,7 +19,7 @@ import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.util.JdomKt;
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * Extension for {@link JDOMExternalizer}.

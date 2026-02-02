@@ -29,16 +29,22 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ref.GCWatcher;
-import com.intellij.util.ui.UIUtil;
 import kotlin.Unit;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -203,11 +209,11 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
 
   public void testFileStatusMapDirtyPSICachingWorks() {
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(false); // to prevent auto-start highlighting
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     @Language("JAVA")
     String text = "class <caret>S { int ffffff =  0;}";
     configureByText(JavaFileType.INSTANCE, text);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     int[] creation = {0};
     class Fac implements TextEditorHighlightingPassFactory {
@@ -257,7 +263,7 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
     @Language("JAVA")
     String text = "class <caret>S { int ffffff =  0;}";
     configureByText(JavaFileType.INSTANCE, text);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     doHighlighting();
     Document document = myEditor.getDocument();
     FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
@@ -327,7 +333,7 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> ((PsiJavaFile)PsiManager.getInstance(myProject).findFile(excluded)).getClasses()[0].getMethods()[0].delete());
 
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     scope = me.getFileDirtyScope(getEditor().getDocument(), getFile(), Pass.UPDATE_ALL);
     assertNull(scope);
   }
@@ -351,7 +357,7 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
         document.insertString(0, "<!-- dsfsd -->");
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       });
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       scope = me.getFileDirtyScope(getEditor().getDocument(), getFile(), Pass.UPDATE_ALL);
       assertNull(scope);
       return Unit.INSTANCE;

@@ -3,25 +3,30 @@
 package org.jetbrains.kotlin.j2k.ast
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.j2k.CodeConverter
 import org.jetbrains.kotlin.j2k.EmptyDocCommentConverter
 
+@K1Deprecation
 fun <TElement: Element> TElement.assignPrototype(prototype: PsiElement?, inheritance: CommentsAndSpacesInheritance = CommentsAndSpacesInheritance()): TElement {
     prototypes = if (prototype != null) listOf(PrototypeInfo(prototype, inheritance)) else listOf()
     return this
 }
 
+@K1Deprecation
 fun <TElement: Element> TElement.assignPrototypes(vararg prototypes: PrototypeInfo): TElement {
     this.prototypes = prototypes.asList()
     return this
 }
 
+@K1Deprecation
 fun <TElement: Element> TElement.assignNoPrototype(): TElement {
     prototypes = listOf()
     return this
 }
 
+@K1Deprecation
 fun <TElement: Element> TElement.assignPrototypesFrom(element: Element, inheritance: CommentsAndSpacesInheritance? = null): TElement {
     prototypes = element.prototypes
     if (inheritance != null) {
@@ -31,12 +36,15 @@ fun <TElement: Element> TElement.assignPrototypesFrom(element: Element, inherita
     return this
 }
 
+@K1Deprecation
 data class PrototypeInfo(val element: PsiElement, val commentsAndSpacesInheritance: CommentsAndSpacesInheritance)
 
+@K1Deprecation
 enum class SpacesInheritance {
     NONE, BLANK_LINES_ONLY, LINE_BREAKS
 }
 
+@K1Deprecation
 data class CommentsAndSpacesInheritance(
         val spacesBefore: SpacesInheritance = SpacesInheritance.BLANK_LINES_ONLY,
         val commentsBefore: Boolean = true,
@@ -49,12 +57,14 @@ data class CommentsAndSpacesInheritance(
     }
 }
 
+@K1Deprecation
 fun Element.canonicalCode(): String {
     val builder = CodeBuilder(null, EmptyDocCommentConverter)
     builder.append(this)
     return builder.resultText
 }
 
+@K1Deprecation
 abstract class Element {
     var prototypes: List<PrototypeInfo>? = null
         set(value) {
@@ -93,6 +103,7 @@ abstract class Element {
 }
 
 // this class should never be created directly - Converter.deferredElement() should be used!
+@K1Deprecation
 class DeferredElement<TResult : Element>(
         private val generator: (CodeConverter) -> TResult
 ) : Element() {

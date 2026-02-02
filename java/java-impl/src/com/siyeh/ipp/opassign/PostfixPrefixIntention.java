@@ -3,7 +3,13 @@ package com.siyeh.ipp.opassign;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiPostfixExpression;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.PsiUnaryExpression;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;

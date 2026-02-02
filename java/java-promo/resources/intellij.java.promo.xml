@@ -1,7 +1,7 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <dependencies>
     <module name="intellij.platform.lang.core"/>
-    <plugin id="com.intellij.java"/>
+    <module name="intellij.java"/>
     <module name="intellij.java.ui"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.core"/>

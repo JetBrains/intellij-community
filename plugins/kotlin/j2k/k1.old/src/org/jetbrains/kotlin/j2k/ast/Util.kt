@@ -2,11 +2,15 @@
 
 package org.jetbrains.kotlin.j2k.ast
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 
+@K1Deprecation
 fun CodeBuilder.appendWithPrefix(element: Element, prefix: String): CodeBuilder = if (!element.isEmpty) this append prefix append element else this
+@K1Deprecation
 fun CodeBuilder.appendWithSuffix(element: Element, suffix: String): CodeBuilder = if (!element.isEmpty) this append element append suffix else this
 
+@K1Deprecation
 fun CodeBuilder.appendOperand(expression: Expression, operand: Expression, parenthesisForSamePrecedence: Boolean = false): CodeBuilder {
     val parentPrecedence = expression.precedence() ?: throw IllegalArgumentException("Unknown precedence for $expression")
     val operandPrecedence = operand.precedence()
@@ -18,6 +22,7 @@ fun CodeBuilder.appendOperand(expression: Expression, operand: Expression, paren
     return this
 }
 
+@K1Deprecation
 fun Element.wrapToBlockIfRequired(): Element = when (this) {
     is AssignmentExpression -> if (isMultiAssignment()) Block.of(this).assignNoPrototype() else this
     else -> this

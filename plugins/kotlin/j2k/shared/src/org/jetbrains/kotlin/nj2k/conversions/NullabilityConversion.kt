@@ -9,7 +9,16 @@ import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.getExpressionDfaNullability
 import org.jetbrains.kotlin.nj2k.psi
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKClass
+import org.jetbrains.kotlin.nj2k.tree.JKClassBody
+import org.jetbrains.kotlin.nj2k.tree.JKEnumConstant
+import org.jetbrains.kotlin.nj2k.tree.JKLocalVariable
+import org.jetbrains.kotlin.nj2k.tree.JKMethod
+import org.jetbrains.kotlin.nj2k.tree.JKParenthesizedExpression
+import org.jetbrains.kotlin.nj2k.tree.JKQualifiedExpression
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.JKTypeCastExpression
+import org.jetbrains.kotlin.nj2k.tree.parentOfType
 import org.jetbrains.kotlin.nj2k.types.updateNullability
 
 /**

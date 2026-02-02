@@ -2,7 +2,18 @@
 
 package org.jetbrains.kotlin.nj2k.inference.common
 
-import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.*
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeCalculatorImpl
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeEnhancer
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ClassReference
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintsCollectorAggregator
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ContextCollector
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.DefaultStateProvider
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.InferenceFacade
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ResolveSuperFunctionsProvider
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.State
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.StateUpdater
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.TypeElementBasedTypeVariable
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.TypeVariable
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors.CallExpressionConstraintCollector
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors.CommonConstraintsCollector
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors.FunctionConstraintsCollector

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine
 
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
@@ -10,19 +10,22 @@ import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.InvokeAndWaitThread
 import com.intellij.debugger.impl.PrioritizedTask
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.statistics.StatisticsStorage
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.ProgressIndicatorListener
-import com.intellij.openapi.progress.util.ProgressWindow
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts.ModalProgressTitle
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.util.AwaitCancellationAndInvoke
@@ -30,29 +33,55 @@ import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.xdebugger.DapMode
 import com.sun.jdi.VMDisconnectedException
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.future.future
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.lang.ref.WeakReference
-import java.util.*
+import java.util.ArrayDeque
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 import kotlin.system.measureNanoTime
 
-class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
+class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
   parent: Disposable,
   private val parentScope: CoroutineScope,
-  debugProcess: DebugProcess? = null,
 ) : InvokeAndWaitThread<DebuggerCommandImpl?>(), DebuggerManagerThread, Disposable {
 
   @Volatile
   private var myDisposed = false
 
   internal val debuggerThreadDispatcher = DebuggerThreadDispatcher(this)
-  private val myDebugProcess = WeakReference(debugProcess)
+  private var _vmProxy = WeakReference<VirtualMachineProxyImpl?>(null)
+
+  @get:ApiStatus.Internal
+  val vmProxy: VirtualMachineProxyImpl?
+    get() = _vmProxy.get()
+
+  @ApiStatus.Internal
+  fun setVmProxy(proxy: VirtualMachineProxyImpl?) {
+    val current = vmProxy
+    if (current != null && proxy != null && current.virtualMachine !== proxy.virtualMachine) {
+      LOG.error("VM proxy changed from $current to $proxy")
+    }
+    _vmProxy = WeakReference(proxy)
+  }
 
   @ApiStatus.Internal
   var coroutineScope: CoroutineScope = createScope()
@@ -199,7 +228,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
         val commandTimeNs = measureNanoTime {
           managerCommand.invokeCommand()
         }
-        myDebugProcess.get()?.let { debugProcess ->
+        vmProxy?.debugProcess?.let { debugProcess ->
           val commandTimeMs = TimeUnit.NANOSECONDS.toMillis(commandTimeNs)
           StatisticsStorage.addCommandTime(debugProcess, commandTimeMs)
         }
@@ -226,19 +255,26 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
     }
   }
 
-  fun startProgress(command: DebuggerCommandImpl, progressWindow: ProgressWindow) {
-    object : ProgressIndicatorListener {
-      override fun cancelled() {
-        command.release()
+  /**
+   * Executes a debugger command while showing a cancellable modal progress dialog with [title].
+   *
+   * Create a command to execute inside [commandProvider] with the given [ProgressIndicator],
+   * so it is possible to update current step and check for cancellation.
+   */
+  fun startCommandWithModalProgress(
+    project: Project,
+    title: @ModalProgressTitle String,
+    commandProvider: (ProgressIndicator) -> DebuggerCommandImpl,
+  ) {
+    coroutineScope.launch(ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()) {
+      withModalProgress(project, title) {
+        coroutineToIndicator { indicator ->
+          val command = commandProvider(indicator)
+          invokeAndWait(command)
+        }
       }
-    }.installToProgress(progressWindow)
-
-    ApplicationManager.getApplication().executeOnPooledThread {
-      ProgressManager.getInstance().runProcess(
-        { invokeAndWait(command) }, progressWindow)
     }
   }
-
 
   fun startLongProcessAndFork(process: Runnable) {
     assertIsManagerThread()

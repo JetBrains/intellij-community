@@ -3,9 +3,22 @@
 package org.jetbrains.kotlin.tools.projectWizard.core.entity.settings
 
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.core.*
-
-import org.jetbrains.kotlin.tools.projectWizard.core.entity.*
+import org.jetbrains.kotlin.tools.projectWizard.core.ComputeContext
+import org.jetbrains.kotlin.tools.projectWizard.core.Parser
+import org.jetbrains.kotlin.tools.projectWizard.core.ParsingContext
+import org.jetbrains.kotlin.tools.projectWizard.core.ParsingState
+import org.jetbrains.kotlin.tools.projectWizard.core.Reader
+import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
+import org.jetbrains.kotlin.tools.projectWizard.core.asNullable
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.SettingValidator
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.StringValidators
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.Validatable
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.ValidationResult
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.withTargetIfNull
+import org.jetbrains.kotlin.tools.projectWizard.core.parse
+import org.jetbrains.kotlin.tools.projectWizard.core.parseAs
+import org.jetbrains.kotlin.tools.projectWizard.core.pathParser
+import org.jetbrains.kotlin.tools.projectWizard.core.sequence
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version

@@ -76,26 +76,4 @@ public abstract class TreeClassChooserFactory {
                                                     @Nullable PsiFile initialFile,
                                                     @Nullable FileType fileType,
                                                     @Nullable TreeFileChooser.PsiFileFilter filter);
-
-
-  /**
-   * @deprecated Use {@link TreeFileChooserFactory#createFileChooser(String, PsiFile, FileType, TreeFileChooser.PsiFileFilter, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract @NotNull TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
-                                                    @Nullable PsiFile initialFile,
-                                                    @Nullable FileType fileType,
-                                                    @Nullable TreeFileChooser.PsiFileFilter filter,
-                                                    boolean disableStructureProviders);
-
-  /**
-   * @deprecated Use {@link TreeFileChooserFactory#createFileChooser(String, PsiFile, FileType, TreeFileChooser.PsiFileFilter, boolean, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract @NotNull TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
-                                                    @Nullable PsiFile initialFile,
-                                                    @Nullable FileType fileType,
-                                                    @Nullable TreeFileChooser.PsiFileFilter filter,
-                                                    boolean disableStructureProviders,
-                                                    boolean showLibraryContents);
 }

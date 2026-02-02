@@ -30,4 +30,29 @@ jvm_library(
     "//notebooks/visualization",
   ]
 )
+
+jvm_library(
+  name = "ide-customization_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":ide-customization"],
+  deps = [
+    "//java/java-psi-api:psi",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-core",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ]
+)
 ### auto-generated section `build intellij.java.ide.customization` end
+
+### auto-generated section `test intellij.java.ide.customization` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "ide-customization_test",
+  runtime_deps = [":ide-customization_test_lib"]
+)
+### auto-generated section `test intellij.java.ide.customization` end

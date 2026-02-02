@@ -11,7 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class ProjectConfigurationProblem extends ConfigurationError {
   private final ProjectStructureProblemDescription myDescription;

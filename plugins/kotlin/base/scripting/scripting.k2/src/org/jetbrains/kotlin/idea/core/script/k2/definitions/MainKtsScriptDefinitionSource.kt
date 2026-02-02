@@ -11,7 +11,11 @@ import org.jetbrains.kotlin.idea.core.script.v1.loggingReporter
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsFromClasspathDiscoverySource
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.dependenciesSources
+import kotlin.script.experimental.api.hostConfiguration
+import kotlin.script.experimental.api.ide
+import kotlin.script.experimental.api.with
 import kotlin.script.experimental.dependencies.withTransformedResolvers
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration

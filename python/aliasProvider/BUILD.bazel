@@ -30,7 +30,7 @@ jvm_library(
     "//python/python-exec-service/execService.python",
     "//python/installer",
     "//python:python-pydev",
-    "//python/python-venv:community-impl-venv",
+    "//python/python-venv:venv",
     "//python/python-hatch:hatch",
     "//python/services/internal-impl:python-community-services-internal-impl",
     "//python/services/shared",

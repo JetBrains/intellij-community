@@ -28,11 +28,9 @@ public final class TextEditorState implements FileEditorState {
     this(carets, relativeCaretPosition, new TextEditorFoldingState(null, null));
   }
 
-  private TextEditorState(
-    @NotNull TextEditorCaretState @NotNull [] carets,
-    int relativeCaretPosition,
-    @NotNull TextEditorFoldingState foldingState
-  ) {
+  private TextEditorState(@NotNull TextEditorCaretState @NotNull [] carets,
+                          int relativeCaretPosition,
+                          @NotNull TextEditorFoldingState foldingState) {
     this.carets = carets;
     this.relativeCaretPosition = relativeCaretPosition;
     this.foldingState = foldingState;

@@ -14,11 +14,19 @@ import com.intellij.codeInsight.template.emmet.filters.SingleLineEmmetFilter;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
-import com.intellij.codeInsight.template.emmet.nodes.*;
+import com.intellij.codeInsight.template.emmet.nodes.FilterNode;
+import com.intellij.codeInsight.template.emmet.nodes.GenerationNode;
+import com.intellij.codeInsight.template.emmet.nodes.TemplateNode;
+import com.intellij.codeInsight.template.emmet.nodes.TextNode;
+import com.intellij.codeInsight.template.emmet.nodes.ZenCodingNode;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.emmet.tokens.TextToken;
 import com.intellij.codeInsight.template.emmet.tokens.ZenCodingToken;
-import com.intellij.codeInsight.template.impl.*;
+import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
+import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -46,7 +54,11 @@ import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 
 

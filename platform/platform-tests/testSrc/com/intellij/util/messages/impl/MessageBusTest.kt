@@ -39,30 +39,16 @@ private val TO_PARENT_TOPIC = Topic(Runnable::class.java, Topic.BroadcastDirecti
 private val IMMEDIATE_DELIVERY = Topic(MessageBusTest.T1Listener::class.java, Topic.BroadcastDirection.NONE, true)
 
 @ExtendWith(DoNoRethrowMessageBusErrors::class)
-abstract class MessageBusTestBase : MessageBusOwner {
-  protected lateinit var bus: RootBus
-  protected var parentDisposable: CheckedDisposable? = Disposer.newCheckedDisposable()
+class MessageBusTest : MessageBusOwner {
+  private lateinit var bus: RootBus
+  private val log: MutableList<String> = ArrayList()
+  private var parentDisposable: CheckedDisposable? = Disposer.newCheckedDisposable()
 
   override fun createListener(descriptor: PluginListenerDescriptor): Any = throw UnsupportedOperationException()
 
   override fun isDisposed(): Boolean = parentDisposable!!.isDisposed
 
   override fun isParentLazyListenersIgnored(): Boolean = true
-
-  @BeforeEach
-  fun setUp() {
-    bus = MessageBusFactoryImpl.createRootBus(this)
-    Disposer.register(parentDisposable!!, bus)
-  }
-
-  @AfterEach
-  fun tearDown() {
-    Disposer.dispose(parentDisposable!!)
-  }
-}
-
-class MessageBusTest : MessageBusTestBase() {
-  private val log: MutableList<String> = ArrayList()
 
   interface T1Listener {
     fun t11()
@@ -92,6 +78,17 @@ class MessageBusTest : MessageBusTestBase() {
     override fun t22() {
       log.add("$id:t22")
     }
+  }
+
+  @BeforeEach
+  fun setUp() {
+    bus = MessageBusFactoryImpl.createRootBus(this)
+    Disposer.register(parentDisposable!!, bus)
+  }
+
+  @AfterEach
+  fun tearDown() {
+    Disposer.dispose(parentDisposable!!)
   }
 
   @Test
@@ -378,6 +375,24 @@ class MessageBusTest : MessageBusTestBase() {
 
     // event is delivered to all subscribers, the error is NOT rethrown
     assertEvents("handler3:t12", "uoe", "handler2:t12")
+  }
+
+  @PerformanceUnitTest
+  @Test
+  fun manyChildrenCreationDeletionPerformance() {
+    Benchmark.newBenchmark("Child bus creation/deletion") {
+      val children = ArrayList<MessageBus>()
+      val count = 10000
+      repeat(count) {
+        children.add(MessageBusFactoryImpl().createMessageBus(this, bus))
+      }
+      // reverse iteration to avoid O(n^2) while deleting from list's beginning
+      for (i in count - 1 downTo 0) {
+        Disposer.dispose(children[i])
+      }
+    }
+      .runAsStressTest()
+      .start()
   }
 
   @Test
@@ -703,25 +718,5 @@ private fun createSimpleMessageBusOwner(owner: String): MessageBusOwner {
     override fun isDisposed() = false
 
     override fun toString() = owner
-  }
-}
-
-@PerformanceUnitTest
-class MessageBusPerformanceTest : MessageBusTestBase() {
-  @Test
-  fun manyChildrenCreationDeletionPerformance() {
-    Benchmark.newBenchmark("Child bus creation/deletion") {
-      val children = ArrayList<MessageBus>()
-      val count = 10000
-      repeat(count) {
-        children.add(MessageBusFactoryImpl().createMessageBus(this, bus))
-      }
-      // reverse iteration to avoid O(n^2) while deleting from list's beginning
-      for (i in count - 1 downTo 0) {
-        Disposer.dispose(children[i])
-      }
-    }
-      .runAsStressTest()
-      .start()
   }
 }

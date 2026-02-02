@@ -3,7 +3,11 @@ package com.jetbrains.python.psi.impl.references.hasattr
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyBinaryExpression
+import com.jetbrains.python.psi.PyConditionalExpression
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyIfPart
+import com.jetbrains.python.psi.PyReferenceExpression
 
 object PyHasAttrHelper {
   fun getNamesFromHasAttrs(psiElement: PsiElement, qualifier: PyExpression): Set<String> =

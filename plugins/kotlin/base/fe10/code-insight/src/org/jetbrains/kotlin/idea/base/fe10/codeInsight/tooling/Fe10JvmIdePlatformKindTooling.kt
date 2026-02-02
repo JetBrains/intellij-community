@@ -5,9 +5,11 @@
 package org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling
 
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractGenericTestIconProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractJvmIdePlatformKindTooling
 
+@K1Deprecation
 @InternalIgnoreDependencyViolation
 class Fe10JvmIdePlatformKindTooling : AbstractJvmIdePlatformKindTooling() {
     override val testIconProvider: AbstractGenericTestIconProvider

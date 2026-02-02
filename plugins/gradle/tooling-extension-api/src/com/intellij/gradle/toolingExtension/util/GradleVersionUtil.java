@@ -69,16 +69,6 @@ public final class GradleVersionUtil {
   /**
    * @deprecated See {@link GradleVersionUtil#isCurrentGradleNewerThan} for details
    */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public static boolean isCurrentGradleOlderOrSameAs(@NotNull String version) {
-    return !isCurrentGradleNewerThan(version);
-  }
-
-  /**
-   * @deprecated See {@link GradleVersionUtil#isCurrentGradleNewerThan} for details
-   */
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static boolean isGradleOlderOrSameAs(@NotNull GradleVersion actualVersion, @NotNull String version) {

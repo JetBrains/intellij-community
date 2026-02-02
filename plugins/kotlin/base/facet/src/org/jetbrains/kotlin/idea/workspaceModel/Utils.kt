@@ -1,9 +1,25 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.workspaceModel
 
-import com.google.gson.*
-import org.jetbrains.kotlin.cli.common.arguments.*
-import org.jetbrains.kotlin.config.*
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonElement
+import com.google.gson.JsonSerializationContext
+import com.google.gson.JsonSerializer
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.Freezable
+import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.K2NativeCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.ManualLanguageFeatureSetting
+import org.jetbrains.kotlin.config.CompilerSettings
+import org.jetbrains.kotlin.config.ExternalSystemNativeMainRunTask
+import org.jetbrains.kotlin.config.ExternalSystemRunTask
+import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
+import org.jetbrains.kotlin.config.copyCompilerSettings
 import org.jetbrains.kotlin.platform.impl.FakeK2NativeCompilerArguments
 import java.lang.reflect.Type
 

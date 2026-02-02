@@ -29,7 +29,14 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.List;
+import java.util.Objects;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.function.Function;
 
 public class ResourceBundleEditorHighlighter implements BackgroundEditorHighlighter {

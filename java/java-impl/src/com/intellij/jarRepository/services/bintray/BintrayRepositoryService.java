@@ -15,7 +15,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
+import static com.intellij.openapi.util.text.StringUtil.split;
+import static com.intellij.openapi.util.text.StringUtil.trimEnd;
+import static com.intellij.openapi.util.text.StringUtil.trimStart;
 import static java.util.Collections.emptyList;
 
 /**

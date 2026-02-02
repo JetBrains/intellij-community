@@ -2,7 +2,11 @@
 package com.intellij.compiler.artifacts;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.packaging.artifacts.*;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactListener;
+import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.artifacts.ModifiableArtifact;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.impl.elements.ArtifactRootElementImpl;

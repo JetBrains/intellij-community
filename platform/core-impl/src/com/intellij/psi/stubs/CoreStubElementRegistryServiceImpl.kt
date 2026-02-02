@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs
 
-import com.intellij.lang.*
+import com.intellij.lang.ASTNode
+import com.intellij.lang.Language
+import com.intellij.lang.LanguageParserDefinitions
+import com.intellij.lang.LighterAST
+import com.intellij.lang.LighterASTNode
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.StubBuilder

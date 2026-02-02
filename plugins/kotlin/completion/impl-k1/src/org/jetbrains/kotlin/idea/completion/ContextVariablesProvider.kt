@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.psi.PsiElement
 import com.intellij.util.SmartList
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalTypeOrSubtype
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
@@ -14,12 +15,13 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindExclude
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.types.TypeSubstitutor
-import java.util.*
 
+@K1Deprecation
 interface ContextVariablesProvider {
     fun functionTypeVariables(requiredType: FuzzyType): Collection<Pair<VariableDescriptor, TypeSubstitutor>>
 }
 
+@K1Deprecation
 class RealContextVariablesProvider(
     private val referenceVariantsHelper: ReferenceVariantsHelper,
     private val contextElement: PsiElement
@@ -64,6 +66,7 @@ class RealContextVariablesProvider(
     }
 }
 
+@K1Deprecation
 class CollectRequiredTypesContextVariablesProvider : ContextVariablesProvider {
     private val _requiredTypes = HashSet<FuzzyType>()
 

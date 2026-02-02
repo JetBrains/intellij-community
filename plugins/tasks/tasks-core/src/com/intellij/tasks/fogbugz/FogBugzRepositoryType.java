@@ -6,7 +6,7 @@ import com.intellij.tasks.impl.BaseRepositoryType;
 import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author mkennedy

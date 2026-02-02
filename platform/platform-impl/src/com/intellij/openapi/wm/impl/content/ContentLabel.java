@@ -220,14 +220,16 @@ public abstract class ContentLabel extends BaseLabel {
     }
 
     if (map.get(false) != null) {
-      int iconWidth = iconsGap;
+      int offset = (myUi.getCurrentLayout() instanceof TabContentLayout tabContentLayout
+                    ? JBUI.scale(tabContentLayout.getTabHOffsetUnscaled())
+                    : 0) + iconsGap;
 
       for (AdditionalIcon icon : map.get(false)) {
-        icon.setX(iconWidth);
-        iconWidth += icon.getIconWidth() + iconsGap;
+        icon.setX(offset);
+        offset += icon.getIconWidth() + iconsGap;
       }
 
-      left = iconWidth;
+      left = offset;
     }
 
     int rightIconWidth = 0;

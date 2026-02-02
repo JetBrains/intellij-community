@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import static com.jetbrains.python.statistics.PythonCompatibilityInspectionAdvertiserIdsHolder.*;
+import static com.jetbrains.python.statistics.PythonCompatibilityInspectionAdvertiserIdsHolder.STALE_PYTHON_VERSION;
 
 /**
  * @author Mikhail Golubev

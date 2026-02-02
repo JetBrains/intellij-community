@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl
 
-import com.intellij.facet.*
+import com.intellij.facet.Facet
+import com.intellij.facet.FacetTypeId
+import com.intellij.facet.ProjectFacetListener
+import com.intellij.facet.ProjectWideFacetListener
+import com.intellij.facet.ProjectWideFacetListenersRegistry
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.view
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.actions.ThreadDumpAction
 import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.ThreadDumpItemsProvider
 import com.intellij.debugger.impl.ThreadDumpItemsProviderFactory
@@ -11,13 +12,16 @@ import com.intellij.debugger.statistics.DebuggerStatistics
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.unscramble.*
+import com.intellij.unscramble.DumpItem
+import com.intellij.unscramble.IconsCache
+import com.intellij.unscramble.MergeableDumpItem
+import com.intellij.unscramble.MergeableToken
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.State
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
-import java.util.*
+import java.util.Objects
 import javax.swing.Icon
 
 /**
@@ -32,7 +36,7 @@ class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
         private val enabled: Boolean =
             Registry.`is`("debugger.kotlin.show.coroutines.in.threadDumpPanel") &&
                     // check that coroutines are in the project's classpath
-                    context.debugProcess!!.virtualMachineProxy.classesByName("kotlinx.coroutines.debug.internal.DebugProbesImpl").isNotEmpty()
+                    VirtualMachineProxy.getCurrent().classesByName("kotlinx.coroutines.debug.internal.DebugProbesImpl").isNotEmpty()
 
         override val requiresEvaluation get() = enabled
 

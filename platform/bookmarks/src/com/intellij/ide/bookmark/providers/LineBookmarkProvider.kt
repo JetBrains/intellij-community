@@ -2,7 +2,12 @@
 package com.intellij.ide.bookmark.providers
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.ide.bookmark.*
+import com.intellij.ide.bookmark.Bookmark
+import com.intellij.ide.bookmark.BookmarkProvider
+import com.intellij.ide.bookmark.BookmarksManager
+import com.intellij.ide.bookmark.BookmarksManagerImpl
+import com.intellij.ide.bookmark.FileBookmark
+import com.intellij.ide.bookmark.LineBookmark
 import com.intellij.ide.bookmark.ui.tree.FileNode
 import com.intellij.ide.bookmark.ui.tree.LineNode
 import com.intellij.ide.projectView.ProjectViewNode
@@ -32,7 +37,6 @@ import com.intellij.ui.tree.project.ProjectFileNode
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.TreePath
 
 @Suppress("ExtensionClassShouldBeFinalAndNonPublic")
@@ -222,15 +226,6 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
           reloadingDocs.remove(document)
         }
       })
-    }
-  }
-
-  companion object {
-    @JvmStatic
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use the 'Util.find' method", ReplaceWith("Util.find(project)", "com.intellij.ide.bookmark.providers.LineBookmarkProvider.Util"))
-    fun find(project: Project): LineBookmarkProvider? {
-      return Util.find(project)
     }
   }
 

@@ -51,7 +51,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.community.execService.python" loading="required"/>
     <module name="intellij.python.community.impl.installer" loading="required"/>
     <module name="intellij.python.pydev" loading="required"/>
-    <module name="intellij.python.community.impl.venv" loading="required"/>
+    <module name="intellij.python.venv" loading="required"/>
     <module name="intellij.python.hatch" loading="required"/>
     <module name="intellij.python.community.services.shared" loading="required"/>
     <module name="intellij.python.community.services.internal.impl" loading="required"/>

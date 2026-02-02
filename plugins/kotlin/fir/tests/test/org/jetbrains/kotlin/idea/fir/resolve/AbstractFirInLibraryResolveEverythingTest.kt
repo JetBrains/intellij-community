@@ -5,7 +5,12 @@ import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.psi.stubs.StubElement
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.MockLibraryFacility
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.test.util.invalidateCaches
 import java.io.File

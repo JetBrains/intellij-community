@@ -7,11 +7,9 @@ import com.intellij.find.findUsages.JavaClassFindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
-import de.plushnikov.intellij.plugin.LombokTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

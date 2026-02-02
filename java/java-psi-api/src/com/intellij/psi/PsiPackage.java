@@ -94,7 +94,17 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
 
   /**
    * Returns the list of package-level annotations for the package.
-   *
+   * <p>
+   * Note that this method is probably not what you need. It returns all the annotations inside {@code package-info.class} or 
+   * {@code package-info.java} files in the whole project that belong to this package. 
+   * For example, the project may contain different versions of the same library, and they may have different package-level annotations,
+   * but the {@link PsiPackage} instance will be shared between them, and {@code getAnnotationList()} will return the annotations from
+   * all the versions of the library combined.
+   * If you want to find whether a specific class belongs to a package with a specific annotation,
+   * you'll end up getting the annotations from unrelated source roots or jars. 
+   * Consider using {@code com.intellij.java.codeserver.core.JavaPsiAnnotationUtil#processPackageAnnotations}.
+   * Likely, it'll better suit your needs, as it searches only the annotations from the given source root.
+   * 
    * @return the list of annotations, or null if the package does not have any package-level annotations.
    */
   @Nullable

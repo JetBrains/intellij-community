@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.moduleInfo
 import org.jetbrains.kotlin.container.StorageComponentContainer
 import org.jetbrains.kotlin.container.useInstance
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.parcelize.ParcelizeNames
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
+@K1Deprecation
 class IdeParcelizeDeclarationCheckerComponentContainerContributor : StorageComponentContainerContributor {
     override fun registerModuleComponents(
         container: StorageComponentContainer,

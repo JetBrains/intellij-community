@@ -60,9 +60,6 @@
 - name: lib/modules/intellij.python.community.impl.uv.common.jar
   contentModules:
   - name: intellij.python.community.impl.uv.common
-- name: lib/modules/intellij.python.community.impl.venv.jar
-  contentModules:
-  - name: intellij.python.community.impl.venv
 - name: lib/modules/intellij.python.community.interpreters.jar
   contentModules:
   - name: intellij.python.community.interpreters
@@ -181,6 +178,9 @@
 - name: lib/modules/intellij.python.terminal.jar
   contentModules:
   - name: intellij.python.terminal
+- name: lib/modules/intellij.python.venv.jar
+  contentModules:
+  - name: intellij.python.venv
 - name: lib/python-ce.jar
   modules:
   - name: intellij.python.community.plugin

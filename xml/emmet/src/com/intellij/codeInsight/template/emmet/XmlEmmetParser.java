@@ -3,8 +3,19 @@ package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
-import com.intellij.codeInsight.template.emmet.nodes.*;
-import com.intellij.codeInsight.template.emmet.tokens.*;
+import com.intellij.codeInsight.template.emmet.nodes.LoremNode;
+import com.intellij.codeInsight.template.emmet.nodes.MoreOperationNode;
+import com.intellij.codeInsight.template.emmet.nodes.MulOperationNode;
+import com.intellij.codeInsight.template.emmet.nodes.TemplateNode;
+import com.intellij.codeInsight.template.emmet.nodes.ZenCodingNode;
+import com.intellij.codeInsight.template.emmet.tokens.IdentifierToken;
+import com.intellij.codeInsight.template.emmet.tokens.NumberToken;
+import com.intellij.codeInsight.template.emmet.tokens.OperationToken;
+import com.intellij.codeInsight.template.emmet.tokens.StringLiteralToken;
+import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
+import com.intellij.codeInsight.template.emmet.tokens.TextToken;
+import com.intellij.codeInsight.template.emmet.tokens.ZenCodingToken;
+import com.intellij.codeInsight.template.emmet.tokens.ZenCodingTokens;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.util.Couple;
@@ -22,7 +33,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

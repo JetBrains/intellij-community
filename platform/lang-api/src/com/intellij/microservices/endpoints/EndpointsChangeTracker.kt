@@ -1,5 +1,6 @@
 package com.intellij.microservices.endpoints
 
+import com.intellij.microservices.endpoints.EndpointsChangeTracker.Companion.withExpectedChanges
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
 

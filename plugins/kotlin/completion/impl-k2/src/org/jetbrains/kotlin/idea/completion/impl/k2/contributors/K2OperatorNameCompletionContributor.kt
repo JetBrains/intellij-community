@@ -27,6 +27,6 @@ internal class K2OperatorNameCompletionContributor : K2SimpleCompletionContribut
         OperatorNameCompletion.getApplicableOperators {
             context.prefixMatcher.prefixMatches(it)
         }.map(OperatorNameLookupElementFactory::createLookup)
-            .forEach { context.addElement(it) }
+            .forEach { addElement(it) }
     }
 }

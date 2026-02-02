@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.osFamily
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.zip.JBZipFile
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
@@ -117,7 +118,7 @@ internal class MavenWrapperSupport {
       throw IllegalStateException(SyncBundle.message("zip.is.not.correct", zipFile.toAbsolutePath()))
     }
     val mavenHome = dirs[0]
-    if (mavenHome.getEelDescriptor().osFamily.isPosix) {
+    if (mavenHome.osFamily.isPosix) {
       makeMavenBinRunnable(mavenHome)
     }
     return mavenHome.toRealPath()

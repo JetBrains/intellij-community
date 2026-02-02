@@ -3,7 +3,10 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts.Command;
@@ -18,7 +21,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 
 @ApiStatus.Internal
@@ -29,7 +34,7 @@ public final class CommandMerger {
   }
 
   private final boolean isLocalHistoryActivity;
-  private final boolean isTransparentSupported;
+  private final UndoCapabilities undoCapabilities;
 
   private @NotNull List<CommandId> commandIds = new ArrayList<>();
   private @Nullable @Command String commandName;
@@ -44,9 +49,9 @@ public final class CommandMerger {
   private boolean isTransparent;
   private boolean isValid = true;
 
-  CommandMerger(boolean isLocalHistoryActivity, boolean isTransparentSupported) {
+  CommandMerger(boolean isLocalHistoryActivity, @NotNull UndoCapabilities undoCapabilities) {
     this.isLocalHistoryActivity = isLocalHistoryActivity;
-    this.isTransparentSupported = isTransparentSupported;
+    this.undoCapabilities = undoCapabilities;
   }
 
   boolean isUndoAvailable(@NotNull Collection<DocumentReference> refs) {
@@ -72,13 +77,13 @@ public final class CommandMerger {
     if (!isCompatible(performedCommand.commandId())) {
       return createFlushReason("INCOMPATIBLE_COMMAND", performedCommand);
     }
-    if (isTransparentSupported &&
+    if (undoCapabilities.isTransparentSupported() &&
         performedCommand.isTransparent() &&
         performedCommand.editorStateAfter() == null &&
         editorStateAfter != null) {
       return createFlushReason("NEXT_TRANSPARENT_WITHOUT_EDITOR_STATE_AFTER", performedCommand);
     }
-    if (isTransparentSupported &&
+    if (undoCapabilities.isTransparentSupported() &&
         isTransparent() &&
         editorStateBefore == null &&
         performedCommand.editorStateBefore() != null) {
@@ -195,7 +200,7 @@ public final class CommandMerger {
   }
 
   boolean isTransparent() {
-    if (isTransparentSupported) {
+    if (undoCapabilities.isTransparentSupported()) {
       return isTransparent;
     }
     return isTransparent && !hasActions();

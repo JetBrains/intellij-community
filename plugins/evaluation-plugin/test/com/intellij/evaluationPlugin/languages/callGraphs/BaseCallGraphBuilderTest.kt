@@ -2,7 +2,9 @@ package com.intellij.evaluationPlugin.languages.callGraphs
 
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import junit.framework.TestCase.*
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertNotNull
+import junit.framework.TestCase.assertTrue
 import java.io.File
 
 object CallGraphTestUtil {

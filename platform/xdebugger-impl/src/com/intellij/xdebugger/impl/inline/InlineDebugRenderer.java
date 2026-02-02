@@ -276,7 +276,8 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
       return text;
     }
 
-    private static TextAttributes getNormalAttributes() {
+    @ApiStatus.Internal
+    public static @NotNull TextAttributes getNormalAttributes() {
       TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.INLINED_VALUES);
       if (attributes == null || attributes.getForegroundColor() == null) {
        return new TextAttributes(JBColor.lazy(() -> EditorColorsManager.getInstance().isDarkEditor() ? new Color(0x3d8065) : Gray._135), null, null, null, Font.ITALIC);

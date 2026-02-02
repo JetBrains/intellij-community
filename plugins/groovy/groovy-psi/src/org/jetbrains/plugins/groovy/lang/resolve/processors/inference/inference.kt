@@ -2,7 +2,15 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.ResolveState
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint
 import com.intellij.psi.util.PsiUtil.extractIterableTypeParameter

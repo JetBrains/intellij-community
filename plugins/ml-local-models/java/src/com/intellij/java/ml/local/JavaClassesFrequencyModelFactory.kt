@@ -3,7 +3,18 @@ package com.intellij.java.ml.local
 
 import com.intellij.ml.local.models.frequency.classes.ClassesFrequencyModelFactory
 import com.intellij.ml.local.models.frequency.classes.ClassesUsagesTracker
-import com.intellij.psi.*
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassObjectAccessExpression
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiImportStatement
+import com.intellij.psi.PsiImportStaticStatement
+import com.intellij.psi.PsiInstanceOfExpression
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiTypeCastExpression
 import com.intellij.psi.util.PsiTypesUtil
 
 class JavaClassesFrequencyModelFactory : ClassesFrequencyModelFactory() {

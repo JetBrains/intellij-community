@@ -12,7 +12,12 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -22,7 +27,13 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.FixingLayoutMatcher
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.PlatformKeyboardLayoutConverter
-import com.intellij.ui.*
+import com.intellij.ui.ColoredTreeCellRenderer
+import com.intellij.ui.FilteringSpeedSearch
+import com.intellij.ui.FilteringTree
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.SearchTextField
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.SmartExpander
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.treeStructure.Tree
@@ -64,7 +75,6 @@ import javax.swing.JTree
 import javax.swing.TransferHandler
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
-import kotlin.collections.asReversed
 
 internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 

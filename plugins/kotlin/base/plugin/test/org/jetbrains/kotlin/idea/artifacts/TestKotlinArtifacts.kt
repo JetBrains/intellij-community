@@ -9,11 +9,11 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.common.BazelTestUtil
 import com.intellij.testFramework.common.BazelTestUtil.getFileFromBazelRuntime
-import org.jetbrains.intellij.bazelEnvironment.BazelLabel
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.createParentDirectories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.bazelEnvironment.BazelLabel
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.extractFile
@@ -29,7 +29,22 @@ import java.nio.file.StandardCopyOption
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyToRecursively
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
+import kotlin.io.path.fileSize
+import kotlin.io.path.inputStream
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.isDirectory
+import kotlin.io.path.moveTo
+import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.outputStream
+import kotlin.io.path.pathString
+import kotlin.io.path.readBytes
+import kotlin.io.path.relativeTo
+import kotlin.io.path.walk
 import kotlin.reflect.KVisibility
 
 @OptIn(ExperimentalPathApi::class)

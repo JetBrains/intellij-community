@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
 import com.intellij.psi.PsiClass
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.types.Variance
 
+@K1Deprecation
 object CreateConstructorFromSuperTypeCallActionFactory : CreateCallableMemberFromUsageFactory<KtSuperTypeCallEntry>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtSuperTypeCallEntry? {
         return diagnostic.psiElement.getStrictParentOfType<KtSuperTypeCallEntry>()

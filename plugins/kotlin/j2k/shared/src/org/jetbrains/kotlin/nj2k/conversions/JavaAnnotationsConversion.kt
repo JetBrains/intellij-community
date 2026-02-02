@@ -7,10 +7,24 @@ import com.intellij.psi.search.ProjectScope
 import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_6
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.j2k.ConverterContext
-import org.jetbrains.kotlin.load.java.JvmAnnotationNames.*
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames.DEPRECATED_ANNOTATION
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames.DOCUMENTED_ANNOTATION
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames.REPEATABLE_ANNOTATION
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames.RETENTION_ANNOTATION
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames.TARGET_ANNOTATION
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.moduleApiVersion
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotation
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotationList
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotationMemberValue
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotationParameter
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotationParameterImpl
+import org.jetbrains.kotlin.nj2k.tree.JKFieldAccessExpression
+import org.jetbrains.kotlin.nj2k.tree.JKKtAnnotationArrayInitializerExpression
+import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression
+import org.jetbrains.kotlin.nj2k.tree.JKQualifiedExpression
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.copyTreeAndDetach
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.ifEmpty
 

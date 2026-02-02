@@ -2,12 +2,29 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.result
 
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.AssignToVariableResultTransformation
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.ChainedCallGenerator
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.MatchingState
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.TransformationMatch
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.TransformationMatcher
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.VariableInitialization
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.extractStaticFunctionCallArguments
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.findVariableInitializationBeforeLoop
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isVariableReference
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.MapTransformation
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtForExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.blockExpressionsOrSingle
 
+@K1Deprecation
 class MaxOrMinTransformation(
     loop: KtForExpression,
     initialization: VariableInitialization,

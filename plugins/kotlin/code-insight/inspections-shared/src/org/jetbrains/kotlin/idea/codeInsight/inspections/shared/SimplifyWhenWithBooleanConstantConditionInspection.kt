@@ -17,7 +17,11 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.ConstantConditionIfUtils.repl
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.KtWhenConditionWithExpression
+import org.jetbrains.kotlin.psi.KtWhenEntry
+import org.jetbrains.kotlin.psi.KtWhenExpression
 
 /**
  * Tests:

@@ -11,7 +11,12 @@ import org.jetbrains.kotlin.analysis.api.components.asSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.ItemPriority
@@ -102,11 +107,11 @@ object KotlinFirLookupElementFactory {
         PackagePartLookupElementFactory.createLookup(packagePartFqName)
 
     context(_: KaSession)
-    fun createNamedArgumentLookupElement(name: Name, types: List<KaType>): LookupElement =
+    fun createNamedArgumentLookupElement(name: Name, types: List<IndexedValue<KaType>>): LookupElement =
         NamedArgumentLookupElementFactory.createLookup(name, types)
 
-    fun createNamedArgumentWithValueLookupElement(name: Name, value: String): LookupElement =
-        NamedArgumentLookupElementFactory.createLookup(name, value)
+    fun createNamedArgumentWithValueLookupElement(name: Name, value: String, index: Int): LookupElement =
+        NamedArgumentLookupElementFactory.createLookup(name, value, index)
 
     context(_: KaSession)
     fun createTypeLookupElement(type: KaType): LookupElement? =

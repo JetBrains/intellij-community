@@ -5,7 +5,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.LightColors;
+import com.intellij.ui.NewUiValue;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.border.NamedBorderKt;
 import com.intellij.ui.scale.DerivedScaleType;
@@ -16,13 +21,19 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GraphicsConfiguration;
+import java.awt.Insets;
 import java.awt.font.TextAttribute;
 import java.util.HashMap;
 import java.util.Map;
@@ -1625,7 +1636,7 @@ public final class JBUI {
         public static final JBValue ARC = new JBValue.UIInteger("Popup.Selection.arc", 8);
         public static final JBValue LEFT_RIGHT_INSET = new JBValue.UIInteger("Popup.Selection.leftRightInset", 8);
 
-        public static @NotNull Insets innerInsets() {
+        public static @NotNull JBInsets innerInsets() {
           JBInsets result = insets("Popup.Selection.innerInsets", insets(0, 8));
           // Top and bottom values are ignored now
           result.top = 0;

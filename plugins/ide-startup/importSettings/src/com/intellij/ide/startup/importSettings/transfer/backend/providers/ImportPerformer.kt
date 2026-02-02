@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer.backend.providers
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.PluginEnabler
+import com.intellij.ide.plugins.PluginInstallOperation
+import com.intellij.ide.plugins.PluginInstaller
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.startup.importSettings.models.PluginFeature
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.openapi.application.EDT
@@ -15,7 +19,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserDialogPluginInstaller
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.getInstallAndEnableTask
-import kotlinx.coroutines.*
+import com.intellij.openapi.util.IntellijInternalApi
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
@@ -63,6 +73,7 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
     return ids
   }
 
+  @OptIn(IntellijInternalApi::class)
   override suspend fun installPlugins(project: Project?, pluginIds: Set<PluginId>, pi: ProgressIndicator): PluginInstallationState {
     if (pluginIds.isEmpty()) {
       logger.info("No plugins to install, proceeding.")
@@ -74,12 +85,13 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
     val pluginsToInstall = pluginIds.filter { !installedPlugins.contains(it.idString) }.toSet()
 
     val installAndEnableTask = getInstallAndEnableTask(project, pluginsToInstall, false, false, pi.modalityState) {}
-    installAndEnableTask.run(pi)
+    installAndEnableTask.runBlocking()
 
-    if (installAndEnableTask.plugins.isEmpty()) return PluginInstallationState.NoPlugins
-    val cp = installAndEnableTask.customPlugins ?: return PluginInstallationState.NoPlugins
+    val plugins = installAndEnableTask.getPlugins()
+    val customPlugins = installAndEnableTask.getCustomPlugins().map { it.getDescriptor() as PluginNode }
+    if (plugins.isEmpty() && customPlugins.isEmpty()) return PluginInstallationState.NoPlugins
     val restartRequiringPlugins = AtomicInteger()
-    val installStatus = doInstallPlugins(project, installAndEnableTask.plugins, cp, pi, restartRequiringPlugins)
+    val installStatus = doInstallPlugins(project, plugins, customPlugins, pi, restartRequiringPlugins)
 
     logger.info("Finished installing plugins, result: $installStatus")
     return if (restartRequiringPlugins.get() > 0) PluginInstallationState.RestartRequired else PluginInstallationState.Done

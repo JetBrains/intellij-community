@@ -4,7 +4,7 @@ package org.jetbrains.plugins.emojipicker;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.Serializable;
 import java.util.List;
 

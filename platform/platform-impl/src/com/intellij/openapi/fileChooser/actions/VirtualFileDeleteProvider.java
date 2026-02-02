@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -13,12 +14,13 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PlatformNioHelper;
+import com.intellij.util.io.TrashBin;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -27,7 +29,7 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
-public final class VirtualFileDeleteProvider implements DeleteProvider{
+public final class VirtualFileDeleteProvider implements DeleteProvider {
   private static final Logger LOG = Logger.getInstance(VirtualFileDeleteProvider.class);
 
   @Override
@@ -37,37 +39,43 @@ public final class VirtualFileDeleteProvider implements DeleteProvider{
 
   @Override
   public boolean canDeleteElement(@NotNull DataContext dataContext) {
-    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    var files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     return files != null && files.length > 0;
   }
 
   @Override
   public void deleteElement(@NotNull DataContext dataContext) {
-    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    var files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (files == null || files.length == 0) return;
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
-    String message = createConfirmationMessage(files);
-    int returnValue = Messages.showOkCancelDialog(message, UIBundle.message("delete.dialog.title"), ApplicationBundle.message("button.delete"),
-      CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
-    if (returnValue != Messages.OK) return;
+    var project = CommonDataKeys.PROJECT.getData(dataContext);
+    var toBin = TrashBin.isSupported() && GeneralSettings.getInstance().isDeletingToBin();
 
-    Arrays.sort(files, FileComparator.getInstance());
+    if (!(toBin && ContainerUtil.all(files, PlatformNioHelper::isLocal))) {
+      var message = createConfirmationMessage(files);
+      var returnValue = Messages.showOkCancelDialog(
+        message, UIBundle.message("delete.dialog.title"), ApplicationBundle.message("button.delete"), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon()
+      );
+      if (returnValue != Messages.OK) return;
+    }
 
-    List<String> problems = new LinkedList<>();
-    CommandProcessor.getInstance().executeCommand(project, () -> new Task.Modal(project, IdeBundle.message("progress.title.deleting.files"), true) {
+    Arrays.sort(files, Comparator.comparing(VirtualFile::getPath));
+
+    var problems = new LinkedList<String>();
+    CommandProcessor.getInstance().executeCommand(project, () -> new Task.Modal(project, IdeBundle.message("progress.deleting"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(false);
-        int i = 0;
-        for (VirtualFile file : files) {
-          indicator.checkCanceled();
-          indicator.setText2(file.getPresentableUrl());
-          indicator.setFraction((double)i / files.length);
-          i++;
-
+        var i = 0;
+        for (var file : files) {
+          if (indicator.isCanceled()) break;
+          indicator.setText(file.getPresentableUrl());
+          indicator.setFraction((double)i++ / files.length);
           try {
-            WriteAction.runAndWait(()-> file.delete(this));
+            if (toBin && PlatformNioHelper.isLocal(file)) {
+              TrashBin.moveToTrash(file.toNioPath());
+            }
+            WriteAction.runAndWait(() -> file.delete(this));
           }
           catch (IOException e) {
             LOG.info("Error when deleting " + file, e);
@@ -95,28 +103,13 @@ public final class VirtualFileDeleteProvider implements DeleteProvider{
   }
 
   private static void reportDeletionProblem(List<String> problems) {
-    boolean more = false;
+    var more = false;
     if (problems.size() > 10) {
       problems = problems.subList(0, 10);
       more = true;
     }
-    Messages.showMessageDialog(
-      IdeBundle.message("dialog.message.could.not.erase.files.or.folders.0.1", StringUtil.join(problems, ",\n  "), more ? "\n  ..." : ""),
-      UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
-  }
-
-  private static final class FileComparator implements Comparator<VirtualFile> {
-    private static final FileComparator ourInstance = new FileComparator();
-
-    public static FileComparator getInstance() {
-      return ourInstance;
-    }
-
-    @Override
-    public int compare(final VirtualFile o1, final VirtualFile o2) {
-      // files first
-      return o2.getPath().compareTo(o1.getPath());
-    }
+    var message = IdeBundle.message("dialog.message.could.not.erase.files.or.folders.0.1", String.join(",\n  ", problems), more ? "\n  ..." : "");
+    Messages.showMessageDialog(message, UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
   }
 
   private static @NlsContexts.DialogMessage String createConfirmationMessage(VirtualFile[] filesToDelete) {
@@ -129,10 +122,10 @@ public final class VirtualFileDeleteProvider implements DeleteProvider{
       }
     }
     else {
-      boolean hasFiles = false;
-      boolean hasFolders = false;
-      for (VirtualFile file : filesToDelete) {
-        boolean isDirectory = file.isDirectory();
+      var hasFiles = false;
+      var hasFolders = false;
+      for (var file : filesToDelete) {
+        var isDirectory = file.isDirectory();
         hasFiles |= !isDirectory;
         hasFolders |= isDirectory;
       }

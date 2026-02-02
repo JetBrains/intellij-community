@@ -43,7 +43,7 @@ import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.ListSelectionModel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

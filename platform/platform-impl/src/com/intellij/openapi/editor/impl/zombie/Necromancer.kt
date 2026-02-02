@@ -113,14 +113,6 @@ interface Necromancy<Z : Zombie> {
    * Reads and deserializes zombie from input
    */
   fun exhumeZombie(grave: DataInput): Z
-
-  /**
-   * Optimization hint whether zombie can stay in heap instead of spilling to disk.
-   *
-   * `true` if the zombie should be spilled to disk almost immediately,
-   * otherwise it may remain in heap for some amount of time
-   */
-  fun isDeepBury(): Boolean
 }
 
 /**

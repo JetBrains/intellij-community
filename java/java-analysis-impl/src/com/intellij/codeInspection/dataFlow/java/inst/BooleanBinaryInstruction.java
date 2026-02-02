@@ -18,7 +18,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-import static com.intellij.codeInspection.dataFlow.types.DfTypes.*;
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.BOOLEAN;
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.FALSE;
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.booleanValue;
 
 /**
  * Evaluate comparison like a < b

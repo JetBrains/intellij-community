@@ -4,7 +4,7 @@ package com.intellij.ui.icons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 public interface RowIcon extends CompositeIcon, DarkIconProvider {

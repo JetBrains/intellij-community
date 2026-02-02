@@ -33,25 +33,12 @@ public interface GutterDraggableObject {
    * Returns the cursor to show when the drag is over the specified line.
    *
    * @param line the line over which the drag is performed.
-   * @param actionId the id of the DnD action {@link java.awt.dnd.DnDConstants}.
-   * @return the cursor to show.
-   * @deprecated override {@link #getCursor(int, VirtualFile, int)}
-   */
-  @Deprecated(forRemoval = true)
-  default Cursor getCursor(int line, int actionId) {
-    return DragSource.DefaultMoveDrop;
-  }
-
-  /**
-   * Returns the cursor to show when the drag is over the specified line.
-   *
-   * @param line the line over which the drag is performed.
    * @param file the DnD target file
    * @param actionId the id of the DnD action {@link java.awt.dnd.DnDConstants}.
    * @return the cursor to show.
    */
   default Cursor getCursor(int line, VirtualFile file, int actionId) {
-    return getCursor(line, actionId);
+    return DragSource.DefaultMoveDrop;
   }
 
   default void remove() {}

@@ -1,7 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl
 
-import com.intellij.facet.*
+import com.intellij.facet.Facet
+import com.intellij.facet.FacetConfiguration
+import com.intellij.facet.FacetManager
+import com.intellij.facet.FacetManagerBase
+import com.intellij.facet.FacetType
+import com.intellij.facet.FacetTypeId
+import com.intellij.facet.FacetTypeRegistry
+import com.intellij.facet.ModifiableFacetModel
+import com.intellij.facet.ProjectFacetManager
 import com.intellij.facet.impl.invalid.InvalidFacetManager
 import com.intellij.facet.impl.invalid.InvalidFacetType
 import com.intellij.openapi.application.ApplicationManager
@@ -15,7 +23,7 @@ import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
 import org.jetbrains.jps.model.serialization.facet.FacetState
-import java.util.*
+import java.util.Arrays
 
 private val LOG = Logger.getInstance(FacetTypeRegistryImpl::class.java)
 private val FACET_TYPE_COMPARATOR = Comparator { o1: FacetType<*, *>, o2: FacetType<*, *> ->

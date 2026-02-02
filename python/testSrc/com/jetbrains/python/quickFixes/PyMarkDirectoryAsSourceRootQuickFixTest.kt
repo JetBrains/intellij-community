@@ -100,6 +100,23 @@ class PyMarkDirectoryAsSourceRootQuickFixTest: PyQuickFixTestCase() {
     testSourceRoot(expectedSourceRootPaths = emptySet())
   }
 
+  fun testNoQuickFixBecauseResolvedToFolderWithoutInitPy() {
+    testSourceRoot(expectedSourceRootPaths = emptySet())
+    openAndHighlightFile("mysrc/foo/abc_folder_no_init.py")
+    testSourceRoot(expectedSourceRootPaths = emptySet())
+    findAndExecuteSourcesQuickFix(isQuickFixExpected = true)
+    testSourceRoot(expectedSourceRootPaths = setOf("/src/mysrc"))
+  }
+
+  fun testNoQuickFixBecauseResolvedToFolderWithInitPy() {
+    testSourceRoot(expectedSourceRootPaths = emptySet())
+    openAndHighlightFile("mysrc/foo/abc_folder_with_init.py")
+    testSourceRoot(expectedSourceRootPaths = setOf("/src/mysrc"))
+    // quick fix is not expected because it will be already automatically applied
+    findAndExecuteSourcesQuickFix(isQuickFixExpected = false)
+    testSourceRoot(expectedSourceRootPaths = setOf("/src/mysrc"))
+  }
+
   private fun testSourceRoot(expectedSourceRootPaths: Set<String>) {
     val moduleRootManager = ModuleRootManager.getInstance(myFixture.module)
     val detectedSourceRoots = moduleRootManager.sourceRoots.map {

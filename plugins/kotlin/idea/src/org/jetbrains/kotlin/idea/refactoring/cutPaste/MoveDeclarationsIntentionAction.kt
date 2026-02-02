@@ -14,8 +14,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.refactoring.BaseRefactoringIntentionAction
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
+@K1Deprecation
 class MoveDeclarationsIntentionAction(
     private val processor: MoveDeclarationsProcessor,
     private val bounds: RangeMarker,

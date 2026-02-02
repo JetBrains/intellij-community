@@ -9,7 +9,14 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsCommitStyleFactory;
+import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.VcsLogDataPack;
+import com.intellij.vcs.log.VcsLogDiffHandler;
+import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogHighlighter;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogGraphData;
 import com.intellij.vcs.log.data.VcsLogStorage;
@@ -31,10 +38,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
@@ -107,14 +117,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     if (pack.getCanRequestMore()) {
       requestMore(EmptyRunnable.INSTANCE);
     }
-  }
-
-  /**
-   * @deprecated use {@link FileHistoryModel#getPathInCommit(Hash)} or {@link FileHistoryPaths#filePath(VcsLogDataPack, int)}
-   */
-  @Deprecated(forRemoval = true)
-  public @Nullable FilePath getPathInCommit(@NotNull Hash hash) {
-    return myFileHistoryModel.getPathInCommit(hash);
   }
 
   @Override

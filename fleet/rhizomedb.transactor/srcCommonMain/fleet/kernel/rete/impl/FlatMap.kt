@@ -7,7 +7,14 @@ import com.jetbrains.rhizomedb.ReadTrackingContext
 import com.jetbrains.rhizomedb.withReadTrackingContext
 import fleet.fastutil.longs.LongOpenHashSet
 import fleet.fastutil.longs.LongSet
-import fleet.kernel.rete.*
+import fleet.kernel.rete.Broadcaster
+import fleet.kernel.rete.Match
+import fleet.kernel.rete.Producer
+import fleet.kernel.rete.QueryScope
+import fleet.kernel.rete.Rete
+import fleet.kernel.rete.Subscription
+import fleet.kernel.rete.Token
+import fleet.kernel.rete.ValidationResultEnum
 
 internal fun <T, U> QueryScope.flatMap(producer: Producer<T>, f: (Match<T>) -> Set<U>): Producer<U> {
   data class MatchInfo(

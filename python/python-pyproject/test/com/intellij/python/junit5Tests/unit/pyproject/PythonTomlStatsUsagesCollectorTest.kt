@@ -6,7 +6,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.Repository
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
-import com.intellij.python.pyproject.statistics.*
+import com.intellij.python.pyproject.statistics.DEPENDENCY_GROUP_OTHER
+import com.intellij.python.pyproject.statistics.PYTHON_PYPROJECT_BUILDSYSTEM
+import com.intellij.python.pyproject.statistics.PYTHON_PYPROJECT_COUNT
+import com.intellij.python.pyproject.statistics.PYTHON_PYPROJECT_DEPENDENCY_GROUP
+import com.intellij.python.pyproject.statistics.PYTHON_PYPROJECT_TOOLS
+import com.intellij.python.pyproject.statistics.PYTHON_TOOL_MARKERS
+import com.intellij.python.pyproject.statistics.PYTHON_TOOL_MARKERS_DETECTED
+import com.intellij.python.pyproject.statistics.PythonTomlStatsUsagesCollector
+import com.intellij.python.pyproject.statistics.TRACKED_DEPENDENCY_GROUPS
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers

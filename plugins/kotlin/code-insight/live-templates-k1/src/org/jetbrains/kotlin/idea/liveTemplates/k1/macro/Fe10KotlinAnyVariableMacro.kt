@@ -3,10 +3,12 @@
 package org.jetbrains.kotlin.idea.liveTemplates.k1.macro
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.BindingContext
 
+@K1Deprecation
 class Fe10KotlinAnyVariableMacro : Fe10AbstractKotlinVariableMacro<Unit>() {
     override fun getName(): String = "kotlinAnyVariable"
     override fun getPresentableName(): String = "kotlinAnyVariable()"

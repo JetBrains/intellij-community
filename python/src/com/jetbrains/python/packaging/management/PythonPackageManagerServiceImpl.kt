@@ -11,30 +11,26 @@ import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 internal class PythonPackageManagerServiceImpl(private val serviceScope: CoroutineScope) : PythonPackageManagerService, Disposable {
-  private val cache = ConcurrentHashMap<UUID, Deferred<PythonPackageManager>>()
+  private val cache = ConcurrentHashMap<UUID, PythonPackageManager>()
 
   private val bridgeCache = ConcurrentHashMap<UUID, PythonPackageManagementServiceBridge>()
 
   /**
    * Requires Sdk to be Python Sdk and have PythonSdkAdditionalData.
    */
-  override suspend fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
+  override fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
     val cacheKey = (sdk.getOrCreateAdditionalData()).uuid
 
     return cache.computeIfAbsent(cacheKey) {
-      serviceScope.async {
-        val createdSdk = PythonPackageManagerProvider.EP_NAME.extensionList.firstNotNullOf { it.createPackageManagerForSdk(project, sdk) }
-        Disposer.register(PyPackageCoroutine.getInstance(project), createdSdk)
-        PythonRequirementTxtSdkUtils.migrateRequirementsTxtPathFromModuleToSdk(project, sdk)
-        createdSdk
-      }
-    }.await()
+      val createdSdk = PythonPackageManagerProvider.EP_NAME.extensionList.firstNotNullOf { it.createPackageManagerForSdk(project, sdk) }
+      Disposer.register(PyPackageCoroutine.getInstance(project), createdSdk)
+      PythonRequirementTxtSdkUtils.migrateRequirementsTxtPathFromModuleToSdk(project, sdk)
+      createdSdk
+    }
   }
 
   override fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge {

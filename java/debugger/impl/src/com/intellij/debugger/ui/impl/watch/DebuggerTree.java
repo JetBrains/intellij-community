@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.LinkedList;

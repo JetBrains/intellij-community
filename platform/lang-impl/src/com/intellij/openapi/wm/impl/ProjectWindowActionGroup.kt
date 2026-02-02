@@ -18,7 +18,7 @@ import com.intellij.project.ProjectStoreOwner
 import com.intellij.util.SystemProperties
 import java.io.File
 import java.nio.file.Path
-import java.util.*
+import java.util.Arrays
 
 internal class ProjectWindowActionGroup : IdeDependentActionGroup(), ActionRemoteBehaviorSpecification.Frontend {
   private var latest: ProjectWindowAction? = null

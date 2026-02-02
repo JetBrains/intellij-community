@@ -9,7 +9,9 @@ import com.intellij.debugger.streams.core.trace.dsl.Expression
 import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 class CollectionTerminatorHandler(
     private val call: TerminatorStreamCall,
     private val resultExpression: String,

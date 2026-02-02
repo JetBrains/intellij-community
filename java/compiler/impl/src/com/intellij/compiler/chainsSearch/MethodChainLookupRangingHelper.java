@@ -2,7 +2,11 @@
 package com.intellij.compiler.chainsSearch;
 
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CastingLookupElementDecorator;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.JavaChainLookupElement;
+import com.intellij.codeInsight.completion.JavaMethodCallElement;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
@@ -12,7 +16,19 @@ import com.intellij.compiler.chainsSearch.completion.lookup.JavaRelevantChainLoo
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Couple;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;

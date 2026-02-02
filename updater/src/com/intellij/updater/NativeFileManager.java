@@ -15,7 +15,11 @@
  */
 package com.intellij.updater;
 
-import com.sun.jna.*;
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
+import com.sun.jna.StringArray;
+import com.sun.jna.Structure;
+import com.sun.jna.WString;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinBase;
 import com.sun.jna.platform.win32.WinDef;

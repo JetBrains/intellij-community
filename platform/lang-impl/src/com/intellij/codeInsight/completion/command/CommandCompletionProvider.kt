@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion.command
 
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.CompletionResult.SHOULD_NOT_CHECK_WHEN_WRAP
+import com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 import com.intellij.codeInsight.completion.command.commands.AfterHighlightingCommandProvider
 import com.intellij.codeInsight.completion.command.commands.DirectIntentionCommandProvider
 import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService
@@ -34,7 +35,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiFileImpl
@@ -180,15 +180,7 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     val sorter = createSorter(parameters)
     val withRelevanceSorter = resultSet.withRelevanceSorter(sorter)
 
-    resultSet.restartCompletionOnPrefixChange(
-      StandardPatterns.string().with(object : PatternCondition<String>("add filter for command completion") {
-        override fun accepts(t: String, context: ProcessingContext?): Boolean {
-          val fullSuffix = commandCompletionFactory.suffix() + (commandCompletionFactory.filterSuffix()?.toString() ?: "")
-          return (!isReadOnly &&
-                  (commandCompletionType.suffix + t == fullSuffix) || t.endsWith(fullSuffix)) ||
-                 (isReadOnly && (commandCompletionType.suffix + t == (commandCompletionFactory.filterSuffix()?.toString() ?: "")))
-        }
-      }))
+    registerRestartPatterns(resultSet, commandCompletionFactory, commandCompletionType, isReadOnly)
 
     // Fetch commands applicable to the position
     processCommandsForContext(commandCompletionFactory = commandCompletionFactory,
@@ -228,6 +220,24 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     }
   }
 
+  private fun registerRestartPatterns(
+    resultSet: CompletionResultSet,
+    commandCompletionFactory: CommandCompletionFactory,
+    commandCompletionType: InvocationCommandType,
+    isReadOnly: Boolean,
+  ) {
+    val filterSuffix = commandCompletionFactory.filterSuffix()?.toString() ?: ""
+    val fullSuffix = commandCompletionFactory.suffix() + filterSuffix
+
+    resultSet.restartCompletionOnPrefixChange(StandardPatterns.string().endsWith(fullSuffix))
+
+    val patternToCheck = if (isReadOnly) filterSuffix else fullSuffix
+    if (patternToCheck.startsWith(commandCompletionType.suffix)) {
+      val patternToRestart = patternToCheck.removePrefix(commandCompletionType.suffix)
+      resultSet.restartCompletionOnPrefixChange(StandardPatterns.string().equalTo(patternToRestart))
+    }
+  }
+
   private fun enableFastShown(parameters: CompletionParameters) {
     if (Registry.`is`("ide.completion.command.faster.paint")) {
       if (!GroupedCompletionContributor.isGroupEnabledInApp()) return
@@ -254,7 +264,12 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     prefix: String,
     customPrefixMatcher: PrefixMatcher?,
   ): List<LookupElement> {
-    val presentableName = command.presentableName.replace("_", "").replace("...", "").replace("…", "")
+    var presentableName = command.presentableName
+      .removeSuffix("...")
+      .removeSuffix("…")
+    if (command is ActionCompletionCommand) {
+      presentableName = presentableName.replace("_", "")
+    }
     val additionalInfo = command.additionalInfo ?: ""
     var tailText = ""
     if (additionalInfo.isNotEmpty()) {

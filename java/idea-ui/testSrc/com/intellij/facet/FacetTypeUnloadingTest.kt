@@ -2,7 +2,12 @@
 package com.intellij.facet
 
 import com.intellij.facet.impl.invalid.InvalidFacetManager
-import com.intellij.facet.mock.*
+import com.intellij.facet.mock.MockFacet
+import com.intellij.facet.mock.MockFacetConfiguration
+import com.intellij.facet.mock.MockFacetType
+import com.intellij.facet.mock.MockSubFacetType
+import com.intellij.facet.mock.registerFacetType
+import com.intellij.facet.mock.runWithRegisteredFacetTypes
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.openapi.util.JDOMUtil

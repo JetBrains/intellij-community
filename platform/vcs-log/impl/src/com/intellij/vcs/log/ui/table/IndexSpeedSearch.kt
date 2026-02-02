@@ -3,7 +3,12 @@ package com.intellij.vcs.log.ui.table
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogDetailsFilter
+import com.intellij.vcs.log.VcsLogUserFilter
+import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.log.VcsUserRegistry
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.data.index.IndexedDetails
 import com.intellij.vcs.log.data.index.VcsLogIndex

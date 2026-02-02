@@ -5,7 +5,16 @@
 package org.jetbrains.kotlin.idea.imports
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptorWithTypeParameters
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
+import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -15,6 +24,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 @get:Deprecated("Only supported for Kotlin Plugin K1 mode. Use Kotlin Analysis API instead, which works for both K1 and K2 modes. See https://kotl.in/analysis-api and `org.jetbrains.kotlin.analysis.api.analyze` for details.")
 @get:ApiStatus.ScheduledForRemoval
 val DeclarationDescriptor.importableFqName: FqName?
@@ -23,6 +33,7 @@ val DeclarationDescriptor.importableFqName: FqName?
         return getImportableDescriptor().fqNameSafe
     }
 
+@K1Deprecation
 @Deprecated("Only supported for Kotlin Plugin K1 mode. Use Kotlin Analysis API instead, which works for both K1 and K2 modes. See https://kotl.in/analysis-api and `org.jetbrains.kotlin.analysis.api.analyze` for details.")
 @ApiStatus.ScheduledForRemoval
 fun DeclarationDescriptor.canBeReferencedViaImport(): Boolean {
@@ -44,20 +55,24 @@ fun DeclarationDescriptor.canBeReferencedViaImport(): Boolean {
     }
 }
 
+@K1Deprecation
 fun DeclarationDescriptor.canBeAddedToImport(): Boolean = this !is PackageViewDescriptor && canBeReferencedViaImport()
 
+@K1Deprecation
 fun KotlinType.canBeReferencedViaImport(): Boolean {
     val descriptor = constructor.declarationDescriptor
     return descriptor != null && descriptor.canBeReferencedViaImport()
 }
 
 // for cases when class qualifier refers companion object treats it like reference to class itself
+@K1Deprecation
 fun KtReferenceExpression.getImportableTargets(bindingContext: BindingContext): Collection<DeclarationDescriptor> {
     val targets = bindingContext[BindingContext.SHORT_REFERENCE_TO_COMPANION_OBJECT, this]?.let { listOf(it) }
         ?: getReferenceTargets(bindingContext)
     return targets.map { it.getImportableDescriptor() }.toSet()
 }
 
+@K1Deprecation
 fun ClassifierDescriptor.getConstructors(): Collection<ConstructorDescriptor> = when (this) {
     is ClassDescriptor -> constructors
     is TypeAliasDescriptor -> constructors

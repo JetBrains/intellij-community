@@ -17,8 +17,12 @@ package com.intellij.designer.designSurface;
 
 import com.intellij.designer.designSurface.tools.ToolProvider;
 
-import javax.swing.*;
-import java.awt.event.*;
+import javax.swing.JComponent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 
 /**
  * @author Alexander Lobas

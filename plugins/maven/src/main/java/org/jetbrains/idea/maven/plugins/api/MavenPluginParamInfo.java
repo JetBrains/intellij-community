@@ -17,9 +17,18 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.model.*;
+import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
+import org.jetbrains.idea.maven.dom.model.MavenDomGoal;
+import org.jetbrains.idea.maven.dom.model.MavenDomGoals;
+import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
+import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 public final class MavenPluginParamInfo {
 

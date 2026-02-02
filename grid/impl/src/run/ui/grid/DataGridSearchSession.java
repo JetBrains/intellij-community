@@ -1,11 +1,29 @@
 package com.intellij.database.run.ui.grid;
 
 import com.intellij.database.DataGridBundle;
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.DataGrid;
+import com.intellij.database.datagrid.DataGridListener;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridModel;
+import com.intellij.database.datagrid.GridPresentationMode;
+import com.intellij.database.datagrid.GridRequestSource;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.extractors.DisplayType;
 import com.intellij.database.run.ui.DataAccessType;
-import com.intellij.find.*;
-import com.intellij.find.editorHeaderActions.*;
+import com.intellij.find.FindBundle;
+import com.intellij.find.FindManager;
+import com.intellij.find.FindModel;
+import com.intellij.find.FindUtil;
+import com.intellij.find.SearchReplaceComponent;
+import com.intellij.find.SearchSession;
+import com.intellij.find.editorHeaderActions.EditorHeaderToggleAction;
+import com.intellij.find.editorHeaderActions.NextOccurrenceAction;
+import com.intellij.find.editorHeaderActions.PrevOccurrenceAction;
+import com.intellij.find.editorHeaderActions.StatusTextAction;
+import com.intellij.find.editorHeaderActions.ToggleMatchCase;
+import com.intellij.find.editorHeaderActions.ToggleRegex;
+import com.intellij.find.editorHeaderActions.ToggleWholeWordsOnlyAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -24,7 +42,7 @@ import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.Collections;
 import java.util.Iterator;
 

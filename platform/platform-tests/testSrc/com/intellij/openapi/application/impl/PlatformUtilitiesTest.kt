@@ -64,11 +64,9 @@ class PlatformUtilitiesTest {
   }
 
   @Test
-  fun `raw background write action is not allowed`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
-    assertThrows<IllegalStateException> {
-      ApplicationManager.getApplication().runWriteAction {
-        fail<Nothing>()
-      }
+  fun `raw background write action is allowed`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    // no errors should be thrown
+    ApplicationManager.getApplication().runWriteAction {
     }
   }
 

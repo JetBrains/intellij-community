@@ -2,11 +2,17 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasUsages
 import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.buildExpression
 
+@K1Deprecation
 interface Condition {
     fun asExpression(reformat: Boolean): KtExpression
     fun asNegatedExpression(reformat: Boolean): KtExpression
@@ -42,6 +48,7 @@ interface Condition {
     }
 }
 
+@K1Deprecation
 class AtomicCondition(val expression: KtExpression, private val isNegated: Boolean = false) : Condition {
     init {
         assert(expression.isPhysical)
@@ -54,6 +61,7 @@ class AtomicCondition(val expression: KtExpression, private val isNegated: Boole
     fun negate() = AtomicCondition(expression, !isNegated)
 }
 
+@K1Deprecation
 class CompositeCondition private constructor(val conditions: List<AtomicCondition>) : Condition {
     override fun asExpression(reformat: Boolean): KtExpression {
         val project = conditions.first().expression.project
@@ -82,6 +90,7 @@ class CompositeCondition private constructor(val conditions: List<AtomicConditio
     }
 }
 
+@K1Deprecation
 fun Condition.hasUsagesOf(variable: KtCallableDeclaration): Boolean {
     return toAtomicConditions().any { variable.hasUsages(it.expression) }
 }

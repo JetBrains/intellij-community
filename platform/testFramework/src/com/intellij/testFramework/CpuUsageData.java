@@ -76,8 +76,12 @@ public final class CpuUsageData {
   }
 
   boolean hasAnyActivityBesides(@NotNull Thread thread) {
+    return hasAnyActivityBesides(thread, 0);
+  }
+
+  boolean hasAnyActivityBesides(@NotNull Thread thread, long userMsThreshold) {
     return myCompilationTimeMs > 0 ||
-           myThreadTimes.stream().anyMatch(pair -> pair.first > 0 && !pair.second.equals(thread.getName())) ||
+           myThreadTimes.stream().anyMatch(pair -> pair.first > userMsThreshold && !pair.second.equals(thread.getName())) ||
            myGcTimes.stream().anyMatch(pair -> pair.first > 0);
   }
 

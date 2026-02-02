@@ -9,7 +9,9 @@ import com.intellij.designer.utils.Position;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 /**
  * @author Alexander Lobas

@@ -5,7 +5,7 @@ import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.client.ClientSystemInfo;
 
-import java.awt.*;
+import java.awt.Cursor;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 

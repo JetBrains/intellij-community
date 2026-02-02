@@ -6,7 +6,7 @@ import com.intellij.database.run.ui.ResultViewFactory;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @author Liudmila Kornilova

@@ -3,7 +3,12 @@
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
@@ -20,9 +25,14 @@ import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.utils.collectDescriptorsFiltered
-import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.TypeConstructor
+import org.jetbrains.kotlin.types.TypeIntersector
+import org.jetbrains.kotlin.types.TypeProjection
+import org.jetbrains.kotlin.types.TypeProjectionImpl
+import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.utils.keysToMapExceptNulls
 
+@K1Deprecation
 class KotlinPullUpData(
     val sourceClass: KtClassOrObject,
     val targetClass: PsiNamedElement,

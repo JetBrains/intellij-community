@@ -15,7 +15,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

@@ -459,9 +459,6 @@ pc:com.intellij.diff.impl.DiffRequestProcessor$MyNextChangeAction
 pc:com.intellij.diff.impl.DiffRequestProcessor$MyNextDifferenceAction
 - com.intellij.diff.impl.DiffRequestProcessor$DelegatingNavigationAction
 - <init>(com.intellij.diff.impl.DiffRequestProcessor):V
-pc:com.intellij.diff.impl.DiffRequestProcessor$MyOpenInEditorAction
-- com.intellij.diff.actions.impl.OpenInEditorAction
-- <init>(com.intellij.diff.impl.DiffRequestProcessor):V
 pc:com.intellij.diff.impl.DiffRequestProcessor$MyPrevChangeAction
 - com.intellij.diff.impl.DiffRequestProcessor$DelegatingNavigationAction
 - <init>(com.intellij.diff.impl.DiffRequestProcessor):V
@@ -2287,24 +2284,6 @@ c:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer
 - com.intellij.openapi.vcs.ex.LineStatusTrackerMarkerRenderer
 - pf:myTracker:com.intellij.openapi.vcs.ex.LineStatusTrackerI
 - <init>(com.intellij.openapi.vcs.ex.LineStatusTrackerI):V
-f:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer$CopyLineStatusRangeAction
-- com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$CopyLineStatusRangeAction
-- <init>(com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer,com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range):V
-a:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer$RangeMarkerAction
-- com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$RangeMarkerAction
-- <init>(com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer,com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range,java.lang.String):V
-f:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer$ShowLineStatusRangeDiffAction
-- com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$ShowLineStatusRangeDiffAction
-- <init>(com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer,com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range):V
-f:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer$ShowNextChangeMarkerAction
-- com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$ShowNextChangeMarkerAction
-- <init>(com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer,com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range):V
-f:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer$ShowPrevChangeMarkerAction
-- com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$ShowPrevChangeMarkerAction
-- <init>(com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer,com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range):V
-f:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer$ToggleByWordDiffAction
-- com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$ToggleByWordDiffAction
-- <init>(com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer,com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range,java.awt.Point):V
 f:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupService
 - sf:Companion:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupService$Companion
 - <init>():V

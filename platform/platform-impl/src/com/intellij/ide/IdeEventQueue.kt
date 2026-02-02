@@ -18,6 +18,7 @@ import com.intellij.ide.ui.normalize
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.impl.InternalThreading
 import com.intellij.openapi.application.impl.InvocationUtil
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.serviceIfCreated
@@ -540,7 +541,7 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   // todo: remove when listeners would not acquire WI
   private fun shouldSkipListeners(e: AWTEvent): Boolean {
-    return e is InvocationEvent && e.toString().contains(ThreadingSupport.RunnableWithTransferredWriteAction.NAME)
+    return e is InternalThreading.TransferredWriteActionEvent
   }
 
   private fun isUserActivityEvent(e: AWTEvent): Boolean =

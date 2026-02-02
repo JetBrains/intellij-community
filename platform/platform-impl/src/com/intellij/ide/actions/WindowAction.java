@@ -42,7 +42,7 @@ public abstract class WindowAction extends AnAction implements ActionRemoteBehav
     @Nullable Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     Window window = ComponentUtil.getWindow(component);
     boolean enabled = isEnabledFor(window);
-    if (enabled && Registry.is("no.window.actions.in.editor")) {
+    if (enabled && Registry.is("no.window.actions.in.editor", false)) {
       Editor editor = event.getData(CommonDataKeys.EDITOR);
       enabled = editor == null || !editor.getContentComponent().hasFocus();
     }

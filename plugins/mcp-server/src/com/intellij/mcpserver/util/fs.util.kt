@@ -11,6 +11,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import java.io.File
+import java.net.URI
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -42,6 +43,10 @@ fun Project.resolveInProject(pathInProject: String, throwWhenOutside: Boolean = 
   val filePath = projectDirectory.resolve(pathInProject).normalize()
   if (throwWhenOutside && !filePath.startsWith(projectDirectory)) mcpFail("Specified path '$filePath' points to the location outside of the project directory")
   return filePath
+}
+
+fun findMostRelevantProjectForRoots(roots: Collection<String>): Project? {
+  return roots.map { Paths.get(URI(it)).normalize() }.firstNotNullOfOrNull { findMostRelevantProject(it) }
 }
 
 fun findMostRelevantProject(path: Path): Project? {

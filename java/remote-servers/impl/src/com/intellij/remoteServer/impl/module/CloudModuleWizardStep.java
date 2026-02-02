@@ -23,8 +23,9 @@ import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.util.CloudAccountSelectionEditor;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.CardLayout;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

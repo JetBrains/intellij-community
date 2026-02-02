@@ -6,7 +6,9 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.service.execution.*
+import org.jetbrains.plugins.gradle.service.execution.GRADLE_TOOLING_EXTENSION_CLASSES
+import org.jetbrains.plugins.gradle.service.execution.joinInitScripts
+import org.jetbrains.plugins.gradle.service.execution.loadToolingExtensionProvidingInitScript
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 
 @ApiStatus.Internal

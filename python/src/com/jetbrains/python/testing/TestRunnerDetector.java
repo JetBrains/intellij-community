@@ -14,7 +14,11 @@ import com.intellij.util.Function;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.management.PythonPackageManager;
 import com.jetbrains.python.packaging.management.PythonPackageManagerExt;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NonNls;
@@ -92,8 +96,8 @@ final class TestRunnerDetector implements Function<Pair<Module, Collection<Virtu
 
   private static @Nullable @NonNls String findSdkByPackage(@NotNull String packageToFind) {
     for (var factory : PythonTestConfigurationType.getInstance().getTypedFactories()) {
-      var packageRequired = factory.getPackageRequired();
-      if (packageRequired != null && packageRequired.equals(packageToFind)) {
+      var marker = factory.getPackageSpec();
+      if (marker != null && marker.getPackageName().equals(packageToFind)) {
         return factory.getId();
       }
     }

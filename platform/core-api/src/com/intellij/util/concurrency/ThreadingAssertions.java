@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import java.awt.*;
+import java.awt.EventQueue;
 import java.util.function.Consumer;
 
 /**

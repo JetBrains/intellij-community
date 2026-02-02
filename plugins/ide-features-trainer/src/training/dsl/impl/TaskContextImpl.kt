@@ -2,7 +2,11 @@
 package training.dsl.impl
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -17,7 +21,15 @@ import com.intellij.util.ui.tree.TreeUtil
 import org.assertj.swing.exception.ComponentLookupException
 import org.assertj.swing.exception.WaitTimedOutError
 import org.intellij.lang.annotations.Language
-import training.dsl.*
+import training.dsl.HighlightTriggerParametersContext
+import training.dsl.HighlightingTriggerMethods
+import training.dsl.LearningBalloonConfig
+import training.dsl.LessonUtil
+import training.dsl.RuntimeTextContext
+import training.dsl.TaskContext
+import training.dsl.TaskRuntimeContext
+import training.dsl.TaskTestContext
+import training.dsl.defaultRestoreDelay
 import training.learn.ActionsRecorder
 import training.learn.LearnBundle
 import training.learn.lesson.LessonManager

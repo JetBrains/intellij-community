@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.assignment.k1
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.assignment.plugin.diagnostics.AssignmentPluginDeclarationChecker
 import org.jetbrains.kotlin.container.StorageComponentContainer
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptModuleInfo
 import org.jetbrains.kotlin.platform.TargetPlatform
 
+@K1Deprecation
 class IdeAssignmentContainerContributor(private val project: Project) : StorageComponentContainerContributor {
 
     override fun registerModuleComponents(

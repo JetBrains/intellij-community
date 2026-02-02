@@ -2,12 +2,18 @@
 
 package org.jetbrains.kotlin.idea.parameterInfo
 
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.resolveCandidates
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtTypeArgumentList
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.calls.util.getCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -15,6 +21,7 @@ import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.isAnyOrNullableAny
 import org.jetbrains.kotlin.types.typeUtil.nullability
 
+@K1Deprecation
 class KotlinClassConstructorInfoHandler : KotlinTypeArgumentInfoHandlerBase<ClassConstructorDescriptor>() {
     override fun fetchTypeParameters(parameterOwner: ClassConstructorDescriptor): List<TypeParameterDescriptor> =
         parameterOwner.typeParameters
@@ -29,6 +36,7 @@ class KotlinClassConstructorInfoHandler : KotlinTypeArgumentInfoHandlerBase<Clas
     override fun getArgumentListAllowedParentClasses() = setOf(KtUserType::class.java)
 }
 
+@K1Deprecation
 class KotlinClassTypeArgumentInfoHandler : KotlinTypeArgumentInfoHandlerBase<ClassDescriptor>() {
     override fun fetchTypeParameters(parameterOwner: ClassDescriptor) = parameterOwner.typeConstructor.parameters
 
@@ -41,6 +49,7 @@ class KotlinClassTypeArgumentInfoHandler : KotlinTypeArgumentInfoHandlerBase<Cla
     override fun getArgumentListAllowedParentClasses() = setOf(KtUserType::class.java)
 }
 
+@K1Deprecation
 class KotlinFunctionTypeArgumentInfoHandler : KotlinTypeArgumentInfoHandlerBase<FunctionDescriptor>() {
     override fun fetchTypeParameters(parameterOwner: FunctionDescriptor) = parameterOwner.typeParameters
 
@@ -57,6 +66,7 @@ class KotlinFunctionTypeArgumentInfoHandler : KotlinTypeArgumentInfoHandlerBase<
     override fun getArgumentListAllowedParentClasses() = setOf(KtCallElement::class.java)
 }
 
+@K1Deprecation
 abstract class KotlinTypeArgumentInfoHandlerBase<TParameterOwner : Any> : AbstractKotlinTypeArgumentInfoHandler() {
     protected abstract fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<TParameterOwner>?
     protected abstract fun fetchTypeParameters(parameterOwner: TParameterOwner): List<TypeParameterDescriptor>

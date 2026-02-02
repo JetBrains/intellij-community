@@ -996,7 +996,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void renameTarget(@NotNull RenameTarget renameTarget, @NotNull String newName) {
-    RenameKt.renameAndWait(getProject(), renameTarget, newName);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      RenameKt.renameAndWait(getProject(), renameTarget, newName);
+    });
   }
 
   @Override
@@ -1957,7 +1959,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myAllowDirt = canI;
   }
 
-  public @NotNull String getFoldingDescription(boolean withCollapseStatus) {
+  public @NotNull String getFoldingDescription(boolean withCollapseStatus, boolean withCaretLocation) {
     Editor topEditor = getHostEditor();
     return EdtTestUtil.runInEdtAndGet(() -> {
       IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
@@ -1965,14 +1967,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         policy.waitForHighlighting(getProject(), topEditor);
       }
       EditorTestUtil.buildInitialFoldingsInBackground(topEditor);
-      return getFoldingData(topEditor, withCollapseStatus);
+      return getFoldingData(topEditor, withCollapseStatus, withCaretLocation);
     });
   }
 
-  public static @NotNull String getFoldingData(Editor topEditor, boolean withCollapseStatus) {
+  public static @NotNull String getFoldingData(@NotNull Editor topEditor, boolean withCollapseStatus, boolean withCaretLocation) {
+    int caretOffset = withCaretLocation ? topEditor.getCaretModel().getOffset() : -1;
     return getTagsFromSegments(topEditor.getDocument().getText(),
                                Arrays.asList(topEditor.getFoldingModel().getAllFoldRegions()),
                                FOLD,
+                               caretOffset,
                                foldRegion -> "text='" + foldRegion.getPlaceholderText() + "'"
                                              + (withCollapseStatus ? " expand='" + foldRegion.isExpanded() + "'" : ""));
   }
@@ -1981,26 +1985,33 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                                         @NotNull Collection<? extends T> segments,
                                                                         @NotNull String tagName,
                                                                         @Nullable Function<? super T, String> attrCalculator) {
-    List<Border> borders =
+    return getTagsFromSegments(text, segments, tagName, -1, attrCalculator);
+  }
+  public static @NotNull <T extends Segment> String getTagsFromSegments(@NotNull String text,
+                                                                        @NotNull Collection<? extends T> segments,
+                                                                        @NotNull String tagName,
+                                                                        int caretLocationOffset,
+                                                                        @Nullable Function<? super T, String> attrCalculator) {
+    List<Border> segs =
       segments.stream()
         .flatMap(region -> Stream.of(
-          new Border(true, region.getStartOffset(), attrCalculator == null ? null : attrCalculator.fun(region)),
-          new Border(false, region.getEndOffset(), "")))
-        .sorted()
+          new Border(true, region.getStartOffset(), attrCalculator == null ? null : attrCalculator.fun(region), tagName),
+          new Border(false, region.getEndOffset(), "", tagName)))
         .toList();
-
+    List<Border> caret = caretLocationOffset == -1 ? List.of() : List.of(new Border(true, caretLocationOffset, null, "caret"));
+    Collection<Border> borders = ContainerUtil.sorted(ContainerUtil.concat(segs, caret), Comparator.comparingInt(Border::offset).thenComparing(b -> ObjectUtils.notNull(b.text(),"")).reversed());
     StringBuilder result = new StringBuilder(text);
     for (Border border : borders) {
       StringBuilder info = new StringBuilder();
       info.append('<');
       if (border.isLeftBorder) {
-        info.append(tagName);
+        info.append(border.tagName);
         if (border.text != null) {
           info.append(' ').append(border.text);
         }
       }
       else {
-        info.append('/').append(tagName);
+        info.append('/').append(border.tagName);
       }
       info.append('>');
       result.insert(border.offset, info);
@@ -2008,11 +2019,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return result.toString();
   }
 
-  private record Border(boolean isLeftBorder, int offset, @Nullable String text) implements Comparable<Border> {
-    @Override
-    public int compareTo(@NotNull Border o) {
-      return offset < o.offset ? 1 : -1;
-    }
+  private record Border(boolean isLeftBorder, int offset, @Nullable String text, @NotNull String tagName) {
   }
 
   private void testFoldingRegions(@NotNull String verificationFileName,
@@ -2056,7 +2063,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         throw new RuntimeException(e);
       }
     }
-    String actual = getFoldingDescription(doCheckCollapseStatus);
+    boolean wasCaretTagFoundInTestFile = ReadAction.compute(() -> editor.getCaretModel().getOffset() != 0);
+    String actual = getFoldingDescription(doCheckCollapseStatus, wasCaretTagFoundInTestFile);
     if (!expectedContent.equals(actual)) {
       throw new FileComparisonFailedError(verificationFile.getName(), expectedContent, actual, verificationFile.getPath());
     }
@@ -2232,9 +2240,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     var disposable = Disposer.newDisposable();
     var hintFixture = new EditorHintFixture(disposable);
     try {
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
       performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
       for (int i = 0; i < 10; i++) {
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       }
       var hintText = hintFixture.getCurrentHintText();

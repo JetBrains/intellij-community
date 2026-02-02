@@ -9,7 +9,7 @@ import com.intellij.usages.UsagePresentation;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 class JavaSliceDereferenceUsage extends JavaSliceUsage {
   JavaSliceDereferenceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {

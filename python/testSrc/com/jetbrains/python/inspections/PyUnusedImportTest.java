@@ -98,6 +98,11 @@ public class PyUnusedImportTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
+  // PY-76922
+  public void testAnnotationWithQuotedIntersectionUsesImportsFromTyping() {
+    doTest();
+  }
+
   public void testSuppressedForUnreachableCode() {
     doTest();
   }

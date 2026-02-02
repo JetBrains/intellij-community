@@ -3252,6 +3252,18 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-86223
+  public void testGenericTypeWithQuotedTypeParameterInTypeHint() {
+    doTestByText("""
+                   from typing import assert_type
+                   
+                   
+                   def foo[T](x: list["T"]):
+                       assert_type(x, list[T])
+                       assert_type(x, list["T"])
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

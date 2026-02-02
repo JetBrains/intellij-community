@@ -18,8 +18,6 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.util.findElementsByCommentPrefix
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import java.io.File
-import kotlin.collections.forEach
-import kotlin.collections.iterator
 
 abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCase() {
     val fixture: JavaCodeInsightTestFixture get() = myFixture

@@ -15,8 +15,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.output.*
+import org.jetbrains.plugins.terminal.block.output.BlockTerminalSearchSession
 import org.jetbrains.plugins.terminal.block.output.BlockTerminalSearchSession.Companion.isSearchInBlock
+import org.jetbrains.plugins.terminal.block.output.CommandBlock
+import org.jetbrains.plugins.terminal.block.output.TerminalOutputController
+import org.jetbrains.plugins.terminal.block.output.TerminalOutputModelListener
+import org.jetbrains.plugins.terminal.block.output.TerminalSelectionController
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptController
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptRenderingInfo
 import org.jetbrains.plugins.terminal.block.prompt.clearCommandAndResetChangesHistory

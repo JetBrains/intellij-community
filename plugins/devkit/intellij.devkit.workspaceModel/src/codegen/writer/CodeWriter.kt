@@ -26,7 +26,13 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FactoryMap
 import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
-import com.intellij.workspaceModel.codegen.engine.*
+import com.intellij.workspaceModel.codegen.engine.CodeGenerator
+import com.intellij.workspaceModel.codegen.engine.GenerationProblem
+import com.intellij.workspaceModel.codegen.engine.GenerationResult
+import com.intellij.workspaceModel.codegen.engine.GeneratorSettings
+import com.intellij.workspaceModel.codegen.engine.ObjClassGeneratedCode
+import com.intellij.workspaceModel.codegen.engine.ObjModuleFileGeneratedCode
+import com.intellij.workspaceModel.codegen.engine.SKIPPED_TYPES
 import kotlinx.coroutines.delay
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.io.JsonUtil
@@ -38,7 +44,7 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.resolve.ImportPath
 import java.io.IOException
 import java.net.URI
-import java.util.*
+import java.util.ServiceLoader
 import java.util.jar.Manifest
 import kotlin.time.Duration.Companion.seconds
 

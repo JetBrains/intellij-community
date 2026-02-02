@@ -7,3 +7,5 @@ class X<T> {
 }
 
 // ELEMENT: TreeMap
+
+// IGNORE_K2

@@ -4,7 +4,7 @@ package com.intellij.ide.starters
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.openapi.module.Module
 import com.intellij.util.messages.Topic
-import java.util.*
+import java.util.EventListener
 
 interface StarterModuleProcessListener : EventListener {
   fun moduleCreated(module: Module, moduleBuilder: ModuleBuilder, frameworkVersion: String?) {

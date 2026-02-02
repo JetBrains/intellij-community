@@ -6,32 +6,48 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.moduleInfo
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.MemberDescriptor
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoVariantsService
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.allImplementingDescriptors
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.util.application.executeCommand
-import org.jetbrains.kotlin.resolve.multiplatform.K1ExpectActualCompatibility
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.platform.konan.NativePlatformUnspecifiedTarget
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.resolve.multiplatform.*
+import org.jetbrains.kotlin.resolve.multiplatform.ExpectedActualResolver
+import org.jetbrains.kotlin.resolve.multiplatform.K1ExpectActualCompatibility
+import org.jetbrains.kotlin.resolve.multiplatform.findAnyActualsForExpected
+import org.jetbrains.kotlin.resolve.multiplatform.findCompatibleActualsForExpected
+import org.jetbrains.kotlin.resolve.multiplatform.onlyFromThisModule
 
+@K1Deprecation
 fun MemberDescriptor.expectedDescriptors(): List<DeclarationDescriptor> {
     val moduleInfo = module.moduleInfo
     val expectedForActual = if (moduleInfo !is LibrarySourceInfo) {
@@ -47,15 +63,18 @@ fun MemberDescriptor.expectedDescriptors(): List<DeclarationDescriptor> {
 }
 
 // TODO: Sort out the cases with multiple expected descriptors
+@K1Deprecation
 fun MemberDescriptor.expectedDescriptor(): DeclarationDescriptor? {
     return expectedDescriptors().firstOrNull()
 }
 
+@K1Deprecation
 fun KtDeclaration.expectedDeclarationIfAny(): KtDeclaration? {
     val expectedDescriptor = (resolveToDescriptorIfAny() as? MemberDescriptor)?.expectedDescriptor() ?: return null
     return DescriptorToSourceUtilsIde.getAnyDeclaration(project, expectedDescriptor) as? KtDeclaration
 }
 
+@K1Deprecation
 fun DeclarationDescriptor.liftToExpected(): DeclarationDescriptor? {
     if (this is MemberDescriptor) {
         return when {
@@ -73,24 +92,28 @@ fun DeclarationDescriptor.liftToExpected(): DeclarationDescriptor? {
     return null
 }
 
+@K1Deprecation
 fun KtDeclaration.liftToExpected(): KtDeclaration? {
     val descriptor = resolveToDescriptorIfAny()
     val expectedDescriptor = descriptor?.liftToExpected() ?: return null
     return DescriptorToSourceUtils.descriptorToDeclaration(expectedDescriptor) as? KtDeclaration
 }
 
+@K1Deprecation
 fun KtParameter.liftToExpected(): KtParameter? {
     val parameterDescriptor = resolveToParameterDescriptorIfAny()
     val expectedDescriptor = parameterDescriptor?.liftToExpected() ?: return null
     return DescriptorToSourceUtils.descriptorToDeclaration(expectedDescriptor) as? KtParameter
 }
 
+@K1Deprecation
 fun KtDeclaration.withExpectedActuals(): List<KtDeclaration> {
     val expect = liftToExpected() ?: return listOf(this)
     val actuals = expect.actualsForExpected()
     return listOf(expect) + actuals
 }
 
+@K1Deprecation
 fun ModuleDescriptor.hasActualsFor(descriptor: MemberDescriptor) =
     descriptor.findActualInModule(this).isNotEmpty()
 
@@ -119,6 +142,7 @@ private fun MemberDescriptor.isConstructorInActual(checkConstructor: Boolean) =
 private fun MemberDescriptor.isEnumEntryInActual() =
     (DescriptorUtils.isEnumEntry(this) && (containingDeclaration as? MemberDescriptor)?.isActual == true)
 
+@K1Deprecation
 fun DeclarationDescriptor.actualsForExpected(): Collection<DeclarationDescriptor> {
     if (this is MemberDescriptor) {
         if (!this.isExpect) return emptyList()
@@ -142,9 +166,11 @@ fun DeclarationDescriptor.actualsForExpected(): Collection<DeclarationDescriptor
     return emptyList()
 }
 
+@K1Deprecation
 fun KtDeclaration.hasAtLeastOneActual() = actualsForExpected().isNotEmpty()
 
 // null means "any platform" here
+@K1Deprecation
 fun KtDeclaration.actualsForExpected(module: Module? = null): Set<KtDeclaration> =
     resolveToDescriptorIfAny(BodyResolveMode.FULL)
         ?.actualsForExpected()
@@ -156,6 +182,7 @@ fun KtDeclaration.actualsForExpected(module: Module? = null): Set<KtDeclaration>
         .toSet()
 
 
+@K1Deprecation
 fun KtDeclaration.isExpectDeclaration(): Boolean {
     return when {
         hasExpectModifier() -> true
@@ -163,14 +190,17 @@ fun KtDeclaration.isExpectDeclaration(): Boolean {
     }
 }
 
+@K1Deprecation
 fun KtDeclaration.hasMatchingExpected() = (resolveToDescriptorIfAny() as? MemberDescriptor)?.expectedDescriptor() != null
 
+@K1Deprecation
 fun KtDeclaration.isEffectivelyActual(checkConstructor: Boolean = true): Boolean = when {
     hasActualModifier() -> true
     this is KtEnumEntry || checkConstructor && this is KtConstructor<*> -> containingClass()?.hasActualModifier() == true
     else -> false
 }
 
+@K1Deprecation
 fun KtDeclaration.runOnExpectAndAllActuals(checkExpect: Boolean = true, useOnSelf: Boolean = false, f: (KtDeclaration) -> Unit) {
     if (hasActualModifier()) {
         val expectElement = liftToExpected()
@@ -187,12 +217,14 @@ fun KtDeclaration.runOnExpectAndAllActuals(checkExpect: Boolean = true, useOnSel
     if (useOnSelf) f(this)
 }
 
+@K1Deprecation
 fun KtDeclaration.collectAllExpectAndActualDeclaration(withSelf: Boolean = true): Set<KtDeclaration> = when {
     isExpectDeclaration() -> actualsForExpected()
     hasActualModifier() -> liftToExpected()?.let { it.actualsForExpected() + it - this }.orEmpty()
     else -> emptySet()
 }.let { if (withSelf) it + this else it }
 
+@K1Deprecation
 fun KtDeclaration.runCommandOnAllExpectAndActualDeclaration(
     @NlsContexts.Command command: String = "",
     writeAction: Boolean = false,

@@ -1,3 +1,5 @@
+// IGNORE_K2
+// IGNORE_K2_K1
 //FILE: a/a.kt
 // DISABLE_STRICT_MODE
 package a
@@ -14,8 +16,8 @@ class Some {
     fun foo() {
         eval(object : R() {      // Line with negative score
             override fun run() {
-                val a = 1        // R: 4 L: 17
-                val b = 12       // R: 4 L: 18
+                val a = 1        // R: 4 L: 19
+                val b = 12       // R: 4 L: 20
             }
         })
     }

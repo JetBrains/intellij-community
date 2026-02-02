@@ -63,6 +63,10 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
   private final XStackFramesListColorsCache myFileColorsCache;
   private static final DataKey<XDebuggerFramesList> FRAMES_LIST = DataKey.create("FRAMES_LIST");
 
+  protected Project getProject() {
+    return myProject;
+  }
+
   private void copyStack() {
     List items = getModel().getItems();
     if (!items.isEmpty()) {

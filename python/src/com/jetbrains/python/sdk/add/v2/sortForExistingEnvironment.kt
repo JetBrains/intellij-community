@@ -3,12 +3,15 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModuleRootManager
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.isAssociatedWithAnotherModule
 import com.jetbrains.python.sdk.isAssociatedWithModule
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
@@ -45,15 +48,23 @@ private enum class Group {
   REDUNDANT
 }
 
+internal fun <P : PathHolder> Flow<List<PythonSelectableInterpreter<P>>?>.mapDistinctSortedForExistingEnvironment(
+  module: Module?,
+): Flow<List<PythonSelectableInterpreter<P>>?> = map { existing ->
+  existing ?: return@map null
+  val withUniquePath = existing.distinctBy { interpreter -> interpreter.homePath }
+  sortForExistingEnvironment(withUniquePath, module)
+}
+
 /**
  * Sorts and filters [pythons] to show them in "existing pythons" combobox in v2.
  * If [module] is set, v2 is displayed for the certain module.
  */
 @ApiStatus.Internal
-suspend fun <P: PathHolder> sortForExistingEnvironment(
+suspend fun <P : PathHolder> sortForExistingEnvironment(
   pythons: Collection<PythonSelectableInterpreter<P>>,
   module: Module?,
-  venvReader: VirtualEnvReader = VirtualEnvReader.Instance,
+  venvReader: VirtualEnvReader = VirtualEnvReader(),
 ): List<PythonSelectableInterpreter<P>> {
   val venvRoot = withContext(Dispatchers.IO) {
     venvReader.getVEnvRootDir()
@@ -62,7 +73,19 @@ suspend fun <P: PathHolder> sortForExistingEnvironment(
     val groupedPythons = pythons.groupBy {
       when (it) {
         is InstallableSelectableInterpreter -> error("$it is unexpected")
-        is DetectedSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> Unit // Those are pythons, and not SDKs
+        is DetectedSelectableInterpreter -> {
+          if (module != null) {
+            when (it.homePath) {
+              is PathHolder.Eel -> {
+                if (ModuleRootManager.getInstance(module).contentRoots.any { root -> it.homePath.path.startsWith(root.toNioPath()) }) {
+                  return@groupBy Group.ASSOC_WITH_PROJ_ROOT
+                }
+              }
+              is PathHolder.Target -> Unit
+            }
+          }
+        }
+        is ManuallyAddedSelectableInterpreter -> Unit // Those are pythons, and not SDKs
         is ExistingSelectableInterpreter -> { //SDKs
           if (module != null) {
             if (it.sdkWrapper.sdk.isAssociatedWithModule(module)) {

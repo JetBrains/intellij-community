@@ -12,7 +12,13 @@ import com.intellij.testFramework.LightPlatformTestCase
 import org.jdom.Element
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntry
-import org.jetbrains.kotlin.idea.formatter.*
+import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteCodeStyle
+import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteStyleGuide
+import org.jetbrains.kotlin.idea.formatter.KotlinPredefinedCodeStyle
+import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
+import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
+import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
+import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils

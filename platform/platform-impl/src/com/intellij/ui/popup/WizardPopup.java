@@ -23,7 +23,9 @@ import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.MnemonicsSearch;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.ui.wayland.WaylandUtilKt;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.TimerUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
@@ -350,31 +352,38 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
         return super.getPreferredSize();
       }
       final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      Point p = null;
-      if (focusOwner != null && focusOwner.isShowing()) {
-        p = focusOwner.getLocationOnScreen();
-      }
-
-      return computeNotBiggerDimension(super.getPreferredSize().getSize(), p);
+      return computeNotBiggerDimension(super.getPreferredSize().getSize(), focusOwner);
     }
 
-    private static Dimension computeNotBiggerDimension(Dimension ofContent, final Point locationOnScreen) {
-      int resultHeight;
-      if (locationOnScreen == null) {
-        resultHeight = ofContent.height > MAX_SIZE.height + 50 ? MAX_SIZE.height : ofContent.height;
-      }
-      else {
-        Rectangle r = ScreenUtil.getScreenRectangle(locationOnScreen);
-        resultHeight = Math.min(ofContent.height, r.height - (r.height / 4));
-      }
+    private static Dimension computeNotBiggerDimension(@NotNull Dimension ofContent, @Nullable Component focusOwner) {
+      int defaultHeight = ofContent.height > MAX_SIZE.height + 50 ? MAX_SIZE.height : ofContent.height;
+      @Nullable Integer computedHeight = computeNotBiggerHeight(ofContent, focusOwner);
+      int resultHeight = computedHeight != null ? computedHeight : defaultHeight;
 
       int resultWidth = Math.min(ofContent.width, MAX_SIZE.width);
-
       if (ofContent.height > resultHeight) {
         resultWidth += ScrollPaneFactory.createScrollPane().getVerticalScrollBar().getPreferredSize().getWidth();
       }
 
       return new Dimension(resultWidth, resultHeight);
+    }
+
+    private static @Nullable Integer computeNotBiggerHeight(@NotNull Dimension ofContent, @Nullable Component focusOwner) {
+      @Nullable Integer screenHeight = null;
+      if (StartupUiUtil.isWaylandToolkit()) {
+        screenHeight = WaylandUtilKt.getFakeScreenHeight(focusOwner);
+      }
+      else {
+        Point locationOnScreen = null;
+        if (focusOwner != null && focusOwner.isShowing()) {
+          locationOnScreen = focusOwner.getLocationOnScreen();
+        }
+        if (locationOnScreen != null) {
+          Rectangle r = ScreenUtil.getScreenRectangle(locationOnScreen);
+          screenHeight = r.height;
+        }
+      }
+      return screenHeight == null ? null : Math.min(ofContent.height, screenHeight - (screenHeight / 4));
     }
   }
 

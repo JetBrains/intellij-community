@@ -2,10 +2,8 @@
 package com.intellij.compose.ide.plugin.resources
 
 import com.intellij.compose.ide.plugin.gradleTooling.rt.ComposeResourcesModel
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.vfs.writeText

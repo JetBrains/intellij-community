@@ -15,9 +15,20 @@ import com.intellij.grazie.text.CheckerRunner
 import com.intellij.grazie.text.ProofreadingProblems
 import com.intellij.grazie.text.TextProblem
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.CustomFoldRegion
+import com.intellij.openapi.editor.CustomFoldRegionRenderer
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.HighlighterColors
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
@@ -38,14 +49,19 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.JBColor
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.IconUtil
 import com.intellij.util.text.TextRangeUtil
 import com.intellij.util.ui.JBUI
 import java.awt.Font
 import java.awt.Graphics2D
 import java.awt.geom.Rectangle2D
-import java.util.*
+import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Action
 import javax.swing.Icon
@@ -68,7 +84,7 @@ class GrazieMassApplyDialog : DialogWrapper {
   constructor(file: PsiFile, problems: ProofreadingProblems) : super(file.project) {
     this.text = file.text
     this.project = file.project
-    this.problems = problems.filterOutDuplicatedTypos()
+    this.problems = problems
     this.editor = createEditor()
     this.undoManager = DocumentUndoManager()
     massApply(MassOptions.SINGLE)

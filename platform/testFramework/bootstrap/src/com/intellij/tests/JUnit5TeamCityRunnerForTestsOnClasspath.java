@@ -62,10 +62,12 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
       // PostDiscoveryFilter runs on already discovered classes and methods (TestDescriptors), so we could run more complex checks,
       // like determining whether it belongs to the current bucket.
       PostDiscoveryFilter postDiscoveryFilter;
+      PostDiscoveryFilter performancePostDiscoveryFilter;
       Set<Path> classPathRoots;
       try {
         nameFilter = createClassNameFilter(classLoader);
         postDiscoveryFilter = createPostDiscoveryFilter(classLoader);
+        performancePostDiscoveryFilter = new JUnit5TeamCityRunnerForTestAllSuite.PerformancePostDiscoveryFilter();
         classPathRoots = getClassPathRoots(classLoader);
       }
       catch (Throwable e) {
@@ -85,7 +87,7 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
       LauncherDiscoveryRequest discoveryRequest = LauncherDiscoveryRequestBuilder.request()
         .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
         .selectors(selectors)
-        .filters(nameFilter, postDiscoveryFilter, EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID)).build();
+        .filters(nameFilter, postDiscoveryFilter, performancePostDiscoveryFilter, EngineFilter.excludeEngines(VintageTestDescriptor.ENGINE_ID)).build();
       TestPlan testPlan = launcher.discover(discoveryRequest);
       if (testPlan.containsTests()) {
         if (ourCollectTestsFile != null) {
@@ -101,10 +103,9 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
     }
     catch (Throwable e) {
       caughtException = e;
-      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestsOnClasspath", e);
     }
     finally {
-      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestsOnClasspath", null);
+      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestsOnClasspath", caughtException);
     }
 
     // Determine exit code OUTSIDE of try/catch/finally to avoid finally overriding the exit code

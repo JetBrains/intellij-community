@@ -16,7 +16,13 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.plus
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot

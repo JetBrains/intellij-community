@@ -8,6 +8,7 @@ import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.psi.resolve.PackageAvailabilitySpec
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 
@@ -51,6 +52,7 @@ class PyNoseTestConfiguration(project: Project, factory: PyNoseTestFactory) :
 class PyNoseTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFactory<PyNoseTestConfiguration>(type) {
   companion object {
     const val id = "Nosetests"
+    private val PACKAGE_SPEC = PackageAvailabilitySpec("nose", "nose.case.Test")
   }
 
   override fun createTemplateConfiguration(project: Project) = PyNoseTestConfiguration(project, this)
@@ -61,5 +63,5 @@ class PyNoseTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFacto
 
   override fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean = false
 
-  override val packageRequired: String = "nose"
+  override val packageSpec: PackageAvailabilitySpec = PACKAGE_SPEC
 }

@@ -2,7 +2,9 @@
 package com.intellij.tasks.core
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.lang.documentation.DocumentationMarkup.*
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_GRAYED
+import com.intellij.lang.documentation.DocumentationMarkup.GRAYED_END
+import com.intellij.lang.documentation.DocumentationMarkup.GRAYED_START
 import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer

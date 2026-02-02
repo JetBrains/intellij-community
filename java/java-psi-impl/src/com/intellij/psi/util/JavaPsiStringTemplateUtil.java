@@ -2,7 +2,13 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFragment;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;

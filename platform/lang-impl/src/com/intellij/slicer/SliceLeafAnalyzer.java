@@ -22,7 +22,11 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class SliceLeafAnalyzer {

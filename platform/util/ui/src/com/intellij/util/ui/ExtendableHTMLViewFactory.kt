@@ -16,21 +16,51 @@ import com.intellij.ui.svg.FitToWidthAdaptiveImageView
 import com.intellij.util.asSafely
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Extension
-import com.intellij.util.ui.html.*
+import com.intellij.util.ui.html.BlockViewEx
 import com.intellij.util.ui.html.CssAttributesEx.BORDER_RADIUS
+import com.intellij.util.ui.html.DetailsView
+import com.intellij.util.ui.html.FitToWidthImageView
+import com.intellij.util.ui.html.FormViewEx
+import com.intellij.util.ui.html.HRViewEx
+import com.intellij.util.ui.html.HTML_Tag_DETAILS
+import com.intellij.util.ui.html.HTML_Tag_SUMMARY
+import com.intellij.util.ui.html.HiDpiScalingImageView
+import com.intellij.util.ui.html.InlineViewEx
+import com.intellij.util.ui.html.LineViewEx
+import com.intellij.util.ui.html.ParagraphViewEx
+import com.intellij.util.ui.html.SummaryView
+import com.intellij.util.ui.html.WbrView
+import com.intellij.util.ui.html.getIntAttr
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.AlphaComposite
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Rectangle
+import java.awt.Shape
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.IOException
-import java.util.*
+import java.util.Base64
+import java.util.BitSet
 import javax.imageio.ImageIO
 import javax.swing.Icon
 import javax.swing.SizeRequirements
-import javax.swing.text.*
+import javax.swing.text.AbstractDocument
+import javax.swing.text.BadLocationException
+import javax.swing.text.Element
 import javax.swing.text.Position.Bias
-import javax.swing.text.html.*
+import javax.swing.text.SimpleAttributeSet
+import javax.swing.text.StyleConstants
+import javax.swing.text.View
+import javax.swing.text.ViewFactory
+import javax.swing.text.html.BlockView
+import javax.swing.text.html.CSS
+import javax.swing.text.html.FormView
+import javax.swing.text.html.HTML
+import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.HTMLEditorKit.HTMLFactory
+import javax.swing.text.html.ImageView
+import javax.swing.text.html.InlineView
 import javax.swing.text.html.ParagraphView
 import javax.swing.text.html.parser.ContentModel
 import javax.swing.text.html.parser.DTD
@@ -112,16 +142,6 @@ class ExtendableHTMLViewFactory internal constructor(
      */
     @JvmField
     val ICONS: Extension = IconExtension(emptyMap())
-
-    /**
-     * Render base64 encoded images
-     *
-     * Syntax is `<img src='data:image/png;base64,ENCODED_IMAGE_HERE'>`
-     */
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated(message = "Use HIDPI_IMAGES or FIT_TO_WIDTH_IMAGES, which support base64 as well.")
-    @JvmField
-    val BASE64_IMAGES: Extension = Base64ImagesExtension()
 
     /**
      * Wrap words that are too long, for example, A_TEST_TABLE_SINGLE_ROW_UPDATE_AUTOCOMMIT_A_FIK

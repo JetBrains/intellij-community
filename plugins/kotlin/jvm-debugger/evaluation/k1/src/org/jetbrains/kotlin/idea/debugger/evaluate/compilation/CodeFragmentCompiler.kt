@@ -3,15 +3,38 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.openapi.progress.ProcessCanceledException
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
+import org.jetbrains.kotlin.cli.extensionsStorage
 import org.jetbrains.kotlin.codegen.state.GenerationState
+import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
+import org.jetbrains.kotlin.compiler.plugin.registerInProject
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.doNotClearBindingContext
 import org.jetbrains.kotlin.config.languageVersionSettings
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorVisitor
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.InvalidModuleException
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
+import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
+import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
+import org.jetbrains.kotlin.descriptors.SourceElement
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
-import org.jetbrains.kotlin.descriptors.impl.*
+import org.jetbrains.kotlin.descriptors.impl.ClassConstructorDescriptorImpl
+import org.jetbrains.kotlin.descriptors.impl.ClassDescriptorImpl
+import org.jetbrains.kotlin.descriptors.impl.DeclarationDescriptorImpl
+import org.jetbrains.kotlin.descriptors.impl.SimpleFunctionDescriptorImpl
+import org.jetbrains.kotlin.descriptors.impl.SubpackagesScope
+import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
@@ -22,7 +45,16 @@ import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockCodeFragment
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.ResolveSession
 import org.jetbrains.kotlin.resolve.lazy.data.KtClassOrObjectInfo
@@ -36,9 +68,17 @@ import org.jetbrains.kotlin.resolve.scopes.MemberScopeImpl
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.scripting.compiler.plugin.extensions.ScriptLoweringExtension
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
-import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.ErasureProjectionComputer
+import org.jetbrains.kotlin.types.ErasureTypeAttributes
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.KotlinTypeFactory
+import org.jetbrains.kotlin.types.SimpleType
+import org.jetbrains.kotlin.types.TypeParameterUpperBoundEraser
+import org.jetbrains.kotlin.types.TypeUsage
+import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.utils.Printer
 
+@K1Deprecation
 class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
     fun compile(
         codeFragment: KtCodeFragment, filesToCompile: List<KtFile>,
@@ -69,9 +109,13 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
         val fragmentCompilerBackend = IRFragmentCompilerCodegen()
 
+        @OptIn(ExperimentalCompilerApi::class)
+        val extensionStorage = CompilerPluginRegistrar.ExtensionStorage()
         val compilerConfiguration = CompilerConfiguration().apply {
             languageVersionSettings = codeFragment.languageVersionSettings
             doNotClearBindingContext = true
+            @OptIn(ExperimentalCompilerApi::class)
+            extensionsStorage = extensionStorage
         }
 
         val parameterInfo = fragmentCompilerBackend.computeFragmentParameters(executionContext, codeFragment, bindingContext)
@@ -91,7 +135,11 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
         try {
             if (filesToCompile.any { it.isScript() }) {
-                IrGenerationExtension.registerExtension(project, ScriptLoweringExtension())
+                @OptIn(ExperimentalCompilerApi::class)
+                with(extensionStorage) {
+                    IrGenerationExtension.registerExtension(ScriptLoweringExtension())
+                    registerInProject(project)
+                }
             }
 
             codegenFactory.convertAndGenerate(filesToCompile, generationState, bindingContext)

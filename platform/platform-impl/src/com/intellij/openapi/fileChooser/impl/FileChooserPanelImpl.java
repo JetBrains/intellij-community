@@ -20,8 +20,11 @@ import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.Formats;
@@ -37,6 +40,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PlatformNioHelper;
+import com.intellij.util.system.OS;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
@@ -48,14 +52,13 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
@@ -103,10 +106,12 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private int myHistoryIndex = -1;  // points to the last added or used element
   private volatile boolean myReloadSuppressed = false;
 
-  FileChooserPanelImpl(@NotNull FileChooserDescriptor descriptor,
-                       @NotNull Runnable callback,
-                       @NotNull Consumer<@Nullable @DialogMessage String> errorSink,
-                       Path @NotNull [] recentPaths) {
+  FileChooserPanelImpl(
+    @NotNull FileChooserDescriptor descriptor,
+    @NotNull Runnable callback,
+    @NotNull Consumer<@Nullable @DialogMessage String> errorSink,
+    Path @NotNull [] recentPaths
+  ) {
     super(new GridBagLayout());
 
     myRegistry = FileTypeRegistry.getInstance();
@@ -680,10 +685,11 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         var attrs = Files.readAttributes(root, BasicFileAttributes.class);
         var virtualFile = new LazyDirectoryOrFile(null, root, attrs);
         var name = NioFiles.getFileName(root);
-        if (name.length() > 1 && name.endsWith(File.separator)) {
+        //noinspection IO_FILE_USAGE,UnnecessaryFullyQualifiedName
+        if (name.length() > 1 && name.endsWith(java.io.File.separator)) {
           name = name.substring(0, name.length() - 1);
         }
-        if (SystemInfo.isWindows) {
+        if (OS.CURRENT == OS.Windows) {
           try {
             var store = Files.getFileStore(root).name();
             if (!store.isBlank()) {
@@ -751,8 +757,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     return NioFiles.toPath(text);
   }
 
-  private static boolean isLocalFs(Path file) {
-    return file.getFileSystem() == FileSystems.getDefault();
+  private static boolean isLocalFs(Path path) {
+    return PlatformNioHelper.isLocal(path);
   }
 
   // faster than `Files#getFileStore` (at least for ZipFS); not suitable for local FS

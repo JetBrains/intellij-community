@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.AfterEventShouldBeFiredBeforeOtherListeners;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
@@ -174,7 +175,7 @@ public final class AsyncEventSupport {
     }
   }
 
-  private static void afterVfsChange(@NotNull List<AsyncFileListener.ChangeApplier> appliers) {
+  public static void afterVfsChange(@NotNull List<AsyncFileListener.ChangeApplier> appliers) {
     invokeAppliers(appliers, AsyncFileListener.ChangeApplier::afterVfsChange);
   }
 
@@ -183,8 +184,9 @@ public final class AsyncEventSupport {
                                        @NotNull List<AsyncFileListener.ChangeApplier> appliers,
                                        boolean excludeAsyncListeners) {
     beforeVfsChange(appliers);
+    List<AsyncFileListener.ChangeApplier> earlyAfterEventChangeAppliers = ContainerUtil.filter(appliers, applier -> applier instanceof AfterEventShouldBeFiredBeforeOtherListeners);
     try {
-      ((PersistentFSImpl)PersistentFS.getInstance()).processEventsImpl(events, excludeAsyncListeners);
+      ((PersistentFSImpl)PersistentFS.getInstance()).processEventsImpl(events, earlyAfterEventChangeAppliers, excludeAsyncListeners);
     }
     catch (Throwable e) {
       if (e instanceof ControlFlowException) {
@@ -193,7 +195,7 @@ public final class AsyncEventSupport {
       LOG.error(e);
     }
     finally {
-      afterVfsChange(appliers);
+      afterVfsChange(ContainerUtil.filter(appliers, applier -> !(applier instanceof AfterEventShouldBeFiredBeforeOtherListeners)));
     }
   }
 }

@@ -1,6 +1,7 @@
 package fleet.buildtool.s3
 
-import fleet.buildtool.platform.*
+import fleet.buildtool.platform.Platform
+import fleet.buildtool.platform.toS3DistributionSlug
 
 sealed class S3Version {
   abstract override fun toString(): String

@@ -19,7 +19,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
-import kotlin.sequences.any
 
 /**
  * Compilation dependencies should be resolved before launching the build process not to have:

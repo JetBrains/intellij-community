@@ -26,11 +26,16 @@ import sun.awt.image.SunWritableRaster
 import java.awt.Point
 import java.awt.Transparency
 import java.awt.color.ColorSpace
-import java.awt.image.*
+import java.awt.image.BufferedImage
+import java.awt.image.ComponentColorModel
+import java.awt.image.DataBuffer
+import java.awt.image.DataBufferByte
+import java.awt.image.DataBufferInt
+import java.awt.image.Raster
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.file.Path
-import java.util.*
+import java.util.Arrays
 import kotlin.time.Duration.Companion.seconds
 
 internal fun getSvgIconCacheFile(): Path = Path.of(PathManager.getSystemPath(), "icon-cache-v1.db")

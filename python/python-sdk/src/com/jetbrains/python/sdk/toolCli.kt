@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.fs.getPath
@@ -11,13 +10,11 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.where
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.impl.PySdkBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.isExecutable
-import kotlin.io.path.pathString
 
 /**
  * Detects the path to a CLI tool executable in the given Eel environment, returns `null` it no tool found

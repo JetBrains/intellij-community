@@ -17,17 +17,6 @@ public final class PercentageCoverageColumnInfo extends ColumnInfo<NodeDescripto
   private final Comparator<NodeDescriptor<?>> myComparator;
   private final CoverageSuitesBundle mySuitesBundle;
 
-  /**
-   * @deprecated Use {@link PercentageCoverageColumnInfo#PercentageCoverageColumnInfo(int, String, CoverageSuitesBundle)}
-   */
-  @Deprecated(forRemoval = true)
-  public PercentageCoverageColumnInfo(int columnIdx,
-                                      @NlsContexts.ColumnName String name,
-                                      final CoverageSuitesBundle suitesBundle,
-                                      @SuppressWarnings("unused") CoverageViewManager.StateBean stateBean) {
-    this(columnIdx, name, suitesBundle);
-  }
-
   public PercentageCoverageColumnInfo(int columnIdx,
                                       @NlsContexts.ColumnName String name,
                                       final CoverageSuitesBundle suitesBundle) {

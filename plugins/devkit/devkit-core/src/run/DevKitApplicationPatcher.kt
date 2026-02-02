@@ -4,7 +4,11 @@ package org.jetbrains.idea.devkit.run
 import com.intellij.execution.JavaRunConfigurationBase
 import com.intellij.execution.RunConfigurationExtension
 import com.intellij.execution.application.ApplicationConfiguration
-import com.intellij.execution.configurations.*
+import com.intellij.execution.configurations.DebuggingRunnerData
+import com.intellij.execution.configurations.JavaParameters
+import com.intellij.execution.configurations.ParametersList
+import com.intellij.execution.configurations.RunConfigurationBase
+import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.scratch.JavaScratchConfiguration
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger

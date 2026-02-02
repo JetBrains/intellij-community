@@ -6,11 +6,12 @@ package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.idea.artifacts.KotlinNativeVersion.resolvedKotlinNativeVersion
 import org.jetbrains.kotlin.konan.file.unzipTo
 import java.io.File
 import java.io.FileInputStream
 import java.nio.file.Paths
-import java.util.*
+import java.util.Properties
 import kotlin.io.path.exists
 
 object KotlinNativeVersion {

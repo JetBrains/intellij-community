@@ -776,9 +776,12 @@ public final class PlatformTestUtil {
   }
 
   public static void waitForAllBackgroundActivityToCalmDown() {
+    // A more liberal threshold helps avoid unnecessary waits if only tiny userspace slices occur.
+    // Configurable via system property: idea.test.waitForAllBackgroundCalm.userMsThreshold (default: 10 ms).
+    long thresholdMs = Long.getLong("idea.test.waitForAllBackgroundCalm.userMsThreshold", 10L);
     for (var i = 0; i < 50; i++) {
       var data = CpuUsageData.measureCpuUsage(() -> TimeoutUtil.sleep(100));
-      if (!data.hasAnyActivityBesides(Thread.currentThread())) {
+      if (!data.hasAnyActivityBesides(Thread.currentThread(), Math.max(0L, thresholdMs))) {
         break;
       }
     }

@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":mcpserver_resources"],
   deps = [
+    "@lib//:mcpserver-toml4j",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
@@ -69,6 +70,7 @@ jvm_library(
     "//libraries/ktor/client-cio:libraries-ktor-client-cio",
     "//libraries/ktor/network-tls:libraries-ktor-network-tls",
     "@lib//:mcpserver-ktor-server-cio-internal",
+    "//platform/eel",
     "//libraries/ktor/io",
     "//platform/execution",
     "//platform/diagnostic/telemetry",

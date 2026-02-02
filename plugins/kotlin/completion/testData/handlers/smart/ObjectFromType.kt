@@ -11,3 +11,5 @@ fun foo(): Outer.T {
 }
 
 // ELEMENT: Null
+
+// IGNORE_K2

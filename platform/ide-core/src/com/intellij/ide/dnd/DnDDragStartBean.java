@@ -2,7 +2,7 @@
 
 package com.intellij.ide.dnd;
 
-import java.awt.*;
+import java.awt.Point;
 
 public class DnDDragStartBean {
   private final Object myAttachedObject;

@@ -3,11 +3,23 @@ package com.intellij.tools.launch.ide.splitMode
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.tools.launch.docker.BindMount
 import com.intellij.tools.launch.ide.splitMode.IdeLauncher.logger
-import com.intellij.tools.launch.ide.splitMode.dsl.*
+import com.intellij.tools.launch.ide.splitMode.dsl.DockerBuilder
+import com.intellij.tools.launch.ide.splitMode.dsl.IdeBackendBuilder
+import com.intellij.tools.launch.ide.splitMode.dsl.IdeBackendInDockerBuilder
+import com.intellij.tools.launch.ide.splitMode.dsl.IdeBuilder
+import com.intellij.tools.launch.ide.splitMode.dsl.IdeFrontendBuilder
+import com.intellij.tools.launch.ide.splitMode.dsl.LaunchIdeBuilder
+import com.intellij.tools.launch.ide.splitMode.dsl.Product
 import com.intellij.tools.launch.os.ProcessOutputInfo
 import com.intellij.tools.launch.os.terminal.AnsiColor
 import com.intellij.tools.launch.os.terminal.colorize
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
 
 suspend fun CoroutineScope.launchIde(init: LaunchIdeBuilder.() -> Unit): LaunchIdeResult =

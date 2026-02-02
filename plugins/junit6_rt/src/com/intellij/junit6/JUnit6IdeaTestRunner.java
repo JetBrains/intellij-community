@@ -2,8 +2,13 @@
 package com.intellij.junit6;
 
 import com.intellij.junit5.JUnit5IdeaTestRunner;
+import com.intellij.junit5.JUnit5TestRunnerHelper;
 
-@SuppressWarnings("unused")
 public final class JUnit6IdeaTestRunner extends JUnit5IdeaTestRunner {
-  // TODO Add support for JUnit 6 specific features like Cancellation token
+  private final JUnit5TestRunnerHelper myHelper = new JUnit6TestRunnerHelper();
+
+  @Override
+  protected JUnit5TestRunnerHelper getHelper() {
+    return myHelper;
+  }
 }

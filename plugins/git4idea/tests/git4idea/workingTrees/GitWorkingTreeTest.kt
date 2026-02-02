@@ -81,7 +81,7 @@ internal abstract class GitWorkingTreeTest : GitWorkingTreeTestBase() {
     val createdWorkTreeRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newWorkingTreeRootPath)
     assertNotNull(createdWorkTreeRoot)
 
-    repo.workingTreeHolder.ensureUpToDateForTests()
+    repo.ensureWorkingTreesUpToDateForTests()
     val createdWorkingTrees = repo.workingTreeHolder.getWorkingTrees()
     val workingTree = createdWorkingTrees.firstOrNull { it.path.path.endsWith(treeRoot) }
     assertNotNull(workingTree)
@@ -90,7 +90,7 @@ internal abstract class GitWorkingTreeTest : GitWorkingTreeTestBase() {
     val removedWorkingTree = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newWorkingTreeRootPath)
     assertNull(removedWorkingTree)
 
-    repo.workingTreeHolder.ensureUpToDateForTests()
+    repo.ensureWorkingTreesUpToDateForTests()
     assertSameElements(repo.workingTreeHolder.getWorkingTrees(), getExpectedDefaultWorkingTrees())
   }
 

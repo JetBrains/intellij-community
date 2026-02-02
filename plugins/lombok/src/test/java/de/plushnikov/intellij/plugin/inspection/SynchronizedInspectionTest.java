@@ -1,9 +1,6 @@
 package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import de.plushnikov.intellij.plugin.LombokTestUtil;
-import org.jetbrains.annotations.NotNull;
 
 public class SynchronizedInspectionTest extends LombokInspectionTest {
 

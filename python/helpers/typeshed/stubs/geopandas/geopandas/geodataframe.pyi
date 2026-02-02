@@ -221,7 +221,7 @@ class GeoDataFrame(GeoPandasBase, pd.DataFrame):  # type: ignore[misc]
         self,
         path: str | os.PathLike[str] | SupportsWrite[Incomplete],
         index: bool | None = None,
-        compression: Literal["snappy", "gzip", "brotli"] | None = "snappy",
+        compression: Literal["snappy", "gzip", "brotli", "lz4", "zstd"] | None = "snappy",
         geometry_encoding: _GeomEncoding = "WKB",
         write_covering_bbox: bool = False,
         schema_version: str | None = None,

@@ -2,7 +2,12 @@
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
 import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.AnnotationVisitor;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.util.HashMap;
 import java.util.Map;

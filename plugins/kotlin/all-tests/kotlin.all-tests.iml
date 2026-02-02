@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.eval4j" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.native.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.test.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="RUNTIME" />
@@ -28,14 +29,12 @@
     <orderEntry type="module" module-name="kotlin.j2k.k1.new.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.shared.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jps.graphImplementationTests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.copyright.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.i18n.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.featuresTrainer.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.kotlin.projectWizard.cli" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.compose" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.scripting-support" scope="RUNTIME" />
@@ -59,7 +58,7 @@
     <orderEntry type="module" module-name="kotlin.completion.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.completion.ml.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.common.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.common.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.facet.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.injection.tests" scope="RUNTIME" />

@@ -5,7 +5,11 @@ import com.intellij.psi.stubs.StubInputStream
 import com.intellij.psi.stubs.StubOutputStream
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyDictLiteralExpression
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveUtil
@@ -13,7 +17,6 @@ import com.jetbrains.python.psi.stubs.PyTypedDictFieldStub
 import com.jetbrains.python.psi.stubs.PyTypedDictStub
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL_PARAMETER
 import java.io.IOException
-import java.util.*
 
 class PyTypedDictStubImpl private constructor(
   private val myCalleeName: QualifiedName,

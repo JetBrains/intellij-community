@@ -2,12 +2,20 @@ package training.featuresSuggester.listeners
 
 import com.intellij.codeInsight.completion.actions.CodeCompletionAction
 import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionResult
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.actions.*
+import com.intellij.openapi.editor.actions.BackspaceAction
+import com.intellij.openapi.editor.actions.CopyAction
+import com.intellij.openapi.editor.actions.CutAction
+import com.intellij.openapi.editor.actions.EscapeAction
+import com.intellij.openapi.editor.actions.IncrementalFindAction
+import com.intellij.openapi.editor.actions.PasteAction
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -15,7 +23,22 @@ import training.featuresSuggester.SuggestingUtils
 import training.featuresSuggester.SuggestingUtils.asString
 import training.featuresSuggester.SuggestingUtils.getSelection
 import training.featuresSuggester.SuggestingUtils.handleAction
-import training.featuresSuggester.actions.*
+import training.featuresSuggester.actions.BeforeCompletionChooseItemAction
+import training.featuresSuggester.actions.BeforeEditorBackspaceAction
+import training.featuresSuggester.actions.BeforeEditorCodeCompletionAction
+import training.featuresSuggester.actions.BeforeEditorCopyAction
+import training.featuresSuggester.actions.BeforeEditorCutAction
+import training.featuresSuggester.actions.BeforeEditorEscapeAction
+import training.featuresSuggester.actions.BeforeEditorFindAction
+import training.featuresSuggester.actions.BeforeEditorPasteAction
+import training.featuresSuggester.actions.CompletionChooseItemAction
+import training.featuresSuggester.actions.EditorBackspaceAction
+import training.featuresSuggester.actions.EditorCodeCompletionAction
+import training.featuresSuggester.actions.EditorCopyAction
+import training.featuresSuggester.actions.EditorCutAction
+import training.featuresSuggester.actions.EditorEscapeAction
+import training.featuresSuggester.actions.EditorFindAction
+import training.featuresSuggester.actions.EditorPasteAction
 import training.featuresSuggester.settings.FeatureSuggesterSettings
 
 class EditorActionsListener : AnActionListener {

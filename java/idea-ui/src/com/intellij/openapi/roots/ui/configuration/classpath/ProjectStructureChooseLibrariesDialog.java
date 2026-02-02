@@ -19,10 +19,16 @@ import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JButton;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTablesDialog {

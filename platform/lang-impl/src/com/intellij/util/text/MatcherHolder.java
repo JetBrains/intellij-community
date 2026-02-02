@@ -4,7 +4,7 @@ package com.intellij.util.text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @author Konstantin Bulenkov

@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.isInheritorOf
+import com.intellij.codeInspection.registerUProblem
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
@@ -10,9 +14,24 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UastCallKind
+import org.jetbrains.uast.UastQualifiedExpressionAccessType
+import org.jetbrains.uast.UastVisibility
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin
 import org.jetbrains.uast.generate.replace
+import org.jetbrains.uast.getContainingUClass
+import org.jetbrains.uast.getContainingUVariable
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.resolveToUElement
+import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspectionBase() {

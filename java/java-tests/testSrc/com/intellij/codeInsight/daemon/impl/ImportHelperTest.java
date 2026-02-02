@@ -12,7 +12,12 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -34,7 +39,19 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
@@ -44,6 +61,7 @@ import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -284,13 +302,13 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     ImportClassFix fix = createImportFix((PsiJavaCodeReferenceElement)ref);
     ImportClassFixBase.Result result = fix.doFix(getEditor(), true, false, true);
     assertEquals(ImportClassFixBase.Result.POPUP_NOT_SHOWN, result);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     getEditor().getCaretModel().moveToOffset(offset - 1);
     fix = createImportFix((PsiJavaCodeReferenceElement)ref);
     result = fix.doFix(getEditor(), true, false, true);
     assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     assertEmpty(highlightErrors());
   }
@@ -381,7 +399,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     backspace();
 
     assertSize(1, highlightErrors());
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     int offset = getEditor().getCaretModel().getOffset();
     PsiReference ref = getFile().findReferenceAt(offset);
@@ -389,7 +407,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
 
     ImportClassFixBase.Result result = createImportFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false, true);
     assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     assertEmpty(highlightErrors());
   }
@@ -442,7 +460,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     type(" xxx"); // make undoable to enable showing autoimports
     doHighlighting();
     assertTrue(SHOWN.get());
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     getEditor().getSelectionModel().setSelection(0,null, 1); // to enable escape
     escape();
     SHOWN.set(false);
@@ -533,7 +551,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_COMMENT_BLOCK);
 
     doHighlighting();
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     assertEmpty(highlightErrors());
 
@@ -576,7 +594,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     assertNotNull(PsiDocumentManager.getInstance(getProject()).getPsiFile(otherEditor.getDocument()));
     doHighlighting();
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     assertEmpty(highlightErrors());
     assertOneImportAdded("x.OtherClass.SomeOtherMethodClass12");
@@ -601,7 +619,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
 
     type("/* */");
     doHighlighting();
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     assertNoImportsAdded();
   }
 
@@ -671,7 +689,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
 
     type("/* */");
     doHighlighting();
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     assertNoImportsAdded();
   }
@@ -691,7 +709,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
       type(" ");
       backspace();
       highlightErrors();
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
       assertOneImportAdded("java.util.ArrayList");
     }
@@ -714,17 +732,17 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     assertEmpty(errs);
 
     type("/* ");
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     errs = highlightErrors();
     assertNotEmpty(errs);
     assertOneImportAdded("java.util.ArrayList");
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     type(" */ ");
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     errs = highlightErrors();
     assertEmpty(errs);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     assertOneImportAdded("java.util.ArrayList");
   }
@@ -741,7 +759,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     assertNoImportsAdded();
     type("/* */");
     doHighlighting();
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     assertNoImportsAdded();
   }
 
@@ -858,7 +876,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100); // make sure editor is visible - auto-import works only for visible area
     getEditor().getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100); // make sure editor is visible - auto-import works only for visible area
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
     Editor editor = getEditor();
     TextRange visibleRange = editor.calculateVisibleRange();
@@ -891,7 +909,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
        }}""";
     configureByText(text);
 
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
     Editor editor = getEditor();
 

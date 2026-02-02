@@ -127,11 +127,7 @@ private fun buildPluginContentReport(pluginToEntries: List<PluginBuildDescriptor
       fileToEntry.computeIfAbsent(presentablePath) { mutableListOf() }.add(entry)
     }
 
-    writer.writeStartObject()
-    writer.writeStringField("mainModule", plugin.layout.mainModule)
-    if (plugin.os != null) {
-      writer.writeStringField("os", plugin.os.osId)
-    }
+    writePluginStart(writer, plugin)
 
     val contentModuleReason = "<- ${plugin.layout.mainModule} (plugin content)"
 
@@ -247,7 +243,7 @@ private fun buildPlatformContentReport(
         // duplicate, e.g. OS-specific plugin
         continue
       }
-      writer.writeString(plugin.layout.mainModule)
+      writePlugin(writer, plugin)
     }
   }
 
@@ -269,6 +265,22 @@ private fun buildPlatformContentReport(
   writer.writeEndArray()
   writer.close()
   return out.toByteArray()
+}
+
+private fun writePlugin(writer: JsonGenerator, plugin: PluginBuildDescriptor) {
+  writePluginStart(writer, plugin)
+  writer.writeEndObject()
+}
+
+private fun writePluginStart(writer: JsonGenerator, plugin: PluginBuildDescriptor) {
+  writer.writeStartObject()
+  writer.writeStringField("mainModule", plugin.layout.mainModule)
+  if (plugin.os != null) {
+    writer.writeStringField("os", plugin.os.osId)
+  }
+  if (plugin.arch != null) {
+    writer.writeStringField("arch", plugin.arch.name)
+  }
 }
 
 private fun groupPlatformEntries(
@@ -528,7 +540,7 @@ private fun writeModuleDependents(writer: JsonGenerator, data: ProjectLibraryDat
 // Helper functions for deduplication
 
 private fun createPluginKey(plugin: PluginBuildDescriptor): String {
-  return plugin.layout.mainModule + (if (plugin.os == null) "" else " (os=${plugin.os})")
+  return plugin.layout.mainModule + (if (plugin.os == null) "" else " (os=${plugin.os})") + (if (plugin.arch == null) "" else " (arch=${plugin.arch.name})")
 }
 
 private fun writeStringArray(writer: YAMLGenerator, items: Collection<String>) {

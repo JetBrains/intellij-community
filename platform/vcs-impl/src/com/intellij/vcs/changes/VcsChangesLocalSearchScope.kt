@@ -15,7 +15,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.scope.RangeBasedLocalSearchScope
 import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Objects
 
 @Suppress("EqualsOrHashCode")
 class VcsChangesLocalSearchScope(private val myProject: Project,

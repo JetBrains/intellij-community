@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
 
-import java.awt.*;
+import java.awt.BorderLayout;
 
 public class HgPushOptionsPanel extends VcsPushOptionsPanel {
 

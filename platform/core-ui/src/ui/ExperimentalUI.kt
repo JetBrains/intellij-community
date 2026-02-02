@@ -10,7 +10,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -33,6 +32,18 @@ abstract class ExperimentalUI {
     // Should be unset by the client, or it will be unset on the IDE close.
     const val NEW_UI_SWITCH: String = "experimental.ui.switch"
     var forcedSwitchedUi: Boolean = false
+
+    const val SWITCHED_FROM_CLASSIC_TO_ISLANDS: String = "switched.from.classic.to.islands"
+    val switchedFromClassicToIslands: Boolean?
+      get() = EarlyAccessRegistryManager.getString(SWITCHED_FROM_CLASSIC_TO_ISLANDS)?.toBoolean()
+
+    @Volatile
+    var switchedFromClassicToIslandsInSession: Boolean = false
+    @Volatile
+    var showNewUiOnboarding: Boolean = false
+    @Volatile
+    var cleanUpClassicUIFromDisabled: Runnable? = null
+
     var wasThemeReset = false
 
     @Internal
@@ -51,7 +62,6 @@ abstract class ExperimentalUI {
     }
 
     @JvmStatic
-    @RequiresBlockingContext
     fun getInstance(): ExperimentalUI = ApplicationManager.getApplication().service<ExperimentalUI>()
 
     @JvmStatic

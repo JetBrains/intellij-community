@@ -13,7 +13,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 public abstract class AbstractElementSignatureProvider implements ElementSignatureProvider {
   private static final int CHILDREN_COUNT_LIMIT = 100;

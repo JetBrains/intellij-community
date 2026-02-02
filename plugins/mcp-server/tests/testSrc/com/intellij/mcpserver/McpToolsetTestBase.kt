@@ -7,7 +7,11 @@ import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvid
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.*
+import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.testFramework.junit5.fixture.pathInProjectFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.sourceRootFixture
+import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.sse.SSE
 import io.ktor.client.request.header

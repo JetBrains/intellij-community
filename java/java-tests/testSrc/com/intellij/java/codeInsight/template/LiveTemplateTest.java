@@ -12,8 +12,33 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.impl.*;
+import com.intellij.codeInsight.template.EverywhereContextType;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.JavaCodeContextType;
+import com.intellij.codeInsight.template.JavaCommentContextType;
+import com.intellij.codeInsight.template.JavaStringContextType;
+import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateActionContext;
+import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInsight.template.impl.EmptyNode;
+import com.intellij.codeInsight.template.impl.InvokeTemplateAction;
+import com.intellij.codeInsight.template.impl.ListTemplatesHandler;
+import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
+import com.intellij.codeInsight.template.impl.MacroCallNode;
+import com.intellij.codeInsight.template.impl.SurroundWithTemplateHandler;
+import com.intellij.codeInsight.template.impl.TemplateContext;
+import com.intellij.codeInsight.template.impl.TemplateContextTypes;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.codeInsight.template.impl.TextExpression;
+import com.intellij.codeInsight.template.impl.VariableNode;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
 import com.intellij.codeInsight.template.macro.ConcatMacro;
 import com.intellij.codeInsight.template.macro.FilePathMacroBase;
@@ -21,7 +46,13 @@ import com.intellij.codeInsight.template.macro.SplitWordsMacro;
 import com.intellij.ide.DataManager;
 import com.intellij.internal.statistic.FUCollectorTestCase;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.JDOMUtil;
@@ -37,10 +68,10 @@ import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.jetbrains.fus.reporting.model.lion3.LogEvent;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -67,7 +98,7 @@ public class LiveTemplateTest extends LiveTemplateTestCase {
     CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable());
 
     writeCommand(() -> manager.startTemplate(getEditor(), '\t'));
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     checkResultByText(expected);
   }
 
@@ -1011,7 +1042,7 @@ public class LiveTemplateTest extends LiveTemplateTestCase {
     template.addVariable("CS", "completeSmart()", "", true);
     template.addVariable("S", "", "\"\"", true);
     getTemplateManager().startTemplate(myFixture.getEditor(), template);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     assertTrue(myFixture.getEditor().getDocument().getText().contains("foo(this, \"\");"));
     assertNotNull(getState());
@@ -1239,7 +1270,7 @@ public class LiveTemplateTest extends LiveTemplateTestCase {
 
     Editor injectionEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myFixture.getEditor(), file);
     manager.startTemplate(injectionEditor, template);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     assertNotNull(getState());
     myFixture.type("123\t");

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.imports.canBeAddedToImport
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
+@K1Deprecation
 class IntroduceImportAliasIntention : SelfTargetingRangeIntention<KtNameReferenceExpression>(
     KtNameReferenceExpression::class.java,
     KotlinBundle.messagePointer("introduce.import.alias")

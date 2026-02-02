@@ -3,18 +3,28 @@
 package org.jetbrains.kotlin.idea.debugger.sequence.lib.sequence
 
 import com.intellij.debugger.streams.core.lib.IntermediateOperation
-import com.intellij.debugger.streams.core.lib.impl.*
+import com.intellij.debugger.streams.core.lib.impl.ConcatOperation
+import com.intellij.debugger.streams.core.lib.impl.DistinctOperation
+import com.intellij.debugger.streams.core.lib.impl.FilterOperation
+import com.intellij.debugger.streams.core.lib.impl.FlatMappingOperation
+import com.intellij.debugger.streams.core.lib.impl.IntermediateOperationBase
+import com.intellij.debugger.streams.core.lib.impl.LibrarySupportBase
+import com.intellij.debugger.streams.core.lib.impl.MappingOperation
+import com.intellij.debugger.streams.core.lib.impl.OrderBasedOperation
+import com.intellij.debugger.streams.core.lib.impl.SortedOperation
 import com.intellij.debugger.streams.core.resolve.AppendResolver
 import com.intellij.debugger.streams.core.resolve.ChunkedResolver
 import com.intellij.debugger.streams.core.resolve.PairMapResolver
 import com.intellij.debugger.streams.core.trace.impl.handler.unified.DistinctTraceHandler
 import com.intellij.debugger.streams.core.trace.impl.interpret.SimplePeekCallTraceInterpreter
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.debugger.sequence.resolve.FilteredMapResolver
 import org.jetbrains.kotlin.idea.debugger.sequence.resolve.WindowedResolver
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.sequence.FilterIsInstanceHandler
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.sequence.KotlinDistinctByHandler
 
+@K1Deprecation
 class KotlinSequencesSupport : LibrarySupportBase() {
     init {
         addIntermediateOperationsSupport(

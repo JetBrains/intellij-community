@@ -195,16 +195,18 @@ private suspend fun jsonResponse(
 }
 
 private fun createModuleOutputProvider(projectRoot: Path, scope: CoroutineScope): ModuleOutputProvider {
+  val useTestCompilationOutput = true
   val project = JpsSerializationManager.getInstance().loadProject(
     projectRoot.toString(),
     mapOf("MAVEN_REPOSITORY" to JpsMavenSettings.getMavenRepositoryPath()),
     false
   )
-  val bazelOutputRoot = bazelOutputRoot ?: return JpsModuleOutputProvider(project)
+  val bazelOutputRoot = bazelOutputRoot ?: return JpsModuleOutputProvider(project, useTestCompilationOutput = useTestCompilationOutput)
   return BazelModuleOutputProvider(
     modules = project.modules,
     projectHome = projectRoot,
     bazelOutputRoot = bazelOutputRoot,
     scope = scope,
+    useTestCompilationOutput = useTestCompilationOutput,
   )
 }

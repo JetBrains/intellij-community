@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.execution.ExecutionException;
@@ -6,12 +6,10 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.execution.wsl.WSLDistribution;
-import com.intellij.execution.wsl.WslPath;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.system.OS;
@@ -19,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.junit.AssumptionViolatedException;
+import org.junit.jupiter.api.Assertions;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -26,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.text.Normalizer;
 import java.util.*;
 import java.util.function.Consumer;
@@ -115,7 +115,7 @@ public final class IoTestUtil {
   }
 
   public static void assumeUnix() throws AssumptionViolatedException {
-    assumeTrue("Need Unix, can't run on " + OS.CURRENT, OS.isGenericUnix());
+    assumeFalse("Need Unix, can't run on " + OS.CURRENT, OS.CURRENT == OS.Windows);
   }
 
   public static void assumeCaseSensitiveFS() throws AssumptionViolatedException {
@@ -126,13 +126,23 @@ public final class IoTestUtil {
     assumeFalse("Assumed case-insensitive FS but got " + OS.CURRENT, SystemInfo.isFileSystemCaseSensitive);
   }
 
-  public static void assumeWslPresence() throws AssumptionViolatedException {
-    assumeTrue("'wsl.exe' not found in %Path%", WSLDistribution.findWslExe() != null);
+  public static void assumeCaseInsensitiveFS(@NotNull Path directory) throws AssumptionViolatedException {
+    try {
+      var attributes = Files.readAttributes(directory, BasicFileAttributes.class);
+      if (attributes instanceof CaseSensitivityAttribute sensitivity && sensitivity.getCaseSensitivity().isKnown()) {
+        assumeTrue("Assumed case-insensitive directory but got " + directory, sensitivity.getCaseSensitivity().isInsensitive());
+      }
+      else {
+        assumeFalse("Assumed case-insensitive FS but got " + OS.CURRENT, SystemInfo.isFileSystemCaseSensitive);
+      }
+    }
+    catch (IOException e) {
+      Assertions.fail("Failed to read case sensitivity attribute of " + directory, e);
+    }
   }
 
-  public static @NotNull Path createWslTempDir(@NotNull String wslVm, @NotNull String testName) throws IOException {
-    var parent = Path.of(new WslPath(wslVm, "/tmp").toWindowsUncPath());
-    return Files.createTempDirectory(parent, UsefulTestCase.TEMP_DIR_MARKER + testName + "_");
+  public static void assumeWslPresence() throws AssumptionViolatedException {
+    assumeTrue("'wsl.exe' not found in %Path%", WSLDistribution.findWslExe() != null);
   }
 
   public static @NotNull File createJunction(@NotNull String target, @NotNull String junction) {

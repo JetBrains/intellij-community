@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.resolve.lazy
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 
+@K1Deprecation
 interface ProbablyNothingCallableNames {
     fun functionNames(): Collection<String>
     fun propertyNames(): Collection<String>

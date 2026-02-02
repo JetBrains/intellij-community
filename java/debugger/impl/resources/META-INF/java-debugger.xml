@@ -82,6 +82,8 @@
                     interface="com.intellij.debugger.engine.SteppingListener" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.dumpItemsProvider"
                     interface="com.intellij.debugger.impl.ThreadDumpItemsProviderFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.debugger.agentParametersModifier"
+                    interface="com.intellij.debugger.engine.DebuggerAgentParametersModifier" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -167,8 +169,6 @@
 
     <notificationGroup id="HotSwap" displayType="TOOL_WINDOW" toolWindowId="Debug" bundle="messages.JavaDebuggerBundle"
                        key="notification.group.hotswap"/>
-    <notificationGroup id="AsyncStackTraces" displayType="BALLOON" bundle="messages.JavaDebuggerBundle"
-                       key="async.stack.traces.notification.group"/>
 
     <debugger.dfaAssistProvider language="JAVA" implementationClass="com.intellij.debugger.engine.dfaassist.java.JavaDfaAssistProvider"/>
 
@@ -178,8 +178,6 @@
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.debugger.engine.evaluation.statistics.JavaDebuggerEvaluatorStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.ui.breakpoints.JavaBreakpointsUsageCollector"/>
-
-    <statistics.validation.customValidationRule implementation="com.intellij.debugger.statistics.ThreadDumpTriggeringExceptionValidator"/>
 
     <feedback.idleFeedbackSurvey implementation="com.intellij.debugger.feedback.KotlinDebuggerFeedbackSurvey"/>
     <debugger.steppingListener implementation="com.intellij.debugger.engine.CancelingSteppingListener"/>
@@ -250,7 +248,7 @@
                  description="Use memory agent to estimate retained sizes in the Instances Window"/>
     <registryKey key="debugger.async.stack.trace.for.all.threads" defaultValue="true"
                  description="Get async stack trace for any thread using the same evaluationContext. By default debugger-agent only returns async stack trace for the current suspended thread."/>
-    <registryKey key="debugger.async.stack.trace.overhead.percent" defaultValue="20.0"
+    <registryKey key="debugger.async.stack.trace.overhead.percent" defaultValue="50.0"
                  description="The allowed overhead of the async stacktraces collection in percents. When exceeded, a user will be suggested to disable or throttle."/>
     <registryKey key="debugger.stepping.current.thread.check.timeout.ms" defaultValue="100"
                  description="In the 'Resume only the current thread mode': Check timeout (in ms) for the stepping thread is running."/>
@@ -333,6 +331,10 @@
                  description="Enable reading capture points from annotations"/>
     <registryKey key="debugger.collection.watchpoints.enabled" defaultValue="false"
                  description="Enable collection watchpoints support"/>
+    <registryKey key="debugger.async.stacks.via.breakpoints" defaultValue="false"
+                 description="Enable async stack traces implementation via breakpoints"/>
+    <registryKey key="debugger.breakpoint.instrumentation" defaultValue="false"
+                 description="Use instrumentation conditional and logging breakpoints if possible"/>
     <registryKey key="debugger.async.stacks.coroutines" defaultValue="true"
                  description="Enable async stack traces for coroutines"/>
     <registryKey key="debugger.async.stacks.max.depth" defaultValue="500"

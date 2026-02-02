@@ -7,7 +7,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 

@@ -2,16 +2,25 @@
 
 package org.jetbrains.kotlin.idea.completion
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.OffsetKey
+import com.intellij.codeInsight.completion.OffsetMap
+import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionType
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.util.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.completion.handlers.CastReceiverInsertHandler
@@ -25,7 +34,17 @@ import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.idea.util.getImplicitReceiversWithInstanceToExpression
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
@@ -39,37 +58,48 @@ import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1Deprecation
 var LookupElement.isDslMember: Boolean? by UserDataProperty(Key.create("DSL_LOOKUP_ITEM"))
 
+@K1Deprecation
 fun LookupElement.assignPriority(priority: ItemPriority): LookupElement {
     this.priority = priority
     return this
 }
 
+@K1Deprecation
 val STATISTICS_INFO_CONTEXT_KEY = Key<String>("STATISTICS_INFO_CONTEXT_KEY")
 
+@K1Deprecation
 val NOT_IMPORTED_KEY = Key<Unit>("NOT_IMPORTED_KEY")
 
+@K1Deprecation
 fun LookupElement.withReceiverCast(): LookupElement = LookupElementDecorator.withDelegateInsertHandler(this) { context, element ->
     element.handleInsert(context)
     CastReceiverInsertHandler.postHandleInsert(context, element)
 }
 
+@K1Deprecation
 val KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY = Key<Unit>("KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY")
 
+@K1Deprecation
 fun LookupElement.keepOldArgumentListOnTab(): LookupElement {
     putUserData(KEEP_OLD_ARGUMENT_LIST_ON_TAB_KEY, Unit)
     return this
 }
 
+@K1Deprecation
 fun PrefixMatcher.asStringNameFilter() = { name: String -> prefixMatches(name) }
 
+@K1Deprecation
 fun ((String) -> Boolean).toNameFilter(): NameFilter {
     return { name -> !name.isSpecial && this(name.identifier) }
 }
 
+@K1Deprecation
 infix fun <T> ((T) -> Boolean).or(otherFilter: (T) -> Boolean): (T) -> Boolean = { this(it) || otherFilter(it) }
 
+@K1Deprecation
 enum class CallableWeightEnum {
     local, // local non-extension
     thisClassMember,
@@ -81,6 +111,7 @@ enum class CallableWeightEnum {
     receiverCastRequired
 }
 
+@K1Deprecation
 class CallableWeight(val enum: CallableWeightEnum, val receiverIndex: Int?) {
     companion object {
         val local = CallableWeight(CallableWeightEnum.local, null)
@@ -89,8 +120,10 @@ class CallableWeight(val enum: CallableWeightEnum, val receiverIndex: Int?) {
     }
 }
 
+@K1Deprecation
 val CALLABLE_WEIGHT_KEY = Key<CallableWeight>("CALLABLE_WEIGHT_KEY")
 
+@K1Deprecation
 fun InsertionContext.isAfterDot(): Boolean {
     var offset = startOffset
     val chars = document.charsSequence
@@ -105,17 +138,21 @@ fun InsertionContext.isAfterDot(): Boolean {
 }
 
 // do not complete this items by prefix like "is"
+@K1Deprecation
 fun shouldCompleteThisItems(prefixMatcher: PrefixMatcher): Boolean {
     val prefix = prefixMatcher.prefix
     val s = "this@"
     return prefix.startsWith(s) || s.startsWith(prefix)
 }
 
+@K1Deprecation
 class ThisItemLookupObject(val receiverParameter: ReceiverParameterDescriptor, val labelName: Name?) : KeywordLookupObject()
 
+@K1Deprecation
 fun ThisItemLookupObject.createLookupElement() = createKeywordElement("this", labelName.labelNameToTail(), lookupObject = this)
     .withTypeText(BasicLookupElementFactory.SHORT_NAMES_RENDERER.renderType(receiverParameter.type))
 
+@K1Deprecation
 fun thisExpressionItems(
     bindingContext: BindingContext,
     position: KtExpression,
@@ -140,6 +177,7 @@ fun thisExpressionItems(
 /**
  * Implementation in K2: [org.jetbrains.kotlin.idea.completion.contributors.keywords.ReturnKeywordHandler]
  */
+@K1Deprecation
 fun returnExpressionItems(bindingContext: BindingContext, position: KtElement): Collection<LookupElement> {
     val result = mutableListOf<LookupElement>()
 
@@ -197,6 +235,7 @@ private fun KtDeclarationWithBody.returnType(bindingContext: BindingContext): Ko
     return callable.returnType
 }
 
+@K1Deprecation
 fun BasicLookupElementFactory.createLookupElementForType(type: KotlinType): LookupElement? {
     if (type.isError) return null
 
@@ -239,6 +278,7 @@ private open class BaseTypeLookupElement(type: KotlinType, baseLookupElement: Lo
     }
 }
 
+@K1Deprecation
 fun shortenReferences(
     context: InsertionContext,
     startOffset: Int,
@@ -257,6 +297,7 @@ fun shortenReferences(
         shortenReferences.process(file, startOffset, endOffset)
 }
 
+@K1Deprecation
 fun LookupElement.decorateAsStaticMember(
     memberDescriptor: DeclarationDescriptor,
     classNameAsLookupString: Boolean
@@ -316,12 +357,14 @@ fun LookupElement.decorateAsStaticMember(
     }
 }
 
+@K1Deprecation
 fun ImportableFqNameClassifier.isImportableDescriptorImported(descriptor: DeclarationDescriptor): Boolean {
     val classification = classify(descriptor.importableFqName!!, false)
     return classification != ImportableFqNameClassifier.Classification.notImported
             && classification != ImportableFqNameClassifier.Classification.siblingImported
 }
 
+@K1Deprecation
 fun OffsetMap.tryGetOffset(key: OffsetKey): Int? {
     try {
         if (!containsOffset(key)) return null
@@ -331,7 +374,9 @@ fun OffsetMap.tryGetOffset(key: OffsetKey): Int? {
     }
 }
 
+@K1Deprecation
 var KtCodeFragment.extraCompletionFilter: ((LookupElement) -> Boolean)? by CopyablePsiUserDataProperty(Key.create("EXTRA_COMPLETION_FILTER"))
 
+@K1Deprecation
 val DeclarationDescriptor.isArtificialImportAliasedDescriptor: Boolean
     get() = original.name != name

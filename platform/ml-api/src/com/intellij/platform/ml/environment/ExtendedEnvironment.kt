@@ -1,9 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.environment
 
-import com.intellij.platform.ml.*
 import com.intellij.platform.ml.ScopeEnvironment.Companion.accessibleSafelyByOrNull
+import com.intellij.platform.ml.SystemLogger
+import com.intellij.platform.ml.SystemLoggerBuilder
+import com.intellij.platform.ml.Tier
+import com.intellij.platform.ml.TierInstanceStorage
+import com.intellij.platform.ml.TierRequester
 import com.intellij.platform.ml.environment.EnvironmentExtender.Companion.extendTierInstance
+import com.intellij.platform.ml.putTierInstance
 import org.jetbrains.annotations.ApiStatus
 
 /**

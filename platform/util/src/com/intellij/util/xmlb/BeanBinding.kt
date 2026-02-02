@@ -13,7 +13,14 @@ import com.intellij.util.ClearableClassValue
 import com.intellij.util.ThreeState
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xmlb.XmlSerializerImpl.createClassBinding
-import com.intellij.util.xmlb.annotations.*
+import com.intellij.util.xmlb.annotations.CollectionBean
+import com.intellij.util.xmlb.annotations.MapAnnotation
+import com.intellij.util.xmlb.annotations.OptionTag
+import com.intellij.util.xmlb.annotations.Property
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.Transient
+import com.intellij.util.xmlb.annotations.XCollection
+import com.intellij.util.xmlb.annotations.XMap
 import it.unimi.dsi.fastutil.objects.Object2FloatMap
 import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
@@ -24,13 +31,13 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.jdom.Element
 import org.jdom.Namespace
 import org.jdom.Text
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.reflect.AccessibleObject
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Type
-import java.util.*
+import java.util.Arrays
+import java.util.Collections
 
 @JvmField
 internal val LOG: Logger = logger<Binding>()
@@ -278,12 +285,6 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : Binding, RootBinding
 
   override fun toString(): String = "BeanBinding(${beanClass.name}, tagName=$tagName)"
 
-  @Internal
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Don't use internal API", ReplaceWith(""))
-  fun serializeInto(bean: Any, preCreatedElement: Element?, filter: SerializationFilter?): Element? {
-    return serializeProperties(bean, preCreatedElement, filter)
-  }
 }
 
 // binding value will be not set if no data

@@ -37,7 +37,7 @@
     <orderEntry type="module" module-name="intellij.python.community.services.systemPython" />
     <orderEntry type="module" module-name="intellij.python.community.junit5Tests.framework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.venv" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.venv" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.services.internal.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />

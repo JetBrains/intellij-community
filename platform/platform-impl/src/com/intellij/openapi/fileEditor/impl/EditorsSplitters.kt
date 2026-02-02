@@ -51,6 +51,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
+import com.intellij.openapi.wm.ex.WelcomeScreenTabService
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -1090,6 +1091,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
         window.updateTabsVisibility()
         addChild(window.component)
         splitters.addWindow(window)
+        WelcomeScreenTabService.getInstance(fileEditorManager.project).openTab()
         windowAddedDeferred.complete(Unit)
       }
       finally {

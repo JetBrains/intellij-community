@@ -21,7 +21,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @author Anna Kozlova

@@ -12,7 +12,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Dimension;
 import java.lang.reflect.Method;
 
 public final class IntroDimensionProperty extends IntrospectedProperty<Dimension> {

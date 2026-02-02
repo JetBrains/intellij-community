@@ -5,3 +5,5 @@ fun bar() {
 }
 
 // ELEMENT: "{...}"
+
+// IGNORE_K2

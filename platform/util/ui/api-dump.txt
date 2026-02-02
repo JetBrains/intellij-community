@@ -685,6 +685,7 @@ f:com.intellij.icons.AllIcons$Ide
 - sf:FeedbackRatingOn:javax.swing.Icon
 - sf:FeedbackRatingOnFocused:javax.swing.Icon
 - sf:Gift:javax.swing.Icon
+- sf:GrayDot:javax.swing.Icon
 - sf:HectorOff:javax.swing.Icon
 - sf:HectorOn:javax.swing.Icon
 - sf:HectorSyntax:javax.swing.Icon
@@ -1025,6 +1026,7 @@ f:com.intellij.icons.AllIcons$Plugins
 - sf:PluginLogo:javax.swing.Icon
 - sf:PluginLogoDisabled:javax.swing.Icon
 - sf:Rating:javax.swing.Icon
+- sf:Refresh:javax.swing.Icon
 - sf:Updated:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Process
@@ -3673,7 +3675,6 @@ com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - kotlin.jvm.functions.Function2
 f:com.intellij.util.ui.ExtendableHTMLViewFactory$Extensions
 - sf:ADAPTIVE_IMAGE_EXTENSION:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
-- sf:BASE64_IMAGES:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:BLOCK_HR_SUPPORT:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:BLOCK_VIEW_EX:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:DETAILS_SUMMARY_SUPPORT:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
@@ -3984,7 +3985,6 @@ f:com.intellij.util.ui.JBHiDpiScalableIcon
 Fc:com.intellij.util.ui.JBHtmlEditorKit
 - javax.swing.text.html.HTMLEditorKit
 - <init>():V
-- <init>(Z):V
 - createDefaultDocument():javax.swing.text.Document
 - deinstall(javax.swing.JEditorPane):V
 - getDefaultCursor():java.awt.Cursor
@@ -3994,10 +3994,6 @@ Fc:com.intellij.util.ui.JBHtmlEditorKit
 - setFontResolver(com.intellij.util.ui.CSSFontResolver):V
 - setStyleSheet(javax.swing.text.html.StyleSheet):V
 - setUnderlineHoveredHyperlink(Z):V
-c:com.intellij.util.ui.JBHtmlEditorKit$JBHtmlFactory
-- javax.swing.text.html.HTMLEditorKit$HTMLFactory
-- <init>():V
-- create(javax.swing.text.Element):javax.swing.text.View
 c:com.intellij.util.ui.JBImageIcon
 - javax.swing.ImageIcon
 - <init>(java.awt.Image):V
@@ -4540,7 +4536,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Popup$Selection
 - sf:ARC:com.intellij.util.ui.JBValue
 - sf:LEFT_RIGHT_INSET:com.intellij.util.ui.JBValue
 - <init>():V
-- s:innerInsets():java.awt.Insets
+- s:innerInsets():com.intellij.util.ui.JBInsets
 f:com.intellij.util.ui.JBUI$CurrentTheme$PopupMenu
 - <init>():V
 f:com.intellij.util.ui.JBUI$CurrentTheme$PopupMenu$Selection
@@ -4955,7 +4951,6 @@ f:com.intellij.util.ui.NamedColorUtil
 - s:getErrorForeground():java.awt.Color
 - s:getInactiveTextColor():java.awt.Color
 - s:getListSelectionForeground(Z):java.awt.Color
-- s:getTextCursor(java.awt.Color):java.awt.Cursor
 f:com.intellij.util.ui.PaletteAvatarPresentation
 - com.intellij.util.ui.AvatarPresentation
 - <init>(java.lang.String,java.lang.String,com.intellij.util.ui.ColorPalette):V
@@ -5542,9 +5537,21 @@ f:com.intellij.util.ui.UIUtil$TextPainter
 - withShortcutColor(java.awt.Color):com.intellij.util.ui.UIUtil$TextPainter
 e:com.intellij.util.ui.UnixDesktopEnv
 - java.lang.Enum
-- s:CURRENT:com.intellij.util.ui.UnixDesktopEnv
+- sf:BUDGIE:com.intellij.util.ui.UnixDesktopEnv
+- sf:CINNAMON:com.intellij.util.ui.UnixDesktopEnv
+- sf:CURRENT:com.intellij.util.ui.UnixDesktopEnv
+- sf:DEEPIN:com.intellij.util.ui.UnixDesktopEnv
 - sf:GNOME:com.intellij.util.ui.UnixDesktopEnv
+- sf:HYPRLAND:com.intellij.util.ui.UnixDesktopEnv
+- sf:I3:com.intellij.util.ui.UnixDesktopEnv
 - sf:KDE:com.intellij.util.ui.UnixDesktopEnv
+- sf:LXDE:com.intellij.util.ui.UnixDesktopEnv
+- sf:LXQT:com.intellij.util.ui.UnixDesktopEnv
+- sf:MATE:com.intellij.util.ui.UnixDesktopEnv
+- sf:PANTHEON:com.intellij.util.ui.UnixDesktopEnv
+- sf:SWAY:com.intellij.util.ui.UnixDesktopEnv
+- sf:UNITY:com.intellij.util.ui.UnixDesktopEnv
+- sf:XFCE:com.intellij.util.ui.UnixDesktopEnv
 - s:valueOf(java.lang.String):com.intellij.util.ui.UnixDesktopEnv
 - s:values():com.intellij.util.ui.UnixDesktopEnv[]
 f:com.intellij.util.ui.WatermarkIcon

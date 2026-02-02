@@ -16,7 +16,11 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi
 import com.intellij.openapi.vcs.changes.savedPatches.ShelfProvider
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentI
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
+import com.intellij.openapi.vcs.changes.ui.subscribeOnVcsToolWindowLayoutChanges
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.content.Content

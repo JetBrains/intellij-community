@@ -5,4 +5,3 @@ class `this` {
 }
 
 // ELEMENT: "this@`this`"
-

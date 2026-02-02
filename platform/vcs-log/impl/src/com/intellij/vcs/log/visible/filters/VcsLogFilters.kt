@@ -6,10 +6,24 @@ import com.intellij.openapi.util.text.CharFilter
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.VcsLogBranchFilter
+import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogDateFilter
+import com.intellij.vcs.log.VcsLogFilter
+import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogFilterCollection.FilterKey
 import com.intellij.vcs.log.VcsLogFilterCollection.HASH_FILTER
+import com.intellij.vcs.log.VcsLogHashFilter
+import com.intellij.vcs.log.VcsLogParentFilter
+import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.VcsLogRangeFilter.RefRange
+import com.intellij.vcs.log.VcsLogRevisionFilter
+import com.intellij.vcs.log.VcsLogRootFilter
+import com.intellij.vcs.log.VcsLogStructureFilter
+import com.intellij.vcs.log.VcsLogTextFilter
+import com.intellij.vcs.log.VcsLogUserFilter
+import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil
@@ -17,7 +31,7 @@ import com.intellij.vcsUtil.VcsUtil
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Date
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 

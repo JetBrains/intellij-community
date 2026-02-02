@@ -4,7 +4,11 @@ package com.intellij.diff.actions.impl
 import com.intellij.diff.actions.impl.DiffFileNavigationAction.Companion.isAvailable
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.PrevNextFileIterable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPromoter
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware

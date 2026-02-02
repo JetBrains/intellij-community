@@ -10,7 +10,10 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import java.io.File
 
 abstract class AbstractKotlinFirInlineTest : KotlinLightCodeInsightFixtureTestCase() {

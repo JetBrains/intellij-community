@@ -10,11 +10,17 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.XMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.jdom.Element
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
-import java.util.*
+import java.util.Arrays
+import java.util.Collections
+import java.util.TreeMap
 
 internal class MapBinding(
   private val oldAnnotation: MapAnnotation?,

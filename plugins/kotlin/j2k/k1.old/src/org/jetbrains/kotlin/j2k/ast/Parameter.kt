@@ -2,10 +2,13 @@
 
 package org.jetbrains.kotlin.j2k.ast
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.j2k.CodeBuilder
 
+@K1Deprecation
 abstract class Parameter(val identifier: Identifier, val type: Type?) : Element()
 
+@K1Deprecation
 class FunctionParameter(
   identifier: Identifier,
   type: Type?,
@@ -46,6 +49,7 @@ class FunctionParameter(
     }
 }
 
+@K1Deprecation
 class LambdaParameter(identifier: Identifier, type: Type?) : Parameter(identifier, type) {
     override fun generateCode(builder: CodeBuilder) {
         builder append identifier

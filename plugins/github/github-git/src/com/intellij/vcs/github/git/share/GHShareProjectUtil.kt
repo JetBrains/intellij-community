@@ -39,7 +39,7 @@ import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubSettings
 import java.awt.Component
-import java.util.*
+import java.util.Collections
 
 internal class GHShareProjectUtilCompatExtension : GHShareProjectCompatibilityExtension {
   override fun shareProjectOnGithub(project: Project, file: VirtualFile?) {

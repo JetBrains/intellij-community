@@ -6,7 +6,11 @@ import com.intellij.ide.startup.importSettings.db.KnownLafs
 import com.intellij.ide.startup.importSettings.db.WindowsEnvVariables
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.transfer.backend.db.KnownColorSchemes
-import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers.*
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers.GeneralSettingsParser
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers.KeyBindingsParser
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers.PluginParser
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers.StateDatabaseParser
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers.StorageParser
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import kotlinx.coroutines.CoroutineScope

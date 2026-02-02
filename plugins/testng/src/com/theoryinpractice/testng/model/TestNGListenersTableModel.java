@@ -16,7 +16,7 @@
 
 package com.theoryinpractice.testng.model;
 
-import javax.swing.*;
+import javax.swing.AbstractListModel;
 import java.util.ArrayList;
 import java.util.List;
 

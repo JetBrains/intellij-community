@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.repo.Repository;
@@ -12,13 +12,13 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitOperationsCollector;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitRebaseParams;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseDialog;
 import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -26,7 +26,10 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.dvcs.DvcsUtil.sortRepositories;
-import static git4idea.GitUtil.*;
+import static git4idea.GitUtil.getRepositories;
+import static git4idea.GitUtil.getRepositoriesInStates;
+import static git4idea.GitUtil.getRootsFromRepositories;
+import static git4idea.GitUtil.hasGitRepositories;
 import static git4idea.rebase.GitRebaseUtils.getRebasingRepositories;
 import static java.util.Collections.singletonList;
 
@@ -63,13 +66,12 @@ public class GitRebase extends DumbAwareAction {
     VirtualFile defaultRoot = selectedRepo != null ? selectedRepo.getRoot() : null;
     final GitRebaseDialog dialog = new GitRebaseDialog(project, roots, defaultRoot);
     if (dialog.showAndGet()) {
-      VirtualFile root = dialog.gitRoot();
+      GitRepository selectedRepository = Objects.requireNonNull(dialog.getSelectedRepo());
       GitRebaseParams selectedParams = dialog.getSelectedParams();
+      GitOperationsCollector.logRebaseFromDialog(project, selectedRepository, selectedParams);
       ProgressManager.getInstance().run(new Task.Backgroundable(project, GitBundle.message("rebase.progress.indicator.title")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          GitRepository selectedRepository =
-            Objects.requireNonNull(GitRepositoryManager.getInstance(project).getRepositoryForRoot(root));
           GitRebaseUtils.rebase(project, singletonList(selectedRepository), selectedParams, indicator);
         }
       });

@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
@@ -41,6 +42,7 @@ internal suspend fun buildPlugins(
   moduleOutputPatcher: ModuleOutputPatcher,
   plugins: Collection<PluginLayout>,
   os: OsFamily?,
+  arch: JvmArchitecture?,
   targetDir: Path,
   state: DistributionBuilderState,
   buildPlatformJob: Deferred<List<DistributionFileEntry>>?,
@@ -63,6 +65,7 @@ internal suspend fun buildPlugins(
         scrambleTool = scrambleTool,
         isScramblingSkipped = isScramblingSkipped,
         os = os,
+        arch = arch,
         context = context,
         pluginBuilt = pluginBuilt,
       )
@@ -106,6 +109,7 @@ private suspend fun CoroutineScope.buildPlugin(
   scrambleTool: ScrambleTool?,
   isScramblingSkipped: Boolean,
   os: OsFamily?,
+  arch: JvmArchitecture?,
   context: BuildContext,
   pluginBuilt: (suspend (PluginLayout, Path) -> List<DistributionFileEntry>)?,
 ): Pair<PluginBuildDescriptor, ScrambleTask?> {
@@ -172,7 +176,7 @@ private suspend fun CoroutineScope.buildPlugin(
       scrambleTask = ScrambleTask(pluginLayout = pluginLayout, pluginDir = pluginDir, targetDir = targetDir)
     }
   }
-  return PluginBuildDescriptor(dir = pluginDir, os = os, layout = pluginLayout, distribution = task.await()) to scrambleTask
+  return PluginBuildDescriptor(dir = pluginDir, os = os, arch = arch, layout = pluginLayout, distribution = task.await()) to scrambleTask
 }
 
 private fun checkOutputOfPluginModules(

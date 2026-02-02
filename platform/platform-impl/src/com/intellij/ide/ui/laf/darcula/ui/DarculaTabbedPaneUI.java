@@ -433,7 +433,15 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
   @Override
   protected int calculateTabWidth(int tabPlacement, int tabIndex, FontMetrics metrics) {
-    return super.calculateTabWidth(tabPlacement, tabIndex, metrics) - 3; //remove magic constant '3' added by parent
+    int tabWidth = super.calculateTabWidth(tabPlacement, tabIndex, metrics) - 3; //remove magic constant '3' added by parent
+
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    if (customization != null) {
+      Insets insets = getTabInsets(tabPlacement, tabIndex);
+      return customization.calculateTabWidth(tabWidth, insets.left + insets.right);
+    }
+
+    return tabWidth;
   }
 
   @Override

@@ -1,5 +1,14 @@
 ### auto-generated section `build kotlin.compiler-reference-index.tests` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_tests",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
 
 jvm_library(
   name = "tests",
@@ -34,6 +43,7 @@ jvm_library(
   module_name = "kotlin.compiler-reference-index.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_tests",
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",

@@ -3,7 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.EventListener
 
 @ApiStatus.Experimental
 interface AmendCommitHandler {

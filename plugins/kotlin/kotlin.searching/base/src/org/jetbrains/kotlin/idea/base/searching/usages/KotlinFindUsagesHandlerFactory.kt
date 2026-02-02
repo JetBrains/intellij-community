@@ -15,7 +15,14 @@ import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindClassU
 import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindMemberUsagesHandler
 import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinTypeParameterFindUsagesHandler
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtImportAlias
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 
 class KotlinFindUsagesHandlerFactory(project: Project) : FindUsagesHandlerFactory() {

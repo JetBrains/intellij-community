@@ -4,7 +4,9 @@ package org.jetbrains.plugins.groovy.findUsages
 import com.intellij.openapi.application.QueryExecutorBase
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset

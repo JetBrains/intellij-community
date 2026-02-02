@@ -5,7 +5,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
 import com.intellij.util.EventDispatcher
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.util.*
@@ -58,18 +57,6 @@ class SettingsSyncStatusTracker {
     lastSyncTime = -1
     state = SyncStatus.Error(message)
     eventDispatcher.multicaster.syncStatusChanged()
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use SettingsSyncAuthService.PendingUserAction instead")
-  fun setActionRequired(message: @Nls String, actionTitle: @Nls String, action: suspend (Component?) -> Unit) {
-    logger<SettingsSyncStatusTracker>().warn("setActionRequired is no longer supported")
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use SettingsSyncAuthService.PendingUserAction instead")
-  fun clearActionRequired() {
-    logger<SettingsSyncStatusTracker>().warn("clearActionRequired is no longer supported")
   }
 
   fun isSyncSuccessful() = state == SyncStatus.Success

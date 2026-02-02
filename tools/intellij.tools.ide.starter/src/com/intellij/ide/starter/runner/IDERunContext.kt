@@ -23,7 +23,12 @@ import com.intellij.ide.starter.profiler.ProfilerType
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.ide.starter.screenRecorder.IDEScreenRecorder
-import com.intellij.ide.starter.utils.*
+import com.intellij.ide.starter.utils.JvmUtils
+import com.intellij.ide.starter.utils.catchAll
+import com.intellij.ide.starter.utils.formatArtifactName
+import com.intellij.ide.starter.utils.startProfileNativeThreads
+import com.intellij.ide.starter.utils.stopProfileNativeThreads
+import com.intellij.ide.starter.utils.takeScreenshot
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.tools.ide.performanceTesting.commands.MarshallableCommand
 import com.intellij.tools.ide.starter.bus.EventsBus

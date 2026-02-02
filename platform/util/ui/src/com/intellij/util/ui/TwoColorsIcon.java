@@ -4,7 +4,7 @@ package com.intellij.util.ui;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * @author Vassiliy Kudryashov

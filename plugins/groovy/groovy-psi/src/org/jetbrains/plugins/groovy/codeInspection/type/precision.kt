@@ -10,7 +10,14 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_PLUS
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.*
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.BIG_DECIMAL_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.BYTE_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.CHARACTER_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.FLOAT_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.INTEGER_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.LONG_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.SHORT_RANK
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.getTypeRank
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.lang.Double as JDouble

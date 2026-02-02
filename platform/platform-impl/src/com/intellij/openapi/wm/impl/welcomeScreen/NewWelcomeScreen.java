@@ -72,7 +72,7 @@ public final class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     footerPanel.add(versionLabel);
     footerPanel.add(makeSmallFont(new JLabel(".  ")));
     footerPanel.add(makeSmallFont(new ActionLink(IdeBundle.message("link.check"), e -> {
-        ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).updateAndShowResult(null);
+      UpdateCheckerFacade.getInstance().updateAndShowResult(null);
     })));
     footerPanel.add(makeSmallFont(new JLabel(IdeBundle.message("welcome.screen.check.for.updates.comment"))));
     return footerPanel;

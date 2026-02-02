@@ -11,16 +11,25 @@ import com.intellij.psi.impl.light.LightElement
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
 import org.jetbrains.kotlin.idea.refactoring.hasIdentifiersOnly
-import org.jetbrains.kotlin.idea.refactoring.move.*
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveDeclarationDelegate
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
+import org.jetbrains.kotlin.idea.refactoring.move.MoveContainerChangeInfo
+import org.jetbrains.kotlin.idea.refactoring.move.MoveContainerInfo
+import org.jetbrains.kotlin.idea.refactoring.move.MoveDeclarationsDescriptor
+import org.jetbrains.kotlin.idea.refactoring.move.allElementsToMove
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
+import org.jetbrains.kotlin.idea.refactoring.move.updatePackageDirective
 import org.jetbrains.kotlin.idea.roots.isOutsideKotlinAwareSourceRoot
 import org.jetbrains.kotlin.psi.KtFile
 
+@K1Deprecation
 class MoveKotlinFileHandler : MoveFileHandler() {
     internal class FileInfo(file: KtFile) : UsageInfo(file)
 

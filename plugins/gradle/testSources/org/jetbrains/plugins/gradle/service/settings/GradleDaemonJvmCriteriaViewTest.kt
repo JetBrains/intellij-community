@@ -3,10 +3,16 @@ package org.jetbrains.plugins.gradle.service.settings
 
 import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparatorImpl
 import com.intellij.util.ui.UIUtil
-import org.gradle.internal.jvm.inspection.JvmVendor.KnownJvmVendor.*
+import org.gradle.internal.jvm.inspection.JvmVendor.KnownJvmVendor.ADOPTIUM
+import org.gradle.internal.jvm.inspection.JvmVendor.KnownJvmVendor.ADOPTOPENJDK
+import org.gradle.internal.jvm.inspection.JvmVendor.KnownJvmVendor.IBM
+import org.gradle.internal.jvm.inspection.JvmVendor.KnownJvmVendor.JETBRAINS
 import org.jetbrains.plugins.gradle.service.settings.GradleDaemonJvmCriteriaView.VendorItem
 import org.jetbrains.plugins.gradle.service.settings.GradleDaemonJvmCriteriaView.VersionItem
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class GradleDaemonJvmCriteriaViewTest: GradleDaemonJvmCriteriaViewTestCase() {

@@ -10,7 +10,24 @@ interface VMOptionsService {
     fun getInstance(): VMOptionsService = service()
   }
 
+  /**
+   * Calculates all the options for the `java` command.
+   */
   fun getOrComputeOptionsForJdk(javaHome: String): CompletableFuture<JdkOptionsData>
 
+  /**
+   * Calculates all the options for the `javac` command.
+   */
+  fun getOrComputeOptionsForJavac(javaHome: String): CompletableFuture<JdkOptionsData> =
+    CompletableFuture.completedFuture(JdkOptionsData(emptyList()))
+
+  /**
+   * @return options that appears in all `java` commands starting from java 8 except informational (help, version)
+   */
   fun getStandardOptions(): JdkOptionsData = JdkOptionsData(emptyList())
+
+  /**
+   * @return options that appears in all `javac` commands starting from java 8 except informational (help, version)
+   */
+  fun getStandardJavacOptions(): JdkOptionsData = JdkOptionsData(emptyList())
 }

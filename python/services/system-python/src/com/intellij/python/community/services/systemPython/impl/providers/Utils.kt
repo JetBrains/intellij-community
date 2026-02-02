@@ -10,7 +10,6 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
 import java.nio.file.Path
 import java.util.regex.Pattern
-import kotlin.collections.map
 import kotlin.io.path.pathString
 
 

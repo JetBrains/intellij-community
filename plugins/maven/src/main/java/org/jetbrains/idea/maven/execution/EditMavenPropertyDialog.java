@@ -7,7 +7,11 @@ import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.ItemEvent;

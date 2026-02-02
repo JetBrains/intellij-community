@@ -4,11 +4,13 @@ package org.jetbrains.kotlin.idea.caches.resolve
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.ResolverForModuleComputationTracker
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 
+@K1Deprecation
 class InternalResolverForModuleComputationTracker: ResolverForModuleComputationTrackerEx {
     override fun onResolverComputed(moduleInfo: ModuleInfo) {
         LOG.info("computed $moduleInfo")
@@ -23,6 +25,7 @@ class InternalResolverForModuleComputationTracker: ResolverForModuleComputationT
     }
 }
 
+@K1Deprecation
 interface ResolverForModuleComputationTrackerEx: ResolverForModuleComputationTracker {
 
     fun onCreateResolverForModule(descriptor: ModuleDescriptor, moduleInfo: IdeaModuleInfo)

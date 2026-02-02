@@ -7,7 +7,9 @@ import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.j2k.AccessorKind.GETTER
 import org.jetbrains.kotlin.j2k.AccessorKind.SETTER
-import org.jetbrains.kotlin.lexer.KtTokens.*
+import org.jetbrains.kotlin.lexer.KtTokens.CONST_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.OPEN_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.OVERRIDE_KEYWORD
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtProperty

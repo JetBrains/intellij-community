@@ -3,8 +3,6 @@ package com.intellij.python.test.env.uv
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.python.test.env.core.*
-import com.intellij.python.test.env.core.extractIfNecessary
-import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import com.jetbrains.python.PythonBinary
 import kotlinx.coroutines.Dispatchers
@@ -64,10 +62,6 @@ fun uvEnvironment(uvVersion: String, block: UvPyEnvironmentSpec.() -> Unit): UvP
 @ApiStatus.Internal
 class UvPyEnvironmentProvider : PyEnvironmentProvider<UvPyEnvironmentSpec>("uv") {
 
-  private companion object {
-    const val UV_GITHUB_RELEASE_URL = "https://github.com/astral-sh/uv/releases"
-  }
-
   override suspend fun setupEnvironment(context: Context, spec: UvPyEnvironmentSpec): PyEnvironment {
     val logger = thisLogger()
     val targetPath = nextEnvPath(context.workingDir)
@@ -109,34 +103,10 @@ class UvPyEnvironmentProvider : PyEnvironmentProvider<UvPyEnvironmentSpec>("uv")
 
   /**
    * Downloads and unpacks UV binary for the current OS to cache directory.
-   * Directory name includes archive name to handle different OS/architecture variants.
    * Returns path to UV executable.
    */
   private suspend fun downloadAndSetupUv(spec: UvPyEnvironmentSpec): Path {
-    val logger = thisLogger()
-    // Determine platform-specific download URL
-    val downloadUrl = getUvDownloadUrl(spec.uvVersion)
-    val archiveFileName = downloadUrl.substringAfterLast('/')
-    // Use archive name (without extension) as directory name to handle different variants
-    val archiveBaseName = archiveFileName.substringBeforeLast(".tar.gz").substringBeforeLast(".zip")
-    val uvDir = PyEnvDownloadCache.cacheDirectory().resolve("uv").resolve(archiveBaseName)
-    val uvExecutable = uvDir.resolve(if (OS.CURRENT == OS.Windows) "uv.exe" else "uv")
-
-    extractIfNecessary(uvDir, logger) { target ->
-      logger.info("Downloading UV archive: $archiveFileName")
-      val cachedArchive = PyEnvDownloadCache.getOrDownload(downloadUrl, archiveFileName)
-      logger.info("UV archive downloaded: $cachedArchive")
-      // Extract UV binary directly from cached archive
-      // UV archives are structured as: uv-<platform>/uv or uv-<platform>/uv.exe
-      // We need to strip the first directory component
-      val archivePrefix = archiveBaseName // e.g., "uv-x86_64-unknown-linux-gnu"
-      logger.info("Extracting UV binary (stripping prefix: $archivePrefix)")
-      unpackArchive(cachedArchive, target, prefixToStrip = archivePrefix)
-
-      markExecutable(logger, uvExecutable)
-    }
-
-    return uvExecutable
+    return getOrDownloadUvExecutable(spec.uvVersion)
   }
 
   /**
@@ -185,26 +155,6 @@ class UvPyEnvironmentProvider : PyEnvironmentProvider<UvPyEnvironmentSpec>("uv")
     }
   }
 
-  private fun getUvDownloadUrl(version: String): String {
-    val arch = when {
-      CpuArch.isArm64() -> "aarch64"
-      CpuArch.isIntel64() -> "x86_64"
-      else -> "x86_64"
-    }
-
-    val platform = when (OS.CURRENT) {
-      OS.Windows -> "$arch-pc-windows-msvc"
-      OS.macOS -> "$arch-apple-darwin"
-      OS.Linux -> "$arch-unknown-linux-gnu"
-      else -> throw IllegalStateException("Unsupported OS: ${OS.CURRENT}")
-    }
-
-    return "$UV_GITHUB_RELEASE_URL/download/$version/uv-$platform.tar.gz"
-  }
-
-  /**
-   * UV Python environment implementation
-   */
 }
 
 class UvPyEnvironment(

@@ -1,11 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.shared.definition
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleAtLeast
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.gradle.scripting.shared.definition.ErrorGradleScriptDefinition
-import org.jetbrains.kotlin.gradle.scripting.shared.definition.GradleScriptDefinition
 import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.shared.definition.loadDefinitionsFromTemplates
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
@@ -124,7 +122,7 @@ private fun kotlinStdlibAndCompiler(gradleLibDir: Path): List<Path> {
     return listOfNotNull(stdlibPath, compilerPath)
 }
 
-private fun Path.findFirst(pattern: String): Path? = Files.newDirectoryStream(this, pattern).firstOrNull()
+private fun Path.findFirst(pattern: String): Path? = Files.newDirectoryStream(this, pattern).use { it.firstOrNull() }
 
 private val kotlinDslDependencySelector = Regex("^gradle-(?:kotlin-dsl|core|base-services).*\\.jar\$")
 

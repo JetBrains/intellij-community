@@ -8,7 +8,11 @@ import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.util.parentOfType
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyDocStringOwner
+import com.jetbrains.python.psi.PyFormattedStringElement
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PyUtil
 
 /**
  * Intention to convert between f-strings and t-strings (PEP-750)

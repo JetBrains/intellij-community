@@ -12,11 +12,13 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -25,11 +27,8 @@ import java.util.List;
 class StackFrameList extends XDebuggerFramesList {
   private static final MyOpenFilesState myEditorState = new MyOpenFilesState();
 
-  private final DebugProcessImpl myDebugProcess;
-
-  StackFrameList(DebugProcessImpl debugProcess) {
-    super(debugProcess.getProject());
-    myDebugProcess = debugProcess;
+  StackFrameList(Project project) {
+    super(project);
     getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(final ListSelectionEvent e) {
@@ -42,35 +41,55 @@ class StackFrameList extends XDebuggerFramesList {
     });
   }
 
-  void setFrameItems(@NotNull List<? extends StackFrameItem> items) {
-    setFrameItems(items, null);
+  void clearFrameItems() {
+    clear();
   }
 
-  void setFrameItems(@NotNull List<? extends StackFrameItem> items, Runnable onDone) {
+  /**
+   * @param items can contain null values treated as separator (e.g., async stack trace separator)
+   */
+  void setFrameItems(@NotNull List<@Nullable StackFrameItem> items, @NotNull DebugProcessImpl debugProcess) {
+    setFrameItems(items, debugProcess, null);
+  }
+
+  /**
+   * @param items can contain null values treated as separator (e.g., async stack trace separator)
+   */
+  void setFrameItems(@NotNull List<@Nullable StackFrameItem> items, @NotNull DebugProcessImpl debugProcess, @Nullable Runnable onDone) {
+    debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+      @Override
+      protected void action() {
+        setFrameItems(
+          ContainerUtil.map(items,
+                            info -> info == null ? null : info.createFrame(debugProcess)),
+          onDone
+        );
+      }
+    });
+  }
+
+  /**
+   * @param frames can contain null values treated as separator (e.g., async stack trace separator)
+   */
+  void setFrameItems(@NotNull List<@Nullable XStackFrame> frames, @Nullable Runnable onDone) {
     clear();
-    if (!items.isEmpty()) {
-      myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
-        @Override
-        protected void action() {
-          boolean separator = false;
-          for (StackFrameItem frameInfo : items) {
-            if (frameInfo == null) {
-              separator = true;
-            }
-            else {
-              XStackFrame frame = frameInfo.createFrame(myDebugProcess);
-              if (separator) {
-                StackFrameItem.setWithSeparator(frame);
-              }
-              DebuggerUIUtil.invokeLater(() -> getModel().add(frame));
-              separator = false;
-            }
-          }
-          if (onDone != null) {
-            onDone.run();
-          }
+    if (!frames.isEmpty()) {
+      boolean separator = false;
+      for (XStackFrame frame : frames) {
+        if (frame == null) {
+          separator = true;
         }
-      });
+        else {
+          if (separator) {
+            StackFrameItem.setWithSeparator(frame);
+            separator = false;
+          }
+          DebuggerUIUtil.invokeLater(() -> getModel().add(frame));
+        }
+      }
+      if (onDone != null) {
+        onDone.run();
+      }
     }
   }
 
@@ -88,7 +107,7 @@ class StackFrameList extends XDebuggerFramesList {
     VirtualFile file = position.getFile();
     int line = position.getLine();
 
-    Project project = myDebugProcess.getProject();
+    Project project = getProject();
 
     OpenFileHyperlinkInfo info = new OpenFileHyperlinkInfo(project, file, line);
     OpenFileDescriptor descriptor = info.getDescriptor();

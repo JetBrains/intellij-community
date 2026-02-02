@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.caches.resolve
 
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.PlatformAnalysisParameters
 import org.jetbrains.kotlin.analyzer.ResolverForModuleFactory
@@ -28,14 +29,17 @@ import org.jetbrains.kotlin.platform.impl.WasmWasiIdePlatformKind
 import org.jetbrains.kotlin.resolve.TargetEnvironment
 import org.jetbrains.kotlin.storage.StorageManager
 
+@K1Deprecation
 class WasmJsPlatformKindResolution : WasmPlatformKindResolution() {
     override val kind get() = WasmJsIdePlatformKind
 }
 
+@K1Deprecation
 class WasmWasiPlatformKindResolution : WasmPlatformKindResolution() {
     override val kind get() = WasmWasiIdePlatformKind
 }
 
+@K1Deprecation
 abstract class WasmPlatformKindResolution : IdePlatformKindResolution {
     override fun getKeyForBuiltIns(moduleInfo: ModuleInfo, sdkInfo: SdkInfo?, stdlibInfo: LibraryInfo?): BuiltInsCacheKey {
         return BuiltInsCacheKey.DefaultBuiltInsKey

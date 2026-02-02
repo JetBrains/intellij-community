@@ -4,6 +4,7 @@
 package org.jetbrains.kotlin.idea.core.util
 
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.psi.KtFile
 //NOTE: idea default API returns module search scope for file under module but not in source or production source (for example, test data )
 // this scope can't be used to search for kotlin declarations in index in order to resolve in that case
 // see com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl.getInherentResolveScope
+@K1Deprecation
 fun getResolveScope(file: KtFile): GlobalSearchScope {
     if (file is KtCodeFragment) {
         // Scope should be corrected when KT-6223 is implemented

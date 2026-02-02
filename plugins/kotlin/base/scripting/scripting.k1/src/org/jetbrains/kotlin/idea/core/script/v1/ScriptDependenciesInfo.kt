@@ -8,11 +8,18 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.sequenceOfNotNull
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.JvmLibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LanguageSettingsOwner
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SourceForBinaryModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
-import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
+import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.TargetPlatformVersion
@@ -22,6 +29,7 @@ import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
+@K1Deprecation
 @K1ModeProjectStructureApi
 sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleInfo, BinaryModuleInfo {
     abstract val sdk: Sdk?

@@ -673,13 +673,11 @@ a:com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 - f:iterateUserObjects(java.lang.Class):com.intellij.util.containers.JBIterable
 - s:mapToExactVirtualFile(com.intellij.openapi.vcs.changes.ui.VcsTreeModelData):com.intellij.util.containers.JBIterable
 - s:mapUserObjectToFilePath(java.lang.Object):com.intellij.openapi.vcs.FilePath
-- f:nodesStream():java.util.stream.Stream
 - s:selected(javax.swing.JTree):com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 - s:selectedUnderTag(javax.swing.JTree,java.lang.Object):com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 - s:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.project.Project,javax.swing.JTree):V
 - f:userObjects():java.util.List
 - f:userObjects(java.lang.Class):java.util.List
-- f:userObjectsStream(java.lang.Class):java.util.stream.Stream
 c:com.intellij.openapi.vcs.changes.ui.VirtualFileHierarchicalComparator
 - java.util.Comparator
 - <init>():V

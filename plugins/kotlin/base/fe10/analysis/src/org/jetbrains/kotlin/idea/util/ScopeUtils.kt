@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.util
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
@@ -25,21 +26,25 @@ import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.collectFunctions
 import org.jetbrains.kotlin.resolve.scopes.utils.collectVariables
 
+@K1Deprecation
 fun LexicalScope.getAllAccessibleVariables(name: Name): Collection<VariableDescriptor> {
     return getVariablesFromImplicitReceivers(name) + collectVariables(name, NoLookupLocation.FROM_IDE)
 }
 
+@K1Deprecation
 fun LexicalScope.getAllAccessibleFunctions(name: Name): Collection<FunctionDescriptor> {
     return getImplicitReceiversWithInstance().flatMap {
         it.type.memberScope.getContributedFunctions(name, NoLookupLocation.FROM_IDE)
     } + collectFunctions(name, NoLookupLocation.FROM_IDE)
 }
 
+@K1Deprecation
 fun LexicalScope.getVariablesFromImplicitReceivers(name: Name): Collection<VariableDescriptor> =
     getImplicitReceiversWithInstance().flatMap {
         it.type.memberScope.getContributedVariables(name, NoLookupLocation.FROM_IDE)
     }
 
+@K1Deprecation
 fun LexicalScope.getVariableFromImplicitReceivers(name: Name): VariableDescriptor? {
     getImplicitReceiversWithInstance().forEach {
         it.type.memberScope.getContributedVariables(name, NoLookupLocation.FROM_IDE).singleOrNull()?.let { return it }
@@ -47,6 +52,7 @@ fun LexicalScope.getVariableFromImplicitReceivers(name: Name): VariableDescripto
     return null
 }
 
+@K1Deprecation
 @Deprecated("Only supported for Kotlin Plugin K1 mode. Use Kotlin Analysis API instead, which works for both K1 and K2 modes. See https://kotl.in/analysis-api and `org.jetbrains.kotlin.analysis.api.analyze` for details.")
 @ApiStatus.ScheduledForRemoval
 fun PsiElement.getResolutionScope(bindingContext: BindingContext): LexicalScope? {
@@ -70,6 +76,7 @@ fun PsiElement.getResolutionScope(bindingContext: BindingContext): LexicalScope?
     return null
 }
 
+@K1Deprecation
 fun PsiElement.getResolutionScope(
     bindingContext: BindingContext,
     resolutionFacade: ResolutionFacade/*TODO: get rid of this parameter*/
@@ -78,12 +85,14 @@ fun PsiElement.getResolutionScope(
     else -> error("Not in KtFile")
 }
 
+@K1Deprecation
 fun KtElement.getResolutionScope(): LexicalScope {
     val resolutionFacade = getResolutionFacade()
     val context = resolutionFacade.analyze(this, BodyResolveMode.FULL)
     return getResolutionScope(context, resolutionFacade)
 }
 
+@K1Deprecation
 @OptIn(FrontendInternals::class)
 fun ResolutionFacade.getFileResolutionScope(file: KtFile): LexicalScope {
     return frontendService<FileScopeProvider>().getFileResolutionScope(file)

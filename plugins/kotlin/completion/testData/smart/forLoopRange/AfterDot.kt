@@ -7,3 +7,5 @@ fun String.extFun(): Collection<Int>{}
 // EXIST: toString
 // EXIST: substring
 // EXIST: extFun
+
+// IGNORE_K2

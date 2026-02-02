@@ -22,7 +22,7 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Point;
 
 /**
  * @author Alexander Lobas

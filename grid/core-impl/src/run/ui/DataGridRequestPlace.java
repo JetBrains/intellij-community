@@ -1,6 +1,10 @@
 package com.intellij.database.run.ui;
 
-import com.intellij.database.datagrid.*;
+import com.intellij.database.datagrid.CoreGrid;
+import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRequestSource;
+import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.ModelIndexSet;
 import org.jetbrains.annotations.NotNull;
 
 public class DataGridRequestPlace implements GridRequestSource.GridRequestPlace<GridRow, GridColumn> {

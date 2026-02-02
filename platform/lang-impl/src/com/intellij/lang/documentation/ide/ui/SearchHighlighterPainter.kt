@@ -6,7 +6,11 @@ package com.intellij.lang.documentation.ide.ui
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.GlobalEditorScheme
 import com.intellij.ui.ColorUtil
-import java.awt.*
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Rectangle
+import java.awt.Shape
 import javax.swing.text.Highlighter
 import javax.swing.text.JTextComponent
 

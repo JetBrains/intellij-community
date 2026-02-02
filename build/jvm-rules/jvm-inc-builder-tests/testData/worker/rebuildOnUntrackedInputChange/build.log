@@ -1,0 +1,18 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/worker_rebuildOnUntrackedInputChange-mock-plugin_lib.kotlin_module
+  mockplugin/MockCompilerPluginRegistrar.class
+End of files
+Compiling files:
+  worker/rebuildOnUntrackedInputChange/plugin/mockplugin/MockCompilerPluginRegistrar.kt
+End of files
+Cleaning output files:
+  KotlinClass.class
+  META-INF/worker_rebuildOnUntrackedInputChange-a.kotlin_module
+End of files
+Compiling files:
+  worker/rebuildOnUntrackedInputChange/a/AnotherKotlinClass.kt
+  worker/rebuildOnUntrackedInputChange/a/KotlinClass.kt
+End of files
+------------------------------------------
+Exit code: OK

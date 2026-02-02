@@ -1,7 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi.impl
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataSnapshot
+import com.intellij.openapi.actionSystem.InjectedDataKeys
+import com.intellij.openapi.actionSystem.UiDataRule
 
 internal class TargetSymbolsDataRule : UiDataRule {
   @Suppress("StaticInitializationInExtensions")

@@ -4,7 +4,14 @@ package com.intellij.execution.junit.references
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInspection.reference.PsiMemberReference
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiArrayInitializerMemberValue
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.util.PsiUtil
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UClassLiteralExpression

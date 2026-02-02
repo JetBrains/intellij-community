@@ -12,7 +12,8 @@ import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 
 public abstract class EditorHeaderToggleAction extends CheckboxAction implements DumbAware, LightEditCompatible {
   protected EditorHeaderToggleAction(@NotNull @NlsContexts.Checkbox String text) {

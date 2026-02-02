@@ -15,9 +15,17 @@
  */
 package com.intellij.java.psi.resolve;
 
-import com.intellij.psi.*;
-import com.intellij.testFramework.LightResolveTestCase;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiJavaReference;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.LightResolveTestCase;
 
 @HeavyPlatformTestCase.WrapInCommand
 public class ResolveVariableTest extends LightResolveTestCase {

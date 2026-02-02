@@ -3,8 +3,25 @@ package org.jetbrains.kotlin.idea.gradleTooling.builders
 
 import org.gradle.api.Task
 import org.gradle.api.logging.Logging
-import org.jetbrains.kotlin.idea.gradleTooling.*
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.*
+import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties
+import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinExtras
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinCompilationCoordinatesImpl
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinCompilationImpl
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinCompilationOutputImpl
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinNativeCompilationExtensionsImpl
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinWasmCompilationExtensionsImpl
+import org.jetbrains.kotlin.idea.gradleTooling.MultiplatformModelImportingContext
+import org.jetbrains.kotlin.idea.gradleTooling.get
+import org.jetbrains.kotlin.idea.gradleTooling.getKotlinTaskProperties
+import org.jetbrains.kotlin.idea.gradleTooling.getProperty
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinCompilationOutputReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinCompilationReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinNativeCompileReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinTargetJarReflection
+import org.jetbrains.kotlin.idea.gradleTooling.resolveAllDependsOnSourceSets
+import org.jetbrains.kotlin.idea.gradleTooling.resolveCompilerArguments
+import org.jetbrains.kotlin.idea.gradleTooling.useKgpDependencyResolution
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationOutput
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform

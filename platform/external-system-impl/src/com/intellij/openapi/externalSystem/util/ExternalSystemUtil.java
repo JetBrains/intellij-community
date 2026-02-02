@@ -677,17 +677,6 @@ public final class ExternalSystemUtil {
     return ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(project, systemId);
   }
 
-  /**
-   * @deprecated Use {@link ExternalSystemTrustedProjectDialog} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean confirmLoadingUntrustedProject(
-    @NotNull Project project,
-    @NotNull Collection<ProjectSystemId> systemIds
-  ) {
-    return ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(project, systemIds);
-  }
-
   public static @NotNull @Nls String naturalJoinSystemIds(@NotNull Collection<ProjectSystemId> systemIds) {
     return new HashSet<>(systemIds).stream()
       .map(it -> it.getReadableName())

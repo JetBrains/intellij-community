@@ -1,13 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.editors;
 
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingUtilities;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
-import java.awt.*;
+import java.awt.Component;
 
 public abstract class ComboBoxPropertyEditor<V> extends PropertyEditor<V> {
   protected final ComboBox<V> myCbx;
@@ -51,7 +55,9 @@ public abstract class ComboBoxPropertyEditor<V> extends PropertyEditor<V> {
     @Override
     public void popupMenuWillBecomeInvisible(final PopupMenuEvent e){
       if(!myCancelled){
-        fireValueCommitted(true, true);
+        WriteIntentReadAction.run(() -> {
+          fireValueCommitted(true, true);
+        });
       }
     }
 

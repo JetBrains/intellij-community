@@ -2,7 +2,6 @@
 package com.intellij.util.containers
 
 import org.jetbrains.annotations.ApiStatus
-import java.util.NoSuchElementException
 
 @ApiStatus.Internal
 internal class OptionalKt<out T : Any?> private constructor(

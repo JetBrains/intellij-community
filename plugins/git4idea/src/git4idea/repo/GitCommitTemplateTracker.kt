@@ -11,7 +11,11 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.Topic

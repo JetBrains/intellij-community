@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.properties.editor;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 
 public class NoPropertySelectedPanel {
   private JPanel myPanel;

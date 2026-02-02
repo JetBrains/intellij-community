@@ -8,16 +8,14 @@
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.core.impl"/>
-    <!--todo temporary disabled until it will be a backend module-->
 
-    <!--  &lt;!&ndash;<module name="intellij.java.psi"/>&ndash;&gt;-->
-  <!--  &lt;!&ndash;<module name="intellij.java.impl"/>&ndash;&gt;-->
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.impl"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.platform.core.ui"/>
 
     <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>
-
   </dependencies>
 
   <xi:include href="/META-INF/ManifestSupport.xml"/>

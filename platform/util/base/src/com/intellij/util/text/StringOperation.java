@@ -5,7 +5,11 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 
 public final class StringOperation {
 

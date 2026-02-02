@@ -7,9 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringHelper
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.codeInsight.shorten.prepareDelayedRequests
 
+@K1Deprecation
 class KotlinRefactoringHelperForDelayedRequests : RefactoringHelper<Any> {
     override fun prepareOperation(
       usages: Array<out UsageInfo>,

@@ -2,7 +2,13 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor;
-import com.intellij.ide.util.gotoByName.*;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.ide.util.gotoByName.ChooseByNameViewModel;
+import com.intellij.ide.util.gotoByName.ContributorsBasedGotoByModel;
+import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider;
+import com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor;
+import com.intellij.ide.util.gotoByName.GotoFileModel;
+import com.intellij.ide.util.gotoByName.MatchResult;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,7 +18,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,7 +35,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.UriUtil;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.ProcessorWithThrottledCancellationCheck;
 import com.intellij.util.text.matching.MatchedFragment;
@@ -41,11 +49,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
-import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.*;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.FUZZY_SEARCH_ACTIVITY;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.FUZZY_SEARCH_RESULT;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.FUZZY_SEARCH_TOTAL_RESULTS;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.FUZZY_SEARCH_TYPE;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.FuzzySearchResult;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.FuzzySearchType;
 import static com.intellij.ide.util.gotoByName.FuzzyFileSearchExperimentOptionKt.isFuzzyFileSearchEnabled;
 
 public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
@@ -193,9 +212,9 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     // Find all directories and files names similar to the last component in patternComponents
     List<MatchResult> matchingNames = new ArrayList<>();
     final String fullPattern = String.join("", patternComponents);
-    final MinusculeMatcher fullMatcher = buildPatternMatcher(fullPattern, true, base.getModel());
+    final MinusculeMatcher fullMatcher = buildPatternMatcher(fullPattern, true);
     String lastPatternComponent = patternComponents.get(patternComponents.size() - 1);
-    MinusculeMatcher matcher = buildPatternMatcher(lastPatternComponent, true, base.getModel());
+    MinusculeMatcher matcher = buildPatternMatcher(lastPatternComponent, true);
     var nameMatchingCheck = new ProcessorWithThrottledCancellationCheck<>(
       (CharSequence fileNameCharSeq) -> {
         indicator.checkCanceled();

@@ -2,14 +2,16 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.psi.collections
 
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.idea.core.receiverType
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.KotlinPsiUtil
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.impl.KotlinChainBuilderBase
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.previousCall
-import org.jetbrains.kotlin.idea.core.receiverType
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 
+@K1Deprecation
 class KotlinCollectionChainBuilder
     : KotlinChainBuilderBase(CollectionChainTransformer()) {
     private companion object {

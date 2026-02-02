@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import java.util.*
+import java.util.EventListener
 
 interface GHListLoader<T> {
   @get:RequiresEdt

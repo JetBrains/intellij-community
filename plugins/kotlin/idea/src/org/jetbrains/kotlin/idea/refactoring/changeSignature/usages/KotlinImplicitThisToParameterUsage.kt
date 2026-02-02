@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.usages
 
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 
+@K1Deprecation
 abstract class KotlinImplicitReceiverUsage(callElement: KtElement) : KotlinUsageInfo<KtElement>(callElement) {
     protected abstract fun getNewReceiverText(): String
 
@@ -31,6 +33,7 @@ abstract class KotlinImplicitReceiverUsage(callElement: KtElement) : KotlinUsage
     }
 }
 
+@K1Deprecation
 class KotlinImplicitThisToParameterUsage(
   callElement: KtElement,
   val parameterInfo: KotlinParameterInfo,
@@ -43,6 +46,7 @@ class KotlinImplicitThisToParameterUsage(
     }
 }
 
+@K1Deprecation
 class KotlinImplicitThisUsage(
     callElement: KtElement,
     val targetDescriptor: DeclarationDescriptor
@@ -54,6 +58,7 @@ class KotlinImplicitThisUsage(
     }
 }
 
+@K1Deprecation
 fun explicateReceiverOf(descriptor: DeclarationDescriptor): String {
     val name = descriptor.name
     return when {

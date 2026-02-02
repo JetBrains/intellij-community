@@ -6,7 +6,12 @@ import fleet.util.logging.KLoggers
 import fleet.util.modules.ModuleInfo
 import java.io.InputStream
 import java.util.jar.JarFile
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.inputStream
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.readBytes
 import kotlin.reflect.KClass
 
 private val logger by lazy { KLoggers.logger(TestJvmFleetModule::class) }

@@ -10,8 +10,10 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+@Suppress("DEPRECATION_ERROR")
 @Deprecated(
   "Custom Python SDKs support was removed from python plugin for IDEA because of UI/UX unification with PyCharm",
+  level = DeprecationLevel.ERROR
 )
 abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
   override val component: Component

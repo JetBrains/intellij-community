@@ -9,18 +9,25 @@ import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.terminal.actions.TerminalActionUtil;
 import com.intellij.terminal.ui.TerminalWidget;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.jediterm.terminal.*;
+import com.jediterm.terminal.ProcessTtyConnector;
+import com.jediterm.terminal.Terminal;
+import com.jediterm.terminal.TerminalStarter;
+import com.jediterm.terminal.TextStyle;
+import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.TerminalLine;
 import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalAction;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.TerminalSplitAction;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
+import org.jetbrains.plugins.terminal.classic.ClassicTerminalCommandStartedListener;
 import org.jetbrains.plugins.terminal.classic.ClassicTerminalVfsRefresher;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.util.TerminalUtilKt;
@@ -46,6 +53,8 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
   private final Prompt myPrompt = new Prompt();
   private final TerminalShellCommandHandlerHelper myShellCommandHandlerHelper;
   private final BlockingQueue<String> myCommandsToExecute = new LinkedBlockingQueue<>();
+  private final EventDispatcher<ClassicTerminalCommandStartedListener> myCommandStartedDispatcher =
+    EventDispatcher.create(ClassicTerminalCommandStartedListener.class);
 
   /**
    * @deprecated use {@link #ShellTerminalWidget(Project, JBTerminalSystemSettingsProvider, Disposable)} instead
@@ -75,7 +84,9 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
         }
       }
       if (e.getKeyCode() == KeyEvent.VK_ENTER || TerminalShellCommandHandlerHelper.matchedExecutor(e) != null) {
-        TerminalUsageTriggerCollector.triggerCommandStarted(project, getTypedShellCommand(), false);
+        String shellCommand = getTypedShellCommand();
+        TerminalUsageTriggerCollector.triggerCommandStarted(project, shellCommand, false);
+        myCommandStartedDispatcher.getMulticaster().commandStarted(shellCommand);
         if (myShellCommandHandlerHelper.processEnterKeyPressed(e)) {
           e.consume();
         }
@@ -134,6 +145,16 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
 
   public @NotNull String getTypedShellCommand() {
     return myPrompt.getTypedShellCommand();
+  }
+
+  /**
+   * Adds a listener to be notified when a shell command is started in this terminal.
+   * <p>
+   * <b>Note:</b> Command detection is heuristics-based
+   */
+  @ApiStatus.Experimental
+  public void addCommandStartedListener(@NotNull ClassicTerminalCommandStartedListener listener, @NotNull Disposable parent) {
+    myCommandStartedDispatcher.addListener(listener, parent);
   }
 
   <T> T processTerminalBuffer(@NotNull Function<TerminalTextBuffer, T> processor) {

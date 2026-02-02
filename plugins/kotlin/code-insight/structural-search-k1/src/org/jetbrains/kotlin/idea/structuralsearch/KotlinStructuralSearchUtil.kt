@@ -6,6 +6,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import com.intellij.util.asSafely
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.KotlinTypeFactory
 import org.jetbrains.kotlin.types.TypeAttributes
 
+@K1Deprecation
 fun getCommentText(comment: PsiComment): String {
     return when (comment.tokenType) {
         KtTokens.EOL_COMMENT -> comment.text.drop(2).trim()
@@ -31,12 +33,14 @@ fun getCommentText(comment: PsiComment): String {
     }
 }
 
+@K1Deprecation
 fun KotlinType.renderNames(): Array<String> = arrayOf(
     DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(this),
     DescriptorRenderer.SHORT_NAMES_IN_TYPES.renderType(this),
     "$this"
 )
 
+@K1Deprecation
 fun String.removeTypeParameters(): String {
     if (!this.contains('<') || !this.contains('>')) return this
     return this.removeRange(
@@ -45,17 +49,21 @@ fun String.removeTypeParameters(): String {
     )
 }
 
+@K1Deprecation
 val MatchingHandler.withinHierarchyTextFilterSet: Boolean
     get() = this is SubstitutionHandler && (this.isSubtype || this.isStrictSubtype)
 
+@K1Deprecation
 fun KtDeclaration.resolveDeclType(): KotlinType? = (resolveToDescriptorIfAny() as? CallableDescriptor)?.returnType
 
+@K1Deprecation
 fun KtExpression.resolveReceiverType(): KotlinType? {
     val descriptor = resolveToCall()?.resultingDescriptor?.containingDeclaration
     if (descriptor is ClassDescriptor) return descriptor.classValueType ?: descriptor.defaultType
     return null
 }
 
+@K1Deprecation
 fun KtExpression.resolveExprType(): KotlinType? {
     val descriptor = resolveMainReferenceToDescriptors().firstOrNull()
     if (descriptor is ClassDescriptor) return descriptor.classValueType ?: descriptor.defaultType
@@ -64,5 +72,6 @@ fun KtExpression.resolveExprType(): KotlinType? {
     return resolveType()
 }
 
+@K1Deprecation
 fun ClassDescriptor.toSimpleType(nullable: Boolean = false) =
     KotlinTypeFactory.simpleType(TypeAttributes.Empty, this.typeConstructor, emptyList(), nullable)

@@ -5,7 +5,9 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public final class HtmlUnknownAttributeInspection extends HtmlUnknownAttributeInspectionBase {
   @Override

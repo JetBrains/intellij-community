@@ -7,7 +7,15 @@ import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.util.Iterators;
 
 import javax.tools.JavaFileManager;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.URI;
 import java.util.Objects;
 

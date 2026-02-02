@@ -17,7 +17,12 @@ package com.intellij.java.psi.impl.source.tree.java;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
 public class ExtendsBoundListTest extends LightJavaCodeInsightTestCase {

@@ -22,8 +22,12 @@ import org.jetbrains.java.decompiler.util.FastSparseSetFactory;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 public class SSAConstructorSparseEx {
 

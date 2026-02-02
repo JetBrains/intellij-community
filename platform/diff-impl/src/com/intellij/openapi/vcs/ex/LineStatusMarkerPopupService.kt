@@ -17,7 +17,16 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
-import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.editor.event.BulkAwareDocumentListener
+import com.intellij.openapi.editor.event.CaretEvent
+import com.intellij.openapi.editor.event.CaretListener
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.event.EditorMouseListener
+import com.intellij.openapi.editor.event.SelectionEvent
+import com.intellij.openapi.editor.event.SelectionListener
+import com.intellij.openapi.editor.event.VisibleAreaEvent
+import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.util.CheckedDisposable

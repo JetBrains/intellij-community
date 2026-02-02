@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.console
 
 import com.intellij.execution.process.BaseOSProcessHandler
 import com.intellij.openapi.command.WriteCommandAction
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.cli.common.repl.replInputAsXml
 import org.jetbrains.kotlin.console.actions.logError
 
+@K1Deprecation
 class CommandExecutor(private val runner: KotlinConsoleRunner) {
     private val commandHistory = runner.commandHistory
     private val historyUpdater = HistoryUpdater(runner)

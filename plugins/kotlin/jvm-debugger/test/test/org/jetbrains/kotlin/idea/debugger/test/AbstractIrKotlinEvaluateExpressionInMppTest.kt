@@ -9,8 +9,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -78,6 +76,7 @@ import java.io.File
  * /* optionally code and test directives for debugger */
  * ```
  */
+
 abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEvaluateExpressionTest() {
     private lateinit var perModuleLibraryOutputDirectory: File
     private lateinit var perModuleLibrarySourceDirectory: File
@@ -290,12 +289,6 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
 
 private typealias PlatformName = String
 private typealias ModuleName = String
-
-abstract class AbstractK1IdeK2CodeKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEvaluateExpressionInMppTest() {
-    override val compileWithK2 = true
-
-    override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
-}
 
 
 open class MppDebuggerCompilerFacility(

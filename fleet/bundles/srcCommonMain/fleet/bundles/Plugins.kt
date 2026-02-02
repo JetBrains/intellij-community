@@ -1,6 +1,5 @@
 package fleet.bundles
 
-import fleet.util.logging.KLoggers
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

@@ -12,8 +12,15 @@ import org.jetbrains.plugins.emojipicker.EmojiCategory;
 import org.jetbrains.plugins.emojipicker.EmojiSkinTone;
 import org.jetbrains.plugins.emojipicker.service.EmojiService;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.LayoutManager2;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;

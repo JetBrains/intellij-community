@@ -26,7 +26,11 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.AbstractE
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.AbstractInplaceExtractionHelper
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.EXTRACT_FUNCTION
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.EXTRACT_FUNCTION_SHOULD_COLLAPSE_BODY
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AnalysisResult
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionGeneratorOptions
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractableCodeDescriptor
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionEngine
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.processDuplicates
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile

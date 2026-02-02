@@ -2,11 +2,50 @@
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.kotlin.builtins.*
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.builtins.extractParameterNameFromFunctionTypeArgument
+import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
+import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
+import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
+import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
+import org.jetbrains.kotlin.builtins.isSuspendFunctionType
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptorWithTypeParameters
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorVisitor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.descriptors.DescriptorVisibility
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.MemberDescriptor
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.descriptors.NotFoundClasses
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
+import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
+import org.jetbrains.kotlin.descriptors.PossiblyInnerType
+import org.jetbrains.kotlin.descriptors.PropertyAccessorDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyGetterDescriptor
+import org.jetbrains.kotlin.descriptors.PropertySetterDescriptor
+import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
+import org.jetbrains.kotlin.descriptors.ScriptDescriptor
+import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.descriptors.buildPossiblyInnerType
 import org.jetbrains.kotlin.idea.ClassifierNamePolicyEx
 import org.jetbrains.kotlin.idea.parameterInfo.KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
@@ -14,7 +53,14 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
-import org.jetbrains.kotlin.renderer.*
+import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.renderer.DescriptorRendererModifier
+import org.jetbrains.kotlin.renderer.DescriptorRendererOptions
+import org.jetbrains.kotlin.renderer.OverrideRenderingPolicy
+import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
+import org.jetbrains.kotlin.renderer.PropertyAccessorRenderingPolicy
+import org.jetbrains.kotlin.renderer.RenderingFormat
+import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils.isCompanionObject
 import org.jetbrains.kotlin.resolve.constants.AnnotationValue
@@ -23,15 +69,26 @@ import org.jetbrains.kotlin.resolve.constants.ConstantValue
 import org.jetbrains.kotlin.resolve.constants.KClassValue
 import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.declaresOrInheritsDefaultValue
-import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.AbbreviatedType
+import org.jetbrains.kotlin.types.FlexibleType
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.SimpleType
+import org.jetbrains.kotlin.types.TypeConstructor
+import org.jetbrains.kotlin.types.TypeProjection
+import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.TypeUtils.CANNOT_INFER_FUNCTION_PARAM_TYPE
-import org.jetbrains.kotlin.types.error.*
+import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.types.WrappedType
+import org.jetbrains.kotlin.types.error.ErrorType
+import org.jetbrains.kotlin.types.error.ErrorTypeConstructor
 import org.jetbrains.kotlin.types.error.ErrorUtils
+import org.jetbrains.kotlin.types.isDefinitelyNotNullType
+import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isUnresolvedType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
-import java.util.*
 
 
+@K1Deprecation
 open class KotlinIdeDescriptorRenderer(
     open val options: KotlinIdeDescriptorOptions
 ) : DescriptorRenderer(), DescriptorRendererOptions by options /* this gives access to options without qualifier */ {

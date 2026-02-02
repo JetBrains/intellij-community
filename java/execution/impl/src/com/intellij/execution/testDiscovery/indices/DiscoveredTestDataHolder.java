@@ -9,7 +9,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.PathKt;
+import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.io.PersistentStringEnumerator;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -21,7 +25,11 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public final class DiscoveredTestDataHolder {
   private static final Logger LOG = Logger.getInstance(DiscoveredTestDataHolder.class);

@@ -2,7 +2,12 @@
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 
 class OutputEditorUi {

@@ -19,11 +19,6 @@ private const val DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME = "KotlinSampleCode
 private const val DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME = "KotlinSampleCodeWithRenderedOnboardingTips"
 
 object AssetsKotlin {
-    @ApiStatus.Internal
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("The onboarding tips generated unconditionally")
-    fun getKotlinSampleTemplateName(generateOnboardingTips: Boolean): String =
-        getKotlinSampleTemplateName()
 
     @ApiStatus.Internal
     fun getKotlinSampleTemplateName(): String {
@@ -107,9 +102,3 @@ private fun AssetsNewProjectWizardStep.withKotlinSampleCode(
         addFilesToOpen(sourcePath)
     }
 }
-
-@ApiStatus.Internal
-@ApiStatus.ScheduledForRemoval
-@Deprecated("The onboarding tips are prepared in the withJavaSampleCodeAsset function")
-fun AssetsNewProjectWizardStep.prepareKotlinSampleOnboardingTips(project: Project): Unit =
-    AssetsKotlin.prepareKotlinSampleOnboardingTips(project, DEFAULT_FILE_NAME)

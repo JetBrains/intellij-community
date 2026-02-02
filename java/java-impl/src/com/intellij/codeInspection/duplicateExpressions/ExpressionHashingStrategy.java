@@ -1,7 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateExpressions;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiArrayAccessExpression;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiUnaryExpression;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashingStrategy;
 import com.siyeh.ig.psiutils.EquivalenceChecker;

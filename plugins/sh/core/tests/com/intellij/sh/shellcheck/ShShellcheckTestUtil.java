@@ -19,7 +19,9 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static com.intellij.sh.shellcheck.ShShellcheckUtil.*;
+import static com.intellij.sh.shellcheck.ShShellcheckUtil.decompressShellcheck;
+import static com.intellij.sh.shellcheck.ShShellcheckUtil.getShellcheckDistributionLink;
+import static com.intellij.sh.shellcheck.ShShellcheckUtil.spellcheckBin;
 import static com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY;
 
 final class ShShellcheckTestUtil {

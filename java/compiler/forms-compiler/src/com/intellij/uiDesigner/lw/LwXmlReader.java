@@ -5,7 +5,8 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Insets;
 import java.lang.reflect.Method;
 
 public final class LwXmlReader {

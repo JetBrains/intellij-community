@@ -3,10 +3,10 @@ package fleet.kernel.rete.impl
 
 import com.jetbrains.rhizomedb.Attribute
 import com.jetbrains.rhizomedb.EID
+import fleet.fastutil.longs.LongSet
 import fleet.kernel.rete.DatomPort
 import fleet.kernel.rete.RevalidationPort
 import fleet.kernel.rete.Subscription
-import fleet.fastutil.longs.LongSet
 import kotlin.jvm.JvmInline
 
 @JvmInline

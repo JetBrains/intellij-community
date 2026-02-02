@@ -79,6 +79,7 @@ jvm_library(
     "//platform/core-ui",
     "//plugins/kotlin/base/kdoc",
     "//platform/code-style-api:codeStyle",
+    "//plugins/kotlin/base/statistics",
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.inspections` end

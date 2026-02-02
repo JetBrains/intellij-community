@@ -4,7 +4,11 @@
 package com.jetbrains.python.run
 
 import com.intellij.execution.target.TargetEnvironment
-import com.intellij.execution.target.value.*
+import com.intellij.execution.target.value.TargetEnvironmentFunction
+import com.intellij.execution.target.value.TraceableTargetEnvironmentFunction
+import com.intellij.execution.target.value.constant
+import com.intellij.execution.target.value.plus
+import com.intellij.execution.target.value.targetPath
 import com.intellij.execution.util.ProgramParametersConfigurator
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.console.PyConsoleOptions

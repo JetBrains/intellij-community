@@ -2,12 +2,14 @@
 package org.jetbrains.kotlin.idea.core.util
 
 import com.intellij.openapi.util.Key
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.types.KotlinType
 
+@K1Deprecation
 object CodeFragmentUtils {
     val RUNTIME_TYPE_EVALUATOR: Key<Function1<KtExpression, KotlinType?>> = Key.create("RUNTIME_TYPE_EVALUATOR")
 
@@ -15,4 +17,5 @@ object CodeFragmentUtils {
     val USED_FOR_COMPILATION_IN_IR_EVALUATOR: Key<Boolean> = Key.create("USED_FOR_COMPILATION_IN_EVALUATOR")
 }
 
+@K1Deprecation
 var KtCodeFragment.externalDescriptors: List<DeclarationDescriptor>? by CopyablePsiUserDataProperty(Key.create("EXTERNAL_DESCRIPTORS"))

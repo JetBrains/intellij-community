@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.openapi.fileEditor.impl
@@ -117,12 +117,10 @@ class EditorTabbedContainer internal constructor(
       }
       val result = ActionCallback()
       val ideDocumentHistory = IdeDocumentHistory.getInstance(project)
-      WriteIntentReadAction.run {
-        CommandProcessor.getInstance().executeCommand(project, {
-          ideDocumentHistory.onSelectionChanged()
-          result.notify(doChangeSelection.run())
-        }, "EditorChange", null)
-      }
+      CommandProcessor.getInstance().executeCommand(project, {
+        ideDocumentHistory.onSelectionChanged()
+        result.notify(doChangeSelection.run())
+      }, "EditorChange", null)
       result
     }
     editorTabs.component.addMouseListener(object : MouseAdapter() {

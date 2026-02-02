@@ -310,7 +310,9 @@ private suspend fun SequenceScope<DynamicTest>.checkPlugins(
   }
 }
 
-private fun getPluginContentKey(item: PluginContentReport): String = item.mainModule + (if (item.os == null) "" else " (os=${item.os})")
+private fun getPluginContentKey(item: PluginContentReport): String {
+  return item.mainModule + (if (item.os == null) "" else " (os=${item.os})") + (if (item.arch == null) "" else " (arch=${item.arch})")
+}
 
 private suspend fun computePackageResult(testInfo: TestInfo, context: BuildContext): PackageResult {
   return doRunTestBuild(

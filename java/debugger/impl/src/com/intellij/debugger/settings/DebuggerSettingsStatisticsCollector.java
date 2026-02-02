@@ -14,7 +14,7 @@ import java.util.Set;
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfDiffers;
 
 public final class DebuggerSettingsStatisticsCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("debugger.settings.ide", 7);
+  private static final EventLogGroup GROUP = new EventLogGroup("debugger.settings.ide", 9);
 
   private static final VarargEventId SHOW_ALTERNATIVE_SOURCE = GROUP.registerVarargEvent("showAlternativeSource", EventFields.Enabled);
   private static final VarargEventId HOTSWAP_IN_BACKROUND = GROUP.registerVarargEvent("hotswapInBackround", EventFields.Enabled);
@@ -32,6 +32,8 @@ public final class DebuggerSettingsStatisticsCollector extends ApplicationUsages
   private static final VarargEventId RESUME_ONLY_CURRENT_THREAD = GROUP.registerVarargEvent("resumeOnlyCurrentThread", EventFields.Enabled);
   private static final VarargEventId HIDE_STACK_FRAMES_USING_STEPPING_FILTER = GROUP.registerVarargEvent("hideStackFramesUsingSteppingFilter", EventFields.Enabled);
   private static final VarargEventId INSTRUMENTING_AGENT = GROUP.registerVarargEvent("instrumentingAgent", EventFields.Enabled);
+  private static final VarargEventId AGENT_THROTTLING =
+    GROUP.registerVarargEvent("agentThrottling", "Debugger agent throttling in case of detected overhead", EventFields.Enabled);
 
   @Override
   public EventLogGroup getGroup() {
@@ -60,6 +62,7 @@ public final class DebuggerSettingsStatisticsCollector extends ApplicationUsages
     addBoolIfDiffers(set, settings, sDefault, s -> s.RESUME_ONLY_CURRENT_THREAD, RESUME_ONLY_CURRENT_THREAD);
     addBoolIfDiffers(set, settings, sDefault, s -> s.HIDE_STACK_FRAMES_USING_STEPPING_FILTER, HIDE_STACK_FRAMES_USING_STEPPING_FILTER);
     addBoolIfDiffers(set, settings, sDefault, s -> s.INSTRUMENTING_AGENT, INSTRUMENTING_AGENT);
+    addBoolIfDiffers(set, settings, sDefault, s -> s.AGENT_THROTTLING, AGENT_THROTTLING);
 
     return set;
   }

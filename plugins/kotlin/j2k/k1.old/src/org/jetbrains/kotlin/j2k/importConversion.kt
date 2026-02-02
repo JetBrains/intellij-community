@@ -2,23 +2,33 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiImportList
+import com.intellij.psi.PsiImportStatementBase
+import com.intellij.psi.PsiImportStaticStatement
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
-import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.j2k.ast.Import
 import org.jetbrains.kotlin.j2k.ast.ImportList
 import org.jetbrains.kotlin.j2k.ast.assignPrototype
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassBody
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.annotations.hasJvmStaticAnnotation
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 
+@K1Deprecation
 fun Converter.convertImportList(importList: PsiImportList): ImportList {
     val imports = importList.allImportStatements
             .flatMap { convertImport(it) }
@@ -26,6 +36,7 @@ fun Converter.convertImportList(importList: PsiImportList): ImportList {
     return ImportList(imports).assignPrototype(importList)
 }
 
+@K1Deprecation
 fun Converter.convertImport(anImport: PsiImportStatementBase, dumpConversion: Boolean = false): List<Import> {
     val reference = anImport.importReference ?: return emptyList()
     val fqName = FqName(reference.qualifiedName!!)

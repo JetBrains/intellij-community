@@ -9,10 +9,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.inspections.suppress.AnnotationHostKind
 import org.jetbrains.kotlin.psi.KtElement
 
+@K1Deprecation
 interface Fe10QuickFixProvider {
     companion object {
         fun getInstance(project: Project): Fe10QuickFixProvider = project.service()
@@ -33,6 +35,7 @@ interface Fe10QuickFixProvider {
     fun createSuppressFix(element: KtElement, suppressionKey: String, hostKind: AnnotationHostKind): SuppressIntentionAction
 }
 
+@K1Deprecation
 object RegisterQuickFixesLaterIntentionAction : IntentionAction {
     override fun getText(): String = ""
 

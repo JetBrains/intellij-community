@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
-
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -74,8 +72,8 @@ internal suspend fun configureCssUiDefaults() {
     span("html style patching") {
       // create a separate copy for each case
       val globalStyleSheet = createGlobalStyleSheet()
-      uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
-      uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
+      uiDefaults["javax.swing.JLabel.userStyleSheet"] = globalStyleSheet
+      uiDefaults["HTMLEditorKit.jbStyleSheet"] = globalStyleSheet
     }
   }
 }
@@ -130,7 +128,6 @@ private suspend fun initAwtToolkit(busyThread: Thread) {
   checkHiDPISettings()
   blockATKWrapper()
 
-  @Suppress("SpellCheckingInspection")
   System.setProperty("sun.awt.noerasebackground", "true")
   // mute system Cmd+`/Cmd+Shift+` shortcuts on macOS to avoid a conflict with corresponding platform actions (JBR-specific option)
   if (System.getProperty("apple.awt.captureNextAppWinKey") == null) {
@@ -196,14 +193,13 @@ private suspend fun replaceIdeEventQueue(isHeadless: Boolean) {
  */
 private fun blockATKWrapper() {
   // the registry must not be used here, because this method is called before application loading
-  @Suppress("SpellCheckingInspection")
   if (OS.CURRENT != OS.Linux || !System.getProperty("linux.jdk.accessibility.atkwrapper.block", "true").toBoolean()) {
     return
   }
 
   val activity = StartUpMeasurer.startActivity("atk wrapper blocking")
   if (ScreenReader.isEnabled(ScreenReader.ATK_WRAPPER)) {
-    // Replacing `AtkWrapper` with a fake `Object`. It'll be instantiated, and garbage collected right away, a NOP.
+    // Replacing the ATK wrapper with a fake object. It'll be instantiated and garbage-collected right away; a NOP.
     System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object")
     logger<AppStarter>().info("${ScreenReader.ATK_WRAPPER} is blocked, see IDEA-149219")
   }

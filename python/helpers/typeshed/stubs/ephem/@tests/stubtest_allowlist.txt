@@ -1,0 +1,11 @@
+# Tests
+ephem.tests.*
+
+# Leaked loop variables
+ephem.stars.k
+ephem.stars.v
+
+# Runtime signature has *args/**kwargs that raise TypeError; stub signature is correct
+ephem._libastro.Observer.__init__
+ephem.FixedBody.__init__
+ephem._libastro.FixedBody.__init__

@@ -4,7 +4,11 @@ package org.jetbrains.kotlin.idea.kdoc
 
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory
-import com.intellij.lang.documentation.DocumentationMarkup.*
+import com.intellij.lang.documentation.DocumentationMarkup.DEFINITION_END
+import com.intellij.lang.documentation.DocumentationMarkup.DEFINITION_START
+import com.intellij.lang.documentation.DocumentationMarkup.SECTION_END
+import com.intellij.lang.documentation.DocumentationMarkup.SECTION_HEADER_START
+import com.intellij.lang.documentation.DocumentationMarkup.SECTION_SEPARATOR
 import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.lang.documentation.QuickDocHighlightingHelper
 import com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledCodeBlock
@@ -44,7 +48,12 @@ import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull

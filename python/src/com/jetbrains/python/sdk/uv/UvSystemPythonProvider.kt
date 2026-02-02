@@ -3,15 +3,12 @@ package com.jetbrains.python.sdk.uv
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.community.impl.uv.common.UV_TOOL_ID
 import com.intellij.python.community.impl.uv.common.UV_UI_INFO
-import com.intellij.python.community.impl.uv.common.icons.PythonCommunityImplUVCommonIcons
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import com.jetbrains.python.sdk.uv.impl.hasUvExecutable
 import java.nio.file.Path

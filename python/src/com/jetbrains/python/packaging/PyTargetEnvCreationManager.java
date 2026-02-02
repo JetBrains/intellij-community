@@ -25,7 +25,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.HelperPackage;
-import com.jetbrains.python.sdk.impl.PySdkBundle;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.packaging.common.PythonPackage;
 import com.jetbrains.python.packaging.pip.PipParseUtils;
@@ -40,7 +39,8 @@ import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import com.jetbrains.python.venvReader.VirtualEnvReader;
+import com.jetbrains.python.sdk.impl.PySdkBundle;
+import com.jetbrains.python.venvReader.VirtualEnvReaderKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +50,11 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
@@ -108,7 +112,7 @@ public class PyTargetEnvCreationManager {
     // TODO [targets] Pass `parentDir = null`
     getPythonProcessResult(pythonExecution, false, true, targetEnvironmentRequest);
 
-    final Path binary = VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(destinationDir));
+    final Path binary = VirtualEnvReaderKt.VirtualEnvReader().findPythonInPythonRoot(Path.of(destinationDir));
     final char separator = targetEnvironmentRequest.getTargetPlatform().getPlatform().fileSeparator;
     final String binaryFallback = destinationDir + separator + "bin" + separator + "python";
 

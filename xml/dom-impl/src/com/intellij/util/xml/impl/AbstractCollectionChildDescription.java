@@ -15,10 +15,10 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.EvaluatedXmlName;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;

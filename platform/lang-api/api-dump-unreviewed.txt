@@ -404,15 +404,6 @@ c:com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributorEP
 - com.intellij.lang.LanguageExtensionPoint
 - <init>():V
 - s:forLanguage(com.intellij.lang.Language):com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributor
-c:com.intellij.codeInsight.completion.SkipAutopopupInComments
-- com.intellij.codeInsight.completion.CompletionConfidence
-- <init>():V
-- shouldSkipAutopopup(com.intellij.psi.PsiElement,com.intellij.psi.PsiFile,I):com.intellij.util.ThreeState
-c:com.intellij.codeInsight.completion.SkipAutopopupInStrings
-- com.intellij.codeInsight.completion.CompletionConfidence
-- <init>():V
-- s:isInStringLiteral(com.intellij.psi.PsiElement):Z
-- shouldSkipAutopopup(com.intellij.psi.PsiElement,com.intellij.psi.PsiFile,I):com.intellij.util.ThreeState
 c:com.intellij.codeInsight.completion.StartOnlyMatcher
 - com.intellij.codeInsight.completion.PrefixMatcher
 - <init>(com.intellij.codeInsight.completion.PrefixMatcher):V
@@ -512,7 +503,6 @@ c:com.intellij.codeInsight.daemon.NavigateAction
 - s:setNavigateAction(com.intellij.codeInsight.daemon.LineMarkerInfo,java.lang.String,java.lang.String,javax.swing.Icon):com.intellij.codeInsight.daemon.LineMarkerInfo
 c:com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo
 - com.intellij.codeInsight.daemon.MergeableLineMarkerInfo
-- <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,javax.swing.Icon,I,com.intellij.util.Function,com.intellij.codeInsight.daemon.GutterIconNavigationHandler,com.intellij.openapi.editor.markup.GutterIconRenderer$Alignment,com.intellij.openapi.util.NotNullLazyValue):V
 - <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,javax.swing.Icon,com.intellij.util.Function,com.intellij.codeInsight.daemon.GutterIconNavigationHandler,com.intellij.openapi.editor.markup.GutterIconRenderer$Alignment,com.intellij.openapi.util.NotNullFactory):V
 - <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,javax.swing.Icon,com.intellij.util.Function,com.intellij.util.Function,com.intellij.codeInsight.daemon.GutterIconNavigationHandler,com.intellij.openapi.editor.markup.GutterIconRenderer$Alignment,com.intellij.openapi.util.NotNullFactory,java.util.function.Supplier):V
 - canMergeWith(com.intellij.codeInsight.daemon.MergeableLineMarkerInfo):Z
@@ -2350,11 +2340,6 @@ f:com.intellij.lang.LanguagePsiElementExternalizer
 f:com.intellij.lang.LanguageSurrounders
 - com.intellij.lang.LanguageExtension
 - sf:INSTANCE:com.intellij.lang.LanguageSurrounders
-f:com.intellij.lang.LanguageWordCompletion
-- com.intellij.lang.LanguageExtension
-- sf:INSTANCE:com.intellij.lang.LanguageWordCompletion
-- isEnabledIn(com.intellij.psi.tree.IElementType):Z
-- isWordCompletionInDumbModeEnabled(com.intellij.lang.Language):Z
 com.intellij.lang.PsiElementExternalizer
 - a:findByQualifiedName(com.intellij.openapi.project.Project,java.lang.String):com.intellij.psi.PsiElement
 - a:getQualifiedName(com.intellij.psi.PsiElement):java.lang.String
@@ -3700,7 +3685,6 @@ a:com.intellij.openapi.roots.ui.configuration.LibrarySettingsProvider
 - s:getAdditionalSettingsConfigurable(com.intellij.openapi.project.Project,com.intellij.openapi.roots.libraries.LibraryKind):com.intellij.openapi.options.Configurable
 - a:getLibraryKind():com.intellij.openapi.roots.libraries.LibraryKind
 c:com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
-- <init>():V
 - canOpenContentEntriesSettings():Z
 - canOpenLibraryOrSdkSettings(com.intellij.openapi.roots.OrderEntry):Z
 - canOpenModuleDependenciesSettings():Z

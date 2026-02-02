@@ -3,7 +3,14 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.controlFlow.ReturnStatementsVisitor;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;

@@ -1,7 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution.target
 
-import com.intellij.execution.target.*
+import com.intellij.execution.target.BrowsableTargetEnvironmentType
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentType
+import com.intellij.execution.target.getRuntimeType
+import com.intellij.execution.target.textFieldWithBrowseTargetButton
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel

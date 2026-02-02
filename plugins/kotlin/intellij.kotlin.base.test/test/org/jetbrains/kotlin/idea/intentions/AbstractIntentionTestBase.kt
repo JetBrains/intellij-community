@@ -51,7 +51,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
 import org.junit.Assert
 import java.io.File
 import java.util.concurrent.ExecutionException
-import kotlin.collections.iterator
 
 abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun intentionFileName(): String = ".intention"

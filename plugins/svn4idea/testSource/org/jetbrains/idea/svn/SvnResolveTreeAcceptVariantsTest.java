@@ -36,8 +36,18 @@ import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
-import static org.jetbrains.idea.svn.status.StatusType.*;
-import static org.junit.Assert.*;
+import static org.jetbrains.idea.svn.status.StatusType.STATUS_ADDED;
+import static org.jetbrains.idea.svn.status.StatusType.STATUS_DELETED;
+import static org.jetbrains.idea.svn.status.StatusType.STATUS_MODIFIED;
+import static org.jetbrains.idea.svn.status.StatusType.STATUS_NORMAL;
+import static org.jetbrains.idea.svn.status.StatusType.STATUS_REPLACED;
+import static org.jetbrains.idea.svn.status.StatusType.STATUS_UNVERSIONED;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {

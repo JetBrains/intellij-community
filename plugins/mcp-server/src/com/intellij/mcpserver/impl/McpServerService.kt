@@ -1,15 +1,44 @@
 package com.intellij.mcpserver.impl
 
 import com.intellij.concurrency.currentThreadContext
-import com.intellij.mcpserver.*
-import com.intellij.mcpserver.impl.util.network.*
+import com.intellij.mcpserver.ClientInfo
+import com.intellij.mcpserver.DirectoryCreatedEvent
+import com.intellij.mcpserver.DirectoryDeletedEvent
+import com.intellij.mcpserver.FileContentChangeEvent
+import com.intellij.mcpserver.FileCreatedEvent
+import com.intellij.mcpserver.FileDeletedEvent
+import com.intellij.mcpserver.FileMovedEvent
+import com.intellij.mcpserver.McpCallAdditionalDataElement
+import com.intellij.mcpserver.McpCallInfo
+import com.intellij.mcpserver.McpExpectedError
+import com.intellij.mcpserver.McpTool
+import com.intellij.mcpserver.McpToolCallResult
+import com.intellij.mcpserver.McpToolCallResultContent
+import com.intellij.mcpserver.McpToolFilter
+import com.intellij.mcpserver.McpToolSideEffectEvent
+import com.intellij.mcpserver.McpToolsProvider
+import com.intellij.mcpserver.McpToolset
+import com.intellij.mcpserver.ToolCallListener
+import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
+import com.intellij.mcpserver.impl.util.network.findFirstFreePort
+import com.intellij.mcpserver.impl.util.network.httpRequestOrNull
+import com.intellij.mcpserver.impl.util.network.installHostValidation
+import com.intellij.mcpserver.impl.util.network.installHttpRequestPropagation
+import com.intellij.mcpserver.impl.util.network.mcpPatched
 import com.intellij.mcpserver.impl.util.projectPathParameterName
+import com.intellij.mcpserver.mcpCallInfoOrNull
+import com.intellij.mcpserver.noSuitableProjectError
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.mcpserver.stdio.IJ_MCP_ALLOWED_TOOLS
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.mcpserver.util.findMostRelevantProject
-import com.intellij.openapi.application.*
+import com.intellij.mcpserver.util.findMostRelevantProjectForRoots
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -29,8 +58,17 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.events.*
-import com.intellij.platform.diagnostic.telemetry.*
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.platform.diagnostic.telemetry.IJNoopTracer
+import com.intellij.platform.diagnostic.telemetry.IJTracer
+import com.intellij.platform.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.TracerLevel
 import com.intellij.util.application
 import com.intellij.util.asDisposable
 import io.ktor.http.HttpStatusCode
@@ -45,18 +83,35 @@ import io.modelcontextprotocol.kotlin.sdk.server.RegisteredTool
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
 import io.modelcontextprotocol.kotlin.sdk.server.ServerSession
-import io.modelcontextprotocol.kotlin.sdk.types.*
+import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
+import io.modelcontextprotocol.kotlin.sdk.types.EmptyJsonObject
+import io.modelcontextprotocol.kotlin.sdk.types.Implementation
+import io.modelcontextprotocol.kotlin.sdk.types.Method
+import io.modelcontextprotocol.kotlin.sdk.types.RootsListChangedNotification
+import io.modelcontextprotocol.kotlin.sdk.types.ServerCapabilities
+import io.modelcontextprotocol.kotlin.sdk.types.TextContent
+import io.modelcontextprotocol.kotlin.sdk.types.Tool
+import io.modelcontextprotocol.kotlin.sdk.types.ToolSchema
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.StatusCode
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.JsonPrimitive
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
@@ -105,6 +160,7 @@ class McpServerService(val cs: CoroutineScope) {
   private val callId = AtomicInteger(0)
 
   private val activeAuthorizedSessions = ConcurrentHashMap<String, McpSessionOptions>()
+  internal val sessionRoots = ConcurrentHashMap<String, Set<String>>()
 
   val isRunning: Boolean
     get() = server.value != null
@@ -330,7 +386,25 @@ class McpServerService(val cs: CoroutineScope) {
             mcpServer.addTools(filteredTools.map { it.mcpToolToRegisteredTool(mcpServer, session, projectPath) })
             previousTools = filteredTools
           }
+
         }
+
+        session.onInitialized {
+          val clientCapabilities = session.clientCapabilities
+          if (clientCapabilities?.roots != null) {
+            session.onClose { sessionRoots.remove(session.sessionId) }
+            session.setNotificationHandler<RootsListChangedNotification>(Method.Defined.NotificationsRootsListChanged) {
+              async {
+                sessionRoots[session.sessionId] = session.roots()
+              }
+            }
+            launch {
+              sessionRoots[session.sessionId] = session.roots()
+            }
+          }
+        }
+
+
         return@mcpPatched session
       }
     }.start(wait = false)
@@ -362,9 +436,15 @@ class McpServerService(val cs: CoroutineScope) {
         ?: projectPathFromInitialRequest
       val projectPathFromMcpRequest = (request.arguments?.get(projectPathParameterName) as? JsonPrimitive)?.content
       val project = try {
-        if (!projectPathFromMcpRequest.isNullOrBlank()) {
+        val sessionRoots = sessionRoots[session.sessionId]
+        val projectFromRootList = sessionRoots?.let { findMostRelevantProjectForRoots(sessionRoots) }
+        if (projectFromRootList != null) {
+          logger.trace { "Project from roots list: $sessionRoots" }
+          // prefer project from list of roots
+          projectFromRootList
+        } else if (!projectPathFromMcpRequest.isNullOrBlank()) {
           logger.trace { "Project path specified in MCP request: $projectPathFromMcpRequest" }
-          // prefer a project from mcp argument first
+          // project from mcp argument first (may hallucinate)
           findMostRelevantProject(Path(projectPathFromMcpRequest))
           ?: throw noSuitableProjectError("`$projectPathParameterName`=`$projectPathFromMcpRequest` doesn't correspond to any open project.")
         }
@@ -605,6 +685,9 @@ class McpServerService(val cs: CoroutineScope) {
       return@RegisteredTool callToolResult
     }
   }
+}
+private suspend fun ServerSession.roots(): Set<String> {
+  return listRoots().roots.map { it.uri }.toSet()
 }
 
 private fun McpToolCallResult.toSdkToolCallResult(): CallToolResult {

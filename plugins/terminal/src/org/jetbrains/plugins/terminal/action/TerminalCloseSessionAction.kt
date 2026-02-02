@@ -3,14 +3,13 @@ package org.jetbrains.plugins.terminal.action
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.promptController
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSession
-import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSession
 
 internal class TerminalCloseSessionAction : TerminalPromotedDumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {

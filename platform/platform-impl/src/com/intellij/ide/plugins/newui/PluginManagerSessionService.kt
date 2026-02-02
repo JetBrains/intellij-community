@@ -68,10 +68,7 @@ class PluginManagerSession(val sessionId: String) {
   var updateService: PluginUpdatesService? = null
   var needRestart = false
 
-  // The next 2 methods was mooved from com.intellij.ide.plugins.InstalledPluginsTableModel
-  fun isPluginDisabled(pluginId: PluginId): Boolean {
-    return pluginStates[pluginId]?.isDisabled ?: true
-  }
+  fun isPluginDisabled(pluginId: PluginId): Boolean = !isPluginEnabled(pluginId)
   
   fun isPluginEnabled(pluginId: PluginId): Boolean {
     return pluginStates[pluginId]?.isEnabled ?: true

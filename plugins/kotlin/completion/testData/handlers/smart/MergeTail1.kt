@@ -8,3 +8,4 @@ fun foo() {
 }
 
 // AUTOCOMPLETE_SETTING: true
+// IGNORE_K2

@@ -18,13 +18,25 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature;
 import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
-import com.jetbrains.jsonSchema.impl.*;
+import com.jetbrains.jsonSchema.impl.JsonComplianceCheckerOptions;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
+import com.jetbrains.jsonSchema.impl.JsonSchemaType;
+import com.jetbrains.jsonSchema.impl.JsonValidationError;
+import com.jetbrains.jsonSchema.impl.MatchResult;
 import kotlin.collections.CollectionsKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 

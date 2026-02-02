@@ -1,7 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rete
 
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.Attribute
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.EntityAttribute
+import com.jetbrains.rhizomedb.EntityType
+import com.jetbrains.rhizomedb.all
+import com.jetbrains.rhizomedb.entity
+import com.jetbrains.rhizomedb.fromIndexValue
+import com.jetbrains.rhizomedb.get
+import com.jetbrains.rhizomedb.getOne
+import com.jetbrains.rhizomedb.toIndexValue
 import fleet.kernel.rete.impl.*
 import fleet.util.async.firstNotNull
 import kotlinx.coroutines.CoroutineScope

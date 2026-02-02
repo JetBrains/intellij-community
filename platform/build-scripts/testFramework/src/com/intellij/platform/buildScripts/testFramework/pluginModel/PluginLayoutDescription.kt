@@ -124,7 +124,7 @@ private class YamlFileBasedPluginLayoutProvider(
   }
 
   override fun loadMainModulesOfBundledPlugins(): List<String> {
-    return ideContentData.flatMap { it.bundled }
+    return ideContentData.flatMap { it.bundled }.map { it.mainModule }
   }
 
   override fun loadPluginLayout(mainModule: JpsModule): PluginLayoutDescription? {

@@ -9,7 +9,7 @@ import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersViewIni
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.BorderLayout;
 
 /**
  * @author Ilya.Kazakevich

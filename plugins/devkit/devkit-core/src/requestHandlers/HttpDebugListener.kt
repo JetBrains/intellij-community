@@ -10,7 +10,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.text.StringUtil
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.*
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpMethod
+import io.netty.handler.codec.http.HttpRequest
+import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.send

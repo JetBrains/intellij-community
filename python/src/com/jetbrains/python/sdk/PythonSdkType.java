@@ -15,7 +15,13 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.AdditionalDataConfigurable;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.SdkModel;
+import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -42,23 +48,33 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.target.PyDetectedSdkAdditionalData;
 import com.jetbrains.python.target.PyInterpreterVersionUtil;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
-import com.jetbrains.python.venvReader.VirtualEnvReader;
+import com.jetbrains.python.venvReader.VirtualEnvReaderKt;
 import kotlin.coroutines.Continuation;
 import kotlin.jvm.functions.Function2;
 import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.Component;
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -144,7 +160,7 @@ public final class PythonSdkType extends SdkType {
   @RequiresBackgroundThread
   public @NotNull String adjustSelectedSdkHome(@NotNull String homePath) {
     try {
-      Path pythonPath = VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(homePath));
+      Path pythonPath = VirtualEnvReaderKt.VirtualEnvReader().findPythonInPythonRoot(Path.of(homePath));
       return pythonPath != null ? pythonPath.toString() : homePath;
     }
     catch (InvalidPathException e) {
@@ -193,7 +209,7 @@ public final class PythonSdkType extends SdkType {
       @Override
       public boolean isFileSelectable(@Nullable VirtualFile file) {
         if (file == null) return false;
-        Path pythonPath = VirtualEnvReader.getInstance().findPythonInPythonRoot(file.toNioPath());
+        Path pythonPath = VirtualEnvReaderKt.VirtualEnvReader().findPythonInPythonRoot(file.toNioPath());
         return pythonPath != null;
       }
     }

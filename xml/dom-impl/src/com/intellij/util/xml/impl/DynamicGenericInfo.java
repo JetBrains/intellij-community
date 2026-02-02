@@ -13,13 +13,24 @@ import com.intellij.util.containers.Interner;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.reflect.*;
+import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
+import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.util.xml.reflect.DomExtender;
+import com.intellij.util.xml.reflect.DomExtenderEP;
+import com.intellij.util.xml.reflect.DomExtensionImpl;
+import com.intellij.util.xml.reflect.DomExtensionsRegistrarImpl;
+import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.reference.SoftReference.dereference;
 

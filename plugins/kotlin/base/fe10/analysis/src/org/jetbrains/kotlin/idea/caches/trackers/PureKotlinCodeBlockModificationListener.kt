@@ -25,12 +25,30 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findTopmostParentInFile
 import com.intellij.psi.util.findTopmostParentOfType
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModificationListener.Companion.getInsideCodeBlockModificationScope
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotated
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtClassInitializer
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtScriptInitializer
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
+import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 
+@K1Deprecation
 @Service(Service.Level.PROJECT)
 class PureKotlinCodeBlockModificationListener(val project: Project) : Disposable {
 
@@ -307,6 +325,7 @@ class PureKotlinCodeBlockModificationListener(val project: Project) : Disposable
 
 private val FILE_OUT_OF_BLOCK_MODIFICATION_COUNT = Key<Long>("FILE_OUT_OF_BLOCK_MODIFICATION_COUNT")
 
+@K1Deprecation
 val KtFile.outOfBlockModificationCount: Long by NotNullableUserDataProperty(FILE_OUT_OF_BLOCK_MODIFICATION_COUNT, 0)
 
 private fun KtFile.incOutOfBlockModificationCount() {
@@ -322,8 +341,10 @@ private fun KtFile.incOutOfBlockModificationCount() {
 private val IN_BLOCK_MODIFICATIONS = Key<MutableCollection<KtElement>>("IN_BLOCK_MODIFICATIONS")
 private val FILE_IN_BLOCK_MODIFICATION_COUNT = Key<Long>("FILE_IN_BLOCK_MODIFICATION_COUNT")
 
+@K1Deprecation
 val KtFile.inBlockModificationCount: Long by NotNullableUserDataProperty(FILE_IN_BLOCK_MODIFICATION_COUNT, 0)
 
+@K1Deprecation
 val KtFile.inBlockModifications: Collection<KtElement>
     get() {
         val collection = getUserData(IN_BLOCK_MODIFICATIONS) ?: return emptyList()
@@ -349,6 +370,7 @@ private fun KtFile.addInBlockModifiedItem(element: KtElement) {
     putUserData(FILE_IN_BLOCK_MODIFICATION_COUNT, count + 1)
 }
 
+@K1Deprecation
 fun KtFile.removeInBlockModifications(blockModifications: Collection<KtElement>) {
     if (blockModifications.isEmpty()) return
 
@@ -359,6 +381,7 @@ fun KtFile.removeInBlockModifications(blockModifications: Collection<KtElement>)
     }
 }
 
+@K1Deprecation
 fun KtFile.clearInBlockModifications() {
     getUserData(IN_BLOCK_MODIFICATIONS)?.let { collection ->
         synchronized(collection) {

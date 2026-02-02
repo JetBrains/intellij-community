@@ -26,7 +26,7 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.status.HgChangesetStatus;
 import org.zmlx.hg4idea.status.HgRemoteStatusUpdater;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.awt.event.MouseEvent;
 import java.util.Objects;
 

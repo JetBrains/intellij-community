@@ -35,6 +35,16 @@ def strip_comments(text: str) -> str:
     return text.split("#")[0].strip()
 
 
+def json5_to_json(text: str) -> str:
+    """Incomplete conversion from JSON5-like input to valid JSON."""
+    # Remove full-line // comments only
+    # (Can not remove inline comments)
+    text = re.sub(r"(?m)^\s*//.*\n?", "", text)
+    # Remove trailing commas before } or ]
+    text = re.sub(r",\s*([}\]])", r"\1", text)
+    return text
+
+
 # ====================================================================
 # Printing utilities
 # ====================================================================

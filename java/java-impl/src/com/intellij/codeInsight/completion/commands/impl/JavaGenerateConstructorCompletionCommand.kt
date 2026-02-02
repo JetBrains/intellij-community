@@ -20,7 +20,15 @@ import com.intellij.modcommand.ModCommandExecutor
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiImplicitClass
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier

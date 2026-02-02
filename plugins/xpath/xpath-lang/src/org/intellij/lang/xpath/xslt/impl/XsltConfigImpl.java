@@ -32,8 +32,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 
 @State(name = "XSLT-Support.Configuration", storages = {@Storage(StoragePathMacros.NON_ROAMABLE_FILE)})
 class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<XsltConfigImpl> {

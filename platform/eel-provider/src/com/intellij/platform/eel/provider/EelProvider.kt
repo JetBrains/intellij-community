@@ -1,6 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("EelProviderUtil")
-
 package com.intellij.platform.eel.provider
 
 import com.intellij.openapi.application.ApplicationManager
@@ -10,7 +9,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.util.coroutines.mapNotNullConcurrent
@@ -147,6 +145,9 @@ fun Path.getEelDescriptor(): EelDescriptor {
   return LocalEelDescriptor
 }
 
+@get:ApiStatus.Experimental
+val Path.osFamily: EelOsFamily get() = getEelDescriptor().osFamily
+
 /**
  * Retrieves [EelDescriptor] for the environment where [this] is located.
  * If the project is not the real one (i.e., it is default or not backed by a real file), then [LocalEelDescriptor] will be returned.
@@ -169,7 +170,8 @@ fun Project.getEelDescriptor(): EelDescriptor {
 
 @get:ApiStatus.Experimental
 val localEel: LocalEelApi by lazy {
-  if (SystemInfo.isWindows) ApplicationManager.getApplication().service<LocalWindowsEelApi>() else ApplicationManager.getApplication().service<LocalPosixEelApi>()
+  if (OS.CURRENT == OS.Windows) ApplicationManager.getApplication().service<LocalWindowsEelApi>()
+  else ApplicationManager.getApplication().service<LocalPosixEelApi>()
 }
 
 @Deprecated("Use toEelApiBlocking() instead", ReplaceWith("toEelApiBlocking()"))
@@ -194,9 +196,7 @@ data object LocalEelMachine : EelMachine {
     return localEel
   }
 
-  override fun ownsPath(path: Path): Boolean {
-    return path.getEelDescriptor() === LocalEelDescriptor
-  }
+  override fun ownsPath(path: Path): Boolean = path.getEelDescriptor() === LocalEelDescriptor
 }
 
 @ApiStatus.Experimental
@@ -206,9 +206,9 @@ data object LocalEelDescriptor : EelDescriptor {
   override val name: @NonNls String = "Local: ${System.getProperty("os.name")}"
 
   override val osFamily: EelOsFamily by lazy {
-    when {
-      SystemInfo.isWindows -> EelOsFamily.Windows
-      SystemInfo.isMac || SystemInfo.isLinux || SystemInfo.isFreeBSD -> EelOsFamily.Posix
+    when (OS.CURRENT) {
+      OS.Windows -> EelOsFamily.Windows
+      OS.macOS, OS.Linux, OS.FreeBSD -> EelOsFamily.Posix
       else -> {
         LOG.info("Eel is not supported on current platform")
         EelOsFamily.Posix
@@ -220,7 +220,7 @@ data object LocalEelDescriptor : EelDescriptor {
 @ApiStatus.Internal
 interface EelProvider {
   companion object {
-    val EP_NAME: ExtensionPointName<EelProvider> = ExtensionPointName<EelProvider>("com.intellij.eelProvider")
+    val EP_NAME: ExtensionPointName<EelProvider> = ExtensionPointName("com.intellij.eelProvider")
   }
 
   /**

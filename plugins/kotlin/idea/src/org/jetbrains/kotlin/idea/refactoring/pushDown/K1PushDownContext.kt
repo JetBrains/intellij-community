@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.refactoring.pushDown
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.utils.keysToMap
 
+@K1Deprecation
 @ApiStatus.Internal
 class K1PushDownContext(
     sourceClass: KtClass,

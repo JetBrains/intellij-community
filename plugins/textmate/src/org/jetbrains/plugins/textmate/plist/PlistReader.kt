@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.textmate.plist
 
-import java.io.*
-import kotlin.jvm.Throws
+import java.io.IOException
+import java.io.InputStream
 
 @Deprecated("Use PlistReaderCore instead")
 interface PlistReader: PlistReaderCore {

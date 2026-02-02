@@ -117,6 +117,6 @@ private object MultilineCodeConverter : HtmlElementConverter {
         val raw = htmlElement.children.joinToString(separator = "") { it.htmlContent }
         // Preserve internal newlines and indentation, but drop surrounding blank lines caused by block formatting.
         val normalized = raw.trimIndent().trim('\n')
-        return MarkdownBlock.CodeBlock.FencedCodeBlock(normalized, mimeType = null)
+        return MarkdownBlock.CodeBlock.FencedCodeBlock(normalized, language = null)
     }
 }

@@ -19,7 +19,11 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.ExternalLibraryDescriptor
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
@@ -41,7 +45,11 @@ import org.jetbrains.kotlin.idea.base.util.findLibrary
 import org.jetbrains.kotlin.idea.base.util.hasKotlinFilesInTestsOnly
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.ui.CreateLibraryDialogWithModules
-import org.jetbrains.kotlin.idea.facet.*
+import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.facet.addCompilerArgumentToKotlinFacet
+import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
+import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
+import org.jetbrains.kotlin.idea.facet.setLanguageAndApiVersionInKotlinFacet
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.projectConfiguration.askUpdateRuntime

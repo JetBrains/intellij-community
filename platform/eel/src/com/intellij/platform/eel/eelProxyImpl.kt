@@ -3,11 +3,26 @@
 
 package com.intellij.platform.eel
 
-import com.intellij.platform.eel.channels.*
-import kotlinx.coroutines.*
+import com.intellij.platform.eel.channels.EelChannelException
+import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelReceiveChannelException
+import com.intellij.platform.eel.channels.EelSendChannel
+import com.intellij.platform.eel.channels.EelSendChannelException
+import com.intellij.platform.eel.channels.sendWholeBuffer
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration.Companion.seconds
 
 // TODO Maybe move to eel.impl?

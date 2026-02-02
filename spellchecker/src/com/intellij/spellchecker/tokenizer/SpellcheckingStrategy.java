@@ -188,9 +188,8 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
     if (useRename && PsiTreeUtil.getNonStrictParentOfType(element, PsiNamedElement.class) != null) {
       result.add(SpellCheckerQuickFixFactory.rename(typo, range, element, tracker));
     } else {
-      List<LocalQuickFix> fixes = SpellCheckerQuickFixFactory.changeToVariants(element, range, typo, tracker, suggestions);
+      result.addAll(SpellCheckerQuickFixFactory.changeToVariants(element, range, typo, tracker, suggestions));
       result.addAll(SpellCheckerQuickFixFactory.additionalFixes());
-      result.addAll(fixes);
     }
 
     SpellCheckerSettings settings = SpellCheckerSettings.getInstance(element.getProject());

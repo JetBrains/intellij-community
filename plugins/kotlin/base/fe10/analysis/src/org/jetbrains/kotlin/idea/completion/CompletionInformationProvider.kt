@@ -7,8 +7,10 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 
+@K1Deprecation
 interface CompletionInformationProvider {
     companion object {
         val EP_NAME: ExtensionPointName<CompletionInformationProvider> =
