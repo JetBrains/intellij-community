@@ -93,7 +93,7 @@ object JavaShellCommandUtils {
 
   internal data class UIOptionInfo(
     val separator: String? = null,
-    @NlsSafe val argumentName: String? = null,
+    val argumentName: @NlsSafe String? = null,
     val repeatTimes: Int = 1,
     val isArgumentOptional: Boolean = false,
     val suggestionsGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>>? = null,
