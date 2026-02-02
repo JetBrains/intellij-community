@@ -357,12 +357,6 @@ class FrontendXDebuggerSession(
         proxy.onTabInitialized(this)
       }
     }
-
-    tabScope.launch(Dispatchers.EDT) {
-      tabInfo.showTab.await()
-      tab.showTab()
-    }
-
     val runContentDescriptor = tab.runContentDescriptor
     if (runContentDescriptor == null) {
       onTabClosed()
@@ -372,6 +366,17 @@ class FrontendXDebuggerSession(
     runContentDescriptor.coroutineScope.awaitCancellationAndInvoke {
       onTabClosed()
     }
+
+    val executionEnvDto = tabInfo.executionEnvironmentProxyDto
+    if (executionEnvDto != null) {
+      runContentDescriptor.executionId = executionEnvDto.executionId
+    }
+
+    tabScope.launch(Dispatchers.EDT) {
+      tabInfo.showTab.await()
+      tab.showTab()
+    }
+
     // don't subscribe on additional tabs if we have [ExecutionEnvironment] (it means this is Monolith)
     if (tabInfo.executionEnvironmentProxyDto?.executionEnvironment == null) {
       subscribeOnAdditionalTabs(tabScope, tab, tabInfo.additionalTabsComponentManagerId)
