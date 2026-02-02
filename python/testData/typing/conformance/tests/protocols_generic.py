@@ -40,7 +40,7 @@ p1: Proto1[str, int] = Concrete1()  # OK
 p2: Proto1[int, str] = Concrete1()  # E: incompatible type
 
 
-# Runtime error: Protocol and Generic cannot be used together as base classes.
+# > It is an error to combine the shorthand with Generic[T, S, ...]
 class Proto2(Protocol[T_co], Generic[T_co]):  # E
     ...
 
