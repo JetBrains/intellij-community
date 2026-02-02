@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.transformWhile
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabGraphQLMutationException
 import org.jetbrains.plugins.gitlab.api.GitLabId
@@ -157,7 +156,7 @@ class GitLabLazyProject(
 
   @Throws(GitLabGraphQLMutationException::class)
   override suspend fun createMergeRequestAndAwaitCompletion(sourceBranch: String, targetBranch: String, title: String, description: String?): GitLabMergeRequestDTO {
-    return withContext(cs.coroutineContext + Dispatchers.IO) {
+    return cs.async(Dispatchers.IO) {
       var data: GitLabMergeRequestDTO = api.graphQL.createMergeRequest(projectCoordinates, sourceBranch, targetBranch, title, description).getResultOrThrow()
       val iid = data.iid
       var attempts = 1
@@ -172,12 +171,12 @@ class GitLabLazyProject(
         delay(GitLabRegistry.getRequestPollingIntervalMillis().toLong())
       }
       data
-    }
+    }.await()
   }
 
   @Throws(GitLabGraphQLMutationException::class, IllegalStateException::class)
   override suspend fun adjustReviewers(mrIid: String, reviewers: List<GitLabUserDTO>): GitLabMergeRequestDTO {
-    return withContext(cs.coroutineContext + Dispatchers.IO) {
+    return cs.async(Dispatchers.IO) {
       if (GitLabVersion(15, 3) <= api.getMetadata().version) {
         api.graphQL.mergeRequestSetReviewers(projectCoordinates, mrIid, reviewers).getResultOrThrow()
       }
@@ -185,7 +184,7 @@ class GitLabLazyProject(
         api.rest.mergeRequestSetReviewers(projectCoordinates, mrIid, reviewers).body()
         api.graphQL.loadMergeRequest(projectCoordinates, mrIid).body() ?: error("Merge request could not be loaded")
       }
-    }
+    }.await()
   }
 
   override fun reloadData() {
@@ -195,19 +194,19 @@ class GitLabLazyProject(
   }
 
   override suspend fun uploadFile(path: Path): String {
-    val uploadRestDTO = withContext(cs.coroutineContext + Dispatchers.IO) {
+    val uploadRestDTO = cs.async(Dispatchers.IO) {
       val filename = path.fileName.toString()
       val mimeType = Files.probeContentType(path) ?: "application/octet-stream"
       Files.newInputStream(path).use {
         api.rest.markdownUploadFile(projectCoordinates, filename, mimeType, it).body()
       }
-    }
+    }.await()
     GitLabStatistics.logFileUploadActionExecuted(project)
     return uploadRestDTO.markdown
   }
 
   override suspend fun uploadImage(image: BufferedImage): String {
-    val uploadRestDTO = withContext(cs.coroutineContext + Dispatchers.IO) {
+    val uploadRestDTO = cs.async(Dispatchers.IO) {
       val byteArray = ByteArrayOutputStream().use { outputStream ->
         ImageIO.write(image, "PNG", outputStream)
         outputStream.toByteArray()
@@ -215,7 +214,7 @@ class GitLabLazyProject(
       ByteArrayInputStream(byteArray).use {
         api.rest.markdownUploadFile(projectCoordinates, "image.png", "image/png", it).body()
       }
-    }
+    }.await()
     GitLabStatistics.logFileUploadActionExecuted(project)
     return uploadRestDTO.markdown
   }
