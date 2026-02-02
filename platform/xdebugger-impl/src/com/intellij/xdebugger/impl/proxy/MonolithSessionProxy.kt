@@ -32,6 +32,7 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSourceKind
+import com.intellij.xdebugger.impl.updateExecutionPosition
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.frame.XValueMarkers
@@ -159,6 +160,9 @@ internal class MonolithSessionProxy(val session: XDebugSession) : XDebugSessionP
 
   override fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean) {
     session.setCurrentStackFrame(executionStack, frame, isTopFrame)
+    if (session.currentStackFrame === frame) {
+      updateExecutionPosition(this)
+    }
   }
 
   override fun isTopFrameSelected(): Boolean {
