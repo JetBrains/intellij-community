@@ -28,6 +28,24 @@ except ImportError:
         return text
 
 
+_REMOVE_COMMENT_RE = re.compile(
+    r"""
+    (\"(?:\\.|[^\\\"])*?\")  # matches literal strings
+    |
+    (\/\*.*?\*\/ | \/\/[^\r\n]*?(?:[\r\n]))  # matches single- and multi-line comments
+    """,
+    re.DOTALL | re.VERBOSE,
+)
+_REMOVE_TRAILING_COMMA_RE = re.compile(
+    r"""
+    (\"(?:\\.|[^\\\"])*?\")  # matches literal strings
+    |
+    ,\s*([\]}])  # matches commas before '}' or ']'
+    """,
+    re.DOTALL | re.VERBOSE,
+)
+
+
 PYTHON_VERSION: Final = f"{sys.version_info.major}.{sys.version_info.minor}"
 
 
@@ -35,13 +53,15 @@ def strip_comments(text: str) -> str:
     return text.split("#")[0].strip()
 
 
-def json5_to_json(text: str) -> str:
-    """Incomplete conversion from JSON5-like input to valid JSON."""
-    # Remove full-line // comments only
-    # (Can not remove inline comments)
-    text = re.sub(r"(?m)^\s*//.*\n?", "", text)
+def jsonc_to_json(text: str) -> str:
+    """Conversion from JSONC format input to valid JSON."""
+    # Remove comments
+    if not text.endswith("\n"):
+        text += "\n"
+    text = _REMOVE_COMMENT_RE.sub(lambda m: m.group(1) or "", text)
+
     # Remove trailing commas before } or ]
-    text = re.sub(r",\s*([}\]])", r"\1", text)
+    text = _REMOVE_TRAILING_COMMA_RE.sub(lambda m: m.group(1) or m.group(2), text)
     return text
 
 
