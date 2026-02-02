@@ -915,7 +915,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val sourceKtFile = getFile("A.kt")
         val sourceKaModule = kaModuleWithAssertion<KaSourceModule>(sourceKtFile)
 
-        val temporaryFile = KtPsiFactory.contextual(sourceKtFile).createFile(name, "A()")
+        val temporaryFile = KtPsiFactory.contextual(sourceKtFile).createFile("dummy.kt", "class A")
         temporaryFile.originalFile = sourceKtFile
         assertKaModuleType<KaDanglingFileModule>(temporaryFile)
 
@@ -943,7 +943,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val sourceKtFile = getFile("A.kt")
         val sourceKaModule = kaModuleWithAssertion<KaSourceModule>(sourceKtFile)
 
-        val temporaryFile = KtPsiFactory.contextual(sourceKtFile).createFile(name, "A()")
+        val temporaryFile = KtPsiFactory.contextual(sourceKtFile).createFile("dummy.kt", "class A")
         temporaryFile.originalFile = sourceKtFile
 
         // Compared to the test above, this test explicitly sets `contextModule`.
@@ -987,7 +987,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val sourceKtFile = getFile("A.kt")
         assertKaModuleType<KaSourceModule>(sourceKtFile)
 
-        val temporaryFile = KtPsiFactory.contextual(sourceKtFile, eventSystemEnabled = isPhysical).createFile(name, "A()")
+        val temporaryFile = KtPsiFactory.contextual(sourceKtFile, eventSystemEnabled = isPhysical).createFile("dummy.kt", "class A")
         temporaryFile.originalFile = sourceKtFile
 
         val danglingFileKaModule = kaModuleWithAssertion<KaDanglingFileModule>(temporaryFile)
