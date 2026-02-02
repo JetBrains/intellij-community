@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.ProjectGeneratorPeer
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.python.pyproject.model.internal.startAutoImportIfNeeded
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
@@ -70,37 +71,47 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
   override fun generateProject(project: Project, baseDir: VirtualFile, settings: PyV3BaseProjectSettings, module: Module) {
     val coroutineScope = project.service<MyService>().coroutineScope
     coroutineScope.launch {
-      val (sdk, interpreterStatistics) = settings.generateAndGetSdk(module, baseDir, supportsNotEmptyModuleStructure).getOr {
-        withContext(Dispatchers.EDT) {
-          uiServices.errorSink.emit(it.error, project)
-        }
-        return@launch // Since we failed to generate a project, we do not need to go any further
-      }
-
-      withContext(Dispatchers.EDT) {
-        edtWriteAction {
-          VirtualFileManager.getInstance().syncRefresh()
-        }
-      }
-
-      val pythonVersion = withContext(Dispatchers.IO) { sdk.version }
-      logPythonNewProjectGenerated(interpreterStatistics,
-                                   pythonVersion,
-                                   this@PyV3ProjectBaseGenerator,
-                                   emptyList())
-
-      // The project view must be expanded (PY-75909), but it can't be unless it contains some files.
-      // Either base settings (which create venv) might generate some or type-specific settings (like Django) may.
-      // So we expand it right after SDK generation, but if there are no files yet, we do it again after project generation
-      uiServices.expandProjectTreeView(project)
-      withBackgroundProgress(project, PyBundle.message("python.project.model.progress.title.generating"), cancellable = true) {
-        typeSpecificSettings.generateProject(module, baseDir, sdk).onFailure {
-          uiServices.errorSink.emit(it, project)
-        }
-        refreshPaths(project, sdk)
-      }
-      uiServices.expandProjectTreeView(project)
+      generateProjectImpl(settings, module, baseDir)
+      startAutoImportIfNeeded(project)
     }
+  }
+
+  private suspend fun generateProjectImpl(
+    settings: PyV3BaseProjectSettings,
+    module: Module,
+    baseDir: VirtualFile,
+  ) {
+    val project = module.project
+    val (sdk, interpreterStatistics) = settings.generateAndGetSdk(module, baseDir, supportsNotEmptyModuleStructure).getOr {
+      withContext(Dispatchers.EDT) {
+        uiServices.errorSink.emit(it.error, project)
+      }
+      return // Since we failed to generate a project, we do not need to go any further
+    }
+
+    withContext(Dispatchers.EDT) {
+      edtWriteAction {
+        VirtualFileManager.getInstance().syncRefresh()
+      }
+    }
+
+    val pythonVersion = withContext(Dispatchers.IO) { sdk.version }
+    logPythonNewProjectGenerated(interpreterStatistics,
+                                 pythonVersion,
+                                 this@PyV3ProjectBaseGenerator,
+                                 emptyList())
+
+    // The project view must be expanded (PY-75909), but it can't be unless it contains some files.
+    // Either base settings (which create venv) might generate some or type-specific settings (like Django) may.
+    // So we expand it right after SDK generation, but if there are no files yet, we do it again after project generation
+    uiServices.expandProjectTreeView(project)
+    withBackgroundProgress(project, PyBundle.message("python.project.model.progress.title.generating"), cancellable = true) {
+      typeSpecificSettings.generateProject(module, baseDir, sdk).onFailure {
+        uiServices.errorSink.emit(it, project)
+      }
+      refreshPaths(project, sdk)
+    }
+    uiServices.expandProjectTreeView(project)
   }
 
 

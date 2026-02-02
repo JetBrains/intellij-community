@@ -19,7 +19,11 @@ internal class PyProjectAutoImportService(private val project: Project) : Dispos
   private var projectId: ExternalSystemProjectId? = null
 
 
-  suspend fun start() {
+  /**
+   * Starts auto-import (`builds project module on any pyproject.toml` change). To be called only once!
+   */
+  internal suspend fun start() {
+    assert(projectId == null) { "Already started, do not call second time" }
     val tracker = getTracker()
     val projectAware = PyExternalSystemProjectAware.create(project)
     val projectId = projectAware.projectId

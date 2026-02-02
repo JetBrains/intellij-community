@@ -9,7 +9,8 @@
 
   <resource-bundle>messages.PyProjectTomlBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey defaultValue="true" description="Load project structure from pyproject.toml" key="intellij.python.pyproject.model" restartRequired="true"/>
+    <registryKey defaultValue="true" description="Load project structure from pyproject.toml" key="intellij.python.pyproject.model"
+                 restartRequired="true"/>
     <postStartupActivity implementation="com.intellij.python.pyproject.model.internal.platformBridge.PyProjectSyncActivity"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.python.pyproject.statistics.PythonTomlStatsUsagesCollector"/>
@@ -17,6 +18,8 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.python.pyproject.model.tool" interface="com.intellij.python.pyproject.model.spi.Tool"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.python.pyproject.model.moduleDataTransfer"
+                    interface="com.intellij.python.pyproject.model.spi.PyModuleDataTransfer" dynamic="true"/>
   </extensionPoints>
 
 </idea-plugin>
