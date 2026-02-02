@@ -25,7 +25,7 @@ internal class MeasuringFileSystemListener : FileSystemTracingListener<Measuring
 
   init {
     // ensure the class is loaded to avoid recursion
-    Measurer.Operation::class to Measurer to TracingSeekableByteChannel::class to TracingDirectoryStream::class
+    Measurer.Operation::class to Measurer to TracingSeekableByteChannel::class to TracingFileChannel::class to TracingDirectoryStream::class
   }
 
   private class State {
@@ -125,10 +125,10 @@ internal class MeasuringFileSystemListener : FileSystemTracingListener<Measuring
     return opStarted(delegate, path, null, Measurer.Operation.providerNewByteChannel)
   }
 
-  override fun providerNewByteChannelReturn(token: SpanEntry?, result: SeekableByteChannel?): SeekableByteChannel? {
+  override fun providerNewByteChannelReturn(token: SpanEntry?, result: SeekableByteChannel): SeekableByteChannel {
     if (token != null) {
       opFinished(token, null)
-      return result?.let { TracingSeekableByteChannel(it, this.spanNamePrefixWithFileSystemClass(token.delegate)) }
+      return result.traced(spanNamePrefixWithFileSystemClass(token.delegate))
     }
     else {
       return result
