@@ -2141,6 +2141,9 @@
 
     <listener class="com.intellij.openapi.editor.impl.ad.markup.AdDocumentMarkupManagerImpl$AdDocumentMarkupListener"
               topic="com.intellij.openapi.editor.impl.DocumentMarkupListener" />
+
+    <listener class="com.intellij.ide.file.XdgTrashBinPreloader" topic="com.intellij.ide.AppLifecycleListener"
+              os="unix" activeInTestMode="false" activeInHeadlessMode="false"/>
   </applicationListeners>
 
   <projectListeners>
