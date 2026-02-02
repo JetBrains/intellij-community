@@ -15,6 +15,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Companion
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyAnnotation
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyAssignmentStatement
 import com.jetbrains.python.psi.PyBoolLiteralExpression
@@ -62,6 +63,10 @@ class PyTypedDictInspection : PyInspection() {
   private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
+      if (node.parent is PyAnnotation) {
+        // Do not check it in TypeHints
+        return
+      }
       val operandType = myTypeEvalContext.getType(node.operand)
       if (operandType !is PyTypedDictType) return
 
