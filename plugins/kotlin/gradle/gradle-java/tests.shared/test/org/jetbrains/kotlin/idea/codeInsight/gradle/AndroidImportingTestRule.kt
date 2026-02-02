@@ -14,7 +14,7 @@ class AndroidImportingTestRule : MethodRule {
 
     private companion object {
         const val androidGradlePluginVersion = "8.2.2"
-        val requiredGradleVersion: GradleVersion = GradleVersion.version("7.5")
+        val requiredGradleVersion: GradleVersion = GradleVersion.version("8.2")
     }
 
     var properties: Map<String, String> = emptyMap()
