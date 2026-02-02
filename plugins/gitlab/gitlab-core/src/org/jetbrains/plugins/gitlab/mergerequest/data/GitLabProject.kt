@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.api.page.ApiPageUtil
+import com.intellij.collaboration.async.BatchesLoader
 import com.intellij.collaboration.util.CodeReviewDomainEntity
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
@@ -266,67 +267,5 @@ class GitLabLazyProject(
       return false
     }
     return widgetAssignees?.allowsMultipleAssignees ?: false
-  }
-}
-
-private class BatchesLoader<T>(private val cs: CoroutineScope, private val batchesFlow: Flow<List<T>>) {
-  private var flowAndScope: Pair<SharedFlow<BatchesLoadingState<T>>, CoroutineScope>? = null
-
-  fun getBatches(): Flow<List<T>> {
-    var currentPagesCount = 0
-    return startLoading().transformWhile {
-      if (it.pages.size > currentPagesCount) {
-        emit(it.pages.subList(currentPagesCount, it.pages.size).flatten())
-        currentPagesCount = it.pages.size
-      }
-      when (it) {
-        is BatchesLoadingState.Loading -> true
-        is BatchesLoadingState.Loaded -> false
-        is BatchesLoadingState.Cancelled -> throw it.ce
-        is BatchesLoadingState.Error -> throw it.error
-      }
-    }
-  }
-
-  @Synchronized
-  private fun startLoading(): SharedFlow<BatchesLoadingState<T>> {
-    flowAndScope?.run {
-      return first
-    }
-
-    val sharingScope = cs.childScope(javaClass.name)
-    val sharedFlow = flow {
-      val loadedBatches = mutableListOf<List<T>>()
-      try {
-        batchesFlow.flowOn(Dispatchers.IO).collect { batch ->
-          loadedBatches.add(batch)
-          emit(BatchesLoadingState.Loading(loadedBatches.toList()))
-        }
-        // will never change anymore, so it's fine to emit as-is
-        emit(BatchesLoadingState.Loaded(loadedBatches))
-      }
-      catch (ce: CancellationException) {
-        emit(BatchesLoadingState.Cancelled(loadedBatches, ce))
-        throw ce
-      }
-      catch (e: Exception) {
-        emit(BatchesLoadingState.Error(loadedBatches, e))
-      }
-    }.shareIn(sharingScope, SharingStarted.Lazily, 1)
-    flowAndScope = sharedFlow to sharingScope
-    return sharedFlow
-  }
-
-  @Synchronized
-  fun cancel() {
-    flowAndScope?.second?.cancel()
-    flowAndScope = null
-  }
-
-  private sealed class BatchesLoadingState<T>(val pages: List<List<T>>) {
-    class Loading<T>(pages: List<List<T>>) : BatchesLoadingState<T>(pages)
-    class Loaded<T>(pages: List<List<T>>) : BatchesLoadingState<T>(pages)
-    class Error<T>(pages: List<List<T>>, val error: Exception) : BatchesLoadingState<T>(pages)
-    class Cancelled<T>(pages: List<List<T>>, val ce: CancellationException) : BatchesLoadingState<T>(pages)
   }
 }
