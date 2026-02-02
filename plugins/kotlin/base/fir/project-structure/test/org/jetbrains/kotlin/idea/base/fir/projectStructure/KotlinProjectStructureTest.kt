@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.idea.test.util.compileScriptsIntoDirectory
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtScript
@@ -901,9 +902,43 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         assertKaModuleType<KaDanglingFileModule>(file)
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
+    fun `test dangling file cannot be analyzed in context module scope`() {
+        // See KT-71135.
+        testDanglingFileElementCannotBeAnalyzedInContextModuleScope(
+            setContextModuleExplicitly = false,
+            selectElement = { it },
+        )
+    }
+
     fun `test dangling file element cannot be analyzed in context module scope`() {
         // See KT-71135.
+        testDanglingFileElementCannotBeAnalyzedInContextModuleScope(
+            setContextModuleExplicitly = false,
+            selectElement = { it.declarations.first() },
+        )
+    }
+
+    fun `test dangling file cannot be analyzed in explicit context module scope`() {
+        // See KT-83777.
+        testDanglingFileElementCannotBeAnalyzedInContextModuleScope(
+            setContextModuleExplicitly = true,
+            selectElement = { it },
+        )
+    }
+
+    fun `test dangling file element cannot be analyzed in explicit context module scope`() {
+        // See KT-83777.
+        testDanglingFileElementCannotBeAnalyzedInContextModuleScope(
+            setContextModuleExplicitly = true,
+            selectElement = { it.declarations.first() },
+        )
+    }
+
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    private fun testDanglingFileElementCannotBeAnalyzedInContextModuleScope(
+        setContextModuleExplicitly: Boolean,
+        selectElement: (KtFile) -> KtElement,
+    ) {
         createModule(
             moduleName = "a",
             srcContentSpec = directoryContent {
@@ -917,65 +952,62 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
 
         val temporaryFile = KtPsiFactory.contextual(sourceKtFile).createFile("dummy.kt", "class A")
         temporaryFile.originalFile = sourceKtFile
+        if (setContextModuleExplicitly) {
+            temporaryFile.contextModule = sourceKaModule
+        }
         assertKaModuleType<KaDanglingFileModule>(temporaryFile)
+
+        val targetElement = selectElement(temporaryFile)
 
         allowAnalysisOnEdt {
             analyze(sourceKaModule) {
                 assertFalse(
-                    "The dangling file should not be analyzable in the scope of its context module.",
-                    temporaryFile.canBeAnalysed(),
+                    "The dangling file element should not be analyzable in the scope of its context module.",
+                    targetElement.canBeAnalysed(),
                 )
             }
         }
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
-    fun `test dangling file element cannot be analyzed in the scope of an explicit context module`() {
+    fun `test physical dangling file can be analyzed in own module scope`() {
         // See KT-83777.
-        createModule(
-            moduleName = "a",
-            srcContentSpec = directoryContent {
-                dir("one") {
-                    file("A.kt", "class A")
-                }
-            }
+        testDanglingFileElementCanBeAnalysedInOwnModule(
+            isPhysical = true,
+            selectElement = { it },
         )
-        val sourceKtFile = getFile("A.kt")
-        val sourceKaModule = kaModuleWithAssertion<KaSourceModule>(sourceKtFile)
-
-        val temporaryFile = KtPsiFactory.contextual(sourceKtFile).createFile("dummy.kt", "class A")
-        temporaryFile.originalFile = sourceKtFile
-
-        // Compared to the test above, this test explicitly sets `contextModule`.
-        temporaryFile.contextModule = sourceKaModule
-
-        assertKaModuleType<KaDanglingFileModule>(temporaryFile)
-
-        allowAnalysisOnEdt {
-            analyze(sourceKaModule) {
-                assertFalse(
-                    "The dangling file should not be analyzable in the scope of its explicit context module.",
-                    temporaryFile.canBeAnalysed(),
-                )
-            }
-        }
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
-    fun `test physical dangling file element can be analyzed in the scope of its own module`() {
+    fun `test physical dangling file element can be analyzed in own module scope`() {
         // See KT-83777.
-        testDanglingFileCanBeAnalysedInOwnModule(isPhysical = true)
+        testDanglingFileElementCanBeAnalysedInOwnModule(
+            isPhysical = true,
+            selectElement = { it.declarations.first() },
+        )
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
-    fun `test non-physical dangling file element can be analyzed in the scope of its own module`() {
+    fun `test non-physical dangling file can be analyzed in own module scope`() {
         // See KT-83777.
         // This test ensures that the content scope of the dangling file module also supports non-physical files.
-        testDanglingFileCanBeAnalysedInOwnModule(isPhysical = false)
+        testDanglingFileElementCanBeAnalysedInOwnModule(
+            isPhysical = false,
+            selectElement = { it },
+        )
+    }
+
+    fun `test non-physical dangling file element can be analyzed in own module scope`() {
+        // See KT-83777.
+        // This test ensures that the content scope of the dangling file module also supports non-physical files.
+        testDanglingFileElementCanBeAnalysedInOwnModule(
+            isPhysical = false,
+            selectElement = { it.declarations.first() },
+        )
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class)
-    private fun testDanglingFileCanBeAnalysedInOwnModule(isPhysical: Boolean) {
+    private fun testDanglingFileElementCanBeAnalysedInOwnModule(
+        isPhysical: Boolean,
+        selectElement: (KtFile) -> KtElement,
+    ) {
         createModule(
             moduleName = "a",
             srcContentSpec = directoryContent {
@@ -992,12 +1024,14 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
 
         val danglingFileKaModule = kaModuleWithAssertion<KaDanglingFileModule>(temporaryFile)
 
+        val targetElement = selectElement(temporaryFile)
+
         allowAnalysisOnEdt {
             analyze(danglingFileKaModule) {
                 val physicalText = if (isPhysical) "physical" else "non-physical"
                 assertTrue(
-                    "The $physicalText dangling file should be analyzable in the scope of its own module.",
-                    temporaryFile.canBeAnalysed(),
+                    "The $physicalText dangling file element should be analyzable in the scope of its own module.",
+                    targetElement.canBeAnalysed(),
                 )
             }
         }
