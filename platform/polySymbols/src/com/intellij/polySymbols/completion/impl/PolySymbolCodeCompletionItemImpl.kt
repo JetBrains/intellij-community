@@ -28,18 +28,18 @@ internal data class PolySymbolCodeCompletionItemImpl(
   override val apiStatus: PolySymbolApiStatus = PolySymbolApiStatus.Stable,
   override val aliases: Set<String> = emptySet(),
   override val icon: Icon? = null,
-  val typeTextStatic: String? = null,
-  val typeTextProvider: (() -> String?)? = null,
+  override val typeText: String? = null,
+  override val typeTextGreyed: Boolean = true,
   override val tailText: String? = null,
+  override val tailTextGreyed: Boolean = true,
   override val caseSensitive: Boolean = true,
+  override val asyncCustomizers: List<PolySymbolCodeCompletionItem.() -> PolySymbolCodeCompletionItem> = emptyList(),
   override val insertHandler: PolySymbolCodeCompletionItemInsertHandler? = null,
   @get:ApiStatus.Internal
   val stopSequencePatternEvaluation: Boolean = false,
   val restartCompletionOnAnyPrefixChange: Boolean = false,
   val restartCompletionOnPrefixChange: Set<String> = emptySet(),
 ) : PolySymbolCodeCompletionItem {
-
-  override val typeText: String? get() = typeTextProvider?.invoke() ?: typeTextStatic
 
   override fun addToResult(
     parameters: CompletionParameters,
@@ -52,31 +52,10 @@ internal data class PolySymbolCodeCompletionItemImpl(
         completionPrefix.substring(offset) == name)
       return
     val priorityOffset = baselinePriorityValue - PolySymbol.Priority.NORMAL.value
-    val deprecatedOrObsolete = apiStatus.isDeprecatedOrObsolete()
     LookupElementBuilder
       .create(wrapSymbolForDocumentation(symbol, parameters.position)?.createPointer() ?: name, name)
       .withLookupStrings(aliases)
-      .withIcon(icon?.scaleToHeight(16))
-      .withTypeText(typeTextStatic, true)
-      .let {
-        if (typeTextProvider != null)
-          it.withExpensiveRenderer(object : LookupElementRenderer<LookupElement>() {
-            override fun renderElement(element: LookupElement, presentation: LookupElementPresentation) {
-              element.renderElement(presentation)
-              typeTextProvider()?.let { presentation.typeText = it }
-            }
-          })
-        else it
-      }
-      .withTailText(tailText, true)
       .withCaseSensitivity(caseSensitive)
-      .withBoldness(!deprecatedOrObsolete && priority != null && priority >= PolySymbol.Priority.HIGHEST)
-      .withStrikeoutness(deprecatedOrObsolete)
-      .let {
-        if (displayName != null)
-          it.withPresentableText(displayName)
-        else it
-      }
       .withInsertHandler { insertionContext, completionItem ->
         val invokeCompletion = completeAfterInsert || completeAfterChars.contains(insertionContext.completionChar)
         insertHandler?.prepare(insertionContext, completionItem, invokeCompletion)?.run()
@@ -86,12 +65,34 @@ internal data class PolySymbolCodeCompletionItemImpl(
               .invokeCompletion(parameters.originalFile.project, parameters.editor)
           }
         }
+      }
+      .withRenderer(object : LookupElementRenderer<LookupElement?>() {
+        override fun renderElement(
+          element: LookupElement,
+          presentation: LookupElementPresentation,
+        ) {
+          renderPresentation(priorityOffset, presentation)
+        }
+      })
+      .let {
+        if (asyncCustomizers.isNotEmpty())
+          it.withExpensiveRenderer(object : LookupElementRenderer<LookupElement>() {
+            override fun renderElement(element: LookupElement, presentation: LookupElementPresentation) {
+              element.renderElement(presentation)
+              val completionItem = asyncCustomizers
+                .fold(this@PolySymbolCodeCompletionItemImpl as PolySymbolCodeCompletionItem) { item, customizer ->
+                  customizer(item)
+                }
+              (completionItem as PolySymbolCodeCompletionItemImpl).renderPresentation(priorityOffset, presentation)
+            }
+          })
+        else it
       }.let {
         if (completeAfterChars.isNotEmpty())
           it.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE)
         else it
       }.let {
-        val priorityValue = if (deprecatedOrObsolete) PolySymbol.Priority.LOWEST.value
+        val priorityValue = if (apiStatus.isDeprecatedOrObsolete()) PolySymbol.Priority.LOWEST.value
         else (priority ?: PolySymbol.Priority.NORMAL).value + priorityOffset
         PrioritizedLookupElement.withPriority(it, priorityValue)
       }.let {
@@ -110,6 +111,21 @@ internal data class PolySymbolCodeCompletionItemImpl(
         }
         result.addElement(it)
       }
+  }
+
+  private fun renderPresentation(priorityOffset: Double, presentation: LookupElementPresentation) {
+    val deprecatedOrObsolete = apiStatus.isDeprecatedOrObsolete()
+    presentation.itemText = displayName ?: name
+    presentation.isItemTextBold =
+      !deprecatedOrObsolete && priority != null && (priority.value + priorityOffset) >= PolySymbol.Priority.HIGHEST.value
+    presentation.isStrikeout = deprecatedOrObsolete
+    presentation.icon = icon?.scaleToHeight(16)
+    presentation.clearTail()
+    if (tailText != null) {
+      presentation.appendTailText(tailText, tailTextGreyed)
+    }
+    presentation.typeText = typeText
+    presentation.isTypeGrayed = typeTextGreyed
   }
 
   private fun wrapSymbolForDocumentation(symbol: PolySymbol?, location: PsiElement) =
@@ -167,13 +183,16 @@ internal data class PolySymbolCodeCompletionItemImpl(
     copy(icon = icon)
 
   override fun withTypeText(typeText: String?): PolySymbolCodeCompletionItem =
-    copy(typeTextStatic = typeText)
+    copy(typeText = typeText)
 
-  override fun withTypeText(typeTextProvider: () -> String?): PolySymbolCodeCompletionItem =
-    copy(typeTextProvider = typeTextProvider)
+  override fun withTypeText(typeText: String?, greyed: Boolean): PolySymbolCodeCompletionItem =
+    copy(typeText = typeText, typeTextGreyed = greyed)
 
   override fun withTailText(tailText: String?): PolySymbolCodeCompletionItem =
     copy(tailText = tailText)
+
+  override fun withTailText(tailText: String?, greyed: Boolean): PolySymbolCodeCompletionItem =
+    copy(tailText = tailText, tailTextGreyed = greyed)
 
   override fun withCaseSensitive(value: Boolean): PolySymbolCodeCompletionItem =
     copy(caseSensitive = value)
@@ -183,6 +202,9 @@ internal data class PolySymbolCodeCompletionItemImpl(
 
   override fun withCompleteAfterCharsAdded(chars: List<Char>): PolySymbolCodeCompletionItem =
     copy(completeAfterChars = if (!completeAfterInsert) completeAfterChars + chars else emptySet())
+
+  override fun withAsyncCustomizer(asyncCustomizer: PolySymbolCodeCompletionItem.() -> PolySymbolCodeCompletionItem): PolySymbolCodeCompletionItem =
+    copy(asyncCustomizers = asyncCustomizers + asyncCustomizer)
 
   override fun withInsertHandlerReplaced(insertHandler: PolySymbolCodeCompletionItemInsertHandler?): PolySymbolCodeCompletionItem =
     copy(insertHandler = insertHandler)
@@ -213,13 +235,13 @@ internal data class PolySymbolCodeCompletionItemImpl(
     proximity: Int? = this.proximity,
     apiStatus: PolySymbolApiStatus = this.apiStatus,
     icon: Icon? = this.icon,
-    typeText: String? = null,
+    typeText: String? = this.typeText,
     tailText: String? = this.tailText,
   ): PolySymbolCodeCompletionItem =
     copy(name = name, offset = offset, completeAfterInsert = completeAfterInsert,
          completeAfterChars = if (!completeAfterInsert) completeAfterChars else emptySet(),
          displayName = displayName, symbol = symbol, priority = priority, proximity = proximity,
-         apiStatus = apiStatus, icon = icon, typeTextStatic = typeText ?: typeTextStatic,
+         apiStatus = apiStatus, icon = icon, typeText = typeText,
          tailText = tailText)
 
   class BuilderImpl(
@@ -239,20 +261,21 @@ internal data class PolySymbolCodeCompletionItemImpl(
       it.icon
       ?: PolySymbolDefaultIconProvider.get(it.kind)
     }
-    private var typeTextStatic: String? = null
-    private var typeTextProvider: (() -> String?)? = null
+    override var typeText: String? = null
+    override var typeTextGreyed: Boolean = true
     override var tailText: String? = null
+    override var tailTextGreyed: Boolean = true
     override var caseSensitive: Boolean = true
     override var insertHandler: PolySymbolCodeCompletionItemInsertHandler? = null
+    private var asyncCustomizers: MutableList<PolySymbolCodeCompletionItem.() -> PolySymbolCodeCompletionItem> = mutableListOf()
     private var stopSequencePatternEvaluation: Boolean = false
     private var restartCompletionOnAnyPrefixChange: Boolean = false
     private var restartCompletionOnPrefixChange: MutableSet<String> = mutableSetOf()
 
-    override val typeText: String? get() = typeTextProvider?.invoke() ?: typeTextStatic
-
     override fun build(): PolySymbolCodeCompletionItem = PolySymbolCodeCompletionItemImpl(
       name, offset, completeAfterInsert, completeAfterChars, displayName, symbol, priority, proximity,
-      apiStatus, aliases, icon, typeTextStatic, typeTextProvider, tailText, caseSensitive, insertHandler, stopSequencePatternEvaluation)
+      apiStatus, aliases, icon, typeText, typeTextGreyed,
+      tailText, tailTextGreyed, caseSensitive, asyncCustomizers, insertHandler, stopSequencePatternEvaluation)
 
     override fun displayName(value: String?): PolySymbolCodeCompletionItemBuilder {
       displayName = value
@@ -270,12 +293,13 @@ internal data class PolySymbolCodeCompletionItemImpl(
     }
 
     override fun typeText(value: String?): PolySymbolCodeCompletionItemBuilder {
-      typeTextStatic = value
+      typeText = value
       return this
     }
 
-    override fun typeText(provider: () -> String?): PolySymbolCodeCompletionItemBuilder {
-      typeTextProvider = provider
+    override fun typeText(value: String?, greyed: Boolean): PolySymbolCodeCompletionItemBuilder {
+      typeText = value
+      typeTextGreyed = greyed
       return this
     }
 
@@ -284,8 +308,19 @@ internal data class PolySymbolCodeCompletionItemImpl(
       return this
     }
 
+    override fun tailText(value: String?, greyed: Boolean): PolySymbolCodeCompletionItemBuilder {
+      tailText = value
+      tailTextGreyed = greyed
+      return this
+    }
+
     override fun caseSensitive(value: Boolean): PolySymbolCodeCompletionItemBuilder {
       caseSensitive = value
+      return this
+    }
+
+    override fun asyncCustomizer(value: PolySymbolCodeCompletionItem.() -> PolySymbolCodeCompletionItem): PolySymbolCodeCompletionItemBuilder {
+      asyncCustomizers.add(value)
       return this
     }
 
