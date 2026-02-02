@@ -31,6 +31,7 @@ internal class MeasuringFileSystemListener : FileSystemTracingListener<Measuring
   private class State {
     var recursionFlag: Boolean = false
   }
+
   data class SpanEntry(
     val span: Span,
     val operation: Measurer.Operation,
@@ -54,6 +55,7 @@ internal class MeasuringFileSystemListener : FileSystemTracingListener<Measuring
     openOperations.get().recursionFlag = false
     return spanEntry
   }
+
   fun opFinished(spanEntry: SpanEntry, err: Throwable?) {
     var unexpectedException = false
     if (err != null) {
@@ -122,6 +124,7 @@ internal class MeasuringFileSystemListener : FileSystemTracingListener<Measuring
     }
     return opStarted(delegate, path, null, Measurer.Operation.providerNewByteChannel)
   }
+
   override fun providerNewByteChannelReturn(token: SpanEntry?, result: SeekableByteChannel?): SeekableByteChannel? {
     if (token != null) {
       opFinished(token, null)
@@ -134,6 +137,7 @@ internal class MeasuringFileSystemListener : FileSystemTracingListener<Measuring
 
   override fun providerNewDirectoryStreamStarted(delegate: FileSystemProvider, dir: Path?, filter: DirectoryStream.Filter<in Path?>?) =
     opStarted(delegate, dir, null, Measurer.Operation.providerNewDirectoryStream)
+
   override fun providerNewDirectoryStreamReturn(token: SpanEntry?, result: DirectoryStream<Path>?): DirectoryStream<Path>? {
     if (token != null) {
       opFinished(token, null)
