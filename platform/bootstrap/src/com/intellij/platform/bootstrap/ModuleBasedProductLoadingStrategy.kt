@@ -156,6 +156,15 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     val serviceModuleMappingDeferred = scope.async { 
       ServiceModuleMapping.buildMapping(productModules)
     }
+
+    productModules.notLoadedBundledPluginModules.forEach { (notLoadedId, failedDependencyPath) ->
+      // todo: convert this to an error after fixing the problem with intellij.performanceTesting.async plugin: IJPL-186414
+      logger<ModuleBasedProductLoadingStrategy>().warn("""
+        |Bundled plugin module '${notLoadedId.stringId}' couldn't be loaded because of missing dependency:
+        |${failedDependencyPath.joinToString(" -> ") { it.stringId }}
+        |""".trimMargin())
+    }
+
     val bundled = productModules.bundledPluginModuleGroups.map { moduleGroup ->
       scope.async {
         if (moduleGroup.includedModules.none { it.moduleDescriptor.moduleId in mainGroupModulesSet } || isPluginWithUseIdeaClassLoader(moduleGroup, context, zipFilePool)) {

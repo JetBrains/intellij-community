@@ -21,9 +21,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public final class ProductModulesSerialization {
@@ -81,16 +83,18 @@ public final class ProductModulesSerialization {
 
     MainRuntimeModuleGroup mainGroup = new MainRuntimeModuleGroup(rawProductModules.getMainGroupModules(), currentMode, repository);
     List<PluginModuleGroup> bundledPluginModuleGroups = new ArrayList<>();
+    Map<RuntimeModuleId, List<RuntimeModuleId>> notLoadedBundledPluginModules = new HashMap<>();
     for (RuntimeModuleId pluginMainModule : rawProductModules.getBundledPluginMainModules()) {
-      RuntimeModuleDescriptor module = repository.resolveModule(pluginMainModule).getResolvedModule();
-      /* todo: this check is temporarily added for JetBrains Client; 
-         It includes intellij.performanceTesting.async plugin which dependencies aren't available in all IDEs, so we need to skip it.
-         Plugins should define which modules from them should be included into JetBrains Client instead. */
+      RuntimeModuleRepository.ResolveResult resolveResult = repository.resolveModule(pluginMainModule);
+      RuntimeModuleDescriptor module = resolveResult.getResolvedModule();
       if (module != null) {
         bundledPluginModuleGroups.add(new PluginModuleGroupImpl(module, currentMode, repository, resourceFileResolver));
       }
+      else {
+        notLoadedBundledPluginModules.put(pluginMainModule, resolveResult.getFailedDependencyPath());
+      }
     }
-    return new ProductModulesImpl(debugName, mainGroup, bundledPluginModuleGroups);
+    return new ProductModulesImpl(debugName, mainGroup, bundledPluginModuleGroups, notLoadedBundledPluginModules);
   }
 
   private static void mergeIncludedFiles(@NotNull RawProductModules rawProductModules,

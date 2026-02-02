@@ -105,7 +105,29 @@ class ProductModulesLoaderTest {
     assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optional.loadingRule)
     assertEquals(setOf("optional", "unknown"), pluginModuleGroup.optionalModuleIds.mapTo(HashSet()) { it.stringId })
   }
-  
+
+  @Test
+  fun `unresolved plugin module`() {
+    val repository = createRepository(
+      tempDirectory.rootPath,
+      RawRuntimeModuleDescriptor.create("root", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("plugin", listOf("plugin"), listOf("plugin.util")),
+      RawRuntimeModuleDescriptor.create("plugin.util", emptyList(), listOf("unresolved.module")),
+    )
+    writePluginXmlWithModules(tempDirectory.rootPath / "plugin", "plugin")
+    val xml = generateProductModulesWithPlugin()
+    val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.MONOLITH, repository)
+    assertThat(productModules.bundledPluginModuleGroups).isEmpty()
+    assertThat(productModules.notLoadedBundledPluginModules).hasSize(1)
+    val notLoadedPlugin = productModules.notLoadedBundledPluginModules.entries.single()
+    assertThat(notLoadedPlugin.key.stringId).isEqualTo("plugin")
+    assertThat(notLoadedPlugin.value).containsExactly(
+      RuntimeModuleId.raw("plugin"),
+      RuntimeModuleId.raw("plugin.util"),
+      RuntimeModuleId.raw("unresolved.module"),
+    )
+  }
+
   @Test
   fun `enable plugin modules in relevant modes`() {
     val repository = createRepository(
