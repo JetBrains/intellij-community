@@ -1,0 +1,20 @@
+// "EXPECTED-SUGGESTION": annotationProcessor, testAnnotationProcessor
+// "OTHER-SUGGESTIONS-ARE-NOT-EXPECTED"
+// "SUGGESTION-INDEX-TO-APPLY": 1
+// "COMPLETION-RESULT-PATH": build.gradle.after.kts
+// FILE: build.gradle.kts
+plugins {
+    id("org.jetbrains.kotlin.jvm")
+}
+dependencies {
+    process<caret>
+}
+
+// FILE: build.gradle.after.kts
+plugins {
+    id("org.jetbrains.kotlin.jvm")
+}
+dependencies {
+    testAnnotationProcessor(<caret>)
+}
+

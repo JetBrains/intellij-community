@@ -12,6 +12,7 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DEFINITION
 import com.intellij.codeInsight.completion.LookupActionKeys.SUPPRESS_QUICK_DOCUMENTATION
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
+import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.gradle.completion.DependencyCompletionLoadingAdvertiser
@@ -31,14 +32,17 @@ import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.V
 import com.intellij.gradle.completion.getCompletionContext
 import com.intellij.gradle.completion.icon
 import com.intellij.gradle.completion.removeDummySuffix
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isCurrentGradleAtLeast
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.openapi.components.service
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionRequest
 import com.intellij.repository.search.completion.api.DependencyCompletionResult
@@ -49,7 +53,9 @@ import com.intellij.repository.search.completion.lookup.StrictOrderWeigher
 import com.intellij.repository.search.completion.lookup.StrictOrderWeigherData
 import com.intellij.repository.search.completion.statistics.BT_COMPLETION_IS_AUTO_POPUP
 import com.intellij.util.ProcessingContext
+import icons.GradleIcons
 import kotlinx.coroutines.flow.flowOf
+import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 
 internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<CompletionParameters>() {
@@ -64,15 +70,23 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
 
     val positionElement = parameters.position
     when {
-      // server-side completion only
-      // dependencies { juni<caret> }
-      !isFreeMode() && positionElement.isOnTheTopLevelOfScriptBlock(DEPENDENCIES) -> suggestDependencyCompletions(
-        result,
-        parameters,
-        DependencyConfigurationInsertHandler,
-        TopLevelLookupStringProvider,
-        invokePosition = TOP_LEVEL
-      )
+
+      positionElement.isOnTheTopLevelOfScriptBlock(DEPENDENCIES) -> {
+        // dependencies { implementatio<caret> }
+        suggestConfigurations(result, parameters)
+
+        // server-side completion only
+        if (!isFreeMode()) {
+          // dependencies { juni<caret> }
+          suggestDependencyCompletions(
+            result,
+            parameters,
+            DependencyConfigurationInsertHandler,
+            TopLevelLookupStringProvider,
+            invokePosition = TOP_LEVEL
+          )
+        }
+      }
 
       // dependencies { implementation(...) { exclude("<caret>") } }
       positionElement.isDependencyArgument(exclude) -> {
@@ -137,6 +151,30 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         }
       }
     }
+  }
+
+  private fun suggestConfigurations(result: CompletionResultSet, parameters: CompletionParameters) {
+    val dependencyConfigurations = getConfigurationsForDependencies(parameters.originalFile)
+    val callWithArgInsertHandler = ParenthesesInsertHandler.getInstance(true, false, false, true, false)
+    val lookup = dependencyConfigurations.map {
+      LookupElementBuilder.create(it).withInsertHandler(callWithArgInsertHandler).withIcon(GradleIcons.Gradle)
+        .withTypeText("Gradle Configuration")
+    }
+    result.addAllElements(lookup)
+  }
+
+  /**
+   * For Gradle 8.2+ returns only configurations that can declare dependencies (e.g., scopes, annotation processors)
+   * For older versions returns all configurations, even those that could not be used in the `dependencies { }` block.
+   */
+  private fun getConfigurationsForDependencies(psiFile: PsiFile): List<String> {
+    val module = ModuleUtilCore.findModuleForFile(psiFile) ?: return emptyList()
+    val extensionsData = GradleExtensionsSettings.getInstance(psiFile.project).getExtensionsFor(module) ?: return emptyList()
+    val configurations = extensionsData.configurations.values
+    return configurations.filter {
+      if (isCurrentGradleAtLeast("8.2")) it.isCanDeclareDependencies
+      else true
+    }.map { it.name }
   }
 
   private fun filterResultsFromOtherContributors(result: CompletionResultSet, parameters: CompletionParameters) {

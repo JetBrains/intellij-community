@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.params.ParameterizedTest
@@ -50,6 +51,25 @@ internal class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         application.replaceService(DependencyCompletionService::class.java, testCompletionService, testRootDisposable)
         removeOtherCompletionContributors()
     }
+
+    // TODO review expected suggestions when "org.jetbrains.kotlin.jvm" plugin is applied
+    // Currently, it suggest an invalid option "apiElements-published". Probably, there are also others.
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("configurationOnTopLevelEmptyInput.test")
+    fun `test configuration completion on top level empty input`(gradleVersion: GradleVersion) = verifyCompletion(gradleVersion)
+
+    // This test works incorrectly because isCurrentGradleAtLeast("8.2")) returns 9.2.0, this breaks the logic
+    @Disabled("Enable when IDEA-378957 is merged in master, it allows getting a Gradle version of a project")
+    @ParameterizedTest
+    @GradleTestSource(value = "8.0")
+    @TestMetadata("configurationOnTopLevelEmptyInputBefore82.test")
+    fun `test completion before 8,2 also shows configurations that couldn't be used in dependencies block`(gradleVersion: GradleVersion) = verifyCompletion(gradleVersion)
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("configurationOnTopLevelPartialInput.test")
+    fun `test configuration completion on top level partial input`(gradleVersion: GradleVersion) = verifyCompletion(gradleVersion)
 
     @ParameterizedTest
     @BaseGradleVersionSource
