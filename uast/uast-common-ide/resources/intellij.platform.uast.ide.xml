@@ -16,4 +16,18 @@
     <module name="intellij.platform.backend"/>
     <plugin id="com.intellij.modules.java-capable"/>
   </dependencies>
+
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.uast.generate.uastCodeGenerationPlugin"
+                    interface="org.jetbrains.uast.generate.UastCodeGenerationPlugin"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="30" description="UAST usages graph building depth limit" key="uast.usage.graph.default.recursion.depth.limit"/>
+    <registryKey key="uast.references.by.usage" defaultValue="true"
+                 description="Enables UAST reference contributors that search for usages of variables in the opened file"/>
+  </extensions>
+
 </idea-plugin>
