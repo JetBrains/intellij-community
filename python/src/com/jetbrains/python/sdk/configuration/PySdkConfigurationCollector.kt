@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 
 object PySdkConfigurationCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("python.sdk.configuration", 2)
+  private val GROUP = EventLogGroup("python.sdk.configuration", 3)
 
   override fun getGroup(): EventLogGroup = GROUP
 
