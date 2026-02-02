@@ -90,10 +90,9 @@ internal class GitWorkingTreeDialog(
     newBranchName = propertyGraph.property("")
     projectName = propertyGraph.property(suggestProjectName())
     parentPath = propertyGraph.property(data.initialParentPath?.path ?: "")
-    propertyGraph.dependsOn(projectName, existingBranchWithWorkingTree, true, ::suggestProjectName)
-    propertyGraph.dependsOn(projectName, createNewBranch, true, ::suggestProjectName)
-    propertyGraph.dependsOn(projectName, newBranchName, true, ::suggestProjectName)
-
+    listOf(existingBranchWithWorkingTree, createNewBranch, newBranchName).forEach {
+      propertyGraph.dependsOn(projectName, it, true, ::suggestProjectName)
+    }
     init()
     title = GitBundle.message("working.tree.dialog.title")
     setOKButtonText(GitBundle.message("working.tree.dialog.button.ok"))
