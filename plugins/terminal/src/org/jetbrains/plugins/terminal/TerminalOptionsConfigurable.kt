@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.application.options.colors.ColorAndFontOptions
-import com.intellij.application.options.schemes.SchemeNameGenerator
 import com.intellij.codeWithMe.ClientId
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
 import com.intellij.ide.DataManager
@@ -18,9 +17,7 @@ import com.intellij.openapi.client.sessions
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.KeymapManager
-import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.AtomicProperty
@@ -35,6 +32,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.rpc.topics.broadcast
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.ExperimentalUI
@@ -92,6 +90,7 @@ import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import org.jetbrains.plugins.terminal.starter.ShellCustomizer
+import org.jetbrains.plugins.terminal.util.updateActionShortcut
 import java.awt.Color
 import java.awt.Component
 import java.awt.event.ActionListener
@@ -734,27 +733,14 @@ private fun getActionShortcuts(actionId: String): List<Shortcut> {
   return keymapManager.activeKeymap.getShortcuts(actionId).toList()
 }
 
-private fun setActionShortcut(actionId: String, value: Shortcut?) {
-  val keymapManager = KeymapManager.getInstance() as? KeymapManagerEx ?: return
+private fun setActionShortcut(actionId: String, value: KeyboardShortcut?) {
+  updateActionShortcut(actionId, value)
 
-  var keymapToModify = keymapManager.activeKeymap
-  if (!keymapToModify.canModify()) {
-    val allKeymaps = keymapManager.allKeymaps
-    val name = SchemeNameGenerator.getUniqueName(
-      KeyMapBundle.message("new.keymap.name", keymapToModify.presentableName)
-    ) { newName: String ->
-      allKeymaps.any { it.name == newName || it.presentableName == newName }
-    }
-
-    val newKeymap = keymapToModify.deriveKeymap(name)
-    keymapManager.schemeManager.addScheme(newKeymap)
-    keymapManager.activeKeymap = newKeymap
-    keymapToModify = newKeymap
-  }
-  keymapToModify.removeAllActionShortcuts(actionId)
-  if (value != null) {
-    keymapToModify.addShortcut(actionId, value)
-  }
+  // The Terminal configurable is created on the backend in RemDev mode.
+  // So, here we can change only the backend Keymap, but we actually need to change the frontend one.
+  // The problem is that backend Keymap changes are not automatically synced to the frontend.
+  // But we can use the RemoteTopic API to pass the change to the frontend.
+  TERMINAL_ACTION_SHORTCUT_CHANGED_TOPIC.broadcast(TerminalActionShortcutChangedEvent(actionId, value))
 }
 
 private val TAB_SHORTCUT_PRESET = ShortcutPreset(
@@ -776,7 +762,7 @@ private fun getCtrlSpacePreset(project: Project): ShortcutPreset {
   )
 }
 
-private data class ShortcutPreset(val shortcut: Shortcut, val text: String)
+private data class ShortcutPreset(val shortcut: KeyboardShortcut, val text: String)
 
 private sealed class ShortcutItem {
   data class Preset(val preset: ShortcutPreset) : ShortcutItem()

@@ -65,6 +65,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/execution",
     "//platform/observable",
+    "//platform/remote-topics/shared:rpc-topics",
   ]
 )
 ### auto-generated section `build intellij.terminal` end
