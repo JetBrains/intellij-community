@@ -6,6 +6,8 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.impl.UndoManagerImpl
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.wm.IdeFocusManager
@@ -34,11 +36,16 @@ class StartInlineRenameCommand(text: String, line: Int) : AbstractCommand(text, 
     UndoManagerImpl.ourNeverAskUser = true
     ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(Runnable {
       val focusedComponent = IdeFocusManager.findInstance().focusOwner
-      val dataContext = DataManager.getInstance().getDataContext(focusedComponent)
-      val editor = dataContext.getData(CommonDataKeys.EDITOR)
+      var dataContext = DataManager.getInstance().getDataContext(focusedComponent)
+      var editor = dataContext.getData(CommonDataKeys.EDITOR)
+
       if (editor == null) {
-        actionCallback.reject("Editor is not focused")
-        return@Runnable
+        editor = FileEditorManager.getInstance(project).getAllEditors().filterIsInstance<TextEditor>().firstOrNull()?.editor
+        if (editor == null) {
+          actionCallback.reject("Couldn't get text editor")
+          return@Runnable
+        }
+        dataContext = DataManager.getInstance().getDataContext(editor.component)
       }
       if (InplaceRefactoringContinuation.tryResumeInplaceContinuation(project, editor, RenameElementAction::class.java)) {
         actionCallback.reject("Another refactoring is in progress")
