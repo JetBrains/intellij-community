@@ -41,60 +41,6 @@ intellij_dev_binary_community(
     platform_prefix = "AndroidStudio",
 )
 
-# production intellij.platform.jps.build.dependencyGraph; cannot use @rules_jvm//dependency-graph:dependency-graph directly because it's mainly
-# used to bootstrap jvm_library rule (from rules_jvm) via kt_jvm_library rule (from rules_kotlin) and @rules_jvm//:rules_jvm_bootstrap_kotlinc_options flags
-jvm_library(
-  name = "dependency-graph",
-  module_name = "intellij.platform.jps.build.dependencyGraph",
-  visibility = ["//visibility:public"],
-  srcs = ["@rules_jvm//dependency-graph:dependency-graph_sources"],
-  resources = ["@rules_jvm//dependency-graph:dependency-graph_resources"],
-  kotlinc_opts = "@community//:k11",
-  deps = [
-    ":build-javac-rt",
-    "@lib//:jetbrains-annotations",
-    "@lib//:kotlin-metadata",
-    "@lib//:caffeine",
-    "@community//libraries/asm:asm",
-    "@community//libraries/hash4j:hash4j",
-    "@community//libraries/fastutil:fastutil",
-    "@lib//:kotlin-stdlib-provided",
-  ]
-)
-
-# production intellij.platform.jps.build.javac.rt; cannot use @rules_jvm//jps-builders-6:build-javac-rt directly because it's mainly
-# used to bootstrap jvm_library rule (from rules_jvm) via kt_jvm_library rule (from rules_kotlin) and @rules_jvm//:rules_jvm_bootstrap_kotlinc_options flags
-jvm_library(
-  name = "build-javac-rt",
-  module_name = "intellij.platform.jps.build.javac.rt",
-  visibility = ["//visibility:public"],
-  srcs = ["@rules_jvm//jps-builders-6:build-javac-rt_sources"],
-  resources = ["@rules_jvm//jps-builders-6:build-javac-rt_resources"],
-  kotlinc_opts = "@community//:k8",
-  deps = [
-    "@lib//:jetbrains-annotations",
-    "@lib//:javax-annotation-api",
-    "@lib//:jps-javac-extension",
-    "@lib//:protobuf",
-    "@lib//:netty-jps-provided",
-  ]
-)
-
-# production intellij.idea.community.build.zip; cannot use @rules_jvm//zip:zip directly because it's mainly
-# used to bootstrap jvm_library rule (from rules_jvm) via kt_jvm_library rule (from rules_kotlin) and @rules_jvm//:rules_jvm_bootstrap_kotlinc_options flags
-jvm_library(
-  name = "zip",
-  module_name = "intellij.idea.community.build.zip",
-  visibility = ["//visibility:public"],
-  srcs = ["@rules_jvm//zip:zip_sources"],
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:netty-buffer",
-    "@lib//:fastutil-min",
-    "@community//libraries/hash4j:hash4j",
-  ]
-)
-
 ### auto-generated section `build intellij.idea.community.build` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -122,3 +68,57 @@ jvm_library(
   runtime_deps = ["@lib//:test-discovery-plugin-base"]
 )
 ### auto-generated section `build intellij.idea.community.build` end
+
+### auto-generated section `build intellij.idea.community.build.zip` start
+jvm_library(
+  name = "zip",
+  module_name = "intellij.idea.community.build.zip",
+  visibility = ["//visibility:public"],
+  srcs = ["@rules_jvm//zip:zip_sources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/netty/buffer",
+    "//libraries/fastutil",
+    "//libraries/hash4j",
+  ]
+)
+### auto-generated section `build intellij.idea.community.build.zip` end
+
+### auto-generated section `build intellij.platform.jps.build.dependencyGraph` start
+jvm_library(
+  name = "dependency-graph",
+  module_name = "intellij.platform.jps.build.dependencyGraph",
+  visibility = ["//visibility:public"],
+  srcs = ["@rules_jvm//dependency-graph:dependency-graph_sources"],
+  resources = ["@rules_jvm//dependency-graph:dependency-graph_resources"],
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "@community//build:build-javac-rt",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-metadata",
+    "//libraries/caffeine",
+    "//libraries/asm",
+    "//libraries/hash4j",
+    "//libraries/fastutil",
+    "@lib//:kotlin-stdlib-provided",
+  ]
+)
+### auto-generated section `build intellij.platform.jps.build.dependencyGraph` end
+
+### auto-generated section `build intellij.platform.jps.build.javac.rt` start
+jvm_library(
+  name = "build-javac-rt",
+  module_name = "intellij.platform.jps.build.javac.rt",
+  visibility = ["//visibility:public"],
+  srcs = ["@rules_jvm//jps-builders-6:build-javac-rt_sources"],
+  resources = ["@rules_jvm//jps-builders-6:build-javac-rt_resources"],
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//libraries/javax/annotation",
+    "@lib//:jps-javac-extension",
+    "//libraries/protobuf",
+    "@lib//:netty-jps-provided",
+  ]
+)
+### auto-generated section `build intellij.platform.jps.build.javac.rt` end

@@ -210,9 +210,6 @@ android/wizard-model
 build
 build/cucumber-test-runner
 build/deps
-build/jvm-rules/dependency-graph
-build/jvm-rules/jps-builders-6
-build/jvm-rules/zip
 build/launch
 build/tasks
 build/tests
