@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.impl.cmd.CmdEvent;
@@ -35,21 +35,33 @@ final class UndoCommandListener implements SeparatedCommandListener {
   @Override
   public void onCommandStarted(@NotNull CmdEvent cmdStartEvent) {
     if (projectNotDisposed()) {
-      undoManager.onCommandStarted(eventWithProject(cmdStartEvent));
+      try {
+        undoManager.onCommandStarted(eventWithProject(cmdStartEvent));
+      } catch (Throwable e) {
+        LOG.error("error during onCommandStarted", e);
+      }
     }
   }
 
   @Override
   public void onCommandFinished(@NotNull CmdEvent cmdFinishEvent) {
     if (projectNotDisposed()) {
-      undoManager.onCommandFinished(eventWithProject(cmdFinishEvent));
+      try {
+        undoManager.onCommandFinished(eventWithProject(cmdFinishEvent));
+      } catch (Throwable e) {
+        LOG.error("error during onCommandFinished", e);
+      }
     }
   }
 
   @Override
   public void onCommandFakeFinished(@NotNull CmdEvent cmdFakeFinishEvent) {
     if (projectNotDisposed()) {
-      undoManager.onCommandFakeFinished(cmdFakeFinishEvent);
+      try {
+        undoManager.onCommandFakeFinished(cmdFakeFinishEvent);
+      } catch (Throwable e) {
+        LOG.error("error during onCommandFakeFinished", e);
+      }
     }
   }
 
