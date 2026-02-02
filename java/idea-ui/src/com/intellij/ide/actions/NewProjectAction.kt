@@ -37,6 +37,10 @@ private class NewProjectActionService(private val coroutineScope: CoroutineScope
   }
 
   fun actionPerformed(project: Project?) {
+    if (isActionInProgress()) {
+      thisLogger().warn("Previous execution hasn't finished yet")
+      return
+    }
     job = coroutineScope.launch {
       runCatching {
         service<ProjectGeneratorManager>().initProjectGenerator(project)
