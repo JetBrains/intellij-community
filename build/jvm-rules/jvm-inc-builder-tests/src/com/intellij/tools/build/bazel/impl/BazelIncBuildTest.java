@@ -6,10 +6,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ComparisonFailure;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.util.List;
@@ -19,7 +33,8 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  Base class describing the main test scenario for incremental build tests
@@ -179,8 +194,10 @@ public abstract class BazelIncBuildTest {
 
     String expectedBuildLog = Files.readString(expectedBuildLogFile, StandardCharsets.UTF_8).replaceAll("\r\n?", "\n").trim();
     String actualBuildLog = buildLog.toString().trim();
-    assertEquals(collectDiagnostics(testOutputDir), expectedBuildLog, actualBuildLog);
-
+    if (!expectedBuildLog.equals(actualBuildLog)) {
+      // only collect diagnostics on failures
+      throw new ComparisonFailure(collectDiagnostics(testOutputDir), expectedBuildLog, actualBuildLog);
+    }
     if (result != null && result.isSuccessful()) {
       // todo: rebuild from scratch and compare graphs
     }
