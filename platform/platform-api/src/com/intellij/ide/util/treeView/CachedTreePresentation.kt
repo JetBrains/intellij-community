@@ -5,10 +5,13 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.TreeState.CachedPresentationDataImpl
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.treeStructure.CachingTreePath
+import com.intellij.ui.treeStructure.TreeNodePresentationImpl
+import com.intellij.ui.treeStructure.TreeNodeWithPresentation
 import com.intellij.util.SlowOperations
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus.Internal
+import javax.swing.Icon
 import javax.swing.JTree
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
@@ -50,33 +53,26 @@ class CachedTreePresentationData(
       node: Any?
     ): CachedTreePresentationData? {
       if (node == null) return null
-      val userObject = TreeUtil.getUserObject(node)
-      if (userObject is PresentableNodeDescriptor<*>) {
-        val presentation = userObject.presentation
-        val children = mutableListOf<CachedTreePresentationData>()
-        val iconData = getIconData(presentation.getIcon(false))
-        val extraAttrs = SlowOperations.knownIssue("IJPL-162819").use {
-          (userObject as? TreeNodeWithCacheableAttributes)?.getCacheableAttributes()
+      val presentation = getPresentationData(node) ?: getPresentationData(TreeUtil.getUserObject(node)) ?: return null
+      val children = mutableListOf<CachedTreePresentationData>()
+      val iconData = getIconData(presentation.icon)
+      val isLeaf = model.isLeaf(node)
+      val result = CachedTreePresentationData(
+        TreeState.PathElement(TreeState.calcId(node), TreeState.calcType(node), 0, null),
+        CachedPresentationDataImpl(presentation.text, iconData, isLeaf),
+        presentation.cacheableAttributes,
+        children
+      )
+      val nodePath = if (parentPath == null) CachingTreePath(node) else parentPath.pathByAddingChild(node)
+      if (tree.isExpanded(nodePath)) {
+        val childCount = model.getChildCount(node)
+        for (i in 0 until childCount) {
+          val child = model.getChild(node, i)
+          val childPresentation = createPresentation(tree, model, nodePath, child) ?: continue
+          children.add(childPresentation)
         }
-        val isLeaf = model.isLeaf(node)
-        val result = CachedTreePresentationData(
-          TreeState.PathElement(TreeState.calcId(node), TreeState.calcType(node), 0, null),
-          CachedPresentationDataImpl(presentation.getCacheableText(), iconData, isLeaf),
-          extraAttrs,
-          children
-        )
-        val nodePath = if (parentPath == null) CachingTreePath(node) else parentPath.pathByAddingChild(node)
-        if (tree.isExpanded(nodePath)) {
-          val childCount = model.getChildCount(node)
-          for (i in 0 until childCount) {
-            val child = model.getChild(node, i)
-            val childPresentation = createPresentation(tree, model, nodePath, child) ?: continue
-            children.add(childPresentation)
-          }
-        }
-        return result
       }
-      return null
+      return result
     }
   }
 
@@ -85,6 +81,40 @@ class CachedTreePresentationData(
   fun createTree(): CachedTreePresentation = CachedTreePresentation(this)
 
 }
+
+private fun getPresentationData(nodeOrUserObject: Any?): NodePresentationData? {
+  return when (nodeOrUserObject) {
+    is PresentableNodeDescriptor<*> -> nodeOrUserObject.getPresentationData()
+    is TreeNodeWithPresentation -> nodeOrUserObject.getPresentationData()
+    else -> null
+  }
+}
+
+private fun PresentableNodeDescriptor<*>.getPresentationData(): NodePresentationData {
+  val presentation = presentation
+  return NodePresentationData(
+    presentation.getCacheableText(),
+    presentation.getIcon(false),
+    SlowOperations.knownIssue("IJPL-162819").use {
+      (this as? TreeNodeWithCacheableAttributes)?.getCacheableAttributes()
+    }
+  )
+}
+
+private fun TreeNodeWithPresentation.getPresentationData(): NodePresentationData {
+  val presentation = presentation as TreeNodePresentationImpl
+  return NodePresentationData(
+    presentation.getCacheableText(),
+    presentation.icon,
+    (this as? TreeNodeWithCacheableAttributes)?.getCacheableAttributes()
+  )
+}
+
+private data class NodePresentationData(
+  val text: String,
+  val icon: Icon?,
+  val cacheableAttributes: Map<String, String>?,
+)
 
 private fun PresentationData.getCacheableText(): String {
   var result = presentableText
@@ -98,6 +128,8 @@ private fun PresentationData.getCacheableText(): String {
   }
   return result
 }
+
+private fun TreeNodePresentationImpl.getCacheableText(): String = mainText
 
 @Internal
 interface CachedTreePathElement {
