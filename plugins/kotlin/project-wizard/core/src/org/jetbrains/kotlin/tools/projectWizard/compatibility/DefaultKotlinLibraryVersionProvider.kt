@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionPr
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.configuration.KotlinLibraryVersionProvider
+import kotlin.KotlinVersion
 
 class DefaultKotlinLibraryVersionProvider : KotlinLibraryVersionProvider {
     /**
@@ -22,8 +23,9 @@ class DefaultKotlinLibraryVersionProvider : KotlinLibraryVersionProvider {
     override fun getVersion(module: Module, groupId: String, artifactId: String): String? {
         val kotlinVersion = module.getKotlinVersion() ?: return null
 
-        val versions = KotlinLibrariesCompatibilityStore.getInstance().getVersions(groupId, artifactId).orEmpty()
+        val compatibilityStore = KotlinLibrariesCompatibilityStore.getInstance()
+        val versions = compatibilityStore.getVersions(groupId, artifactId) ?: return null
         val kotlinShortVersion = "${kotlinVersion.major}.${kotlinVersion.minor}"
-        return versions[kotlinShortVersion]
+        return versions[kotlinShortVersion] ?: compatibilityStore.getLatestVersion(versions)
     }
 }
