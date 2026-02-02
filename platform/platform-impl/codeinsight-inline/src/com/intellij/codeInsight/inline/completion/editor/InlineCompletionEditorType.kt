@@ -7,8 +7,9 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 enum class InlineCompletionEditorType {
   MAIN_EDITOR,
   XDEBUGGER,
@@ -35,6 +36,19 @@ enum class InlineCompletionEditorType {
     @ApiStatus.Internal
     fun force(editor: Editor, type: InlineCompletionEditorType) {
       editor.putUserData(forcedInlineCompletionEditorType, type)
+    }
+
+    @TestOnly
+    @ApiStatus.Internal
+    suspend fun withForced(editor: Editor, type: InlineCompletionEditorType?, block: suspend () -> Unit) {
+      if (type == null) return block()
+      val previousType = editor.getUserData(forcedInlineCompletionEditorType)
+      editor.putUserData(forcedInlineCompletionEditorType, type)
+      try {
+        block()
+      } finally {
+        editor.putUserData(forcedInlineCompletionEditorType, previousType)
+      }
     }
 
     @ApiStatus.Internal
