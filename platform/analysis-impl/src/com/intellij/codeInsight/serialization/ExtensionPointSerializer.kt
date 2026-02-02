@@ -145,16 +145,8 @@ class ExtensionPointSerializerBean : BaseKeyedLazyInstance<SerializationHelper<A
     pluginDescriptor: PluginDescriptor,
   ): KSerializer<Any> {
     val serializableClass = componentManager.loadClass<Any>(fqn, pluginDescriptor)
-
-    val companionField = serializableClass.getField("Companion")
-    companionField.trySetAccessible()
-    val companion = companionField.get(null)!!
-
-    val serializerMethod = companion.javaClass.getMethod("serializer")
-    serializerMethod.trySetAccessible()
-
-    @Suppress("UNCHECKED_CAST")
-    return serializerMethod.invoke(companion) as KSerializer<Any>
+    val serializer = SerializerSearcher.findSerializer(serializableClass)
+    return serializer ?: error("Cannot find serializer in $fqn class")
   }
 
   override fun getKey(): String = implementationClass!!
