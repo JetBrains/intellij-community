@@ -1,70 +1,26 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.shared.util
 
-import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import org.intellij.lang.annotations.Language
+sealed class QuickFixCheck {
+  data class ExpectFix(
+    val after: String,
+    val caretAnchor: String = "",
+    val expectedFunctionName: String? = null,
+  ) : QuickFixCheck()
 
-@DslMarker
-annotation class QuickFixTestDsl
-
-@QuickFixTestDsl
-class ExpectFix {
-  @Language("kotlin")
-  lateinit var after: String
-  var caretAnchor: String = ""
-  var expectedFunctionName: String? = null
+  data class ExpectNoFix(
+    val anchors: List<String>,
+  ) : QuickFixCheck()
 }
 
-@QuickFixTestDsl
-class ExpectUnavailable {
-  private val _positions = mutableListOf<String>()
-  fun at(vararg caretAnchors: String) { _positions.addAll(caretAnchors) }
-  internal val positions: List<String> get() = _positions
-}
+// -"anchor" -> ExpectNoFix
+operator fun String.unaryMinus() = QuickFixCheck.ExpectNoFix(listOf(this))
 
-@QuickFixTestDsl
-class QuickFixTestBuilder(
-  private val fixture: CodeInsightTestFixture,
-  private val fixFilterFactory: (expectedFunctionName: String?) -> (IntentionAction) -> Boolean,
-) {
-  @Language("kotlin")
-  lateinit var before: String
+// +"expected code" -> ExpectFix
+operator fun String.unaryPlus() = QuickFixCheck.ExpectFix(after = this)
 
-  private var fixExpectation: ExpectFix? = null
-  private var unavailableExpectation: ExpectUnavailable? = null
+// ... at "anchor" -> ExpectFix
+infix fun QuickFixCheck.ExpectFix.at(anchor: String) = copy(caretAnchor = anchor)
 
-  fun expectFix(init: ExpectFix.() -> Unit) {
-    fixExpectation = ExpectFix().apply(init)
-  }
-
-  fun expectUnavailableFix(init: ExpectUnavailable.() -> Unit) {
-    unavailableExpectation = ExpectUnavailable().apply(init)
-  }
-
-  internal fun execute() {
-    require(fixExpectation != null || unavailableExpectation != null) {
-      "Must call expectFix {} or expectUnavailableFix {}"
-    }
-    unavailableExpectation?.let {
-      require(it.positions.isNotEmpty()) { "Must add at least one position to expectUnavailableFix via at(...)" }
-    }
-    fixture.configureByText("Test.kt", before.trimIndent())
-
-    unavailableExpectation?.positions?.forEach { pos ->
-      fixture.assertQuickFixNotAvailable(pos, fixFilterFactory(null))
-    }
-
-    fixExpectation?.let { exp ->
-      fixture.invokeQuickFix(exp.caretAnchor, fixFilterFactory(exp.expectedFunctionName))
-      fixture.checkResult(exp.after.trimIndent())
-    }
-  }
-}
-
-fun testQuickFix(
-  fixture: CodeInsightTestFixture,
-  fixFilterFactory: (expectedFunctionName: String?) -> (IntentionAction) -> Boolean,
-  init: QuickFixTestBuilder.() -> Unit
-) {
-  QuickFixTestBuilder(fixture, fixFilterFactory).apply(init).execute()
-}
+// ... with "functionName" -> ExpectFix
+infix fun QuickFixCheck.ExpectFix.with(name: String) = copy(expectedFunctionName = name)

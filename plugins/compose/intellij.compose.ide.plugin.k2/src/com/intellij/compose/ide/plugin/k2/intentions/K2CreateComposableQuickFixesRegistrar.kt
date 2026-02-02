@@ -99,20 +99,21 @@ internal class K2CreateComposableQuickFixesRegistrar : KotlinQuickFixRegistrar()
       else -> name?.let { ComposeIdeBundle.message("compose.add.composable.to.element.name", it) }
     }
 
-  private fun KtTypeReference.toDisplayText(): String? {
-    val param = parent as? KtParameter
-
-    if (param == null) {
-      val propertyName = (parent as? KtProperty)?.name ?: return null
-      return ComposeIdeBundle.message("compose.add.composable.to.property.type.name", propertyName)
+  private fun KtTypeReference.toDisplayText(): String? = when (val p = parent) {
+    is KtParameter -> {
+      val paramName = p.name ?: return null
+      val functionName = (p.parent?.parent as? KtNamedFunction)?.name
+      functionName?.let {
+        ComposeIdeBundle.message("compose.add.composable.to.lambda.parameter.name", it, paramName)
+      } ?: ComposeIdeBundle.message("compose.add.composable.to.lambda.parameter.of.anonymous.function.name", paramName)
     }
-
-    val paramName = param.name ?: return null
-    val functionName = (param.parent?.parent as? KtNamedFunction)?.name
-
-    return functionName?.let {
-      ComposeIdeBundle.message("compose.add.composable.to.lambda.parameter.name", functionName, paramName)
-    } ?: ComposeIdeBundle.message("compose.add.composable.to.lambda.parameter.of.anonymous.function.name", paramName)
+    is KtProperty -> p.name?.let {
+      ComposeIdeBundle.message("compose.add.composable.to.property.type.name", it)
+    }
+    is KtNamedFunction -> p.name?.let {
+      ComposeIdeBundle.message("compose.add.composable.to.element.name", it)
+    }
+    else -> null
   }
 
   override val list: KotlinQuickFixesList = KtQuickFixesListBuilder.registerPsiQuickFix {
