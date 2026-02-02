@@ -84,8 +84,7 @@ public final class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentPar
     int recalcEndOffsetTranslated = event.getActualEndOffset() - lengthDiff;
 
     int firstIndex = -1;
-    int softWrappedLinesDiff = myStorage.getNumberOfSoftWrapsInRange(event.getStartOffset() + 1, myEditor.getDocument().getTextLength());
-    boolean softWrapsChanged = softWrappedLinesDiff > 0;
+    boolean softWrapsChanged = myStorage.hasSoftWrapsInRange(event.getStartOffset() + 1, myEditor.getDocument().getTextLength());
     for (int i = 0; i < myAffectedByUpdateSoftWraps.size(); i++) {
       SoftWrapImpl softWrap = myAffectedByUpdateSoftWraps.get(i);
       if (firstIndex < 0) {
@@ -95,7 +94,6 @@ public final class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentPar
             break;
           }
         } else {
-          softWrappedLinesDiff--;
           softWrapsChanged = true;
         }
       } 
