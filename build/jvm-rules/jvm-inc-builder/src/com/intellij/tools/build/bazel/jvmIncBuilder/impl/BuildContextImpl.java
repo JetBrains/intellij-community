@@ -1,7 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
-import com.intellij.tools.build.bazel.jvmIncBuilder.*;
+import com.intellij.tools.build.bazel.jvmIncBuilder.BuildContext;
+import com.intellij.tools.build.bazel.jvmIncBuilder.BuildProcessLogger;
+import com.intellij.tools.build.bazel.jvmIncBuilder.BuilderOptions;
+import com.intellij.tools.build.bazel.jvmIncBuilder.CLFlags;
+import com.intellij.tools.build.bazel.jvmIncBuilder.DataPaths;
+import com.intellij.tools.build.bazel.jvmIncBuilder.Message;
+import com.intellij.tools.build.bazel.jvmIncBuilder.NodeSourceSnapshot;
+import com.intellij.tools.build.bazel.jvmIncBuilder.ResourceGroup;
+import com.intellij.tools.build.bazel.jvmIncBuilder.VMFlags;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.bazel.jvm.Input;
@@ -12,13 +20,27 @@ import org.jetbrains.jps.util.Pair;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.asIterable;
+import static org.jetbrains.jps.util.Iterators.find;
+import static org.jetbrains.jps.util.Iterators.flat;
+import static org.jetbrains.jps.util.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.unique;
 
 /** @noinspection IO_FILE_USAGE*/
 public class BuildContextImpl implements BuildContext {
@@ -99,9 +121,14 @@ public class BuildContextImpl implements BuildContext {
 
     Map<NodeSource, String> sourcesMap = new HashMap<>();
     for (String src : CLFlags.SRCS.getValue(flags)) {
-      Path inputPath = baseDir.resolve(src).normalize();
-      assert isSourceDependency(inputPath);
-      sourcesMap.put(myPathMapper.toNodeSource(inputPath), getDigest.apply(src));
+      try {
+        Path inputPath = baseDir.resolve(src).toRealPath(LinkOption.NOFOLLOW_LINKS); // ensure the input path names have exactly the same case as on the disk
+        assert isSourceDependency(inputPath);
+        sourcesMap.put(myPathMapper.toNodeSource(inputPath), getDigest.apply(src));
+      }
+      catch (IOException e) {
+        report(Message.create(null, Message.Kind.ERROR, "Unable to resolve relative path " + src, e));
+      }
     }
     mySources = new SourceSnapshotImpl(sourcesMap);
 
