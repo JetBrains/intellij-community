@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.Icon;
 import java.awt.Color;
 
-@ApiStatus.Experimental
 @ApiStatus.NonExtendable
 public interface TargetPresentationBuilder {
 

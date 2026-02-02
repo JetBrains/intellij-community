@@ -8,7 +8,6 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 
 /**
@@ -16,7 +15,6 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable
  *
  * @see [NavigationRequest.sourceNavigationRequest]
  */
-@Experimental
 @NonExtendable // sealed
 interface NavigationRequest {
 

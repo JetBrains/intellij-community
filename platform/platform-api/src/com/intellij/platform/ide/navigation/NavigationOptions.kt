@@ -4,9 +4,7 @@ package com.intellij.platform.ide.navigation
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 
-@Experimental
 interface NavigationOptions {
-
   /**
    * Sets whether to request the focus.
    *
@@ -15,9 +13,8 @@ interface NavigationOptions {
   fun requestFocus(value: Boolean): NavigationOptions
 
   /**
-   * If the navigation leads to a file, which is already open in some editor,
-   * the editor will be focused, but the caret position will remain unchanged,
-   * if the caret position is within text range of requested PsiElement.
+   * If the navigation leads to a file, which is already open in some editor, the editor will be focused. But the caret position will remain
+   * unchanged when the caret position is within text range of the requested PsiElement.
    *
    * For example, when requesting navigation to PsiElement, which corresponds to class `C`:
    * ```
@@ -40,7 +37,6 @@ interface NavigationOptions {
    */
   fun preserveCaret(value: Boolean): NavigationOptions
 
-  @Internal
   fun openInRightSplit(value: Boolean): NavigationOptions
 
   @Internal
@@ -55,7 +51,6 @@ interface NavigationOptions {
   fun forceFocus(value: Boolean): NavigationOptions
 
   companion object {
-
     @JvmStatic
     fun defaultOptions(): NavigationOptions = defaultOptions
 
@@ -78,8 +73,7 @@ interface NavigationOptions {
   data class Impl internal constructor(
     val requestFocus: Boolean,
     val preserveCaret: Boolean,
-    // some UI uses single-click navigation instead of double-click,
-    // in this case we want only source navigation,
+    // some UI uses single-click navigation instead of double-click; in this case we want only source navigation
     // but not opening library settings (https://youtrack.jetbrains.com/issue/IJPL-157790)
     @Experimental @JvmField val sourceNavigationOnly: Boolean,
     @Experimental @JvmField val openInRightSplit: Boolean,

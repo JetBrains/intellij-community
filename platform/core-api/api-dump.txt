@@ -977,6 +977,47 @@ f:com.intellij.patterns.StringPattern
 - afterNonJavaIdentifierPart():com.intellij.patterns.StringPattern
 - endsWithOneOf(java.lang.Iterable):com.intellij.patterns.StringPattern
 - endsWithUppercaseLetter():com.intellij.patterns.StringPattern
+com.intellij.platform.backend.navigation.NavigationRequest
+- sf:Companion:com.intellij.platform.backend.navigation.NavigationRequest$Companion
+- s:directoryNavigationRequest(com.intellij.psi.PsiDirectory):com.intellij.platform.backend.navigation.NavigationRequest
+- s:sourceNavigationRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,I):com.intellij.platform.backend.navigation.NavigationRequest
+- s:sourceNavigationRequest(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange):com.intellij.platform.backend.navigation.NavigationRequest
+f:com.intellij.platform.backend.navigation.NavigationRequest$Companion
+- f:directoryNavigationRequest(com.intellij.psi.PsiDirectory):com.intellij.platform.backend.navigation.NavigationRequest
+- f:sourceNavigationRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,I):com.intellij.platform.backend.navigation.NavigationRequest
+- f:sourceNavigationRequest(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange):com.intellij.platform.backend.navigation.NavigationRequest
+com.intellij.platform.backend.navigation.NavigationTarget
+- a:computePresentation():com.intellij.platform.backend.presentation.TargetPresentation
+- a:createPointer():com.intellij.model.Pointer
+- a:equals(java.lang.Object):Z
+- a:hashCode():I
+- a:navigationRequest():com.intellij.platform.backend.navigation.NavigationRequest
+com.intellij.platform.backend.presentation.TargetPresentation
+- sf:Companion:com.intellij.platform.backend.presentation.TargetPresentation$Companion
+- s:builder(com.intellij.platform.backend.presentation.TargetPresentation):com.intellij.platform.backend.presentation.TargetPresentationBuilder
+- s:builder(java.lang.String):com.intellij.platform.backend.presentation.TargetPresentationBuilder
+- a:getBackgroundColor():java.awt.Color
+- a:getContainerText():java.lang.String
+- a:getContainerTextAttributes():com.intellij.openapi.editor.markup.TextAttributes
+- a:getIcon():javax.swing.Icon
+- a:getLocationIcon():javax.swing.Icon
+- a:getLocationText():java.lang.String
+- a:getPresentableText():java.lang.String
+- a:getPresentableTextAttributes():com.intellij.openapi.editor.markup.TextAttributes
+f:com.intellij.platform.backend.presentation.TargetPresentation$Companion
+- f:builder(com.intellij.platform.backend.presentation.TargetPresentation):com.intellij.platform.backend.presentation.TargetPresentationBuilder
+- f:builder(java.lang.String):com.intellij.platform.backend.presentation.TargetPresentationBuilder
+com.intellij.platform.backend.presentation.TargetPresentationBuilder
+- a:backgroundColor(java.awt.Color):com.intellij.platform.backend.presentation.TargetPresentationBuilder
+- a:containerText(java.lang.String):com.intellij.platform.backend.presentation.TargetPresentationBuilder
+- a:containerText(java.lang.String,com.intellij.openapi.editor.markup.TextAttributes):com.intellij.platform.backend.presentation.TargetPresentationBuilder
+- a:containerTextAttributes(com.intellij.openapi.editor.markup.TextAttributes):com.intellij.platform.backend.presentation.TargetPresentationBuilder
+- a:icon(javax.swing.Icon):com.intellij.platform.backend.presentation.TargetPresentationBuilder
+- a:locationText(java.lang.String):com.intellij.platform.backend.presentation.TargetPresentationBuilder
+- a:locationText(java.lang.String,javax.swing.Icon):com.intellij.platform.backend.presentation.TargetPresentationBuilder
+- a:presentableText(java.lang.String):com.intellij.platform.backend.presentation.TargetPresentationBuilder
+- a:presentableTextAttributes(com.intellij.openapi.editor.markup.TextAttributes):com.intellij.platform.backend.presentation.TargetPresentationBuilder
+- a:presentation():com.intellij.platform.backend.presentation.TargetPresentation
 com.intellij.pom.Navigatable
 - sf:EMPTY_NAVIGATABLE_ARRAY:com.intellij.pom.Navigatable[]
 - canNavigate():Z

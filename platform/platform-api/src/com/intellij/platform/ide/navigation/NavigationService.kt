@@ -7,16 +7,17 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.pom.Navigatable
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 
-@Experimental
+@ApiStatus.NonExtendable
 interface NavigationService {
   companion object {
     @JvmStatic
@@ -25,9 +26,23 @@ interface NavigationService {
     }
   }
 
+  /**
+   * Initiates navigation in UI based on the provided data context and navigation options.
+   *
+   * @param dataContext Represents the contextual information required for determining the navigation target.
+   * @param options Contains configuration settings and parameters that influence the navigation behavior.
+   */
   suspend fun navigate(dataContext: DataContext, options: NavigationOptions)
 
-  @Internal
+  /**
+   * Initiates navigation based on the provided request, with optional navigation options and a data context.
+   *
+   * @param request The navigation request describing the destination and associated parameters.
+   * @param options Optional navigation options to customize the navigation behavior. Defaults to `NavigationOptions.defaultOptions()`.
+   * @param dataContext Optional context data to provide additional information or state during navigation. Can be null.
+   *
+   * @see NavigationRequest
+   */
   suspend fun navigate(
     request: NavigationRequest,
     options: NavigationOptions = NavigationOptions.defaultOptions(),
@@ -35,6 +50,7 @@ interface NavigationService {
   )
 
   @Internal // compatibility function
+  @IntellijInternalApi
   suspend fun navigate(
     navigatables: List<Navigatable>,
     options: NavigationOptions = NavigationOptions.defaultOptions(),
@@ -42,6 +58,7 @@ interface NavigationService {
   ): Boolean
 
   @Internal // compatibility function
+  @IntellijInternalApi
   suspend fun navigate(navigatable: Navigatable, options: NavigationOptions, dataContext: DataContext? = null): Boolean {
     return navigate(listOf(navigatable), options, dataContext)
   }
