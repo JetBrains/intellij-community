@@ -45,6 +45,7 @@ object Measurer {
           it
         }[clazz]!!
       }
+
       private fun fromDelegateClassInternal(clazz: Class<FileSystemProvider>): DelegateType {
         if (clazz.name == "com.intellij.platform.ide.impl.wsl.ijent.nio.IjentWslNioFileSystemProvider") return wsl
         if (clazz.name == "com.intellij.docker.ijent.DockerMountsAwareFileSystemProvider") return docker
@@ -58,7 +59,7 @@ object Measurer {
     val delegateType: DelegateType,
     val operation: Operation,
     val success: Boolean?,
-    val repeated: Boolean?
+    val repeated: Boolean?,
   ) {
     override fun toString(): String {
       val successKey = when (success) {
@@ -79,6 +80,7 @@ object Measurer {
       val keyString = "nio.fs${delegateTypeKey}.${operation}$successKey$repeatedKey"
       return keyString
     }
+
     companion object {
       val countUniquePathsEnabled: Boolean get() = System.getProperty("nio.mrfs.telemetry.count.unique.paths", "false").toBoolean()
       val VALUES: List<FsEventKey> = DelegateType.entries.filter {
