@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
+import com.intellij.ide.util.gotoByName.FileTypeRef
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.Disposable
@@ -272,6 +273,25 @@ open class NonIndexableFilesSEContributorTest {
     assertThat(items).allSatisfy { it is PsiFileSystemItem }
     val names = items.map { (it as PsiFileSystemItem).name }
     assertThat(names).containsExactlyInAnyOrder("file1")
+  }
+
+
+  @Test
+  fun `file is not found because it has hidden type`(): Unit = runBlocking {
+    val unindexed1 = baseDir.newVirtualDirectory("dir1").toVirtualFileUrl(urlManager)
+    val file1 = baseDir.newVirtualFile("dir1/file1")
+    workspaceModel.update { storage ->
+      storage.addEntity(NonIndexableTestEntity(unindexed1, NonPersistentEntitySource))
+    }
+    VfsTestUtil.syncRefresh()
+
+    val contributor = NonIndexableFilesSEContributor(createEvent(project))
+    contributor.setHiddenTypes(listOf(FileTypeRef.forFileType(file1.fileType)))
+    Disposer.register(disposable, contributor)
+
+    val items = contributor.search("file1", MockProgressIndicator()).toSet()
+
+    assertThat(items).isEmpty()
   }
 
   @Test

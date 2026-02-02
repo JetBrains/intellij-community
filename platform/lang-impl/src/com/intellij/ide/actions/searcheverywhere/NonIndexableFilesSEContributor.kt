@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.SearchEverywherePsiRenderer
 import com.intellij.ide.actions.searcheverywhere.footer.createPsiExtendedInfo
+import com.intellij.ide.util.gotoByName.FileTypeRef
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ReadAction
@@ -39,6 +40,7 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 @ApiStatus.Internal
 interface FilesTabSEContributor {
   fun setScope(scope: ScopeDescriptor)
+  fun setHiddenTypes(hiddenTypes: List<FileTypeRef>)
 
   companion object {
     @ApiStatus.Internal
@@ -57,7 +59,8 @@ interface FilesTabSEContributor {
     @ApiStatus.Internal
     @JvmStatic
     fun SearchEverywhereContributor<*>.isMainFilesContributor(): Boolean {
-      return this is FileSearchEverywhereContributor || this is SearchEverywhereContributorWrapper && this.getEffectiveContributor().isMainFilesContributor()
+      return this is FileSearchEverywhereContributor || this is SearchEverywhereContributorWrapper && this.getEffectiveContributor()
+        .isMainFilesContributor()
     }
   }
 }
@@ -73,7 +76,8 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
   private val project: Project = event.project!!
   private val navigationHandler: SearchEverywhereNavigationHandler = FileSearchEverywhereNavigationContributionHandler(project)
 
-  private var scope: AtomicReference<ScopeDescriptor?> = AtomicReference(null)
+  private val scope: AtomicReference<ScopeDescriptor?> = AtomicReference(null)
+  private val hiddenTypes: AtomicReference<Set<FileTypeRef>> = AtomicReference(emptySet())
 
   override fun getSearchProviderId(): String = ID
 
@@ -108,6 +112,10 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
     this.scope.store(scope)
   }
 
+  override fun setHiddenTypes(hiddenTypes: List<FileTypeRef>) {
+    this.hiddenTypes.store(hiddenTypes.toSet())
+  }
+
   /**
    * @implNote instead of running under one large read action, launches many short blocking RAs
    */
@@ -138,9 +146,13 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
     // We want to send good matches first, and only send others later if didn't find enough
     val suboptimalMatches = mutableListOf<VirtualFile>()
 
+    val hiddenTypes = hiddenTypes.load()
+    val filterByType = VirtualFileFilter { file -> FileTypeRef.forFileType(file.fileType) !in hiddenTypes }
+
     val scope = scope.load()?.scope
-    val filter: VirtualFileFilter = if (scope == null) VirtualFileFilter.ALL
-    else VirtualFileFilter { file -> scope.contains(file) }
+    val filter: VirtualFileFilter = if (scope == null) filterByType
+    else filterByType.and { file -> scope.contains(file) }
+
 
     val filesDeque = ReadAction.nonBlocking<FilesDeque> {
       FilesDeque.nonIndexableDequeue(project, filter)
