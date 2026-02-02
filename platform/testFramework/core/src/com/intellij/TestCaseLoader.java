@@ -420,13 +420,7 @@ public class TestCaseLoader {
   }
 
   public static int getRank(Class<?> aClass) {
-    if (runFirst(aClass)) return 0;
-
     return 1;
-  }
-
-  private static boolean runFirst(Class<?> testClass) {
-    return getAnnotationInHierarchy(testClass, RunFirst.class) != null;
   }
 
   public int getClassesCount() {

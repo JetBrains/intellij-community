@@ -5,7 +5,6 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.RunFirst;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ref.GCUtil;
@@ -32,7 +31,6 @@ import java.util.stream.IntStream;
  * {@link ConcurrentCollectionFactory}.create*
  * collections for being really weak/soft/concurrent
  */
-@RunFirst
 public class ContainerUtilCollectionsTest extends Assert {
   @Rule
   public TestRule watcher = TestLoggerFactory.createTestWatcher();

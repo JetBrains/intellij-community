@@ -48,7 +48,6 @@ import java.util.stream.IntStream;
 import static java.util.Objects.requireNonNull;
 import static org.junit.Assert.*;
 
-@RunFirst
 @SkipSlowTestLocally
 @PerformanceUnitTest
 public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {

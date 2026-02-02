@@ -38,7 +38,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-@RunFirst
 @SkipSlowTestLocally
 public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
   private final Disposable disposable = Disposer.newDisposable();

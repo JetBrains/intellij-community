@@ -24,7 +24,6 @@ import com.intellij.psi.ExternalChangeAction;
 import com.intellij.psi.ExternalChangeActionUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PerformanceUnitTest;
-import com.intellij.testFramework.RunFirst;
 import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.*;
@@ -47,7 +46,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-@RunFirst
 public class ApplicationImplTest extends LightPlatformTestCase {
   private TestTimeOut t;
 
