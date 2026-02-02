@@ -10,7 +10,11 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.RefGroup
+import com.intellij.vcs.log.VcsLogRefManager
+import com.intellij.vcs.log.VcsLogStandardColors
+import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.VcsRefType
 import com.intellij.vcs.log.impl.DetachedHeadRefGroup
 import com.intellij.vcs.log.impl.SimpleRefGroup
 import com.intellij.vcs.log.impl.SimpleRefGroup.Companion.buildGroups
@@ -28,7 +32,6 @@ import git4idea.ui.branch.GitBranchManager
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.IOException
-import java.util.*
 
 /**
  * @author Kirill Likhodedov

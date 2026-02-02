@@ -2,7 +2,12 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.mapState
-import com.intellij.collaboration.ui.*
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.ComponentListPanelFactory
+import com.intellij.collaboration.ui.EditableComponentFactory
+import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.SimpleHtmlPane
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil
@@ -13,7 +18,12 @@ import com.intellij.collaboration.ui.codereview.comment.submitActionIn
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
-import com.intellij.collaboration.ui.util.*
+import com.intellij.collaboration.ui.util.bindContent
+import com.intellij.collaboration.ui.util.bindIcon
+import com.intellij.collaboration.ui.util.bindTextHtml
+import com.intellij.collaboration.ui.util.bindTextHtmlIn
+import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
@@ -37,7 +47,14 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.ai.GHPRAISummaryExtension
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException

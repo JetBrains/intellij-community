@@ -9,7 +9,11 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.DaemonListeners
 import com.intellij.codeInsight.daemon.impl.SilentChangeVetoer
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.modcommand.ModPsiUpdater

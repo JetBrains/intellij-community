@@ -25,9 +25,18 @@ function getOtherModeOnlyNames(mode) {
 }
 
 describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
-  const upstreamToolsWithSearch = [
-    ...defaultUpstreamTools,
-    buildUpstreamTool('search', {query: {type: 'string'}}, ['query'])
+  const defaultHasSearchSymbol = defaultUpstreamTools.some((tool) => tool.name === 'search_symbol')
+  const upstreamToolsWithLegacySearch = [
+    buildUpstreamTool('search_in_files_by_text', {project_path: {type: 'string'}}, ['project_path']),
+    buildUpstreamTool('search_in_files_by_regex', {project_path: {type: 'string'}}, ['project_path']),
+    buildUpstreamTool('find_files_by_glob', {project_path: {type: 'string'}}, ['project_path']),
+    buildUpstreamTool('search', {query: {type: 'string'}, project_path: {type: 'string'}}, ['query', 'project_path'])
+  ]
+  const upstreamToolsWithSearchText = [
+    buildUpstreamTool('search_text', {query: {type: 'string'}, project_path: {type: 'string'}}, ['query', 'project_path'])
+  ]
+  const upstreamToolsWithReadFile = [
+    buildUpstreamTool('read_file', {path: {type: 'string'}}, ['path'])
   ]
 
   it('exposes proxy tools and hides replaced/blocked upstream tools', async () => {
@@ -37,7 +46,11 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
       debug('test: tools/list response received')
       const names = listResponse.result.tools.map((tool) => tool.name)
 
-      assertContainsAll(names, getProxyToolNames(TOOL_MODES.CODEX))
+      const expected = new Set(getProxyToolNames(TOOL_MODES.CODEX))
+      if (!defaultHasSearchSymbol) {
+        expected.delete('search_symbol')
+      }
+      assertContainsAll(names, expected)
       assertExcludesAll(names, getOtherModeOnlyNames(TOOL_MODES.CODEX))
       assertExcludesAll(names, BLOCKED_TOOL_NAMES)
       assertExcludesAll(names, getReplacedToolNames())
@@ -45,25 +58,45 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
     })
   })
 
-  it('hides search tool by default', async () => {
-    await withProxy({tools: upstreamToolsWithSearch}, async ({proxyClient}) => {
+  it('hides upstream search tool and keeps proxy search tools', async () => {
+    await withProxy({tools: upstreamToolsWithLegacySearch}, async ({proxyClient}) => {
       const listResponse = await proxyClient.send('tools/list')
       const names = listResponse.result.tools.map((tool) => tool.name)
 
       ok(!names.includes('search'))
+      ok(names.includes('search_text'))
+      ok(names.includes('search_regex'))
+      ok(names.includes('search_file'))
     })
   })
 
-  it('exposes search tool and hides grep when search mode is enabled', async () => {
-    await withProxy({
-      tools: upstreamToolsWithSearch,
-      proxyEnv: {JETBRAINS_MCP_SEARCH_TOOL: 'search'}
-    }, async ({proxyClient}) => {
+  it('does not expose search_symbol when upstream search_symbol is unavailable', async () => {
+    await withProxy({tools: upstreamToolsWithLegacySearch}, async ({proxyClient}) => {
       const listResponse = await proxyClient.send('tools/list')
       const names = listResponse.result.tools.map((tool) => tool.name)
+      ok(!names.includes('search_symbol'))
+    })
+  })
 
-      ok(names.includes('search'))
-      ok(!names.includes('grep'))
+  it('passes through upstream search schema when search_text is available', async () => {
+    await withProxy({tools: upstreamToolsWithSearchText}, async ({proxyClient}) => {
+      const listResponse = await proxyClient.send('tools/list')
+      const searchTool = listResponse.result.tools.find((tool) => tool.name === 'search_text')
+      ok(searchTool)
+      const properties = searchTool.inputSchema?.properties ?? {}
+      ok('query' in properties)
+      ok(!('q' in properties))
+    })
+  })
+
+  it('passes through upstream read_file schema when read_file is available', async () => {
+    await withProxy({tools: upstreamToolsWithReadFile}, async ({proxyClient}) => {
+      const listResponse = await proxyClient.send('tools/list')
+      const readTool = listResponse.result.tools.find((tool) => tool.name === 'read_file')
+      ok(readTool)
+      const properties = readTool.inputSchema?.properties ?? {}
+      ok('path' in properties)
+      ok(!('file_path' in properties))
     })
   })
 
@@ -82,7 +115,11 @@ describe('ij MCP proxy tool list', {timeout: SUITE_TIMEOUT_MS}, () => {
       const listResponse = await proxyClient.send('tools/list')
       const names = listResponse.result.tools.map((tool) => tool.name)
 
-      assertContainsAll(names, getProxyToolNames(TOOL_MODES.CC))
+      const expected = new Set(getProxyToolNames(TOOL_MODES.CC))
+      if (!defaultHasSearchSymbol) {
+        expected.delete('search_symbol')
+      }
+      assertContainsAll(names, expected)
       assertExcludesAll(names, getOtherModeOnlyNames(TOOL_MODES.CC))
       assertExcludesAll(names, BLOCKED_TOOL_NAMES)
       assertExcludesAll(names, getReplacedToolNames())

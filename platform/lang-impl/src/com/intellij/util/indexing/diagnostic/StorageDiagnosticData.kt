@@ -23,7 +23,11 @@ import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
 import com.intellij.util.indexing.contentQueue.dev.IndexWriter
 import com.intellij.util.indexing.impl.MapIndexStorageCacheProvider
-import com.intellij.util.io.*
+import com.intellij.util.io.DirectByteBufferAllocator
+import com.intellij.util.io.FileChannelInterruptsRetryer
+import com.intellij.util.io.PageCacheUtils
+import com.intellij.util.io.StorageLockContext
+import com.intellij.util.io.delete
 import com.intellij.util.io.stats.FilePageCacheStatistics
 import com.intellij.util.io.stats.PersistentEnumeratorStatistics
 import com.intellij.util.io.stats.PersistentHashMapStatistics
@@ -38,7 +42,8 @@ import java.nio.file.Path
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.util.*
+import java.util.SortedMap
+import java.util.TreeMap
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.MILLISECONDS

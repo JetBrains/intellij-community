@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
-import java.util.*
 
 @K1Deprecation
 class MultipleArgumentsItemProvider(

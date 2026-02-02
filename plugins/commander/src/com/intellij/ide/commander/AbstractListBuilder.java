@@ -15,10 +15,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.ListSelectionModel;
+import java.awt.Cursor;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 

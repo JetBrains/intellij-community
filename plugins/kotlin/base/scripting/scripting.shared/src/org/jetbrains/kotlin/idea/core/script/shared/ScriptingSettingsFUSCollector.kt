@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
-import kotlin.sequences.forEach
 
 internal class ScriptingSettingsFUSCollector: ProjectUsagesCollector() {
     override fun getGroup() = GROUP

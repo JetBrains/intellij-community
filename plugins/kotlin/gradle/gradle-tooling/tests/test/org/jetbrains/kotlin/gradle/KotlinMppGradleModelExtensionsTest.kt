@@ -1,7 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.gradle
 
-import org.jetbrains.kotlin.idea.gradleTooling.*
+import org.jetbrains.kotlin.idea.gradleTooling.compilationDependsOnSourceSet
+import org.jetbrains.kotlin.idea.gradleTooling.getCompilations
+import org.jetbrains.kotlin.idea.gradleTooling.isDependsOn
+import org.jetbrains.kotlin.idea.gradleTooling.resolveAllDependsOnSourceSets
+import org.jetbrains.kotlin.idea.gradleTooling.resolveDeclaredDependsOnSourceSets
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

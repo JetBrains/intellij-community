@@ -16,7 +16,7 @@
 
 package com.intellij.refactoring.introduceParameter;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 
 /**
  *  Parameters used in expression

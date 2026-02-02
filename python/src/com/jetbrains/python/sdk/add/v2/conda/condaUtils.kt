@@ -12,7 +12,13 @@ import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.add.v2.*
+import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.PyProjectCreateHelpers
+import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.Version
+import com.jetbrains.python.sdk.add.v2.VersionFormatException
+import com.jetbrains.python.sdk.add.v2.existingSdks
+import com.jetbrains.python.sdk.add.v2.getToolVersion
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest

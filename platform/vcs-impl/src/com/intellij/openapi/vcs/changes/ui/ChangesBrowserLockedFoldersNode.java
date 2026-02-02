@@ -12,7 +12,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.vcs.changes.ChangesUtil.processVirtualFilesByVcs;
-import static com.intellij.ui.SimpleTextAttributes.*;
+import static com.intellij.ui.SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES;
+import static com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_UNDERLINE;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 @ApiStatus.Internal

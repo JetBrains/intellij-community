@@ -6,10 +6,21 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.declarationList
 import org.jetbrains.kotlin.nj2k.getOrCreateCompanionObject
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKClass
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.COMPANION
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.OBJECT
+import org.jetbrains.kotlin.nj2k.tree.JKJavaStaticInitDeclaration
+import org.jetbrains.kotlin.nj2k.tree.JKKtInitDeclaration
+import org.jetbrains.kotlin.nj2k.tree.JKModalityOwner
+import org.jetbrains.kotlin.nj2k.tree.JKOtherModifiersOwner
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier
+import org.jetbrains.kotlin.nj2k.tree.detached
+import org.jetbrains.kotlin.nj2k.tree.elementByModifier
+import org.jetbrains.kotlin.nj2k.tree.hasOtherModifier
+import org.jetbrains.kotlin.nj2k.tree.modality
+import org.jetbrains.kotlin.nj2k.tree.withFormattingFrom
 
 class StaticsToCompanionExtractConversion(context: ConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

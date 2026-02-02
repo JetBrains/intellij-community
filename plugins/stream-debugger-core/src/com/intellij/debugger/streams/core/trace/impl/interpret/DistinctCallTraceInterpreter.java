@@ -1,14 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.core.trace.impl.interpret;
 
-import com.intellij.debugger.streams.core.trace.*;
+import com.intellij.debugger.streams.core.trace.ArrayReference;
+import com.intellij.debugger.streams.core.trace.CallTraceInterpreter;
+import com.intellij.debugger.streams.core.trace.IntegerValue;
+import com.intellij.debugger.streams.core.trace.TraceElement;
+import com.intellij.debugger.streams.core.trace.TraceInfo;
+import com.intellij.debugger.streams.core.trace.Value;
 import com.intellij.debugger.streams.core.trace.impl.interpret.ex.UnexpectedArrayLengthException;
 import com.intellij.debugger.streams.core.trace.impl.interpret.ex.UnexpectedValueException;
 import com.intellij.debugger.streams.core.trace.impl.interpret.ex.UnexpectedValueTypeException;
 import com.intellij.debugger.streams.core.wrapper.StreamCall;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Vitaliy.Bibaev

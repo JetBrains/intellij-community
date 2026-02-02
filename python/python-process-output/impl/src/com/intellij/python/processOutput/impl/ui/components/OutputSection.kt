@@ -28,22 +28,22 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import org.jetbrains.jewel.ui.component.Text
-import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.intellij.python.community.execService.impl.LoggedProcessLine
-import com.intellij.python.processOutput.impl.ui.Icons
 import com.intellij.python.processOutput.impl.OutputFilter
 import com.intellij.python.processOutput.impl.ProcessOutputBundle.message
 import com.intellij.python.processOutput.impl.ProcessOutputController
 import com.intellij.python.processOutput.impl.Tag
 import com.intellij.python.processOutput.impl.formatFull
 import com.intellij.python.processOutput.impl.ui.Colors
+import com.intellij.python.processOutput.impl.ui.Icons
 import com.intellij.python.processOutput.impl.ui.collectReplayAsState
 import com.intellij.python.processOutput.impl.ui.thenIfNotNull
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
 
 private object Styling {

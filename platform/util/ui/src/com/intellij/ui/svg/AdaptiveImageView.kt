@@ -18,7 +18,11 @@ import java.awt.Shape
 import java.net.URL
 import javax.swing.Icon
 import javax.swing.event.DocumentEvent
-import javax.swing.text.*
+import javax.swing.text.Document
+import javax.swing.text.Element
+import javax.swing.text.Position
+import javax.swing.text.View
+import javax.swing.text.ViewFactory
 import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLDocument
 

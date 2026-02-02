@@ -9,7 +9,7 @@ import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class JavaFileType extends LanguageFileType {
   public static final @NonNls String DEFAULT_EXTENSION = "java";

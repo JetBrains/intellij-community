@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.AssumptionViolatedException
 import org.junit.Test
-import java.lang.reflect.Method
 
 @TestMetadata("multiplatform/core/features/misc")
 class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() {

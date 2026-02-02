@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 
 import java.nio.charset.Charset;

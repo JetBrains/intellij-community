@@ -21,11 +21,11 @@ import kotlinx.coroutines.test.testTimeSource
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.textmate.TestUtilMultiplatform
 import org.jetbrains.plugins.textmate.update
-import kotlin.test.Test
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse

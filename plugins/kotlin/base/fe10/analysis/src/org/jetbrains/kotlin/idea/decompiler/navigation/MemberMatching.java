@@ -5,7 +5,18 @@ package org.jetbrains.kotlin.idea.decompiler.navigation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.builtins.StandardNames;
-import org.jetbrains.kotlin.psi.*;
+import org.jetbrains.kotlin.psi.KtCallableDeclaration;
+import org.jetbrains.kotlin.psi.KtDeclaration;
+import org.jetbrains.kotlin.psi.KtDynamicType;
+import org.jetbrains.kotlin.psi.KtFunctionType;
+import org.jetbrains.kotlin.psi.KtNamedDeclaration;
+import org.jetbrains.kotlin.psi.KtNullableType;
+import org.jetbrains.kotlin.psi.KtParameter;
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression;
+import org.jetbrains.kotlin.psi.KtTypeElement;
+import org.jetbrains.kotlin.psi.KtTypeReference;
+import org.jetbrains.kotlin.psi.KtUserType;
+import org.jetbrains.kotlin.psi.KtVisitor;
 
 import java.util.List;
 

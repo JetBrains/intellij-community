@@ -3,7 +3,13 @@ package com.intellij.refactoring.safeDelete;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiPackageAccessibilityStatement;
 import com.intellij.refactoring.move.moveClassesOrPackages.ModifyModuleStatementUsageInfo;
 import com.intellij.refactoring.move.moveClassesOrPackages.ModuleInfoUsageDetector;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteModuleStatementsUsageInfo;

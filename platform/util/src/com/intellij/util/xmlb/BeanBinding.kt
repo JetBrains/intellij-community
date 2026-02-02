@@ -13,7 +13,14 @@ import com.intellij.util.ClearableClassValue
 import com.intellij.util.ThreeState
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xmlb.XmlSerializerImpl.createClassBinding
-import com.intellij.util.xmlb.annotations.*
+import com.intellij.util.xmlb.annotations.CollectionBean
+import com.intellij.util.xmlb.annotations.MapAnnotation
+import com.intellij.util.xmlb.annotations.OptionTag
+import com.intellij.util.xmlb.annotations.Property
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.Transient
+import com.intellij.util.xmlb.annotations.XCollection
+import com.intellij.util.xmlb.annotations.XMap
 import it.unimi.dsi.fastutil.objects.Object2FloatMap
 import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
@@ -29,7 +36,8 @@ import java.lang.reflect.AccessibleObject
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Type
-import java.util.*
+import java.util.Arrays
+import java.util.Collections
 
 @JvmField
 internal val LOG: Logger = logger<Binding>()

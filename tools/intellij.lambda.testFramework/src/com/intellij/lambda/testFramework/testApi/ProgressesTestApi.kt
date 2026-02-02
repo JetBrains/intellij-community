@@ -1,13 +1,13 @@
 package com.intellij.lambda.testFramework.testApi
 
 import com.intellij.lambda.testFramework.frameworkLogger
-import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.ProgressModel
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.remoteDev.tests.LambdaIdeContext
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 

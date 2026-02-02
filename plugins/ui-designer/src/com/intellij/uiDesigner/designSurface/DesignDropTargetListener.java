@@ -18,9 +18,15 @@ import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.dnd.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
 import java.util.ArrayList;
 import java.util.List;
 

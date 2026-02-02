@@ -5,11 +5,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import fleet.util.logging.logger
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration.Companion.seconds
 
 internal fun GitRepositoriesHolder.Companion.getAndInit(project: Project): GitRepositoriesHolder = getInstance(project).also {

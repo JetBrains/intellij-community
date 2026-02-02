@@ -2,7 +2,6 @@
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.platform.eel.isPosix
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.osFamily
 import java.nio.file.Path
 

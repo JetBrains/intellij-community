@@ -18,9 +18,20 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
 
-import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.*;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.BIG_INTEGER_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.BOOLEAN_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.DOUBLE_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.INTEGER_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.STRING_MERGER;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.getClassName;
+import static com.intellij.database.datagrid.DocumentDataHookUp.DataMarkup.getType;
 
 public class CsvDocumentDataHookUp extends DocumentDataHookUp {
   private CsvFormat myFormat;

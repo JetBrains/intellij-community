@@ -34,7 +34,7 @@ import org.intellij.plugins.relaxNG.model.Define;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Objects;

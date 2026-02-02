@@ -54,7 +54,7 @@ abstract class TcpEelMachine(override val internalName: String) : EelMachine {
   val isSessionRunning: Boolean
     get() = (state as? SessionState.Started)?.session?.isRunning == true
 
-  protected abstract fun createStrategy(): IjentIsolatedTcpDeployingStrategy
+  protected abstract suspend fun createStrategy(): IjentIsolatedTcpDeployingStrategy
 
   override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {
     // Fast path: check if session is still running without acquiring mutex

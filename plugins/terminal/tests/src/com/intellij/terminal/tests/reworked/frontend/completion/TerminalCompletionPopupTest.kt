@@ -25,7 +25,9 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.awt.event.KeyEvent.*
+import java.awt.event.KeyEvent.VK_BACK_SPACE
+import java.awt.event.KeyEvent.VK_LEFT
+import java.awt.event.KeyEvent.VK_RIGHT
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.createTempDirectory

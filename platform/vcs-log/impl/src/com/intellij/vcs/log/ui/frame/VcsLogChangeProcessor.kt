@@ -9,7 +9,14 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.ChangeWrapper
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
+import com.intellij.openapi.vcs.changes.ui.TreeHandlerChangesTreeTracker
+import com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.util.containers.JBIterable
 import java.beans.PropertyChangeListener
 import javax.swing.JTree

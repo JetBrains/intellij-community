@@ -12,7 +12,15 @@ import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.MavenEmbedderWrappers
+import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
+import org.jetbrains.idea.maven.project.MavenGeneralSettings
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectChanges
+import org.jetbrains.idea.maven.project.MavenProjectResolver
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.IOException
 import java.util.concurrent.CopyOnWriteArrayList

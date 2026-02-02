@@ -2,7 +2,9 @@
 
 package org.jetbrains.kotlin.idea.test
 
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestsRoot
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.toSlashEndingDirPath
 import java.io.File
 
 @Deprecated("Use KotlinLightCodeInsightFixtureTestCase instead")

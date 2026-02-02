@@ -11,7 +11,10 @@ import org.jetbrains.kotlin.idea.base.psi.tailComments
 import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.psi.generateBuildStringCallWithExtras
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
 fun convertConcatenationToBuildStringCall(element: KtBinaryExpression): KtExpression {
     val operands = element.collectOperands()

@@ -10,7 +10,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DetailsComponent
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.ModuleOrProject.*
+import com.jetbrains.python.sdk.ModuleOrProject.ModuleAndProject
+import com.jetbrains.python.sdk.ModuleOrProject.ProjectOnly
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 

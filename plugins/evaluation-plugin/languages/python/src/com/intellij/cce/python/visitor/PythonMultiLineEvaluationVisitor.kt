@@ -6,7 +6,11 @@ import com.intellij.cce.visitor.EvaluationVisitor
 import com.intellij.cce.visitor.MultiLineVisitorUtils
 import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.psi.PsiElement
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyRecursiveElementVisitor
+import com.jetbrains.python.psi.PyStatementList
 
 class PythonMultiLineEvaluationVisitor : EvaluationVisitor, PyRecursiveElementVisitor() {
   private var codeFragment: CodeFragment? = null

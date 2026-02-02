@@ -54,9 +54,24 @@
 
 package org.jdom.input;
 
-import org.jdom.*;
-import org.jdom.input.sax.*;
-import org.xml.sax.*;
+import org.jdom.DefaultJDOMFactory;
+import org.jdom.Document;
+import org.jdom.JDOMException;
+import org.jdom.JDOMFactory;
+import org.jdom.Verifier;
+import org.jdom.input.sax.BuilderErrorHandler;
+import org.jdom.input.sax.DefaultSAXHandlerFactory;
+import org.jdom.input.sax.SAXBuilderEngine;
+import org.jdom.input.sax.SAXEngine;
+import org.jdom.input.sax.SAXHandler;
+import org.jdom.input.sax.SAXHandlerFactory;
+import org.jdom.input.sax.XMLReaderJDOMFactory;
+import org.jdom.input.sax.XMLReaders;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+import org.xml.sax.XMLReader;
 
 import javax.xml.XMLConstants;
 import java.io.File;
@@ -68,7 +83,9 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.jdom.JDOMConstants.*;
+import static org.jdom.JDOMConstants.SAX_PROPERTY_DECLARATION_HANDLER;
+import static org.jdom.JDOMConstants.SAX_PROPERTY_LEXICAL_HANDLER;
+import static org.jdom.JDOMConstants.SAX_PROPERTY_LEXICAL_HANDLER_ALT;
 
 /**
  * @deprecated Please JDOMUtil or JDK API (StAX) or XmlDomReader.readXmlAsModel.

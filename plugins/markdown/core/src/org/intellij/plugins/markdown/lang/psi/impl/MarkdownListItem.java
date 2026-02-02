@@ -16,7 +16,7 @@ import org.intellij.plugins.markdown.structureView.MarkdownBasePresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class MarkdownListItem extends MarkdownCompositePsiElementBase {
   public MarkdownListItem(@NotNull ASTNode node) {

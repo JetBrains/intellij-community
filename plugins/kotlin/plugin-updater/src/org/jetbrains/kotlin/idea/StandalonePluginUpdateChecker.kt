@@ -3,7 +3,12 @@ package org.jetbrains.kotlin.idea
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ShowLogAction
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManagerMain
+import com.intellij.ide.plugins.PluginManagerUISettings
+import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.notification.NotificationAction

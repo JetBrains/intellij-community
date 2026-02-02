@@ -48,7 +48,7 @@ import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Font;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;

@@ -9,7 +9,11 @@ import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.indexing.withDataOf
 import com.intellij.util.io.PersistentStringEnumerator
-import org.jetbrains.jps.backwardRefs.*
+import org.jetbrains.jps.backwardRefs.CompilerRef
+import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter
+import org.jetbrains.jps.backwardRefs.JavaCompilerBackwardReferenceIndex
+import org.jetbrains.jps.backwardRefs.NameEnumerator
+import org.jetbrains.jps.backwardRefs.SignatureData
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData
 import org.jetbrains.jps.backwardRefs.index.JavaCompilerIndices
 import org.jetbrains.jps.builders.JpsBuildTestCase

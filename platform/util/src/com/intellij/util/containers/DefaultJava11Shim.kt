@@ -2,7 +2,8 @@
 package com.intellij.util.containers
 
 import com.intellij.util.ReflectionUtil
-import java.util.*
+import java.util.Arrays
+import java.util.Collections
 
 internal class DefaultJava11Shim : Java11Shim() {
   override fun <K : Any, V> copyOf(map: Map<K, V>): Map<K, V> {

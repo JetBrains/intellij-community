@@ -104,65 +104,6 @@ export function createEditSchema(): ToolInputSchema {
   )
 }
 
-export function createGlobSchema(): ToolInputSchema {
-  return objectSchema(
-    {
-      pattern: {
-        type: 'string',
-        description: 'Glob pattern to match.'
-      },
-      path: {
-        type: 'string',
-        description: 'Optional base directory (absolute or project-relative).'
-      }
-    },
-    ['pattern']
-  )
-}
-
-export function createGrepSchemaCodex(): ToolInputSchema {
-  return objectSchema(
-    {
-      pattern: {
-        type: 'string',
-        description: 'Regular expression pattern to search for.'
-      },
-      path: {
-        type: 'string',
-        description: 'Directory or file path to search. Defaults to the session working directory.'
-      },
-      include: {
-        type: 'string',
-        description: 'Optional glob that limits which files are searched.'
-      },
-      glob: {
-        type: 'string',
-        description: 'Optional glob filter for matched files.'
-      },
-      type: {
-        type: 'string',
-        description: 'Optional file extension filter (for example, "ts" for TypeScript files).'
-      },
-      output_mode: {
-        type: 'string',
-        description: 'Output mode: "files_with_matches", "content", or "count".'
-      },
-      '-i': {
-        type: 'boolean',
-        description: 'Case-insensitive search.'
-      },
-      '-n': {
-        type: 'boolean',
-        description: 'Include line numbers in output when in content mode.'
-      },
-      limit: {
-        type: 'number',
-        description: 'Maximum number of results to return.'
-      }
-    },
-    ['pattern']
-  )
-}
 
 export function createListDirSchema(): ToolInputSchema {
   return objectSchema(
@@ -188,32 +129,53 @@ export function createListDirSchema(): ToolInputSchema {
   )
 }
 
-export function createFindSchema(): ToolInputSchema {
+function createSearchSchema(qDescription: string): ToolInputSchema {
   return objectSchema(
     {
-      pattern: {
+      q: {
         type: 'string',
-        description: 'Filename substring or glob pattern to search for.'
+        description: qDescription
       },
-      path: {
-        type: 'string',
-        description: 'Optional base directory (absolute or project-relative).'
+      paths: {
+        type: 'array',
+        description: 'Optional list of project-relative glob patterns (supports ! excludes).',
+        items: {
+          type: 'string'
+        }
       },
       limit: {
         type: 'number',
-        description: 'Maximum number of file paths to return.'
-      },
-      mode: {
-        type: 'string',
-        description: 'Optional mode: "auto" (default), "glob", or "name".'
-      },
-      add_excluded: {
-        type: 'boolean',
-        description: 'Whether to include excluded/ignored files when using glob mode.'
+        description: 'Maximum number of results to return.'
       }
     },
-    ['pattern']
+    ['q']
   )
+}
+
+export function createSearchTextSchema(): ToolInputSchema {
+  return createSearchSchema('Text substring to search for.')
+}
+
+export function createSearchRegexSchema(): ToolInputSchema {
+  return createSearchSchema('Regular expression pattern to search for.')
+}
+
+export function createSearchFileSchema(): ToolInputSchema {
+  const base = createSearchSchema('Glob pattern to match file paths.')
+  return objectSchema(
+    {
+      ...base.properties,
+      includeExcluded: {
+        type: 'boolean',
+        description: 'Whether to include excluded/ignored files in results.'
+      }
+    },
+    base.required
+  )
+}
+
+export function createSearchSymbolSchema(): ToolInputSchema {
+  return createSearchSchema('Symbol query text (class, method, field, etc.).')
 }
 
 export function createApplyPatchSchema(): ToolInputSchema {

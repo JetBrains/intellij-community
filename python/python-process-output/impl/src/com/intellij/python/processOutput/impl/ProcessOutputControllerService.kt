@@ -23,8 +23,6 @@ import com.intellij.python.processOutput.impl.ui.toggle
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.TraceContext
-import kotlin.collections.minus
-import kotlin.collections.plus
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope

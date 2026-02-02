@@ -12,7 +12,7 @@ import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.CopiesPanel;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 

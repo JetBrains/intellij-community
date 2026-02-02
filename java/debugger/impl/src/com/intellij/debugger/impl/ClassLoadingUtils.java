@@ -11,7 +11,12 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.jetbrains.jdi.MethodImpl;
-import com.sun.jdi.*;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ClassLoaderReference;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Method;
+import com.sun.jdi.StringReference;
+import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;

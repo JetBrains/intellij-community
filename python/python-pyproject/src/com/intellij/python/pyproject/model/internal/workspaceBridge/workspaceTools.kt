@@ -16,7 +16,11 @@ import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.internal.PyProjectTomlBundle
 import com.intellij.python.pyproject.model.internal.pyProjectToml.FSWalkInfoWithToml
 import com.intellij.python.pyproject.model.internal.pyProjectToml.getPEP621Deps
-import com.intellij.python.pyproject.model.spi.*
+import com.intellij.python.pyproject.model.spi.ProjectName
+import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
+import com.intellij.python.pyproject.model.spi.Tool
+import com.intellij.python.pyproject.model.spi.WorkspaceName
+import com.intellij.python.pyproject.model.spi.plus
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.findFacet
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.findSdkEntity

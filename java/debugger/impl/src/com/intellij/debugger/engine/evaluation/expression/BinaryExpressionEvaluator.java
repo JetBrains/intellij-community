@@ -17,7 +17,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
-import com.sun.jdi.*;
+import com.sun.jdi.BooleanValue;
+import com.sun.jdi.ByteValue;
+import com.sun.jdi.CharValue;
+import com.sun.jdi.IntegerValue;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.ShortValue;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 class BinaryExpressionEvaluator implements Evaluator {

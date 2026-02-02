@@ -9,7 +9,6 @@ import com.intellij.psi.util.MethodSignatureUtil.createMethodSignature
 import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.resolve.api.CallParameter
 import org.jetbrains.plugins.groovy.lang.resolve.api.CallSignature
-import java.util.*
 
 fun generateAllMethodSignaturesBySignature(name: String, signatures: List<CallSignature<*>>): List<MethodSignature> {
   return signatures.flatMap {

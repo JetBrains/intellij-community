@@ -3,7 +3,11 @@ package git4idea.rebase
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.vcs.log.VcsShortCommitDetails
 import git4idea.branch.GitRebaseParams

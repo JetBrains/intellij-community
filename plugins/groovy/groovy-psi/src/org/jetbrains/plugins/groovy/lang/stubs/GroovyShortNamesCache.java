@@ -18,7 +18,11 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Processor;
+import com.intellij.util.Processors;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NonNls;
@@ -30,9 +34,20 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.search.GrSourceFilterScope;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.*;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotationMethodNameIndex;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameStringIndex;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullScriptNameStringIndex;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrScriptClassNameIndex;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys.CLASS_SHORT_NAMES;
 

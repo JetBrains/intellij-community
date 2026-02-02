@@ -44,7 +44,14 @@ import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.authentication.ui.GithubChooseAccountDialog;
 import org.jetbrains.plugins.github.i18n.GithubBundle;
-import org.jetbrains.plugins.github.util.*;
+import org.jetbrains.plugins.github.util.GHCompatibilityUtil;
+import org.jetbrains.plugins.github.util.GHGitRepositoryMapping;
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager;
+import org.jetbrains.plugins.github.util.GithubGitHelper;
+import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder;
+import org.jetbrains.plugins.github.util.GithubNotifications;
+import org.jetbrains.plugins.github.util.GithubUrlUtil;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
 import java.io.IOException;
 import java.util.Collections;

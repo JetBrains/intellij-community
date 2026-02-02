@@ -8,7 +8,13 @@ import com.intellij.debugger.mockJDI.MockVirtualMachine;
 import com.intellij.debugger.mockJDI.members.MockField;
 import com.intellij.debugger.mockJDI.members.MockMethod;
 import com.intellij.debugger.mockJDI.types.MockClassType;
-import com.sun.jdi.*;
+import com.sun.jdi.Field;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.ThreadReference;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;

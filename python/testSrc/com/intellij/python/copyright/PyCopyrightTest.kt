@@ -4,7 +4,7 @@ package com.intellij.python.copyright
 import com.jetbrains.python.fixtures.PyTestCase
 import com.maddyhome.idea.copyright.CopyrightProfile
 import com.maddyhome.idea.copyright.psi.UpdateCopyrightFactory
-import java.util.*
+import java.util.Calendar
 
 class PyCopyrightTest : PyTestCase() {
 

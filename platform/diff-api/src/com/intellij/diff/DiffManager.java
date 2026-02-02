@@ -11,7 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Window;
 
 /**
  * Use {@link #showDiff}/{@link #showMerge} methods to show diff viewer in a frame or modal window.

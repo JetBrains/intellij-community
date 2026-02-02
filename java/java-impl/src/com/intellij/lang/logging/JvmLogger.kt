@@ -5,7 +5,11 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiImplicitClass
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.annotations.ApiStatus

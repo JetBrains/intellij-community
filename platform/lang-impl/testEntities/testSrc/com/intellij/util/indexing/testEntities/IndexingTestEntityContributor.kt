@@ -15,6 +15,14 @@ class NonIndexableKindFileSetTestContributor : WorkspaceFileIndexContributor<Non
   }
 }
 
+class ExcludedKindFileSetTestContributor : WorkspaceFileIndexContributor<ExcludedTestEntity> {
+  override val entityClass: Class<ExcludedTestEntity> = ExcludedTestEntity::class.java
+
+  override fun registerFileSets(entity: ExcludedTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+    registrar.registerExcludedRoot(entity.root, entity)
+  }
+}
+
 class IndexableKindFileSetTestContributor : WorkspaceFileIndexContributor<IndexingTestEntity> {
   override val entityClass: Class<IndexingTestEntity> = IndexingTestEntity::class.java
 

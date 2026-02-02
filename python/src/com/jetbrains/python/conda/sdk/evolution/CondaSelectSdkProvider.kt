@@ -10,8 +10,6 @@ import com.intellij.platform.eel.where
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
-import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
 import com.intellij.python.sdk.ui.evolution.AddNewEnvAction
 import com.intellij.python.sdk.ui.evolution.SelectEnvAction
 import com.intellij.python.sdk.ui.evolution.sdk.EvoModuleSdk
@@ -22,6 +20,8 @@ import com.intellij.python.sdk.ui.evolution.ui.EvoSelectSdkProvider
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLazyNodeElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLeafElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeSection
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.icons.PythonIcons
 import java.nio.file.Path
 import kotlin.io.path.exists

@@ -10,13 +10,13 @@ import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
+import org.jetbrains.kotlin.idea.codeinsight.utils.isReferenceToImplicitLambdaParameter
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.source.getPsi
-import org.jetbrains.kotlin.idea.codeinsight.utils.isReferenceToImplicitLambdaParameter
 
 @K1Deprecation
 class FE10KotlinTargetElementEvaluator : KotlinTargetElementEvaluator() {

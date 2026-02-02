@@ -2,9 +2,23 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.psi.*
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiExpressionStatement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiReturnStatement
 import org.jetbrains.kotlin.K1Deprecation
-import org.jetbrains.kotlin.j2k.ast.*
+import org.jetbrains.kotlin.j2k.ast.DeferredElement
+import org.jetbrains.kotlin.j2k.ast.Expression
+import org.jetbrains.kotlin.j2k.ast.FunctionParameter
+import org.jetbrains.kotlin.j2k.ast.LPar
+import org.jetbrains.kotlin.j2k.ast.ParameterList
+import org.jetbrains.kotlin.j2k.ast.RPar
+import org.jetbrains.kotlin.j2k.ast.assignPrototype
 
 @K1Deprecation
 class OverloadReducer(

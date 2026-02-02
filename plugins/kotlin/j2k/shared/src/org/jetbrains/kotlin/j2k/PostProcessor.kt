@@ -2,10 +2,7 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.runBlockingCancellable
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 

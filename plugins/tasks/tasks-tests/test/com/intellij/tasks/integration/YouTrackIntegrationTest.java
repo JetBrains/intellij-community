@@ -6,7 +6,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
-import com.intellij.tasks.*;
+import com.intellij.tasks.CustomTaskState;
+import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskManagerTestCase;
+import com.intellij.tasks.TaskState;
+import com.intellij.tasks.TaskType;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.tasks.impl.httpclient.TaskResponseUtil;
@@ -28,7 +32,13 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Base64;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.TimeZone;
 
 @RunWith(JUnit38AssumeSupportRunner.class)
 public class YouTrackIntegrationTest extends TaskManagerTestCase {

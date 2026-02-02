@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer
 
 import org.jetbrains.plugins.textmate.TestUtil
-import kotlin.test.Test
 import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
+import kotlin.test.Test
 
 class MakefileLexerTest : TextMateLexerTestCase() {
   @Test

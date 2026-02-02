@@ -5,7 +5,11 @@ import ai.grazie.rules.RuleClient
 import ai.grazie.rules.settings.TextStyle
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContent.TextDomain
-import com.intellij.grazie.utils.TextStyleDomain.*
+import com.intellij.grazie.utils.TextStyleDomain.AIPrompt
+import com.intellij.grazie.utils.TextStyleDomain.CodeComment
+import com.intellij.grazie.utils.TextStyleDomain.CodeDocumentation
+import com.intellij.grazie.utils.TextStyleDomain.Commit
+import com.intellij.grazie.utils.TextStyleDomain.Other
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.ui.CommitMessage
 import java.util.regex.Matcher

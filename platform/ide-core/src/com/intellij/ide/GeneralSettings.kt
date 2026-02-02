@@ -8,7 +8,12 @@ import com.intellij.ide.GeneralSettings.Companion.OPEN_PROJECT_SAME_WINDOW_ATTAC
 import com.intellij.ide.ui.UINumericRange
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.ReportValue
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization
 import com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomization
 import com.intellij.util.PlatformUtils

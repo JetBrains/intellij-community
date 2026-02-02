@@ -9,7 +9,7 @@ import org.jetbrains.idea.maven.model.MavenParent
 import org.jetbrains.idea.maven.server.MavenServerConfigUtil
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.util.*
+import java.util.Properties
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.io.path.isRegularFile

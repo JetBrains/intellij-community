@@ -6,7 +6,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.project.projectId
-import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.platform.vcs.impl.frontend.changes.ChangesTreeModel
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.EntityChangesBrowserNode
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.SELECTION_IDENTIFIER_KEY
@@ -18,12 +17,16 @@ import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeListRpc
 import com.intellij.platform.vcs.impl.shared.rpc.RemoteShelfApi
+import com.intellij.util.ui.tree.TreeUtil
 import fleet.kernel.ref
 import fleet.kernel.rete.collectLatest
 import fleet.kernel.rete.each
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.tree.DefaultMutableTreeNode

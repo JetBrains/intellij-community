@@ -2,9 +2,24 @@
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.execution.*;
+import com.intellij.execution.ConfigurationWithCommandLineShortener;
+import com.intellij.execution.Executor;
+import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.JavaTestConfigurationBase;
+import com.intellij.execution.JavaTestConfigurationWithDiscoverySupport;
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.ModuleRunProfile;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption;
+import com.intellij.execution.configurations.WrappingRunConfiguration;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestSearchScope;
@@ -27,8 +42,14 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigurationProducerBase<JavaTestConfigurationWithDiscoverySupport> {

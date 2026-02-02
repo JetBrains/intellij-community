@@ -7,7 +7,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
-import com.intellij.openapi.updateSettings.impl.*
+import com.intellij.openapi.updateSettings.impl.ChannelStatus
+import com.intellij.openapi.updateSettings.impl.PlatformUpdates
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
+import com.intellij.openapi.updateSettings.impl.UpdateSettings
+import com.intellij.openapi.updateSettings.impl.UpdateStrategy
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.pycharm.community.ide.impl.promo.WelcomeToUnifiedWelcomeScreenBanner
 import kotlinx.coroutines.CoroutineScope

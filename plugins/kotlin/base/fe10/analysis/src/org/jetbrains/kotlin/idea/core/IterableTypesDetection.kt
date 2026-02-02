@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.types.expressions.ExpressionTypingContext
 import org.jetbrains.kotlin.types.expressions.ForLoopConventionsChecker
 import org.jetbrains.kotlin.util.isValidOperator
 import org.jetbrains.kotlin.utils.getOrPutNullable
-import java.util.*
 
 @K1Deprecation
 class IterableTypesDetection(

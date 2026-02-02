@@ -2,7 +2,9 @@
 package org.jetbrains.kotlin.idea.grazie
 
 import com.intellij.grazie.text.TextContent
-import com.intellij.grazie.text.TextContent.TextDomain.*
+import com.intellij.grazie.text.TextContent.TextDomain.COMMENTS
+import com.intellij.grazie.text.TextContent.TextDomain.DOCUMENTATION
+import com.intellij.grazie.text.TextContent.TextDomain.LITERALS
 import com.intellij.grazie.text.TextContentBuilder
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.utils.Text

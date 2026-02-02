@@ -2,7 +2,11 @@
 
 package org.jetbrains.kotlin.idea.base.compilerPreferences.facet
 
-import com.intellij.facet.ui.*
+import com.intellij.facet.ui.FacetEditorContext
+import com.intellij.facet.ui.FacetEditorTab
+import com.intellij.facet.ui.FacetEditorValidator
+import com.intellij.facet.ui.FacetValidatorsManager
+import com.intellij.facet.ui.ValidationResult
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.Disposable
@@ -15,8 +19,24 @@ import com.intellij.ui.HoverHyperlinkLabel
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.xmlb.annotations.Transient
-import org.jetbrains.kotlin.cli.common.arguments.*
-import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.cli.common.arguments.Argument
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArgumentsConfigurator
+import org.jetbrains.kotlin.cli.common.arguments.Freezable
+import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.collectProperties
+import org.jetbrains.kotlin.cli.common.arguments.copyCommonCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.copyInheritedFields
+import org.jetbrains.kotlin.cli.common.arguments.mergeBeans
+import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
+import org.jetbrains.kotlin.cli.common.arguments.unfrozen
+import org.jetbrains.kotlin.cli.common.arguments.validateArguments
+import org.jetbrains.kotlin.config.CompilerSettings
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.createArguments
+import org.jetbrains.kotlin.config.isHmpp
+import org.jetbrains.kotlin.config.splitArgumentString
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle
 import org.jetbrains.kotlin.idea.base.compilerPreferences.configuration.KotlinCompilerConfigurableTab
 import org.jetbrains.kotlin.idea.base.util.onTextChange
@@ -27,13 +47,24 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
 import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker
 import org.jetbrains.kotlin.idea.facet.getExposedFacetFields
-import org.jetbrains.kotlin.platform.*
+import org.jetbrains.kotlin.platform.CommonPlatforms
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.idePlatformKind
+import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
+import org.jetbrains.kotlin.platform.oldFashionedDescription
 import java.awt.BorderLayout
 import java.awt.Component
-import javax.swing.*
+import javax.swing.AbstractButton
+import javax.swing.DefaultListCellRenderer
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.JTextField
 import javax.swing.border.EmptyBorder
 import kotlin.reflect.full.findAnnotation
 

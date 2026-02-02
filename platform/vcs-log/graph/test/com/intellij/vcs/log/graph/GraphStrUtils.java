@@ -13,7 +13,11 @@ import com.intellij.vcs.log.graph.impl.print.GraphElementComparatorByLayoutIndex
 import com.intellij.vcs.log.graph.parser.CommitParser;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 import static com.intellij.vcs.log.graph.parser.EdgeNodeCharConverter.toChar;

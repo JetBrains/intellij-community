@@ -4,21 +4,28 @@ package org.jetbrains.plugins.gradle.service.project.wizard.groovy
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
+import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
-import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
 import com.intellij.ui.UIBundle
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleAssetsNewProjectWizardStep
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.gradle.service.project.wizard.addGradleGitIgnoreAsset
 import org.jetbrains.plugins.gradle.service.project.wizard.addGradleWrapperAsset
 import org.jetbrains.plugins.groovy.config.GroovyHomeKind
-import org.jetbrains.plugins.groovy.config.wizard.*
+import org.jetbrains.plugins.groovy.config.wizard.BuildSystemGroovyNewProjectWizard
+import org.jetbrains.plugins.groovy.config.wizard.BuildSystemGroovyNewProjectWizardData
+import org.jetbrains.plugins.groovy.config.wizard.FrameworkLibraryDistributionInfo
+import org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizard
+import org.jetbrains.plugins.groovy.config.wizard.setupGroovySdkUI
+import org.jetbrains.plugins.groovy.config.wizard.withGroovySampleCode
 
 class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 

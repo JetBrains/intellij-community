@@ -18,7 +18,13 @@ import org.jetbrains.kotlin.idea.debugger.core.breakpoints.ApplicabilityResult.C
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
 
 open class KotlinFunctionBreakpointType protected constructor(@NotNull id: String, @Nls @NotNull message: String) :
     JavaMethodBreakpointType(id, message),

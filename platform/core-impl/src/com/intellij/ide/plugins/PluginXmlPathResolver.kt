@@ -2,12 +2,18 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.platform.plugins.parser.impl.*
+import com.intellij.platform.plugins.parser.impl.LoadPathUtil
+import com.intellij.platform.plugins.parser.impl.LoadedXIncludeReference
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
+import com.intellij.platform.plugins.parser.impl.consume
+import com.intellij.platform.plugins.parser.impl.isV2ModulePath
 import com.intellij.util.lang.ZipEntryResolverPool
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 
 @ApiStatus.Internal
 class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val pool: ZipEntryResolverPool?) : PathResolver {

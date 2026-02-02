@@ -26,7 +26,13 @@ import com.pty4j.windows.winpty.WinPtyProcess
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.TerminalEngine
-import org.jetbrains.plugins.terminal.block.session.*
+import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
+import org.jetbrains.plugins.terminal.block.session.CommandFinishedEvent
+import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
+import org.jetbrains.plugins.terminal.block.session.ShellCommandOutputListener
+import org.jetbrains.plugins.terminal.block.session.ShellCommandOutputScraperImpl
+import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
+import org.jetbrains.plugins.terminal.block.session.TerminalModel
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.util.ShellType
 import org.junit.Assert

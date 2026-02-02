@@ -8,7 +8,16 @@ import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CompositeShortcutSet
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.keymap.KeymapUtil
@@ -39,9 +48,14 @@ import git4idea.remote.removeRemotes
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import git4idea.ui.branch.*
+import git4idea.ui.branch.BranchGroupingAction
+import git4idea.ui.branch.GitBranchManager
+import git4idea.ui.branch.createOrCheckoutNewBranch
+import git4idea.ui.branch.hasRemotes
+import git4idea.ui.branch.isTrackingInfosExist
+import git4idea.ui.branch.updateBranches
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.Locale
 import java.util.function.Supplier
 import javax.swing.Icon
 

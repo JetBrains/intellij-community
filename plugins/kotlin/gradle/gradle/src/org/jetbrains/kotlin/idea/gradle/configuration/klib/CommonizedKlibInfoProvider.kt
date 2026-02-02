@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.library.KLIB_PROPERTY_NATIVE_TARGETS
 import org.jetbrains.kotlin.library.KLIB_PROPERTY_SHORT_NAME
 import org.jetbrains.kotlin.library.KLIB_PROPERTY_UNIQUE_NAME
 import java.io.File
-import java.util.*
+import java.util.Properties
 
 // TODO: Can be replaced with org.jetbrains.kotlin.library.KLIB_PROPERTY_COMMONIZER_TARGET after compiler update to 1.5.20
 private const val KLIB_PROPERTY_COMMONIZER_TARGET = "commonizer_target"

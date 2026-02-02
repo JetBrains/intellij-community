@@ -20,7 +20,8 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.TestFileSystemBuilder
 import java.io.IOException
 import java.nio.file.Path
-import java.util.*
+import java.util.Arrays
+import java.util.Optional
 import kotlin.io.path.exists
 import kotlin.io.path.notExists
 import kotlin.io.path.readText

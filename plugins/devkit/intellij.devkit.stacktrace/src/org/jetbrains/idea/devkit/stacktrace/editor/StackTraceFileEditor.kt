@@ -21,12 +21,16 @@ import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.TabbedPaneContentUI
 import com.intellij.unscramble.UnscrambleUtils.addConsole
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.devkit.stacktrace.DevKitStackTraceBundle
 import org.jetbrains.idea.devkit.stacktrace.getFreezeRunDescriptor
 import org.jetbrains.idea.devkit.stacktrace.util.StackTracePluginScope

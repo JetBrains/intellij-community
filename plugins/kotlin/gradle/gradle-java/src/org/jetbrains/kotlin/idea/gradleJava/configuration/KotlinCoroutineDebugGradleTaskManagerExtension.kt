@@ -8,7 +8,11 @@ import kotlinx.coroutines.DEBUG_PROPERTY_NAME
 import kotlinx.coroutines.DEBUG_PROPERTY_VALUE_OFF
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.extensions.KotlinJvmDebuggerFacade
-import org.jetbrains.plugins.gradle.service.execution.*
+import org.jetbrains.plugins.gradle.service.execution.GRADLE_TOOLING_EXTENSION_CLASSES
+import org.jetbrains.plugins.gradle.service.execution.joinInitScripts
+import org.jetbrains.plugins.gradle.service.execution.loadInitScript
+import org.jetbrains.plugins.gradle.service.execution.loadToolingExtensionProvidingInitScript
+import org.jetbrains.plugins.gradle.service.execution.toGroovyStringLiteral
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 

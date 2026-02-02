@@ -5,7 +5,10 @@ import de.plushnikov.intellij.plugin.LombokClassNames;
 
 import static com.intellij.psi.PsiModifier.FINAL;
 import static com.intellij.psi.PsiModifier.STATIC;
-import static de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersInfoType.*;
+import static de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersInfoType.CLASS;
+import static de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersInfoType.FIELD;
+import static de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersInfoType.INNER_CLASS;
+import static de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersInfoType.METHOD;
 
 public final class RedundantModifiersOnUtilityClassLombokAnnotationInspection extends LombokRedundantModifierInspection {
 

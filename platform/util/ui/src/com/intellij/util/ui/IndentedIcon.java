@@ -2,8 +2,10 @@
 
 package com.intellij.util.ui;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Insets;
 
 
 public final class IndentedIcon implements Icon {

@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.settings.DebuggerSettings
-import com.intellij.debugger.settings.ThreadsViewSettings
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 

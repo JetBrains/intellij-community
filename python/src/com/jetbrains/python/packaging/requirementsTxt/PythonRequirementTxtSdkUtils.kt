@@ -16,7 +16,11 @@ import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.associatedModuleDir
+import com.jetbrains.python.sdk.associatedModuleNioPath
+import com.jetbrains.python.sdk.baseDir
+import com.jetbrains.python.sdk.pythonSdk
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 

@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.psi.KtFile
-import java.util.*
+import java.util.EnumSet
 import java.util.function.Function
 import javax.swing.JComponent
 

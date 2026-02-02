@@ -14,7 +14,7 @@ import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import java.util.*
+import java.util.WeakHashMap
 
 val kotlinDslSyncListenerInstance: AbstractKotlinDslSyncListener?
     get() =

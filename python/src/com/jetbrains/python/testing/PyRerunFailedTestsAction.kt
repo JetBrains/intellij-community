@@ -27,7 +27,10 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.python.HelperPackage
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.run.*
+import com.jetbrains.python.run.AbstractPythonRunConfiguration
+import com.jetbrains.python.run.CommandLinePatcher
+import com.jetbrains.python.run.PythonScriptExecution
+import com.jetbrains.python.run.PythonScriptTargetedCommandLineBuilder
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import java.util.function.Function
 

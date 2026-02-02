@@ -2,8 +2,8 @@
 package com.intellij.compose.ide.plugin.resources.findUsages
 
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesBase
-import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesFileBase
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesXmlBase
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.findUsages.FindUsagesHandlerFactory

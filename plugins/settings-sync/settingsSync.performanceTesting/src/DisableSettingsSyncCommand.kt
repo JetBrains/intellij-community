@@ -5,7 +5,11 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
-import com.intellij.settingsSync.core.*
+import com.intellij.settingsSync.core.DeleteServerDataResult
+import com.intellij.settingsSync.core.SettingsSyncBundle
+import com.intellij.settingsSync.core.SettingsSyncEvents
+import com.intellij.settingsSync.core.SettingsSyncSettings
+import com.intellij.settingsSync.core.SyncSettingsEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls

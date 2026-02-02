@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchReques
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import java.util.*
+import java.util.Locale
 
 
 internal fun checkFunctionOverriddenInSubclassConflict(

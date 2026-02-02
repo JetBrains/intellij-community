@@ -14,7 +14,12 @@ import com.intellij.util.io.zip.JBZipFile
 import org.kodein.di.instance
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyToRecursively
+import kotlin.io.path.createDirectories
+import kotlin.io.path.div
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 

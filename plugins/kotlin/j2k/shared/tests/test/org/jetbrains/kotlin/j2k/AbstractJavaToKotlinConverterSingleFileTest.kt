@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile

@@ -18,7 +18,11 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.vcs.git.actions.GitSingleRefActions;
 import com.intellij.vcs.git.ui.GitBranchPresentation;
-import git4idea.*;
+import git4idea.GitBranch;
+import git4idea.GitLocalBranch;
+import git4idea.GitReference;
+import git4idea.GitRemoteBranch;
+import git4idea.GitTag;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.branch.GitBrancher;
 import git4idea.config.GitSharedSettings;
@@ -29,14 +33,17 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.dvcs.DvcsUtil.getShortHash;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
 import static git4idea.branch.GitBranchType.LOCAL;
 import static git4idea.branch.GitBranchType.REMOTE;
-import static git4idea.ui.branch.GitBranchActionsUtilKt.createOrCheckoutNewBranch;
 
 public final class GitBranchPopupActions {
   private static final int MAX_BRANCH_NAME_LENGTH = 40;

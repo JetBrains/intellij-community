@@ -9,7 +9,13 @@ import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.terminal.TerminalUiSettingsManager
-import org.jetbrains.plugins.terminal.*
+import org.jetbrains.plugins.terminal.DEFAULT_TERMINAL_COLUMN_SPACING
+import org.jetbrains.plugins.terminal.DEFAULT_TERMINAL_FONT_SIZE
+import org.jetbrains.plugins.terminal.DEFAULT_TERMINAL_LINE_SPACING
+import org.jetbrains.plugins.terminal.RunCommandUsingIdeUtil
+import org.jetbrains.plugins.terminal.TerminalEngine
+import org.jetbrains.plugins.terminal.TerminalFontSettingsService
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle

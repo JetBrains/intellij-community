@@ -20,7 +20,6 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.io.awaitExit
-import com.intellij.util.progress.sleepCancellable
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.getOrThrow

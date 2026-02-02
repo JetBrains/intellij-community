@@ -3,9 +3,14 @@
 package org.jetbrains.kotlin.idea.completion.handlers
 
 import com.intellij.codeInsight.AutoPopupController
-import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.CompletionInitializationContext.IDENTIFIER_END_OFFSET
 import com.intellij.codeInsight.completion.CompletionInitializationContext.START_OFFSET
+import com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
+import com.intellij.codeInsight.completion.DeclarativeInsertHandler
+import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.OffsetKey
+import com.intellij.codeInsight.completion.OffsetMap
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.editor.Editor

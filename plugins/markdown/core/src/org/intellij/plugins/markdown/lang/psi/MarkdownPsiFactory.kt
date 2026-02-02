@@ -5,7 +5,27 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
-import org.intellij.plugins.markdown.lang.psi.impl.*
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeBlock
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownComment
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFrontMatterHeader
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderContent
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImage
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownInlineLink
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDefinition
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkLabel
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkText
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownShortReferenceLink
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownWrappedAutoLink
 
 object MarkdownPsiFactory {
   @JvmStatic

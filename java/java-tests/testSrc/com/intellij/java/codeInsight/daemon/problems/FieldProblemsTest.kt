@@ -4,7 +4,16 @@ package com.intellij.java.codeInsight.daemon.problems
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiAssignmentExpression
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDeclarationStatement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiStatement
 
 internal class FieldProblemsTest : ProjectProblemsViewTest() {
 

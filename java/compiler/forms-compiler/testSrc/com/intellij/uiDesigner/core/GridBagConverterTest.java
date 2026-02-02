@@ -5,8 +5,16 @@ import com.intellij.uiDesigner.compiler.GridBagConverter;
 import com.intellij.util.CurrentJavaVersion;
 import junit.framework.TestCase;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import java.awt.Dimension;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Rectangle;
 
 public class GridBagConverterTest extends TestCase {
   /**

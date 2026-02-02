@@ -1,7 +1,18 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -28,7 +39,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static de.plushnikov.intellij.plugin.LombokClassNames.*;
+import static de.plushnikov.intellij.plugin.LombokClassNames.EQUALS_AND_HASHCODE;
+import static de.plushnikov.intellij.plugin.LombokClassNames.EQUALS_AND_HASHCODE_EXCLUDE;
+import static de.plushnikov.intellij.plugin.LombokClassNames.EQUALS_AND_HASHCODE_INCLUDE;
 
 /**
  * Inspect and validate @EqualsAndHashCode lombok annotation on a class

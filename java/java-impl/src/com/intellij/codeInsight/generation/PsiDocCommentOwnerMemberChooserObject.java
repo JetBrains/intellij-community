@@ -6,7 +6,7 @@ import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class PsiDocCommentOwnerMemberChooserObject extends PsiElementMemberChooserObject {
   private final boolean myIsValid;

@@ -11,7 +11,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.elementType
 import org.jetbrains.yaml.YAMLSpellcheckerStrategy.JsonSchemaSpellcheckerClientForYaml
-import org.jetbrains.yaml.YAMLTokenTypes.*
+import org.jetbrains.yaml.YAMLTokenTypes.COMMENT
+import org.jetbrains.yaml.YAMLTokenTypes.EOL
+import org.jetbrains.yaml.YAMLTokenTypes.INDENT
+import org.jetbrains.yaml.YAMLTokenTypes.SCALAR_KEY
+import org.jetbrains.yaml.YAMLTokenTypes.SCALAR_LIST
+import org.jetbrains.yaml.YAMLTokenTypes.SCALAR_TEXT
+import org.jetbrains.yaml.YAMLTokenTypes.WHITESPACE
 import org.jetbrains.yaml.psi.YAMLScalar
 import org.jetbrains.yaml.psi.impl.YAMLAnchorImpl
 

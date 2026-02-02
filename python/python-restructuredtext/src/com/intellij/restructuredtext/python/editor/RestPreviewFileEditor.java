@@ -19,7 +19,7 @@ import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.beans.PropertyChangeListener;
 
 public class RestPreviewFileEditor extends UserDataHolderBase implements FileEditor {

@@ -6,7 +6,12 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.registerUProblem
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
@@ -15,9 +20,20 @@ import com.intellij.util.SmartList
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.processExtensionsByClassName
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnonymousClass
+import org.jetbrains.uast.UBlockExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UDeclarationsExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.getContainingUClass
+import org.jetbrains.uast.getUastParentOfType
+import org.jetbrains.uast.isPsiAncestor
+import org.jetbrains.uast.resolveToUElementOfType
 import org.jetbrains.uast.visitor.AbstractUastVisitor
-import java.util.*
+import java.util.Collections
 
 internal class StatefulEpInspection : DevKitUastInspectionBase(UField::class.java, UClass::class.java) {
 

@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 /**

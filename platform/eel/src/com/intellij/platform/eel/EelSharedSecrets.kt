@@ -11,7 +11,7 @@ import java.lang.invoke.MethodType
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.ServiceLoader
 
 @ApiStatus.Internal
 object EelSharedSecrets {

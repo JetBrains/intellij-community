@@ -34,7 +34,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.awt.Point
 import java.awt.Rectangle
-import java.awt.event.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.BorderFactory
 

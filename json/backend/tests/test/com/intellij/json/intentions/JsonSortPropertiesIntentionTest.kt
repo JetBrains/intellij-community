@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.intentions
 
-import com.intellij.json.JsonTestCase
 import com.intellij.json.JsonBundle
+import com.intellij.json.JsonTestCase
 
 class JsonSortPropertiesIntentionTest : JsonTestCase() {
   private fun doTest() {

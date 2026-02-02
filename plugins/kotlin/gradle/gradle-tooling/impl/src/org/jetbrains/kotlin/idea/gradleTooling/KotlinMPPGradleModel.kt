@@ -2,7 +2,11 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
-import org.jetbrains.kotlin.idea.projectModel.*
+import org.jetbrains.kotlin.idea.projectModel.ExtraFeatures
+import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
+import org.jetbrains.kotlin.idea.projectModel.KotlinGradlePluginVersionDependentApi
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
+import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import java.io.Serializable
 
 interface KotlinMPPGradleModel : KotlinSourceSetContainer, Serializable {

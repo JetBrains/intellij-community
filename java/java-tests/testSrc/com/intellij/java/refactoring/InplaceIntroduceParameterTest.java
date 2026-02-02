@@ -13,7 +13,6 @@ import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;

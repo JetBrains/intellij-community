@@ -6,15 +6,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 internal fun advanceCompilerVersion(preferences: GeneratorPreferences) {
-    val ticket = preferences.ticket ?: run {
-        println("No '${GeneratorPreferences::ticket.name}' preference is provided; entering interactive mode...")
-        print("Enter YouTrack ticket: ")
-        readln()
-    }
-
-    if (!ticket.matches(Regex("KTIJ-\\d+"))) {
-        exitWithErrorMessage("Mandatory YouTrack ticket is not a valid KTIJ-xxxx ticket")
-    }
+    val ticket = preferences.getTicketAndCheck()
 
     val newVersion = preferences.newKotlincVersion ?: run {
         println("No '${GeneratorPreferences::newKotlincVersion.name}' preference is provided; entering interactive mode...")

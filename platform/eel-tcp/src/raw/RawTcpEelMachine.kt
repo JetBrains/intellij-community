@@ -9,7 +9,7 @@ class RawTcpEelMachine(
   val host: String,
   private val coroutineScope: CoroutineScope,
 ) : TcpEelMachine("tcp-$host") {
-  override fun createStrategy(): IjentIsolatedTcpDeployingStrategy {
+  override suspend fun createStrategy(): IjentIsolatedTcpDeployingStrategy {
     TODO("not implemented")
   }
 }

@@ -1,7 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.toml.completion
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionConfidence
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.Editor
 import com.intellij.patterns.PatternCondition
@@ -15,7 +21,17 @@ import com.intellij.util.ProcessingContext
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
 import org.toml.lang.TomlLanguage
-import org.toml.lang.psi.*
+import org.toml.lang.psi.TomlArray
+import org.toml.lang.psi.TomlElement
+import org.toml.lang.psi.TomlFile
+import org.toml.lang.psi.TomlInlineTable
+import org.toml.lang.psi.TomlKey
+import org.toml.lang.psi.TomlKeySegment
+import org.toml.lang.psi.TomlKeyValue
+import org.toml.lang.psi.TomlLiteral
+import org.toml.lang.psi.TomlTable
+import org.toml.lang.psi.TomlTableHeader
+import org.toml.lang.psi.TomlVisitor
 import org.toml.lang.psi.ext.TomlLiteralKind
 import org.toml.lang.psi.ext.kind
 

@@ -16,7 +16,11 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.JavaMapForEachInspectionUtils
 import org.jetbrains.kotlin.idea.refactoring.singleLambdaArgumentExpression
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.callExpressionVisitor
 
 internal class JavaMapForEachInspection : KotlinApplicableInspectionBase.Simple<KtCallExpression, JavaMapForEachInspection.Context>() {
 

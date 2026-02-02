@@ -15,7 +15,11 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import it.unimi.dsi.fastutil.ints.*
+import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.ints.IntList
+import it.unimi.dsi.fastutil.ints.IntLists
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
 import java.util.function.IntConsumer

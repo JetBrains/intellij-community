@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.parentOrNull
 import java.awt.BorderLayout
-import java.util.*
+import java.util.TreeSet
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 

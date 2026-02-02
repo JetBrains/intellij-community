@@ -24,6 +24,27 @@ export interface SearchEntry {
   [key: string]: unknown
 }
 
+export interface SearchItem {
+  filePath: string
+  lineNumber?: number
+  lineText?: string
+}
+
+export interface SearchCapabilities {
+  hasSearchText: boolean
+  hasSearchRegex: boolean
+  hasSearchFile: boolean
+  hasSearchSymbol: boolean
+  supportsSymbol: boolean
+  supportsText: boolean
+  supportsRegex: boolean
+  supportsFile: boolean
+}
+
+export interface ReadCapabilities {
+  hasReadFile: boolean
+}
+
 export interface ToolInputSchema {
   type: 'object'
   properties: Record<string, unknown>

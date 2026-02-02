@@ -15,13 +15,29 @@ import git4idea.changes.GitCommitShaWithPatches
 import git4idea.changes.filePath
 import git4idea.remote.hosting.GitCodeReviewUtils
 import git4idea.repo.GitRepository
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.getCommitDiffsURI
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.getMergeRequestChangesURI
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.getMergeRequestCommitsURI
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.getMergeRequestDiffsURI
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadCommit
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadCommitDiffs
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestChanges
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestCommits
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestDiffs
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 private val LOG = logger<GitLabMergeRequestChanges>()

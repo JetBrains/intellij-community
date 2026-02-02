@@ -2,7 +2,9 @@
 package com.intellij.compilation.charts.ui
 
 import com.intellij.compilation.charts.CompilationChartsBundle
-import com.intellij.compilation.charts.ui.CompilationChartsAction.Position.*
+import com.intellij.compilation.charts.ui.CompilationChartsAction.Position.LEFT
+import com.intellij.compilation.charts.ui.CompilationChartsAction.Position.LIST
+import com.intellij.compilation.charts.ui.CompilationChartsAction.Position.RIGHT
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon

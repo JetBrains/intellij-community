@@ -31,7 +31,11 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ClsGenericsHighlightingTest extends UsefulTestCase {

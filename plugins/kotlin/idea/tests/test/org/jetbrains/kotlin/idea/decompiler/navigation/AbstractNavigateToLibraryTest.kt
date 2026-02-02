@@ -2,14 +2,25 @@
 
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.navigation.NavigationTestUtils
 import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinMultiModuleProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinStdJSProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.MockLibraryFacility
+import org.jetbrains.kotlin.idea.test.runAll
 import java.io.File
 
 abstract class AbstractNavigateToLibraryTest : KotlinLightCodeInsightFixtureTestCase() {

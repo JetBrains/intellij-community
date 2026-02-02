@@ -21,7 +21,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlConditionalSection;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlEntityRef;
+import com.intellij.psi.xml.XmlTokenType;
 
 /**
  * @author maxim.mossienko

@@ -2,10 +2,10 @@
 package com.intellij.platform.runtime.product.serialization
 
 import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
+import com.intellij.platform.runtime.product.serialization.impl.loadPluginModules
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.createRepository
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
-import com.intellij.platform.runtime.product.serialization.impl.loadPluginModules
 import com.intellij.platform.runtime.repository.writePluginXml
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import org.junit.jupiter.api.Assertions.assertEquals

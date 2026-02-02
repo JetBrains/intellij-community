@@ -16,7 +16,8 @@
 
 package com.intellij.tasks.jira;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;

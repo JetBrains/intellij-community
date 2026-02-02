@@ -12,7 +12,7 @@ import org.junit.Test
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.Date
 
 class RevisionTest {
   @Test

@@ -46,9 +46,20 @@ import java.util.function.Consumer;
 
 import static com.intellij.conversion.ModuleSettings.MODULE_ROOT_MANAGER_COMPONENT;
 import static com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER;
-import static org.jetbrains.jps.model.serialization.JpsProjectLoader.*;
-import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*;
-import static org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*;
+import static org.jetbrains.jps.model.serialization.JpsProjectLoader.FILE_PATH_ATTRIBUTE;
+import static org.jetbrains.jps.model.serialization.JpsProjectLoader.MODULES_TAG;
+import static org.jetbrains.jps.model.serialization.JpsProjectLoader.MODULE_MANAGER_COMPONENT;
+import static org.jetbrains.jps.model.serialization.JpsProjectLoader.MODULE_TAG;
+import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.IS_GENERATED_ATTRIBUTE;
+import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID;
+import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID;
+import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.LANGUAGE_LEVEL_ATTRIBUTE;
+import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.MODULE_LANGUAGE_LEVEL_ATTRIBUTE;
+import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.OUTPUT_TAG;
+import static org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.CONTENT_TAG;
+import static org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.IS_TEST_SOURCE_ATTRIBUTE;
+import static org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.SOURCE_FOLDER_TAG;
+import static org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.TYPE_ATTRIBUTE;
 
 public class MultiModuleProjectDescriptor extends DefaultLightProjectDescriptor {
   private final Path myPath;

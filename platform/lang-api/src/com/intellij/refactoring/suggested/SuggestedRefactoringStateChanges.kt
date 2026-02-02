@@ -2,6 +2,7 @@
 package com.intellij.refactoring.suggested
 
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -10,7 +11,6 @@ import com.intellij.psi.PsiNamedElementWithCustomPresentation
 import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
 import com.intellij.refactoring.suggested.SuggestedRefactoringState.ParameterMarker
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
-import com.intellij.openapi.editor.asTextRange
 
 /**
  * A service transforming a sequence of declaration states into [SuggestedRefactoringState].

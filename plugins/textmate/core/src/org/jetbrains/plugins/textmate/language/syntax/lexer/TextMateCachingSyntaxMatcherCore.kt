@@ -5,8 +5,8 @@ import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.cache.SLRUTextMateCache
 import org.jetbrains.plugins.textmate.cache.TextMateCache
 import org.jetbrains.plugins.textmate.cache.use
-import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor
 import org.jetbrains.plugins.textmate.language.syntax.InjectionNodeDescriptor
+import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh
 import org.jetbrains.plugins.textmate.regex.MatchData
 import org.jetbrains.plugins.textmate.regex.TextMateByteOffset

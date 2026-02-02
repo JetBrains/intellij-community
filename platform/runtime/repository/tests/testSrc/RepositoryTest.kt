@@ -8,7 +8,10 @@ import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRe
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import com.intellij.project.IntelliJProjectConfiguration.Companion.getLocalMavenRepo
 import com.intellij.testFramework.rules.TempDirectoryExtension
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junitpioneer.jupiter.cartesian.CartesianTest

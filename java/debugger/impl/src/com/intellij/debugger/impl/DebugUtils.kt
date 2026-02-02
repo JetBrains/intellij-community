@@ -12,7 +12,13 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.registry.Registry
-import com.sun.jdi.*
+import com.sun.jdi.IncompatibleThreadStateException
+import com.sun.jdi.InternalException
+import com.sun.jdi.ObjectCollectedException
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.Type
+import com.sun.jdi.VMDisconnectedException
+import com.sun.jdi.VirtualMachine
 import com.sun.jdi.event.ClassPrepareEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel

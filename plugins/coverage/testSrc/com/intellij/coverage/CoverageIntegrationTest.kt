@@ -5,7 +5,9 @@ import com.intellij.codeEditor.printing.ExportToHTMLSettings
 import com.intellij.coverage.analysis.CoverageInfoCollector
 import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator
 import com.intellij.coverage.analysis.JavaCoverageReportEnumerator
-import com.intellij.coverage.analysis.PackageAnnotator.*
+import com.intellij.coverage.analysis.PackageAnnotator.ClassCoverageInfo
+import com.intellij.coverage.analysis.PackageAnnotator.PackageCoverageInfo
+import com.intellij.coverage.analysis.PackageAnnotator.SummaryCoverageInfo
 import com.intellij.coverage.xml.XMLReportAnnotator
 import com.intellij.idea.ExcludeFromTestDiscovery
 import com.intellij.openapi.application.readAction

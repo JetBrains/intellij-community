@@ -15,11 +15,11 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinReferencePreservingUsageInfo
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinReferenceUsageInfo
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
-import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
-import java.util.*
+import java.util.Collections
 
 abstract class KotlinFindUsagesHandler<T : PsiElement>(
     psiElement: T,

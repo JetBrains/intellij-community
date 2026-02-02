@@ -10,7 +10,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole.RescheduledMavenDownloadJobException
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenSyncListener
 import kotlin.time.Duration.Companion.seconds
 
 class MavenDownloadLibrarySourcesSyncListener : MavenSyncListener {

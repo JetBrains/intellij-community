@@ -1,11 +1,38 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rebase
 
-import com.jetbrains.rhizomedb.*
-import fleet.kernel.*
+import com.jetbrains.rhizomedb.Attribute
+import com.jetbrains.rhizomedb.CachedQuery
+import com.jetbrains.rhizomedb.CachedQueryResult
+import com.jetbrains.rhizomedb.Datom
+import com.jetbrains.rhizomedb.DbContext
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.Expansion
+import com.jetbrains.rhizomedb.IndexQuery
+import com.jetbrains.rhizomedb.Instruction
+import com.jetbrains.rhizomedb.InstructionExpansion
+import com.jetbrains.rhizomedb.Mut
+import com.jetbrains.rhizomedb.Novelty
+import com.jetbrains.rhizomedb.Op
+import com.jetbrains.rhizomedb.Q
+import com.jetbrains.rhizomedb.TX
+import com.jetbrains.rhizomedb.Versioned
+import com.jetbrains.rhizomedb.VersionedEID
+import com.jetbrains.rhizomedb.asOf
+import com.jetbrains.rhizomedb.attributeByIdent
+import com.jetbrains.rhizomedb.attributeIdent
+import com.jetbrains.rhizomedb.entityTypeByIdent
+import com.jetbrains.rhizomedb.lookupOne
+import com.jetbrains.rhizomedb.partition
+import fleet.fastutil.longs.LongArrayList
+import fleet.kernel.DurableDbValue
+import fleet.kernel.SharedPart
+import fleet.kernel.deserialize
+import fleet.kernel.serialize1
+import fleet.kernel.uidAttribute
 import fleet.rpc.core.AssumptionsViolatedException
 import fleet.util.UID
-import fleet.fastutil.longs.LongArrayList
 
 internal fun Mut.queryRecording(
   serContext: InstructionEncodingContext,

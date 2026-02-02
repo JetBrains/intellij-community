@@ -7,7 +7,12 @@ import training.featuresSuggester.FeatureSuggesterBundle
 import training.featuresSuggester.NoSuggestion
 import training.featuresSuggester.SuggestingUtils.findBreakpointOnPosition
 import training.featuresSuggester.Suggestion
-import training.featuresSuggester.actions.*
+import training.featuresSuggester.actions.Action
+import training.featuresSuggester.actions.BreakpointAddedAction
+import training.featuresSuggester.actions.BreakpointRemovedAction
+import training.featuresSuggester.actions.DebugProcessStartedAction
+import training.featuresSuggester.actions.DebugProcessStoppedAction
+import training.featuresSuggester.actions.DebugSessionPausedAction
 import kotlin.math.abs
 
 class MuteBreakpointsSuggester : AbstractFeatureSuggester() {

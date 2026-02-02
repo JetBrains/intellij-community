@@ -11,7 +11,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class DebuggerSettingsUtils {
   private static final Logger LOG = Logger.getInstance(DebuggerSettingsUtils.class);

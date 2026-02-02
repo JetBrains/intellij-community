@@ -4,7 +4,6 @@ package com.intellij.platform.compose
 import androidx.compose.ui.awt.ComposePanel
 import androidx.compose.ui.semantics.SemanticsNode
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.command.undo.DocumentReference
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.command.undo.UndoableAction

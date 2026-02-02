@@ -5,8 +5,18 @@ package org.jetbrains.kotlin.nj2k.conversions
 import com.intellij.psi.PsiEnumConstant
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
-import org.jetbrains.kotlin.nj2k.symbols.*
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKFieldSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKMultiverseFieldSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKMultiverseKtEnumEntrySymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKUniverseFieldSymbol
+import org.jetbrains.kotlin.nj2k.tree.JKClass
+import org.jetbrains.kotlin.nj2k.tree.JKClassAccessExpression
+import org.jetbrains.kotlin.nj2k.tree.JKEnumConstant
+import org.jetbrains.kotlin.nj2k.tree.JKFieldAccessExpression
+import org.jetbrains.kotlin.nj2k.tree.JKQualifiedExpression
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.parentOfType
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
 /**

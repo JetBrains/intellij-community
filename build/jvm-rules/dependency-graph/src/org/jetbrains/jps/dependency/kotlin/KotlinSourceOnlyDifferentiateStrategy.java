@@ -4,8 +4,20 @@ package org.jetbrains.jps.dependency.kotlin;
 import kotlin.metadata.KmClass;
 import kotlin.metadata.KmDeclarationContainer;
 import kotlin.metadata.KmTypeAlias;
-import org.jetbrains.jps.dependency.*;
-import org.jetbrains.jps.dependency.java.*;
+import org.jetbrains.jps.dependency.Delta;
+import org.jetbrains.jps.dependency.DifferentiateContext;
+import org.jetbrains.jps.dependency.DifferentiateParameters;
+import org.jetbrains.jps.dependency.DifferentiateStrategy;
+import org.jetbrains.jps.dependency.Graph;
+import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.ReferenceID;
+import org.jetbrains.jps.dependency.Usage;
+import org.jetbrains.jps.dependency.java.ClassUsage;
+import org.jetbrains.jps.dependency.java.JvmClass;
+import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
+import org.jetbrains.jps.dependency.java.LookupNameUsage;
+import org.jetbrains.jps.dependency.java.Utils;
 
 import java.util.HashSet;
 import java.util.List;
@@ -14,7 +26,11 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.jetbrains.jps.util.Iterators.*;
+import static org.jetbrains.jps.util.Iterators.filter;
+import static org.jetbrains.jps.util.Iterators.flat;
+import static org.jetbrains.jps.util.Iterators.isEmpty;
+import static org.jetbrains.jps.util.Iterators.map;
+import static org.jetbrains.jps.util.Iterators.unique;
 
 public final class KotlinSourceOnlyDifferentiateStrategy implements DifferentiateStrategy {
   private static final Logger LOG = Logger.getLogger("#org.jetbrains.jps.dependency.kotlin.KotlinSourceOnlyDifferentiateStrategy");

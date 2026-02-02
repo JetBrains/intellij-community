@@ -3,7 +3,11 @@
 
 package org.jetbrains.settingsRepository
 
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.APP_CONFIG
+import com.intellij.configurationStore.StateStorageManager
+import com.intellij.configurationStore.getExportableComponentsMap
+import com.intellij.configurationStore.getExportableItemsFromLocalStorage
+import com.intellij.configurationStore.removeMacroIfStartsWith
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType

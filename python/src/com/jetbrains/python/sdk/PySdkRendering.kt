@@ -14,8 +14,8 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isVirtualEnv
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon

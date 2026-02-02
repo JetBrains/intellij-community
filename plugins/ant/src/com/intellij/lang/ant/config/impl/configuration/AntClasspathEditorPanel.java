@@ -22,8 +22,11 @@ import com.intellij.ui.ListUtil;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.ListProperty;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collection;
 

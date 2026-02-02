@@ -32,7 +32,14 @@ import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager.Companion.getIns
 import com.intellij.vcs.log.ui.table.links.VcsLinksRenderer
 import com.intellij.vcs.log.visible.filters.VcsLogTextFilterWithMatches
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Font
+import java.awt.FontMetrics
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Point
 import java.awt.geom.AffineTransform
 import javax.swing.JComponent
 import javax.swing.JTable

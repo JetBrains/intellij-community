@@ -3,8 +3,13 @@ package org.editorconfig.language.codestyle
 
 import com.intellij.editorconfig.common.EditorConfigBundle
 import com.intellij.editorconfig.common.syntax.EditorConfigLanguage
-import com.intellij.psi.codeStyle.*
+import com.intellij.psi.codeStyle.CodeStyleConfigurable
+import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 import org.editorconfig.Utils
 
 class EditorConfigLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() {

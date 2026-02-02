@@ -2,7 +2,12 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.AsyncStacksUtils
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.MethodInvokeUtils
+import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.SuspendManagerUtil
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.impl.HelperClassNotAvailableException
@@ -14,7 +19,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.sun.jdi.*
+import com.sun.jdi.ArrayReference
+import com.sun.jdi.Location
+import com.sun.jdi.LongValue
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.Value
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
@@ -27,7 +36,12 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.CoroutineStackF
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugMetadata
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImplCoroutineOwner
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.CoroutineFrameBuilder
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.completionVariableValue
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.extractContinuation
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.findDebugProbesImplClass
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.isInvokeSuspend
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.threadAndContextSupportsEvaluation
 
 
 private class CoroutineStackFrameInterceptor : StackFrameInterceptor {

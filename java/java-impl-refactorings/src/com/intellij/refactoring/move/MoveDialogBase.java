@@ -7,7 +7,7 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
 
 public abstract class MoveDialogBase extends RefactoringDialog {
 

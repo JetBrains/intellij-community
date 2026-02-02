@@ -9,7 +9,8 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.structureView.PyStructureViewElement;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JTree;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertTreeEqual;
 

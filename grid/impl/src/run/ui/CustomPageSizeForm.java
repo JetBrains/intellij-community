@@ -4,7 +4,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.fields.IntegerField;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 
 import static com.intellij.database.datagrid.GridPagingModel.UNLIMITED_PAGE_SIZE;
 

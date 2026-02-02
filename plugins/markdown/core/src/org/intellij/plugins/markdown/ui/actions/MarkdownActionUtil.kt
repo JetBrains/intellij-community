@@ -18,10 +18,10 @@ import com.intellij.psi.util.parents
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.util.hasType
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 import org.jetbrains.annotations.ApiStatus
-import org.intellij.plugins.markdown.lang.supportsMarkdown
 
 @ApiStatus.Internal
 object MarkdownActionUtil {

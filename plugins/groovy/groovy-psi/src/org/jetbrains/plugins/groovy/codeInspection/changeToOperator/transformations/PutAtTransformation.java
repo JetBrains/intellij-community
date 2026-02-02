@@ -24,7 +24,9 @@ import static com.siyeh.ig.psiutils.ParenthesesUtils.ASSIGNMENT_PRECEDENCE;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedence;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedenceForNonBinaryOps;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.parenthesize;
 
 class PutAtTransformation extends Transformation {
   @Override

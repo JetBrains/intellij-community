@@ -4,10 +4,10 @@ package com.intellij.debugger.actions
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
-import com.intellij.xdebugger.SplitDebuggerMode
-import com.intellij.xdebugger.frame.XValue
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.xdebugger.SplitDebuggerMode
+import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
 import kotlinx.coroutines.runBlocking
 

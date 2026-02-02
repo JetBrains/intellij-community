@@ -19,7 +19,7 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.*
+import java.util.Properties
 import kotlin.io.path.Path
 import kotlin.io.path.writer
 import kotlin.time.Duration.Companion.milliseconds

@@ -2,7 +2,12 @@
 package com.jetbrains.python.console
 
 import com.intellij.execution.target.TargetEnvironment
-import com.intellij.execution.target.value.*
+import com.intellij.execution.target.value.TargetEnvironmentFunction
+import com.intellij.execution.target.value.constant
+import com.intellij.execution.target.value.getRelativeTargetPath
+import com.intellij.execution.target.value.getTargetEnvironmentValueForLocalPath
+import com.intellij.execution.target.value.joinToStringFunction
+import com.intellij.execution.target.value.targetPath
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
@@ -15,8 +20,12 @@ import com.intellij.util.PathMapper
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
 import com.jetbrains.python.remote.PyRemotePathMapper
-import com.jetbrains.python.run.*
+import com.jetbrains.python.run.EnvironmentController
+import com.jetbrains.python.run.PlainEnvironmentController
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.findPythonTargetInterpreter
+import com.jetbrains.python.run.PythonRunConfiguration
+import com.jetbrains.python.run.collectPythonPath
+import com.jetbrains.python.run.toStringLiteral
 import com.jetbrains.python.sdk.PythonEnvUtil
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.InvalidPathException

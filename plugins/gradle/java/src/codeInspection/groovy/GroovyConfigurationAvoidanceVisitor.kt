@@ -12,7 +12,11 @@ import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.codeInspection.fix.GradleTaskToRegisterFix
 import org.jetbrains.plugins.gradle.codeInspection.fix.GradleWithTypeFix
 import org.jetbrains.plugins.gradle.codeInspection.fix.isReturnTypeValueUsed
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_DOMAIN_OBJECT_COLLECTION
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_NAMED_DOMAIN_OBJECT_COLLECTION
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK_COLLECTION
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK_CONTAINER
 import org.jetbrains.plugins.gradle.service.resolve.getLinkedGradleProjectPath
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.groovy.intentions.GrReplaceMethodCallQuickFix

@@ -12,7 +12,11 @@ import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtilRt
-import com.intellij.util.io.*
+import com.intellij.util.io.basicAttributesIfExists
+import com.intellij.util.io.delete
+import com.intellij.util.io.deleteWithParentsIfEmpty
+import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.io.write
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException

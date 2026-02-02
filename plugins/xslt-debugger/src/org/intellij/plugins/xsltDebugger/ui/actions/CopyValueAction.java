@@ -25,7 +25,7 @@ import org.intellij.plugins.xsltDebugger.rt.engine.OutputEventQueue;
 import org.intellij.plugins.xsltDebugger.ui.GeneratedStructureModel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.datatransfer.StringSelection;
 

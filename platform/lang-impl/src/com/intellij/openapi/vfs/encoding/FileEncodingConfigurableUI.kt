@@ -8,7 +8,11 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl.BOMForNewUTF8Files
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ItemListener
 import javax.swing.JComponent

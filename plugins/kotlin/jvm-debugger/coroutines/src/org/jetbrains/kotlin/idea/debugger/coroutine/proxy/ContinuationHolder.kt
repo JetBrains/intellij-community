@@ -17,8 +17,10 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.callMethodFromHelper
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackFrameItem
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStacksInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CreationCoroutineStackFrameItem
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.*
-import java.lang.StackTraceElement
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.CoroutineStackTraceData
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugMetadata
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.FieldVariable
 
 private val LOG by lazy { fileLogger() }
 

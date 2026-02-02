@@ -13,7 +13,8 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;

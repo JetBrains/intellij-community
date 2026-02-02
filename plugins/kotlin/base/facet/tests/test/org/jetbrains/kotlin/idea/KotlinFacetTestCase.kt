@@ -6,8 +6,12 @@ import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.testFramework.*
-import com.intellij.testFramework.fixtures.*
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory
+import com.intellij.testFramework.fixtures.TestFixtureBuilder
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider

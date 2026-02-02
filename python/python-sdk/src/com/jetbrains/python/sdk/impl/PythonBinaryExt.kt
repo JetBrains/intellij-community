@@ -1,8 +1,6 @@
 package com.jetbrains.python.sdk.impl
 
 import com.intellij.platform.eel.EelOsFamily
-import com.intellij.platform.eel.isWindows
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.osFamily
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary

@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.inline
 
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.lang.refactoring.InlineActionHandler
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightMultiplatformCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.configureMultiPlatformModuleStructure
 import java.io.File

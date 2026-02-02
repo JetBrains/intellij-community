@@ -3,7 +3,11 @@
 package org.jetbrains.kotlin.idea.completion.test.confidence;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
+import com.intellij.codeInsight.completion.CompletionConfidence;
+import com.intellij.codeInsight.completion.CompletionConfidenceEP;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.LightCompletionTestCase;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -21,11 +25,11 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.idea.completion.test.CompletionTestUtilKt;
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
 import org.jetbrains.kotlin.idea.test.TestUtilsKt;
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils;
 import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.runner.RunWith;
 

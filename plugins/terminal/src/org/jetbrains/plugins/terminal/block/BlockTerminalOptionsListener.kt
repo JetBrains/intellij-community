@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.block
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
-import java.util.*
+import java.util.EventListener
 
 @ApiStatus.Internal
 interface BlockTerminalOptionsListener : EventListener {

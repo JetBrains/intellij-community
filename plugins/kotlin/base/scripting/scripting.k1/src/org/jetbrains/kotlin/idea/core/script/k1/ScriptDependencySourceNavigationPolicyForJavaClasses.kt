@@ -3,7 +3,8 @@ package org.jetbrains.kotlin.idea.core.script.k1
 
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.compiled.*
+import com.intellij.psi.impl.compiled.ClsClassImpl
+import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.psi.search.FilenameIndex
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.idea.core.script.shared.AbstractScriptDependencySourceNavigationPolicyForJavaClasses

@@ -13,7 +13,15 @@ import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
-import org.jetbrains.plugins.terminal.view.shellIntegration.*
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockAddedEvent
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockBase
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockIdImpl
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlockRemovedEvent
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksModel
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksModelEvent
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksModelListener
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksReplacedEvent
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 
 @ApiStatus.Internal
 class TerminalBlocksModelImpl(

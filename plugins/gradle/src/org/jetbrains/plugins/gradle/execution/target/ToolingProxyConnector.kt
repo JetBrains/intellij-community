@@ -13,7 +13,11 @@ import org.gradle.internal.remote.internal.RemoteConnection
 import org.gradle.internal.remote.internal.inet.SocketInetAddress
 import org.gradle.internal.remote.internal.inet.TcpOutgoingConnector
 import org.gradle.internal.serialize.Serializers
-import org.gradle.launcher.daemon.protocol.*
+import org.gradle.launcher.daemon.protocol.BuildEvent
+import org.gradle.launcher.daemon.protocol.DaemonMessageSerializer
+import org.gradle.launcher.daemon.protocol.Failure
+import org.gradle.launcher.daemon.protocol.Message
+import org.gradle.launcher.daemon.protocol.Success
 import org.gradle.tooling.BuildCancelledException
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.ResultHandler

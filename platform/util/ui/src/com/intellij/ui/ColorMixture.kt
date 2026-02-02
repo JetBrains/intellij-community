@@ -8,7 +8,7 @@ import com.intellij.util.ui.PresentableColor
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
-import java.util.*
+import java.util.Objects
 import java.util.function.Supplier
 
 @ApiStatus.Internal

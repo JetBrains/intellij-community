@@ -10,7 +10,10 @@ import com.intellij.lang.PairedBraceMatcher
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import org.toml.lang.TomlLanguage
-import org.toml.lang.psi.TomlElementTypes.*
+import org.toml.lang.psi.TomlElementTypes.L_BRACKET
+import org.toml.lang.psi.TomlElementTypes.L_CURLY
+import org.toml.lang.psi.TomlElementTypes.R_BRACKET
+import org.toml.lang.psi.TomlElementTypes.R_CURLY
 
 class TomlBraceMatcher : PairedBraceMatcher {
     override fun getPairs() = PAIRS

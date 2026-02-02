@@ -26,10 +26,6 @@ import org.jetbrains.kotlin.idea.codeInsight.hints.NoInlayInfoOption
 import org.jetbrains.kotlin.idea.codeInsight.hints.PsiInlayInfoDetail
 import org.jetbrains.kotlin.idea.codeInsight.hints.TextInlayInfoDetail
 import org.jetbrains.kotlin.idea.codeInsight.hints.TypeInlayInfoDetail
-import kotlin.collections.filter
-import kotlin.collections.forEach
-import kotlin.collections.ifEmpty
-import kotlin.let
 
 @K1Deprecation
 abstract class AbstractKotlinInlayHintsProvider(private vararg val hintTypes: HintType): InlayHintsProvider {

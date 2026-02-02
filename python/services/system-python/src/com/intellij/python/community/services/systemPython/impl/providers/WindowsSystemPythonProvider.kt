@@ -10,15 +10,14 @@ import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.WinRegistryService
 import com.jetbrains.python.sdk.getAppxFiles
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.util.regex.Pattern
-import kotlin.collections.iterator
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
 

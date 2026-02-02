@@ -21,7 +21,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
-import java.util.*
+import java.util.Base64
 
 object JarHttpDownloaderTestUtil {
   private const val LOCALHOST = "127.0.0.1"

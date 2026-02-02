@@ -14,7 +14,11 @@ import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseUtils
 import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog
 import git4idea.test.GitSingleRepoTest
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
 
 class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
   private lateinit var testCs: CoroutineScope

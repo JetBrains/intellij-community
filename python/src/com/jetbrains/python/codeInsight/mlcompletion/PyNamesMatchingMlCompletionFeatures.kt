@@ -10,7 +10,17 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyImportElement
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyRecursiveElementVisitor
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyStatementList
+import com.jetbrains.python.psi.PyTargetExpression
 import java.util.Locale
 
 object PyNamesMatchingMlCompletionFeatures {

@@ -7,7 +7,13 @@ import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.DebugProcessEvents
 import com.intellij.debugger.engine.SteppingAction
 import com.intellij.debugger.impl.DebuggerUtilsImpl
-import com.intellij.debugger.statistics.EvaluationOnPauseStatus.*
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.DEBUGGER_AGENT_HELPER_THREAD_DISABLED_FAILURE
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.DEBUGGER_AGENT_HELPER_THREAD_DISABLED_SUCCESS
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.DEBUGGER_AGENT_HELPER_THREAD_ENABLED_FAILURE
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.DEBUGGER_AGENT_HELPER_THREAD_ENABLED_SUCCESS
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.EVALUATION_ON_PAUSE_DISABLED
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.NO_DEBUGGER_AGENT_FAILURE
+import com.intellij.debugger.statistics.EvaluationOnPauseStatus.NO_DEBUGGER_AGENT_SUCCESS
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields

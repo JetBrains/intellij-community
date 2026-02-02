@@ -5,7 +5,8 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.compiler.GridBagConverter;
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 final class GridBagLayoutSerializer extends GridLayoutSerializer {
   private GridBagLayoutSerializer() {

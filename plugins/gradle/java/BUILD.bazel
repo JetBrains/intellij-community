@@ -128,6 +128,7 @@ jvm_library(
     "//java/testFramework",
     "//platform/observable",
     "//java/java-runtime:rt",
+    "//plugins/gradle/properties",
     "//plugins/gradle/java",
     "//plugins/gradle:gradle-tests_test_lib",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",

@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs.ui;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
  * @see com.intellij.openapi.vcs.changes.ui.BooleanCommitOption

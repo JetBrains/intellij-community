@@ -8,11 +8,23 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.annotationByFqName
 import org.jetbrains.kotlin.nj2k.psi
-import org.jetbrains.kotlin.nj2k.tree.*
-import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
-import org.jetbrains.kotlin.nj2k.tree.Modality.*
+import org.jetbrains.kotlin.nj2k.tree.JKClass
+import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.ENUM
+import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.INTERFACE
+import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.RECORD
+import org.jetbrains.kotlin.nj2k.tree.JKField
+import org.jetbrains.kotlin.nj2k.tree.JKMethod
+import org.jetbrains.kotlin.nj2k.tree.JKOtherModifierElement
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.Modality.ABSTRACT
+import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
+import org.jetbrains.kotlin.nj2k.tree.Modality.OPEN
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.OVERRIDE
 import org.jetbrains.kotlin.nj2k.tree.Visibility.PRIVATE
+import org.jetbrains.kotlin.nj2k.tree.hasOtherModifier
+import org.jetbrains.kotlin.nj2k.tree.modality
+import org.jetbrains.kotlin.nj2k.tree.parentOfType
+import org.jetbrains.kotlin.nj2k.tree.visibility
 
 /**
  * Updates the modality (open, final, abstract) of some declarations.

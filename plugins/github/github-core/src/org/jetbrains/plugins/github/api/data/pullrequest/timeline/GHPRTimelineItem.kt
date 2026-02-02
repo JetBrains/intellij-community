@@ -7,7 +7,7 @@ import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem.Unknown
-import java.util.*
+import java.util.Date
 
 /*REQUIRED
 IssueComment

@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Max Medvedev

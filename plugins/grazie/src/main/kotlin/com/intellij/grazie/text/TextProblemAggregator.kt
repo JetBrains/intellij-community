@@ -1,7 +1,9 @@
 package com.intellij.grazie.text
 
 import ai.grazie.gec.model.CorrectionServiceType
-import ai.grazie.gec.model.CorrectionServiceType.*
+import ai.grazie.gec.model.CorrectionServiceType.MLEC
+import ai.grazie.gec.model.CorrectionServiceType.OTHER
+import ai.grazie.gec.model.CorrectionServiceType.RULE
 import ai.grazie.gec.model.problem.ProblemAggregator
 import ai.grazie.gec.model.problem.ProblemFix
 import ai.grazie.gec.model.problem.concedeToOtherGrammarCheckers

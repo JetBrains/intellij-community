@@ -17,7 +17,9 @@ import java.util.Collection;
 import java.util.Collections;
 
 import static com.intellij.util.ObjectUtils.coalesce;
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.filter;
+import static com.intellij.util.containers.ContainerUtil.find;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public abstract class SymbolBasedStructureViewModel extends TextEditorBasedStructureViewModel {
   protected SymbolBasedStructureViewModel(@NotNull PsiFile psiFile) {

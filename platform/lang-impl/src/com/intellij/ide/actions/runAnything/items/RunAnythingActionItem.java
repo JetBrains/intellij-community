@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class RunAnythingActionItem<T extends AnAction> extends RunAnythingItemBase {
   private final @NotNull T myAction;

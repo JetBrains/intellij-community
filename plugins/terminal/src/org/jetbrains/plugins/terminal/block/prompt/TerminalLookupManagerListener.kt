@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.prompt
 
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.lookup.LookupListener
+import com.intellij.codeInsight.lookup.LookupManagerListener
+import com.intellij.codeInsight.lookup.LookupPositionStrategy
+import com.intellij.codeInsight.lookup.LookupPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.DataManager
 import com.intellij.openapi.application.invokeLater

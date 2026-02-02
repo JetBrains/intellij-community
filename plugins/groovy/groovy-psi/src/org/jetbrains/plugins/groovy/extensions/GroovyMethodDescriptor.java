@@ -9,7 +9,12 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.impl.StringTypeCondition;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 public class GroovyMethodDescriptor {
   private static final String ATTR_NAMES_DELIMITER = " \t\n\r,;";

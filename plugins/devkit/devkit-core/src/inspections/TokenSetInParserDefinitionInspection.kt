@@ -11,7 +11,18 @@ import com.intellij.psi.TokenType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UResolvable
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.getContainingUClass
+import org.jetbrains.uast.resolveToUElement
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 internal class TokenSetInParserDefinitionInspection : DevKitUastInspectionBase(UClass::class.java) {

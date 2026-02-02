@@ -3,8 +3,12 @@ package org.jetbrains.kotlin.idea.util
 
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.kotlin.lang.BinaryOperationPrecedence
-import org.jetbrains.kotlin.parsing.KotlinExpressionParsing
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotatedExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLabeledExpression
+import org.jetbrains.kotlin.psi.KtOperationExpression
+import org.jetbrains.kotlin.psi.KtPostfixExpression
+import org.jetbrains.kotlin.psi.KtPrefixExpression
 
 object PsiPrecedences {
     private val LOG = Logger.getInstance(PsiPrecedences::class.java)

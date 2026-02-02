@@ -21,7 +21,14 @@ import com.intellij.psi.tree.IElementType;
 import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 
-import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.*;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.IDENTIFIER_OR_KEYWORD;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.LPAREN;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.MINUS;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.PIPE;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.PREFIXED_NAME;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.PREFIXED_STAR;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.RPAREN;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.STAR;
 
 public class NameClassParsing extends AbstractParsing {
 

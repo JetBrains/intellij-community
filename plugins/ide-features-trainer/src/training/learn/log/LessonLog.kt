@@ -2,7 +2,7 @@
 package training.learn.log
 
 import training.learn.course.Lesson
-import java.util.*
+import java.util.Date
 
 class LessonLog(lesson: Lesson) {
 

@@ -30,7 +30,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class GitShelveChangesSaver extends GitChangesSaver {
   private static final Logger LOG = Logger.getInstance(GitShelveChangesSaver.class);

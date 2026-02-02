@@ -5,7 +5,7 @@ import com.intellij.openapi.util.io.FileUtil
 import java.io.File
 import java.io.Serializable
 import java.text.DateFormat
-import java.util.*
+import java.util.Date
 
 /**
  * @author Vladislav.Soroka

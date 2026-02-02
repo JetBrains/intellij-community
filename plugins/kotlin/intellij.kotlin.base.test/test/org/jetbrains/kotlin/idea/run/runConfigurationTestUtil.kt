@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.MapDataContext
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl.Companion.disposeLibrary
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.junit.Assert
 

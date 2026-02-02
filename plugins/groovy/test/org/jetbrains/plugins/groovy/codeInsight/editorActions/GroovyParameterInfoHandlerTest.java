@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
 import org.jetbrains.plugins.groovy.util.ResolveTest;
 import org.jetbrains.plugins.groovy.util.TestUtils;

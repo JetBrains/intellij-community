@@ -11,8 +11,12 @@ import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.UnsupportedHistoryFiltersException
+import com.intellij.vcs.log.VcsLogFileHistoryHandler
 import com.intellij.vcs.log.VcsLogFileHistoryHandler.Rename
+import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.impl.VcsFileStatusInfo
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject

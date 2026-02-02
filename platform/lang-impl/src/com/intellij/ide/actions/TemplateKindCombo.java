@@ -15,7 +15,9 @@ import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.ComboBoxModel;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 

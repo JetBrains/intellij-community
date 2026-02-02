@@ -33,7 +33,9 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonSingleObjectDeserializer;
-import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.*;
+import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.IssueWrapper;
+import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.IssuesWrapper;
+import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.ProjectsWrapper;
 
 /**
  * @author Mikhail Golubev

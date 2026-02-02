@@ -10,7 +10,12 @@ import com.intellij.java.workspace.entities.javaSourceRoots
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ContentRootEntityBuilder
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.FileCollectionFactory
@@ -22,7 +27,10 @@ import org.jetbrains.idea.maven.importing.MavenImportUtil.getAnnotationProcessor
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.project.MavenImportingSettings
-import org.jetbrains.idea.maven.project.MavenImportingSettings.GeneratedSourcesFolder.*
+import org.jetbrains.idea.maven.project.MavenImportingSettings.GeneratedSourcesFolder.AUTODETECT
+import org.jetbrains.idea.maven.project.MavenImportingSettings.GeneratedSourcesFolder.GENERATED_SOURCE_FOLDER
+import org.jetbrains.idea.maven.project.MavenImportingSettings.GeneratedSourcesFolder.IGNORE
+import org.jetbrains.idea.maven.project.MavenImportingSettings.GeneratedSourcesFolder.SUBFOLDER
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
 import org.jetbrains.idea.maven.utils.MavenLog

@@ -28,12 +28,22 @@ import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.intellij.plugins.relaxNG.compact.psi.RncFile;
-import org.intellij.plugins.relaxNG.model.*;
+import org.intellij.plugins.relaxNG.model.CommonElement;
+import org.intellij.plugins.relaxNG.model.Define;
+import org.intellij.plugins.relaxNG.model.Div;
+import org.intellij.plugins.relaxNG.model.Grammar;
+import org.intellij.plugins.relaxNG.model.Include;
+import org.intellij.plugins.relaxNG.model.Pattern;
+import org.intellij.plugins.relaxNG.model.Ref;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public final class DefinitionResolver extends CommonElement.Visitor implements
         CachedValueProvider<Map<String, Set<Define>>> {

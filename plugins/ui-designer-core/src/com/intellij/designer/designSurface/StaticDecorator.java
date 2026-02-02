@@ -18,7 +18,7 @@ package com.intellij.designer.designSurface;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
 
-import java.awt.*;
+import java.awt.Graphics2D;
 
 /**
  * @author Alexander Lobas

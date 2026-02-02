@@ -26,7 +26,12 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalFontSettingsListener
 import org.jetbrains.plugins.terminal.TerminalFontSettingsService
 import org.jetbrains.plugins.terminal.TerminalFontSizeProviderImpl
-import org.jetbrains.plugins.terminal.block.ui.*
+import org.jetbrains.plugins.terminal.block.ui.ChangeTerminalFontSizeStrategy
+import org.jetbrains.plugins.terminal.block.ui.TerminalUi
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
+import org.jetbrains.plugins.terminal.block.ui.VerticalSpaceInlayRenderer
+import org.jetbrains.plugins.terminal.block.ui.applyFontSettings
+import org.jetbrains.plugins.terminal.block.ui.setTerminalFontSize
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
 import java.awt.event.HierarchyEvent
 import javax.swing.JScrollPane

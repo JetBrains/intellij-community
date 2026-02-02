@@ -19,7 +19,9 @@ import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Image;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.function.BiFunction;
 

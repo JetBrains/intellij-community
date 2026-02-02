@@ -12,8 +12,8 @@ import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.update.SvnRevisionPanel;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 public class SvnSelectRevisionPanel extends JPanel {
   private SvnRevisionPanel mySvnRevisionPanel;

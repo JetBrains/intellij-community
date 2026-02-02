@@ -3,7 +3,7 @@ package org.jetbrains.plugins.cucumber.java.run;
 
 import cucumber.api.TestCase;
 import cucumber.api.TestStep;
-import cucumber.api.event.*;
+import cucumber.api.event.TestStepFinished;
 import gherkin.events.PickleEvent;
 
 import java.lang.reflect.Field;

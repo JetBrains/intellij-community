@@ -13,7 +13,11 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.ui.StartupUiUtil
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap
-import java.awt.*
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.GraphicsConfiguration
+import java.awt.GraphicsEnvironment
+import java.awt.Image
 import java.lang.ref.SoftReference
 import java.util.concurrent.CancellationException
 import javax.swing.Icon

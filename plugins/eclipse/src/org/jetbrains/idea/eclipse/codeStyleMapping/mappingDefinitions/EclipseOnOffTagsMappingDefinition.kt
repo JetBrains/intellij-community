@@ -2,8 +2,8 @@
 package org.jetbrains.idea.eclipse.codeStyleMapping.mappingDefinitions
 
 import org.jetbrains.idea.eclipse.codeStyleMapping.EclipseJavaCodeStyleMappingDefinitionBuilder
-import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.field
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.compute
+import org.jetbrains.idea.eclipse.codeStyleMapping.util.SettingsMappingHelpers.field
 import org.jetbrains.idea.eclipse.codeStyleMapping.util.convertBoolean
 
 internal fun EclipseJavaCodeStyleMappingDefinitionBuilder.addOnOffTagsMapping() {

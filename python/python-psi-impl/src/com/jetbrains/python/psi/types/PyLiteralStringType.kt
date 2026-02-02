@@ -6,7 +6,7 @@ import com.jetbrains.python.getEffectiveLanguageLevel
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.impl.PyBuiltinCache
-import java.util.*
+import java.util.Objects
 
 
 /**

@@ -8,7 +8,7 @@ import com.intellij.ide.bookmark.ui.tree.FolderNode
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Objects
 
 class FileBookmarkImpl(override val provider: LineBookmarkProvider, file: VirtualFile) : FileBookmark {
   val descriptor: OpenFileDescriptor = OpenFileDescriptor(provider.project, file)

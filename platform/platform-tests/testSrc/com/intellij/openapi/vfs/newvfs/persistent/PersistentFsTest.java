@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.CacheSwitcher;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -570,21 +571,24 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   @Test
   public void testCreateNewDirectoryEntailsLoadingAllChildren() throws Exception {
     tempDirectory.newFile("d/d1/x.txt");
+    tempDirectory.newDirectory(".idea"); // for some reason when the test is run on TC .idea is not created (e.g. for temp project) or IDEA is notified later, so we create it here in advance
     Path source = tempDirectory.getRootPath().resolve("d");
     Path target = tempDirectory.getRootPath().resolve("target");
     VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory.getRoot());
     assertNotNull(vTemp);
     vTemp.refresh(false, true);
-    assertEquals("d", assertOneElement(vTemp.getChildren()).getName());
+    assertSize(2, vTemp.getChildren()); // d and .idea
 
-    Project project = ProjectManager.getInstance().loadAndOpenProject(tempDirectory.getRoot().getPath());
+    Project project = ProjectUtil.openOrImport(tempDirectory.getRoot().toPath());
     Disposer.register(getTestRootDisposable(), () -> ProjectManager.getInstance().closeAndDispose(project));
 
     Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
     vTemp.refresh(false, true);
     assertChildrenAreLoaded(vTemp);
-    VirtualFile vTarget = assertOneElement(((VirtualDirectoryImpl)vTemp).getCachedChildren());
-    assertEquals("target", vTarget.getName());
+    List<VirtualFile> rootChildren = ((VirtualDirectoryImpl)vTemp).getCachedChildren();
+    assertSize(2, rootChildren);
+    VirtualFile vTarget = ContainerUtil.find(rootChildren, f -> f.getName().equals("target"));
+    assertNotNull(vTarget);
     assertChildrenAreLoaded(vTarget);
     VirtualFile vd1 = assertOneElement(((VirtualDirectoryImpl)vTarget).getCachedChildren());
     assertEquals("d1", vd1.getName());
@@ -596,14 +600,15 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   @Test
   public void testCreateNewDirectoryEntailsLoadingAllChildrenExceptExcluded() throws Exception {
     tempDirectory.newFile("d/d1/x.txt");
+    tempDirectory.newDirectory(".idea"); // for some reason when the test is run on TC .idea is not created (e.g. for temp project) or IDEA is notified later, so we create it here in advance
     Path source = tempDirectory.getRootPath().resolve("d");
     Path target = tempDirectory.getRootPath().resolve("target");
     VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory.getRoot());
     assertNotNull(vTemp);
     vTemp.refresh(false, true);
-    assertEquals("d", assertOneElement(vTemp.getChildren()).getName());
+    assertSize(2, vTemp.getChildren()); // d and .idea
 
-    Project project = ProjectManager.getInstance().loadAndOpenProject(tempDirectory.getRoot().getPath());
+    Project project = ProjectUtil.openOrImport(tempDirectory.getRoot().toPath());
     Disposer.register(getTestRootDisposable(), () -> ProjectManager.getInstance().closeAndDispose(project));
 
     String imlPath = tempDirectory.getRootPath().resolve("temp.iml").toString();
@@ -619,7 +624,10 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
     vTemp.refresh(false, true);
     assertChildrenAreLoaded(vTemp);
-    VirtualFile vTarget = assertOneElement(((VirtualDirectoryImpl)vTemp).getCachedChildren());
+    List<VirtualFile> rootChildren = ((VirtualDirectoryImpl)vTemp).getCachedChildren();
+    assertSize(2, rootChildren);
+    VirtualFile vTarget = ContainerUtil.find(rootChildren, f -> f.getName().equals("target"));
+    assertNotNull(vTarget);
     assertEquals("target", vTarget.getName());
     assertChildrenAreLoaded(vTarget);
     VirtualFile vd1 = assertOneElement(((VirtualDirectoryImpl)vTarget).getCachedChildren());

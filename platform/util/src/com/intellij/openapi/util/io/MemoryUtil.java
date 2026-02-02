@@ -2,7 +2,9 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.sun.jna.*;
+import com.sun.jna.Library;
+import com.sun.jna.Native;
+import com.sun.jna.Structure;
 import com.sun.jna.ptr.IntByReference;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;

@@ -15,7 +15,7 @@ import com.intellij.openapi.keymap.KeymapTextContext
 import com.intellij.openapi.project.Project
 import com.intellij.pom.java.JavaFeature
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.StringJoiner
 
 private const val DEFAULT_FILE_NAME = "Main.java"
 private const val DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME = "SampleCodeWithOnboardingTips.java"

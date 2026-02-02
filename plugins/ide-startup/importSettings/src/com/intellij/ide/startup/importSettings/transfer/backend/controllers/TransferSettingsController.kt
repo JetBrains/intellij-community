@@ -3,13 +3,13 @@ package com.intellij.ide.startup.importSettings.controllers
 
 import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
 import com.intellij.ide.startup.importSettings.models.FailedIdeVersion
-import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsPerformContext
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.ImportPerformer
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import java.util.*
+import java.util.EventListener
 
 interface TransferSettingsController {
   fun updateCheckboxes(ideVersion: IdeVersion)

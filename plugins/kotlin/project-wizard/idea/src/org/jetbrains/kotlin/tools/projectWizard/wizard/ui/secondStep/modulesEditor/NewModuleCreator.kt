@@ -3,7 +3,11 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.modulesEdi
 
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.TargetConfigurator
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleKind
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.MultiplatformTargetModule
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Sourceset
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 
 class NewModuleCreator {
     private fun suggestName(@NonNls name: String, modules: List<Module>): String {

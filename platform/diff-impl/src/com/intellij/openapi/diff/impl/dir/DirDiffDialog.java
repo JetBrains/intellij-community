@@ -9,7 +9,8 @@ import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
 
 /**
  * @author Konstantin Bulenkov

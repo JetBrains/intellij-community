@@ -3,7 +3,12 @@ package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.DirectInputDataDiffBuilder;
+import com.intellij.util.indexing.impl.EmptyInputDataDiffBuilder;
+import com.intellij.util.indexing.impl.InputData;
+import com.intellij.util.indexing.impl.InputDataDiffBuilder;
+import com.intellij.util.indexing.impl.InputIndexDataExternalizer;
+import com.intellij.util.indexing.impl.UpdatedEntryProcessor;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;

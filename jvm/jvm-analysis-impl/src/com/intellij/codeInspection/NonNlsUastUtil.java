@@ -10,7 +10,28 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UAnnotated;
+import org.jetbrains.uast.UBinaryExpression;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UCallableReferenceExpression;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UExpressionList;
+import org.jetbrains.uast.UField;
+import org.jetbrains.uast.ULiteralExpression;
+import org.jetbrains.uast.ULocalVariable;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UParameter;
+import org.jetbrains.uast.UQualifiedReferenceExpression;
+import org.jetbrains.uast.UResolvable;
+import org.jetbrains.uast.UReturnExpression;
+import org.jetbrains.uast.USimpleNameReferenceExpression;
+import org.jetbrains.uast.UVariable;
+import org.jetbrains.uast.UastBinaryOperator;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UastLiteralUtils;
+import org.jetbrains.uast.UastUtils;
 
 //TODO it is not intuitive that for Kotlin properties user should use @get:NonNls
 

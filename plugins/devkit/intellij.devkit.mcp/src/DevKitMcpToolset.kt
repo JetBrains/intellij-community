@@ -17,8 +17,16 @@ import com.intellij.psi.SmartPointerManager
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
-import org.jetbrains.idea.devkit.threadingModelHelper.*
-import java.util.*
+import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisConfig
+import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
+import org.jetbrains.idea.devkit.threadingModelHelper.ExecutionPath
+import org.jetbrains.idea.devkit.threadingModelHelper.LOCK_REQUIREMENTS
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqAnalyzerParallelBFS
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqConsumer
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps
+import org.jetbrains.idea.devkit.threadingModelHelper.THREAD_REQUIREMENTS
+import java.util.Collections
+import java.util.EnumSet
 import kotlin.time.Duration.Companion.milliseconds
 
 class DevKitMcpToolset : McpToolset {

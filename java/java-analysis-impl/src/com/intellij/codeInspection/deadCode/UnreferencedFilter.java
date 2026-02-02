@@ -5,7 +5,14 @@ package com.intellij.codeInspection.deadCode;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefClass;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefElementImpl;
+import com.intellij.codeInspection.reference.RefField;
+import com.intellij.codeInspection.reference.RefFile;
+import com.intellij.codeInspection.reference.RefJavaElement;
+import com.intellij.codeInspection.reference.RefMethod;
+import com.intellij.codeInspection.reference.RefParameter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 

@@ -5,23 +5,20 @@ import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
-import org.jetbrains.kotlin.config.IKotlinFacetSettings
-import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.platform.TargetPlatform
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.Module
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
 import org.jetbrains.kotlin.idea.project.ModulePlatformCache
 import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import kotlin.collections.firstOrNull
-import kotlin.collections.forEach
-import kotlin.toString
 
 class ModulePlatformCacheTest : KotlinLightCodeInsightFixtureTestCase() {
     val myModule

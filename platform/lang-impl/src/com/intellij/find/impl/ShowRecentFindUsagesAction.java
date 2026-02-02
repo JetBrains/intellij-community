@@ -18,8 +18,12 @@ import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @ApiStatus.Internal
 public final class ShowRecentFindUsagesAction extends AnAction implements ActionRemoteBehaviorSpecification.Frontend {

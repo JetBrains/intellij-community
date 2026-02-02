@@ -3,7 +3,7 @@ package com.intellij.ui.icons;
 
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * An icon composing and painting a number of icons.

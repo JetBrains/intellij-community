@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer.backend.providers
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.PluginEnabler
+import com.intellij.ide.plugins.PluginInstallOperation
+import com.intellij.ide.plugins.PluginInstaller
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.startup.importSettings.models.PluginFeature
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.openapi.application.EDT
@@ -16,7 +20,12 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserDialogPluginInstaller
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.getInstallAndEnableTask
 import com.intellij.openapi.util.IntellijInternalApi
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 

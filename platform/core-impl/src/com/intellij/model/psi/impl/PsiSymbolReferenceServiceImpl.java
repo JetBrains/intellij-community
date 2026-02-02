@@ -1,7 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi.impl;
 
-import com.intellij.model.psi.*;
+import com.intellij.model.psi.PsiExternalReferenceHost;
+import com.intellij.model.psi.PsiSymbolReference;
+import com.intellij.model.psi.PsiSymbolReferenceHints;
+import com.intellij.model.psi.PsiSymbolReferenceProviderBean;
+import com.intellij.model.psi.PsiSymbolReferenceService;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.CachedValueProvider.Result;

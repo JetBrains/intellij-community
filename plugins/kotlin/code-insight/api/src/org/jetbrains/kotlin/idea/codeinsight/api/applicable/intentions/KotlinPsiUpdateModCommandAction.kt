@@ -4,7 +4,12 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.modcommand.*
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModNothing
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiBasedModCommandAction
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread

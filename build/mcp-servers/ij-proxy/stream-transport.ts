@@ -7,12 +7,14 @@ import {StreamableHTTPClientTransport} from '@modelcontextprotocol/sdk/client/st
 type TransportMessage = unknown
 type TransportSendOptions = Record<string, unknown> | undefined
 
+const SESSION_NOT_FOUND_RE = /session not found/i
+
 interface PortCandidate {
   port: number
   kind: 'preferred' | 'scan'
 }
 
-interface StreamTransportOptions {
+export interface StreamTransportOptions {
   explicitUrl?: string
   preferredPorts?: number[]
   portScanStart: number
@@ -29,6 +31,18 @@ interface StreamTransportOptions {
   probeHost?: string
 }
 
+export interface McpStreamTransport {
+  sessionId: string | undefined
+  onmessage?: (message: TransportMessage, extra?: unknown) => void
+  onerror?: (error: Error) => void
+  onclose?: () => void
+  start: () => Promise<void>
+  send: (message: TransportMessage, options?: TransportSendOptions) => Promise<void>
+  close: () => Promise<void>
+  setProtocolVersion: (version: string) => void
+  resetTransport: (reason: unknown) => Promise<void>
+}
+
 interface QueueEntry {
   message: TransportMessage
   options: TransportSendOptions
@@ -40,6 +54,17 @@ interface QueueEntry {
 function resolveTimeout(timeoutMs: number | null | undefined): number | undefined {
   if (timeoutMs === undefined || timeoutMs === null) return undefined
   return timeoutMs > 0 ? timeoutMs : undefined
+}
+
+function isSessionNotFoundError(error: unknown): boolean {
+  if (!error) return false
+  const message = error instanceof Error ? error.message : String(error)
+  if (!SESSION_NOT_FOUND_RE.test(message)) return false
+  const code = (error as {code?: unknown}).code
+  if (typeof code === 'number') {
+    return code === -32000 || code === 400 || code === 404 || code === 410
+  }
+  return true
 }
 
 function normalizePortList(
@@ -69,7 +94,7 @@ function normalizePortList(
   return candidates
 }
 
-class StreamTransport {
+class StreamTransportImpl implements McpStreamTransport {
   _options: StreamTransportOptions
   _queue: QueueEntry[]
   _connectPromise: Promise<void> | null
@@ -130,14 +155,43 @@ class StreamTransport {
     }
   }
 
+  async resetTransport(reason: unknown): Promise<void> {
+    const warn = this._options.warn
+    const message = reason instanceof Error ? reason.message : String(reason)
+    if (warn) warn(`MCP stream session invalid; reconnecting. ${message}`)
+    const transport = this._transport
+    this._transport = null
+    this.sessionId = undefined
+    if (transport) {
+      try {
+        await transport.close()
+      } catch (error) {
+        const closeMessage = error instanceof Error ? error.message : String(error)
+        if (warn) warn(`Failed to close stale MCP transport: ${closeMessage}`)
+      }
+    }
+  }
+
   async _sendDirect(message: TransportMessage, options?: TransportSendOptions): Promise<void> {
-    try {
-      await this._transport.send(message, options)
-      this.sessionId = this._transport.sessionId
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error))
-      if (this.onerror) this.onerror(err)
-      throw err
+    let retried = false
+    while (true) {
+      try {
+        if (!this._transport) {
+          await this._ensureConnected()
+        }
+        await this._transport!.send(message, options)
+        this.sessionId = this._transport!.sessionId
+        return
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error))
+        if (!retried && isSessionNotFoundError(err)) {
+          retried = true
+          await this.resetTransport(err)
+          continue
+        }
+        if (this.onerror) this.onerror(err)
+        throw err
+      }
     }
   }
 
@@ -310,8 +364,8 @@ export function createStreamTransport({
   note,
   warn,
   probeHost = '127.0.0.1'
-}: StreamTransportOptions): StreamTransport {
-  return new StreamTransport({
+}: StreamTransportOptions): McpStreamTransport {
+  return new StreamTransportImpl({
     explicitUrl,
     preferredPorts,
     portScanStart,

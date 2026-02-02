@@ -27,9 +27,11 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
+import java.awt.Component;
 import java.lang.reflect.Type;
 
 final class DomUIFactoryImpl extends DomUIFactory {

@@ -6,7 +6,8 @@ import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeStatus
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 data class GitLabMergeRequestShortRestDTO(
   val id: Long,

@@ -14,7 +14,10 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 
 public class ExtractArtifactDialog extends DialogWrapper implements IExtractArtifactDialog {

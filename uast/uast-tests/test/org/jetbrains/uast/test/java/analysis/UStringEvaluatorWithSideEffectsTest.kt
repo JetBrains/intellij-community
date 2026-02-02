@@ -10,7 +10,11 @@ import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import junit.framework.TestCase
 import org.jetbrains.uast.UReturnExpression
-import org.jetbrains.uast.analysis.*
+import org.jetbrains.uast.analysis.BuilderLikeExpressionEvaluator
+import org.jetbrains.uast.analysis.BuilderMethodEvaluator
+import org.jetbrains.uast.analysis.UNeDfaConfiguration
+import org.jetbrains.uast.analysis.UStringBuilderEvaluator
+import org.jetbrains.uast.analysis.UStringEvaluator
 import org.jetbrains.uast.getUastParentOfType
 
 class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {

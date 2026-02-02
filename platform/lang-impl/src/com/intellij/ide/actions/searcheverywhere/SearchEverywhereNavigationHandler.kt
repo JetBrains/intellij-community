@@ -30,7 +30,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InputEvent
 import java.util.regex.Matcher
 import java.util.regex.Pattern
-import kotlin.text.toInt
 
 private val LOG = logger<SearchEverywhereNavigationHandler>()
 

@@ -6,7 +6,14 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.config.GitVersionSpecialty
 import git4idea.rebase.log.GitCommitEditingOperationResult.Complete
 import git4idea.rebase.log.GitCommitEditingOperationResult.Complete.UndoPossibility.Possible
-import git4idea.test.*
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.assertCommitted
+import git4idea.test.assertLastMessage
+import git4idea.test.assertLatestHistory
+import git4idea.test.assertMessage
+import git4idea.test.assertStagedChanges
+import git4idea.test.findGitLogProvider
+import git4idea.test.message
 import org.junit.Assume.assumeTrue
 
 class GitRewordTest : GitSingleRepoTest() {

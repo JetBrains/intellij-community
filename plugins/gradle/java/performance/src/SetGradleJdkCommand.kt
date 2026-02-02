@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.java.performance
 
+import com.intellij.gradle.java.performance.ImportGradleProjectCommand.linkGradleProjectIfNeeded
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import com.jetbrains.performancePlugin.commands.SetupProjectSdkUtil
-import com.intellij.gradle.java.performance.ImportGradleProjectCommand.linkGradleProjectIfNeeded
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
 /**

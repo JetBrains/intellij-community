@@ -3,7 +3,11 @@ package com.intellij.framework.library;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.*;
+import com.intellij.openapi.roots.libraries.JarVersionDetectionUtil;
+import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -11,7 +15,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.net.URL;
 import java.util.List;
 import java.util.function.Supplier;

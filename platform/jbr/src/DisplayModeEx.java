@@ -4,7 +4,7 @@ package com.intellij.platform.jbr;
 import com.intellij.util.MethodInvocator;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.DisplayMode;
 
 /**
  * WARNING: For internal usage only.

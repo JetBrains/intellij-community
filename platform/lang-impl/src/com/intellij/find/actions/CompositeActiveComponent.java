@@ -4,7 +4,8 @@ package com.intellij.find.actions;
 import com.intellij.ui.ActiveComponent;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 public final class CompositeActiveComponent implements ActiveComponent {
   private final ActiveComponent[] myComponents;

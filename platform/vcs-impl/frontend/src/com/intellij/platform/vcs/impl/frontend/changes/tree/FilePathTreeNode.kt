@@ -1,13 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.frontend.changes.tree
 
+import com.intellij.platform.vcs.impl.frontend.changes.findFileStatusById
 import com.intellij.platform.vcs.impl.frontend.shelf.tree.ChangesBrowserNodeRenderer
+import com.intellij.platform.vcs.impl.frontend.shelf.tree.EntityChangesBrowserNode
+import com.intellij.platform.vcs.impl.shared.rhizome.FilePathNodeEntity
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
 import com.intellij.util.PlatformIcons
-import com.intellij.platform.vcs.impl.frontend.changes.findFileStatusById
-import com.intellij.platform.vcs.impl.frontend.shelf.tree.EntityChangesBrowserNode
-import com.intellij.platform.vcs.impl.shared.rhizome.FilePathNodeEntity
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 

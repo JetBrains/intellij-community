@@ -3,7 +3,26 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.tasks.Exec
-import org.jetbrains.kotlin.idea.projectModel.*
+import org.jetbrains.kotlin.idea.projectModel.ExtraFeatures
+import org.jetbrains.kotlin.idea.projectModel.KonanArtifactModel
+import org.jetbrains.kotlin.idea.projectModel.KonanRunConfigurationModel
+import org.jetbrains.kotlin.idea.projectModel.KotlinAndroidSourceSetInfo
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationCoordinates
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationOutput
+import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
+import org.jetbrains.kotlin.idea.projectModel.KotlinGradlePluginVersionDependentApi
+import org.jetbrains.kotlin.idea.projectModel.KotlinLanguageSettings
+import org.jetbrains.kotlin.idea.projectModel.KotlinNativeCompilationExtensions
+import org.jetbrains.kotlin.idea.projectModel.KotlinNativeMainRunTask
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatformContainer
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
+import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
+import org.jetbrains.kotlin.idea.projectModel.KotlinTargetJar
+import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
+import org.jetbrains.kotlin.idea.projectModel.KotlinTestRunTask
+import org.jetbrains.kotlin.idea.projectModel.KotlinWasmCompilationExtensions
 import java.io.File
 
 class KotlinAndroidSourceSetInfoImpl(

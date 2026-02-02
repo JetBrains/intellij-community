@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.utils.addToStdlib.cast
-import java.util.*
+import java.util.Collections
 
 class InvokeFindUsages(file: PsiFile): ActionOnFile(file) {
     override fun performCommand(env: ImperativeCommand.Environment) {

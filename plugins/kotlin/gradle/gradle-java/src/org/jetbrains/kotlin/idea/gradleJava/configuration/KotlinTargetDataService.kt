@@ -11,7 +11,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.packaging.impl.artifacts.JarArtifactType
 import com.intellij.packaging.impl.elements.ProductionModuleOutputPackagingElement
-import org.jetbrains.kotlin.idea.gradle.configuration.*
+import org.jetbrains.kotlin.idea.gradle.configuration.KotlinTargetData
+import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById
+import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.kotlin.idea.util.createPointer
 
 class KotlinTargetDataService : AbstractProjectDataService<KotlinTargetData, Void>() {

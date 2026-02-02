@@ -6,11 +6,17 @@
 package org.toml.lang.psi.ext
 
 import com.intellij.lang.ASTNode
-import org.toml.lang.psi.LiteralOffsets
 import org.toml.lang.lexer.unescapeToml
+import org.toml.lang.psi.LiteralOffsets
 import org.toml.lang.psi.TOML_LITERALS
 import org.toml.lang.psi.TOML_STRING_LITERALS
-import org.toml.lang.psi.TomlElementTypes.*
+import org.toml.lang.psi.TomlElementTypes.BASIC_STRING
+import org.toml.lang.psi.TomlElementTypes.BOOLEAN
+import org.toml.lang.psi.TomlElementTypes.DATE_TIME
+import org.toml.lang.psi.TomlElementTypes.LITERAL_STRING
+import org.toml.lang.psi.TomlElementTypes.MULTILINE_BASIC_STRING
+import org.toml.lang.psi.TomlElementTypes.MULTILINE_LITERAL_STRING
+import org.toml.lang.psi.TomlElementTypes.NUMBER
 import org.toml.lang.psi.TomlLiteral
 
 val TomlLiteral.kind: TomlLiteralKind?

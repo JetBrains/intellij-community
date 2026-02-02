@@ -19,7 +19,11 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UastCallKind
+import org.jetbrains.uast.getContainingUClass
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 internal class InstanceIElementTypeFieldInspection : DevKitUastInspectionBase() {

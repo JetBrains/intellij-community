@@ -25,7 +25,7 @@ import icons.XpathIcons;
 import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class XsltRunConfigType implements ConfigurationType {
   private final ConfigurationFactory myFactory;

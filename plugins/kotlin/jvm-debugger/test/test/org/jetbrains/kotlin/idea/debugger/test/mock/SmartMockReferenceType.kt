@@ -4,7 +4,11 @@ package org.jetbrains.kotlin.idea.debugger.test.mock
 
 import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
-import com.sun.jdi.*
+import com.sun.jdi.Field
+import com.sun.jdi.Location
+import com.sun.jdi.Method
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.ReferenceType
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.backend.common.output.OutputFileCollection
 import org.jetbrains.org.objectweb.asm.ClassReader

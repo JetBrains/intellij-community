@@ -15,9 +15,10 @@ import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.util.PathUtil
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
+import org.jetbrains.plugins.terminal.runner.TerminalCustomizerLocalPathTranslator.Companion.MULTI_PATH_ENV_NAMES
+import org.jetbrains.plugins.terminal.runner.TerminalCustomizerLocalPathTranslator.Companion.SINGLE_PATH_ENV_NAMES
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import kotlin.text.orEmpty
 
 /**
  * Fixes potentially incorrect modifications to PATH-like environment variables made by

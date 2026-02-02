@@ -23,7 +23,15 @@ import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.RegexValidator;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +41,9 @@ import org.jetbrains.java.generate.GenerateToStringUtils;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.string;
 
 /**
  * Inspection to check if the current class overrides the toString() method.

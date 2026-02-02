@@ -54,7 +54,6 @@ jvm_library(
     "//libraries/fastutil",
     "//libraries/commons/cli",
     "//platform/workspace/storage",
-    "//plugins/properties/properties-psi-impl:backend-psi",
     "//platform/core-ui",
     "//platform/util-class-loader:util-classLoader",
     "//platform/platform-util-io:ide-util-io",

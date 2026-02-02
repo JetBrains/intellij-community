@@ -3,10 +3,10 @@
 
 package andel.operation
 
-import fleet.util.UID
 import fleet.bifurcan.BifurcanVector
 import fleet.bifurcan.IBifurcanVector
 import fleet.bifurcan.serialization.BifurcanListSerializer
+import fleet.util.UID
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 

@@ -3,7 +3,12 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.*
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.util.PsiUtil
 import java.awt.event.MouseEvent
 

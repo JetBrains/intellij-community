@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
-import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement

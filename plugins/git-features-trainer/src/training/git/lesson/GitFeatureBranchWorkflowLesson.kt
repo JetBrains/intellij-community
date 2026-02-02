@@ -29,7 +29,14 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchPopupActions
 import org.jetbrains.annotations.Nls
-import training.dsl.*
+import training.dsl.LearningBalloonConfig
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
+import training.dsl.TaskContext
+import training.dsl.TaskTestContext
+import training.dsl.defaultRestoreDelay
+import training.dsl.dropMnemonic
+import training.dsl.gotItStep
 import training.git.GitFeaturesTrainerIcons
 import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.clickTreeRow

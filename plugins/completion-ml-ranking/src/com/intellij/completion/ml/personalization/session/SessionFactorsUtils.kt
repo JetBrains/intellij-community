@@ -2,10 +2,10 @@
 package com.intellij.completion.ml.personalization.session
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.completion.ml.util.idString
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.completion.ml.storage.LookupStorage
 import com.intellij.completion.ml.storage.MutableLookupStorage
+import com.intellij.completion.ml.util.idString
+import com.intellij.openapi.util.registry.Registry
 
 object SessionFactorsUtils {
   private const val SESSION_FACTOR_PREFIX = "session_"

@@ -24,8 +24,8 @@ import com.intellij.usageView.UsageTreeColors;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

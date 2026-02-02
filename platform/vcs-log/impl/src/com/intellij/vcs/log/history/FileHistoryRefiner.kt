@@ -14,7 +14,8 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.getCorrespondingParent
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.*
+import java.util.LinkedList
+import java.util.Queue
 
 internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
                                   permanentGraphInfo: PermanentGraphInfo<Int>,

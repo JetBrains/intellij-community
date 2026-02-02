@@ -2,7 +2,11 @@
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.util.Comparing
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.OptionTag
@@ -11,7 +15,7 @@ import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.TreeMap
 
 @Internal
 @State(name = "Vcs.Log.Tabs.Properties", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
@@ -29,6 +33,10 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
   override fun createProperties(id: String): MainVcsLogUiProperties {
     _state.tabStates.putIfAbsent(id, MyState())
     return MyVcsLogUiPropertiesImpl(id)
+  }
+
+  fun checkTabHasFilters(id: String): Boolean {
+    return _state.tabStates[id]?.filters?.isNotEmpty() ?: false
   }
 
   fun addTab(tabId: String, location: VcsLogTabLocation) {

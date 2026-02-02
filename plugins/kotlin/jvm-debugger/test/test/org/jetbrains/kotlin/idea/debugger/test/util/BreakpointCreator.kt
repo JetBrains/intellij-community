@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpo
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpointType
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
-import java.util.*
+import java.util.Locale
 
 internal class BreakpointCreator(
     private val project: Project,

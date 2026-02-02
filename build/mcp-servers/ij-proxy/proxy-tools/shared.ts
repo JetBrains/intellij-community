@@ -2,7 +2,7 @@
 
 import path from 'node:path'
 import {z, type ZodType} from 'zod'
-import type {SearchEntry, ToolResultLike, UpstreamToolCaller} from './types'
+import type {SearchEntry, SearchItem, ToolResultLike, UpstreamToolCaller} from './types'
 
 export const TRUNCATION_MARKER = '<<<...content truncated...>>>'
 const FULL_READ_MAX_LINES = 200_000
@@ -17,11 +17,6 @@ export type TruncateMode = 'NONE' | 'START' | 'END'
 export interface ReadFileTextOptions {
   maxLinesCount?: number | null
   truncateMode?: TruncateMode | null
-}
-
-export interface SplitLinesResult {
-  lines: string[]
-  trailingNewline: boolean
 }
 
 const nonEmptyStringSchema = z.string().refine((value) => value.trim() !== '', {
@@ -66,18 +61,6 @@ export function resolvePathInProject(projectPath: string, inputPath: unknown, la
   return {absolute, relative}
 }
 
-export function resolveSearchPath(projectPath: string, inputPath: unknown): ResolvedPath {
-  if (inputPath === undefined || inputPath === null) {
-    return {absolute: projectPath, relative: ''}
-  }
-  return resolvePathInProject(projectPath, inputPath, 'path')
-}
-
-export function looksLikeFilePath(rawPath: string, relativePath: string): boolean {
-  if (rawPath.endsWith(path.sep) || rawPath.endsWith('/') || rawPath.endsWith('\\')) return false
-  return path.extname(relativePath) !== ''
-}
-
 export function normalizeEntryPath<T>(projectPath: string, filePath: T): T extends string ? string : T {
   if (typeof filePath !== 'string' || filePath === '') return filePath as T extends string ? string : T
   if (path.isAbsolute(filePath)) return filePath as T extends string ? string : T
@@ -114,44 +97,167 @@ export function extractStructuredContent(result: unknown): unknown | null {
   }
 }
 
-export function extractFileList(result: unknown): string[] {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function coerceSearchItem(value: unknown): SearchItem | null {
+  if (typeof value === 'string') return {filePath: value}
+  if (Array.isArray(value)) {
+    if (value.length === 0 || value.length > 3) return null
+    if (typeof value[0] !== 'string') return null
+    const item: SearchItem = {filePath: value[0]}
+    if (typeof value[1] === 'number') {
+      item.lineNumber = value[1]
+      if (typeof value[2] === 'string') {
+        item.lineText = value[2]
+      }
+    }
+    return item
+  }
+  if (isRecord(value)) {
+    const filePath = typeof value.filePath === 'string' ? value.filePath : null
+    if (!filePath) return null
+    const item: SearchItem = {filePath}
+    if (typeof value.lineNumber === 'number') {
+      item.lineNumber = value.lineNumber
+    }
+    if (typeof value.lineText === 'string') {
+      item.lineText = value.lineText
+    }
+    return item
+  }
+  return null
+}
+
+function coerceItems(value: unknown): SearchItem[] | null {
+  if (!Array.isArray(value)) return null
+  const items: SearchItem[] = []
+  for (const entry of value) {
+    const item = coerceSearchItem(entry)
+    if (item) items.push(item)
+  }
+  return items
+}
+
+function extractItemsFromValue(value: unknown): SearchItem[] | null {
+  if (!value) return null
+  if (Array.isArray(value)) return coerceItems(value)
+  if (!isRecord(value)) return null
+  if (Array.isArray(value.items)) return coerceItems(value.items)
+  if (Array.isArray(value.entries)) return coerceItems(value.entries)
+  if (Array.isArray(value.results)) return coerceItems(value.results)
+  if (Array.isArray(value.files)) return coerceItems(value.files)
+  const resultsMap = extractResultsMapFromValue(value)
+  if (resultsMap) {
+    return coerceItems(flattenResultsMap(resultsMap))
+  }
+  return null
+}
+
+function itemsToEntries(items: SearchItem[]): SearchEntry[] {
+  return items.map((item) => ({
+    filePath: item.filePath,
+    lineNumber: item.lineNumber,
+    lineText: item.lineText
+  }))
+}
+
+export function extractItems(result: unknown): SearchItem[] {
   const structured = extractStructuredContent(result)
-  if (structured) {
-    const structuredRecord = structured as Record<string, unknown>
-    if (Array.isArray(structuredRecord.files)) return structuredRecord.files as string[]
-    if (Array.isArray(structured)) return structured as string[]
+  const fromStructured = extractItemsFromValue(structured)
+  return fromStructured ?? []
+}
+
+function coerceEntries(value: unknown): SearchEntry[] | null {
+  if (!Array.isArray(value)) return null
+  const entries: SearchEntry[] = []
+  for (const item of value) {
+    if (!item) continue
+    if (typeof item === 'string') {
+      entries.push({filePath: item})
+      continue
+    }
+    if (typeof item === 'object') {
+      entries.push(item as SearchEntry)
+    }
   }
-  const text = extractTextFromResult(result)
-  if (!text) return []
-  try {
-    const parsed = JSON.parse(text)
-    if (Array.isArray(parsed.files)) return parsed.files
-    if (Array.isArray(parsed)) return parsed
-  } catch {
-    return []
+  return entries
+}
+
+function extractResultsMapFromValue(value: unknown): Record<string, SearchEntry[]> | null {
+  if (!isRecord(value)) return null
+  const rawResults = value.results
+  if (!isRecord(rawResults)) return null
+  const results: Record<string, SearchEntry[]> = {}
+  for (const [key, rawEntries] of Object.entries(rawResults)) {
+    const entries = coerceEntries(rawEntries)
+    if (entries) {
+      results[key] = entries
+    }
   }
+  return results
+}
+
+export function extractResultsMap(result: unknown): Record<string, SearchEntry[]> | null {
+  const structured = extractStructuredContent(result)
+  return extractResultsMapFromValue(structured)
+}
+
+export function extractFileList(result: unknown): string[] {
+  const resultsMap = extractResultsMap(result)
+  if (resultsMap) {
+    return extractFileListFromResults(resultsMap)
+  }
+  const structured = extractStructuredContent(result)
+  if (!structured) return []
+  if (Array.isArray(structured)) {
+    const items = extractItemsFromValue(structured)
+    if (items) return items.map((item) => item.filePath)
+    return structured as string[]
+  }
+  const structuredRecord = structured as Record<string, unknown>
+  const items = extractItemsFromValue(structuredRecord)
+  if (items) return items.map((item) => item.filePath)
+  if (Array.isArray(structuredRecord.files)) return structuredRecord.files as string[]
   return []
 }
 
 export function extractEntries(result: unknown): SearchEntry[] {
+  const resultsMap = extractResultsMap(result)
+  if (resultsMap) return flattenResultsMap(resultsMap)
   const structured = extractStructuredContent(result)
   if (structured) {
     const structuredRecord = structured as Record<string, unknown>
     if (Array.isArray(structuredRecord.entries)) return structuredRecord.entries as SearchEntry[]
     if (Array.isArray(structuredRecord.results)) return structuredRecord.results as SearchEntry[]
-    if (Array.isArray(structured)) return structured as SearchEntry[]
-  }
-  const text = extractTextFromResult(result)
-  if (!text) return []
-  try {
-    const parsed = JSON.parse(text)
-    if (Array.isArray(parsed.entries)) return parsed.entries
-    if (Array.isArray(parsed.results)) return parsed.results
-    if (Array.isArray(parsed)) return parsed
-  } catch {
-    return []
+    const items = extractItemsFromValue(structuredRecord)
+    if (items) return itemsToEntries(items)
+    if (Array.isArray(structured)) {
+      const fromItems = extractItemsFromValue(structured)
+      if (fromItems) return itemsToEntries(fromItems)
+      return structured as SearchEntry[]
+    }
   }
   return []
+}
+
+function flattenResultsMap(results: Record<string, SearchEntry[]>): SearchEntry[] {
+  const entries: SearchEntry[] = []
+  for (const groupEntries of Object.values(results)) {
+    entries.push(...groupEntries)
+  }
+  return entries
+}
+
+function extractFileListFromResults(results: Record<string, SearchEntry[]>): string[] {
+  const files: string[] = []
+  for (const entry of flattenResultsMap(results)) {
+    if (typeof entry.filePath === 'string' && entry.filePath.length > 0) {
+      files.push(entry.filePath)
+    }
+  }
+  return files
 }
 
 export function normalizeLineEndings(text: string): string {
@@ -190,37 +296,4 @@ export function splitLines(text: string): string[] {
     lines.pop()
   }
   return lines
-}
-
-export function splitLinesWithTrailing(text: string): SplitLinesResult {
-  const normalized = normalizeLineEndings(text)
-  const trailingNewline = normalized.endsWith('\n')
-  const lines = normalized.split('\n')
-  if (trailingNewline) {
-    lines.pop()
-  }
-  return {lines, trailingNewline}
-}
-
-export function countOccurrences(haystack: string, needle: string): number {
-  if (needle.length === 0) return 0
-  let count = 0
-  let index = 0
-  while (true) {
-    const next = haystack.indexOf(needle, index)
-    if (next === -1) break
-    count += 1
-    index = next + needle.length
-  }
-  return count
-}
-
-export function replaceFirst(text: string, oldString: string, newString: string): string | null {
-  const index = text.indexOf(oldString)
-  if (index === -1) return null
-  return text.slice(0, index) + newString + text.slice(index + oldString.length)
-}
-
-export function replaceAll(text: string, oldString: string, newString: string): string {
-  return text.split(oldString).join(newString)
 }

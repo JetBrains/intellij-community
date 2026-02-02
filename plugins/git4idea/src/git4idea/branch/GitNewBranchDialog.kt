@@ -24,7 +24,14 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.EditorTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toMutableProperty
+import com.intellij.ui.dsl.builder.whenItemChangedFromUi
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValidationInfoBuilder
@@ -40,7 +47,11 @@ import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import git4idea.validators.*
+import git4idea.validators.GitRefNameValidator
+import git4idea.validators.checkRefNameEmptyOrHead
+import git4idea.validators.conflictsWithLocalBranch
+import git4idea.validators.conflictsWithLocalBranchDirectory
+import git4idea.validators.conflictsWithRemoteBranch
 import org.jetbrains.annotations.Nls
 import javax.swing.JCheckBox
 

@@ -27,7 +27,7 @@ sealed interface RpcCompletionResponseEvent {
 
   /**
    * This event is sent when all items are already emitted,
-   * but the prefix changed without completion restaring, and we need to re-sort items.
+   * but the prefix changed without completion restarting, and we need to re-sort items.
    */
   @Serializable
   data class NewArrangement(
@@ -38,6 +38,11 @@ sealed interface RpcCompletionResponseEvent {
     }
   }
 
+  @Serializable
+  data class ExpensivePresentations(
+    val presentations: List<RpcCompletionExpensivePresentation>
+  ) : RpcCompletionResponseEvent
+
   /**
    * This event is sent when all completion items are sent.
    * After it is sent, the backend can send only updates for the existing items (and [CompletionFinished] event).
@@ -47,10 +52,11 @@ sealed interface RpcCompletionResponseEvent {
   object CompletionItemsFinished : RpcCompletionResponseEvent
 
   /**
-   * This event is sent when the backend decided to abort autopopup completion.
+   * This event is sent when the backend decides to abort completion.
+   * Can be sent only before [NewItems] event.
    */
   @Serializable
-  object SkipAutoPopup: RpcCompletionResponseEvent
+  object SkipCompletion: RpcCompletionResponseEvent
   /**
    * This event is sent when the completion session registers a new advertisement.
    */

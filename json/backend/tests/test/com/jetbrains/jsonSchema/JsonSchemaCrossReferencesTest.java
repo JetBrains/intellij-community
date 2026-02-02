@@ -4,7 +4,11 @@ package com.jetbrains.jsonSchema;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.json.JsonFileType;
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonFile;
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -30,7 +34,11 @@ import com.jetbrains.jsonSchema.schemaFile.TestJsonSchemaMappingsProjectConfigur
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.JSON_DEFINITIONS;

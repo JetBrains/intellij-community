@@ -4,7 +4,14 @@ package com.intellij.cce.evaluation
 import com.intellij.cce.actions.DatasetContext
 import com.intellij.cce.evaluable.EvaluableFeature
 import com.intellij.cce.evaluable.EvaluationStrategy
-import com.intellij.cce.evaluation.step.*
+import com.intellij.cce.evaluation.step.ActionsInterpretationStep
+import com.intellij.cce.evaluation.step.DatasetPreparationStep
+import com.intellij.cce.evaluation.step.DisableDockerEel
+import com.intellij.cce.evaluation.step.HeadlessFinishEvaluationStep
+import com.intellij.cce.evaluation.step.ReorderElementsStep
+import com.intellij.cce.evaluation.step.ReportGenerationStep
+import com.intellij.cce.evaluation.step.SetupRegistryStep
+import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationManager

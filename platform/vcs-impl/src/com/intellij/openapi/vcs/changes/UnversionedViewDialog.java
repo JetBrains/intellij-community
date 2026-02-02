@@ -9,7 +9,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
 

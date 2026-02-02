@@ -9,7 +9,14 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.tasks.TaskBundle;
-import com.intellij.tasks.jira.jql.psi.*;
+import com.intellij.tasks.jira.jql.psi.JqlElementVisitor;
+import com.intellij.tasks.jira.jql.psi.JqlEmptyValue;
+import com.intellij.tasks.jira.jql.psi.JqlFunctionCall;
+import com.intellij.tasks.jira.jql.psi.JqlIdentifier;
+import com.intellij.tasks.jira.jql.psi.JqlList;
+import com.intellij.tasks.jira.jql.psi.JqlOperand;
+import com.intellij.tasks.jira.jql.psi.JqlSimpleClause;
+import com.intellij.tasks.jira.jql.psi.JqlTerminalClause;
 import org.jetbrains.annotations.NotNull;
 
 /**

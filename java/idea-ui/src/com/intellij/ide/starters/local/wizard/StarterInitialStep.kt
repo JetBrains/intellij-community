@@ -2,7 +2,13 @@
 package com.intellij.ide.starters.local.wizard
 
 import com.intellij.ide.starters.JavaStartersBundle
-import com.intellij.ide.starters.local.*
+import com.intellij.ide.starters.local.DependencyConfig
+import com.intellij.ide.starters.local.Starter
+import com.intellij.ide.starters.local.StarterContext
+import com.intellij.ide.starters.local.StarterContextProvider
+import com.intellij.ide.starters.local.StarterModuleBuilder
+import com.intellij.ide.starters.local.StarterPack
+import com.intellij.ide.starters.local.StarterUtils
 import com.intellij.ide.starters.shared.CommonStarterInitialStep
 import com.intellij.ide.starters.shared.StarterAppType
 import com.intellij.ide.starters.shared.validateFormFields
@@ -18,7 +24,12 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests

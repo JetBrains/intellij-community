@@ -2,7 +2,11 @@
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.completion.CompletionLocation
-import com.intellij.codeInsight.completion.ml.*
+import com.intellij.codeInsight.completion.ml.CompletionEnvironment
+import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
+import com.intellij.codeInsight.completion.ml.ContextFeatures
+import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
+import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.java.JavaLanguage

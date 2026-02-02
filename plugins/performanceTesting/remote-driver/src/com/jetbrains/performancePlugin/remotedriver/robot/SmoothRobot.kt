@@ -33,6 +33,7 @@ import javax.swing.JComponent
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 import kotlin.math.ln
+import kotlin.text.toBoolean
 
 @ApiStatus.Internal
 class SmoothRobot @JvmOverloads constructor(

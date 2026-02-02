@@ -25,12 +25,17 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
-import java.util.*
+import java.util.Locale
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.KeyStroke
 import javax.swing.ListCellRenderer
-import kotlin.math.*
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.math.sqrt
+import kotlin.math.tan
 
 internal class CalculatorSEContributorFactory : SearchEverywhereContributorFactory<EvaluationResult> {
   override fun createContributor(initEvent: AnActionEvent): SearchEverywhereContributor<EvaluationResult> {

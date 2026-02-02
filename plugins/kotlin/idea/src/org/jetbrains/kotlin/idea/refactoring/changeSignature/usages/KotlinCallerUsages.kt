@@ -10,7 +10,12 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.getAffectedCallable
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.isCaller
 import org.jetbrains.kotlin.idea.refactoring.isInsideOfCallerBody
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.createPrimaryConstructorParameterListIfAbsent
 
 @K1Deprecation
 class KotlinCallerUsage(element: KtNamedDeclaration) : KotlinUsageInfo<KtNamedDeclaration>(element) {

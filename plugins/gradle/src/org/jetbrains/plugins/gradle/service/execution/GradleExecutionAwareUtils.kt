@@ -2,7 +2,12 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.build.events.BuildEventsNls
-import com.intellij.build.events.impl.*
+import com.intellij.build.events.impl.FailureResultImpl
+import com.intellij.build.events.impl.FinishEventImpl
+import com.intellij.build.events.impl.ProgressBuildEventImpl
+import com.intellij.build.events.impl.SkippedResultImpl
+import com.intellij.build.events.impl.StartEventImpl
+import com.intellij.build.events.impl.SuccessResultImpl
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener

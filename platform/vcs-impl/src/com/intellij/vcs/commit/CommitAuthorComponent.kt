@@ -29,7 +29,7 @@ import com.intellij.vcs.log.VcsUserEditor
 import com.intellij.vcs.log.util.VcsUserUtil
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent.VK_ENTER
-import java.util.*
+import java.util.Date
 import javax.swing.KeyStroke.getKeyStroke
 import kotlin.properties.Delegates.observable
 

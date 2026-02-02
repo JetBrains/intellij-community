@@ -8,8 +8,8 @@ import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
 import java.util.Comparator;
 import java.util.List;
 

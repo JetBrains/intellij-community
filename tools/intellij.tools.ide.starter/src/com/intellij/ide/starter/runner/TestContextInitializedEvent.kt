@@ -2,8 +2,8 @@ package com.intellij.ide.starter.runner
 
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.isRemDevContext
-import com.intellij.tools.ide.starter.bus.events.Event
 import com.intellij.tools.ide.starter.bus.EventsBus
+import com.intellij.tools.ide.starter.bus.events.Event
 import com.intellij.tools.ide.util.common.logOutput
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes

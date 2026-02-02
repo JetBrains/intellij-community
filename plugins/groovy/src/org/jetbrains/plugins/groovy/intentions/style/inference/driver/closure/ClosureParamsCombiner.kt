@@ -2,12 +2,19 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiParameterList
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import org.jetbrains.plugins.groovy.intentions.style.inference.cartesianProduct
 import org.jetbrains.plugins.groovy.intentions.style.inference.isTypeParameter
 import org.jetbrains.plugins.groovy.intentions.style.inference.unreachable
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_STC_CLOSURE_PARAMS
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_STC_FROM_STRING
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_STC_SIMPLE_TYPE
 
 class ClosureParamsCombiner {
 

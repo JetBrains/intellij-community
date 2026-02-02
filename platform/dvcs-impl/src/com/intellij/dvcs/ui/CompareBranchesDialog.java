@@ -12,7 +12,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.TabbedPaneImpl;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
 /**
  * Dialog for comparing two DVCS branches.

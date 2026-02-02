@@ -28,7 +28,11 @@ import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex;
 import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import static java.util.Collections.singleton;

@@ -16,7 +16,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.java.codeInsight.navigation.LineMarkerTestCase;
 import com.intellij.java.codeInsight.navigation.MockGradleRunConfiguration;
 import com.intellij.junit.testFramework.JUnitProjectDescriptor;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUiKind;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
@@ -31,11 +36,14 @@ import com.intellij.testIntegration.TestRunLineMarkerProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Date;
 import java.util.List;
 
-import static com.intellij.junit.testFramework.JUnitLibrary.*;
+import static com.intellij.junit.testFramework.JUnitLibrary.JUNIT3;
+import static com.intellij.junit.testFramework.JUnitLibrary.JUNIT4;
+import static com.intellij.junit.testFramework.JUnitLibrary.JUNIT5;
+import static com.intellij.junit.testFramework.JUnitLibrary.PIONEER;
 import static com.intellij.pom.java.LanguageLevel.HIGHEST;
 
 public class JUnitTestRunLineMarkerTest extends LineMarkerTestCase {

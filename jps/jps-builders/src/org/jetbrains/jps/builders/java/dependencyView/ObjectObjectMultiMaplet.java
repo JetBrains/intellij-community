@@ -8,7 +8,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 @ApiStatus.Internal
 public abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMaplet {

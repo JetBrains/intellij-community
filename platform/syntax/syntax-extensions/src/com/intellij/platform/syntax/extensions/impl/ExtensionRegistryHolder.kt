@@ -3,8 +3,8 @@ package com.intellij.platform.syntax.extensions.impl
 
 import com.intellij.platform.syntax.extensions.ExtensionRegistry
 import com.intellij.platform.syntax.extensions.ExtensionSupport
-import com.intellij.platform.syntax.extensions.currentExtensionSupport
 import com.intellij.platform.syntax.extensions.StaticExtensionSupport
+import com.intellij.platform.syntax.extensions.currentExtensionSupport
 import fleet.util.multiplatform.linkToActual
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract

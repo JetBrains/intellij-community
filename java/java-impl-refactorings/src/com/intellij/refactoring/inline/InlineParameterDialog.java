@@ -9,8 +9,13 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.RefactoringDialog;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+import java.awt.BorderLayout;
 
 
 public class InlineParameterDialog extends RefactoringDialog {

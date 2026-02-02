@@ -5,7 +5,6 @@ package com.intellij.mock
 
 import com.intellij.lang.MetaLanguage
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState

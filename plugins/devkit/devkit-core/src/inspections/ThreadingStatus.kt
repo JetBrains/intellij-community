@@ -2,7 +2,11 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.util.concurrency.annotations.*
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.uast.UMethod
 
 internal enum class ThreadingStatus(val annotationFqn: String,

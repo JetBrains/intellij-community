@@ -13,8 +13,14 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
-import org.jetbrains.kotlin.j2k.*
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.*
+import org.jetbrains.kotlin.j2k.ConverterContext
+import org.jetbrains.kotlin.j2k.ConverterSettings
+import org.jetbrains.kotlin.j2k.J2KPostProcessingRunner
+import org.jetbrains.kotlin.j2k.J2kConverterExtension
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_OLD
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
+import org.jetbrains.kotlin.j2k.ParseContext
 import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName

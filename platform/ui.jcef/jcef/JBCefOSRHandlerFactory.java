@@ -6,8 +6,9 @@ import com.intellij.util.Function;
 import org.cef.handler.CefRenderHandler;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
 
 /**
  * A factory for creating alternative component/handler/bounds for an off-screen rendering browser.

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.builder;
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.component.SoftwareComponent;
 import org.gradle.api.file.RegularFileProperty;
@@ -9,9 +10,13 @@ import org.gradle.api.internal.project.DefaultProject;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.PluginContainer;
 import org.gradle.api.provider.Provider;
-import org.apache.commons.lang3.StringUtils;
 import org.gradle.internal.os.OperatingSystem;
-import org.gradle.language.cpp.*;
+import org.gradle.language.cpp.CppBinary;
+import org.gradle.language.cpp.CppComponent;
+import org.gradle.language.cpp.CppPlatform;
+import org.gradle.language.cpp.CppSharedLibrary;
+import org.gradle.language.cpp.CppStaticLibrary;
+import org.gradle.language.cpp.ProductionCppComponent;
 import org.gradle.language.cpp.plugins.CppBasePlugin;
 import org.gradle.language.cpp.plugins.CppPlugin;
 import org.gradle.language.cpp.tasks.CppCompile;
@@ -37,7 +42,16 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.DefaultExternalTask;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppProject;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.SourceFile;
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.*;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CompilationDetailsImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppBinaryImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppComponentImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppExecutableImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppProjectImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppSharedLibraryImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppStaticLibraryImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppTestSuiteImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.LinkageDetailsImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.SourceFileImpl;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
@@ -46,7 +60,12 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * The prototype of the C++ project gradle tooling model builder.

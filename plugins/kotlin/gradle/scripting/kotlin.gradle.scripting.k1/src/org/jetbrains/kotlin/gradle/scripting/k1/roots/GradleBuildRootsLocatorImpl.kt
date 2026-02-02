@@ -21,7 +21,15 @@ import org.jetbrains.kotlin.gradle.scripting.shared.definition.getFullDefinition
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.toGradleHomePath
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.kotlinDslScriptsModelImportSupported
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.*
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.AbstractGradleBuildRootDataSerializer
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRoot
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootData
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleScriptInfo
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.Legacy
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.New
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.StandaloneScriptsUpdater
 import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.DefaultScriptingSupport

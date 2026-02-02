@@ -1,9 +1,9 @@
 package com.intellij.python.junit5Tests.env.pyproject
 
-import com.intellij.python.venv.createVenv
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.pyproject.model.internal.pyProjectToml.walkFileSystemNoTomlContent
+import com.intellij.python.venv.createVenv
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.io.createDirectories
 import com.jetbrains.python.PythonBinary

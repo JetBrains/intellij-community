@@ -5,16 +5,42 @@ package com.intellij.patterns.uast
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Key
-import com.intellij.patterns.*
+import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.ObjectPattern
+import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PsiJavaPatterns.psiClass
+import com.intellij.patterns.PsiNamePatternCondition
 import com.intellij.patterns.StandardPatterns.string
-import com.intellij.psi.*
+import com.intellij.patterns.ValuePatternCondition
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.REQUESTED_PSI_ELEMENT
 import com.intellij.util.ProcessingContext
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UArrayAccessExpression
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UMultiResolvable
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.UastCallKind
 import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.getContainingUAnnotationEntry
+import org.jetbrains.uast.getUCallExpression
+import org.jetbrains.uast.isInjectionHost
+import org.jetbrains.uast.sourcePsiElement
 
 fun literalExpression(): ULiteralExpressionPattern = ULiteralExpressionPattern()
 

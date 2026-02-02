@@ -18,7 +18,7 @@ import com.intellij.psi.impl.PsiNameHelperImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 
-import javax.swing.*;
+import javax.swing.JTextField;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

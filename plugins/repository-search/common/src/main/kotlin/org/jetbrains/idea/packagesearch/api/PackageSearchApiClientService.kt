@@ -9,7 +9,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.createParentDirectories
 import io.ktor.client.engine.java.Java
-import io.ktor.client.plugins.*
+import io.ktor.client.plugins.DefaultRequest
+import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.UserAgent
+import io.ktor.client.plugins.UserAgentConfig
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger

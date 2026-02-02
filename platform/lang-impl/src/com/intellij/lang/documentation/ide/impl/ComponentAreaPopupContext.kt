@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupRelativePosition
 import com.intellij.openapi.ui.popup.PopupShowOptionsBuilder
 import com.intellij.openapi.ui.popup.PopupShowOptionsImpl
-import com.intellij.openapi.util.TextRange
 import com.intellij.ui.MouseMovementTracker
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.WidthBasedLayout
@@ -21,7 +20,13 @@ import com.intellij.util.Alarm
 import com.intellij.util.asSafely
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.yield
-import java.awt.*
+import java.awt.AWTEvent
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.MouseInfo
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
 import javax.swing.SwingUtilities

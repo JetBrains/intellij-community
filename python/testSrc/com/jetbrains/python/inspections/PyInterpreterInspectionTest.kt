@@ -3,7 +3,6 @@ package com.jetbrains.python.inspections
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.LightProjectDescriptor
 import com.jetbrains.python.PyPsiBundle

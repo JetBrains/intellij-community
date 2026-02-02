@@ -12,7 +12,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.rt.execution.junit.MapSerializerUtil.*;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.SUITE_TREE_NODE;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.TEST_FAILED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.TEST_FINISHED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.TEST_IGNORED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.TEST_STARTED;
+import static com.intellij.rt.execution.junit.MapSerializerUtil.asString;
 
 public class TestReporter extends AbstractTestReporter {
   private final String name;

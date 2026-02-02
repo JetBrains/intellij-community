@@ -2,7 +2,12 @@
 
 package org.jetbrains.kotlin.idea.debugger.core
 
-import com.intellij.execution.filters.*
+import com.intellij.execution.filters.ExceptionFilter
+import com.intellij.execution.filters.ExceptionFilterFactory
+import com.intellij.execution.filters.FileHyperlinkInfo
+import com.intellij.execution.filters.Filter
+import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.execution.filters.impl.HyperlinkInfoFactoryImpl
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project

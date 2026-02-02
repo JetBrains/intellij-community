@@ -9,6 +9,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.ui.ToolWindowLazyContent
+import com.intellij.util.ContentUtilEx
+import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogFilterCollection
@@ -17,10 +19,18 @@ import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.showCommit
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.showCommitSync
 import com.intellij.vcs.log.ui.MainVcsLogUi
+import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 
 internal class IdeVcsLogManager(
@@ -126,10 +136,7 @@ internal class IdeVcsLogManager(
   }
 
   /**
-   * Show given commit in the changes view tool window in the log tab matching a given predicate:
-   * - Try using one of the currently selected tabs if possible.
-   * - Otherwise try main log tab.
-   * - Otherwise create a new tab without filters and show commit there.
+   * Show a commit [hash] at [root] in the changes view tool window in the log tab matching a given [predicate]
    */
   suspend fun showCommitInLogTab(
     hash: Hash,
@@ -142,46 +149,135 @@ internal class IdeVcsLogManager(
     }
     // At this point we know that commit exists in permanent graph.
     // Try finding it in the opened tabs or open a new tab if none has a matching filter.
-    // We will skip tabs that are not refreshed yet, as it may be slow.
-
     val window = VcsLogContentUtil.getToolWindow(project) ?: return null
-    if (!window.isVisible) {
-      suspendCancellableCoroutine { continuation ->
-        window.activate { continuation.resumeWith(Result.success(Unit)) }
+
+    return tryShowCommitSync(window, hash, root, requestFocus, predicate)
+           ?: showCommitInEmptyTab(window, hash, root, requestFocus, predicate)
+  }
+
+  /**
+   * Tries to show a commit in the given log tab only if some tab already contains the commit
+   *
+   * Tries the selected tab first, then the main tab, and then iterates the rest
+   */
+  private suspend fun tryShowCommitSync(
+    toolWindow: ToolWindow,
+    hash: Hash,
+    root: VirtualFile,
+    requestFocus: Boolean,
+    predicate: (MainVcsLogUi) -> Boolean,
+  ): MainVcsLogUi? {
+    // if content was not created yet, we definitely won't find the commit immediately
+    val contentManager = toolWindow.contentManagerIfCreated ?: return null
+
+    fun VcsLogUiEx.showIfPossible(): MainVcsLogUi? =
+      asSafely<MainVcsLogUi>()
+        ?.takeIf(predicate)
+        ?.takeIf {
+          if (!it.mainComponent.isShowing) {
+            // since the ui is not visible, it needs to be validated to find the commit
+            it.refresher.setValid(true, false)
+          }
+          it.showCommitSync(hash, root, false)
+        }
+
+    val selectedContent = contentManager.selectedContent
+    val mainContent = VcsLogContentUtil.findMainLog(contentManager)
+
+    if (selectedContent != null && selectedContent != mainContent) {
+      val ui = VcsLogContentUtil.getLogUi(selectedContent.component)?.showIfPossible()
+      if (ui != null) {
+        toolWindow.activateOrShow(requestFocus)
+        return ui
       }
     }
 
-    val selectedUi = VcsLogContentUtil.findSelectedLogUi(window) as? MainVcsLogUi
-    if (selectedUi != null && predicate(selectedUi)) {
-      if (selectedUi.showCommitSync(hash, root, requestFocus)) {
-        return selectedUi
+    if (mainContent != null) {
+      ToolWindowLazyContent.initLazyContent(mainContent)
+      val ui = mainUiState.filterNotNull().first().showIfPossible()
+      if (ui != null) {
+        contentManager.setSelectedContent(mainContent)
+        toolWindow.activateOrShow(requestFocus)
+        return ui
       }
     }
 
-    if (selectedUi?.id != MAIN_LOG_ID) {
-      val mainLogContent = VcsLogContentUtil.findMainLog(window.contentManager)
-      if (mainLogContent != null) {
-        ToolWindowLazyContent.initLazyContent(mainLogContent)
+    for ((content, component) in contentManager.contentComponentSequence()) {
+      if (content == mainContent || content == selectedContent) continue
+      val ui = VcsLogContentUtil.getLogUi(component)?.showIfPossible()
+      if (ui != null) {
+        ContentUtilEx.selectContent(contentManager, component, false)
+        toolWindow.activateOrShow(requestFocus)
+        return ui
+      }
+    }
 
-        val mainLogUi = mainUiState.filterNotNull().first()
-        mainLogUi.refresher.setValid(true, false) // since the main ui is not visible, it needs to be validated to find the commit
-        if (predicate(mainLogUi) && mainLogUi.showCommitSync(hash, root, requestFocus)) {
-          window.contentManager.setSelectedContent(mainLogContent)
-          return mainLogUi
+    return null
+  }
+
+  /**
+   * Searches a commit in a tab without any filters
+   *
+   * Picks the first tab that has no filters or opens a new one
+   * Tab lookup order is:
+   * selected -> main -> existing -> new
+   */
+  private suspend fun showCommitInEmptyTab(
+    toolWindow: ToolWindow,
+    hash: Hash,
+    root: VirtualFile,
+    requestFocus: Boolean,
+    predicate: (MainVcsLogUi) -> Boolean,
+  ): MainVcsLogUi? {
+    // will potentially init the content manager
+    val contentManager = toolWindow.contentManager
+
+    suspend fun VcsLogUiEx.showIfPossible(): MainVcsLogUi? =
+      asSafely<MainVcsLogUi>()
+        ?.takeIf { predicate(it) && it.filterUi.filters.isEmpty }
+        ?.takeIf {
+          it.showCommit(hash, root, false)
+        }
+
+    val selectedContent = contentManager.selectedContent
+    val mainContent = VcsLogContentUtil.findMainLog(contentManager)
+
+    if (selectedContent != null && selectedContent != mainContent) {
+      val ui = VcsLogContentUtil.getLogUi(selectedContent.component)?.showIfPossible()
+      if (ui != null) {
+        toolWindow.activateOrShow(requestFocus)
+        return ui
+      }
+    }
+
+    if (mainContent != null) {
+      ToolWindowLazyContent.initLazyContent(mainContent)
+      val ui = mainUiState.filterNotNull().first().showIfPossible()
+      if (ui != null) {
+        contentManager.setSelectedContent(mainContent)
+        toolWindow.activateOrShow(requestFocus)
+        return ui
+      }
+    }
+
+    contentManager.contentComponentSequence()
+      .firstNotNullOfOrNull { (content, component) ->
+        VcsLogContentUtil.getLogUi(component).asSafely<MainVcsLogUi>()
+          ?.takeIf { predicate(it) && it.filterUi.filters.isEmpty }
+          ?.let { component to it }
+      }?.let { (component, ui) ->
+        if (ui.showCommit(hash, root, false)) {
+          ContentUtilEx.selectContent(contentManager, component, false)
+          toolWindow.activateOrShow(requestFocus)
+          return ui
         }
       }
-    }
 
-    val existingUi = VcsLogContentUtil.findLogUi(window, MainVcsLogUi::class.java, true) {
-      if (it === selectedUi && it === mainUi) return@findLogUi false
-      it.refresher.setValid(true, false)
-      predicate(it) && it.showCommitSync(hash, root, requestFocus)
-    }
-    if (existingUi != null) return existingUi
+    val ui = openNewLogTab(VcsLogTabLocation.TOOL_WINDOW, VcsLogFilterObject.EMPTY_COLLECTION)
+    if (!ui.showCommit(hash, root, false)) return null
 
-    val newUi = openNewLogTab(VcsLogTabLocation.TOOL_WINDOW, VcsLogFilterObject.EMPTY_COLLECTION)
-    if (newUi.showCommit(hash, root, requestFocus)) return newUi
-    return null
+    toolWindow.activateOrShow(requestFocus)
+    return ui
   }
 
   @RequiresEdt
@@ -202,4 +298,13 @@ internal class IdeVcsLogManager(
 @Internal
 fun getProjectLogName(logProviders: Map<VirtualFile, VcsLogProvider>): String {
   return "Vcs Project Log for " + VcsLogUtil.getProvidersMapText(logProviders)
+}
+
+private fun ToolWindow.activateOrShow(requestFocus: Boolean) {
+  if (requestFocus) {
+    activate(null, true, true)
+  }
+  else {
+    show()
+  }
 }

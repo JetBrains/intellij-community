@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.data
 
-import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
+import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.ImageUtil

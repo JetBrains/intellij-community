@@ -18,7 +18,7 @@ import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
 import java.net.InetSocketAddress
 import java.net.Proxy
-import java.util.*
+import java.util.Base64
 import kotlin.time.Duration.Companion.seconds
 
 /** NB: HTTP client instances should not be cached in the callers. */

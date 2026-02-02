@@ -2,7 +2,12 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler
 
-import com.intellij.debugger.streams.core.wrapper.*
+import com.intellij.debugger.streams.core.wrapper.CallArgument
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
+import com.intellij.debugger.streams.core.wrapper.StreamCall
+import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
+import com.intellij.debugger.streams.core.wrapper.TypeAfterAware
+import com.intellij.debugger.streams.core.wrapper.TypeBeforeAware
 import com.intellij.debugger.streams.core.wrapper.impl.IntermediateStreamCallImpl
 import com.intellij.debugger.streams.core.wrapper.impl.TerminatorStreamCallImpl
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes

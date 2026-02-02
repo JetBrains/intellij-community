@@ -8,7 +8,23 @@ import com.fasterxml.jackson.databind.MapperFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.intellij.codeInspection.ex.InspectionMetaInformationService
-import com.intellij.codeInspection.options.*
+import com.intellij.codeInspection.options.LocMessage
+import com.intellij.codeInspection.options.OptCheckbox
+import com.intellij.codeInspection.options.OptComponent
+import com.intellij.codeInspection.options.OptControl
+import com.intellij.codeInspection.options.OptDescribedComponent
+import com.intellij.codeInspection.options.OptDropdown
+import com.intellij.codeInspection.options.OptExpandableString
+import com.intellij.codeInspection.options.OptGroup
+import com.intellij.codeInspection.options.OptNumber
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptSettingLink
+import com.intellij.codeInspection.options.OptString
+import com.intellij.codeInspection.options.OptStringList
+import com.intellij.codeInspection.options.OptTab
+import com.intellij.codeInspection.options.OptTable
+import com.intellij.codeInspection.options.OptTableColumn
+import com.intellij.codeInspection.options.OptionController
 import com.intellij.ide.plugins.PluginManagerCore.getPluginSet
 import com.intellij.inspectopedia.extractor.data.Inspection
 import com.intellij.inspectopedia.extractor.data.OptionsPanelInfo
@@ -24,7 +40,8 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
+import java.util.Locale
 import kotlin.system.exitProcess
 
 internal class InspectopediaExtractor : ModernApplicationStarter() {

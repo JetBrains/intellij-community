@@ -11,7 +11,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiRecursiveVisitor
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.XmlElementFactory
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlText
@@ -19,7 +23,13 @@ import com.intellij.util.xml.GenericDomValue
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.dom.MavenDomElement
 import org.jetbrains.idea.maven.dom.MavenDomUtil
-import org.jetbrains.idea.maven.dom.model.*
+import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates
+import org.jetbrains.idea.maven.dom.model.MavenDomDependencies
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency
+import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
+import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
+import org.jetbrains.idea.maven.dom.model.MavenDomRepository
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.MavenProject

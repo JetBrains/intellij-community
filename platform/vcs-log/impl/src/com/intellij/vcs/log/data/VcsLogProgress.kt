@@ -10,7 +10,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.Objects
 
 @ApiStatus.Internal
 class VcsLogProgress(parent: Disposable) : Disposable {

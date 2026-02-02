@@ -3,7 +3,6 @@ package git4idea.rebase.log.changes
 
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.log.VcsCommitMetadata
-import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.test.GitSingleRepoTest
@@ -11,7 +10,6 @@ import git4idea.test.assertCommitted
 import git4idea.test.assertStagedChanges
 import git4idea.test.commit
 import git4idea.test.filterChangesByFileName
-
 import kotlinx.coroutines.runBlocking
 
 class GitDropSelectedChangesOperationTest : GitSingleRepoTest() {

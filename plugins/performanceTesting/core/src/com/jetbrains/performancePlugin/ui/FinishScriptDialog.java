@@ -13,7 +13,12 @@ import com.jetbrains.performancePlugin.utils.StatisticCollector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.ArrayList;

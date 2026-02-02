@@ -22,7 +22,11 @@ import java.io.InputStreamReader
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.copyTo
+import kotlin.io.path.createDirectories
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
 fun <T : HttpRequest> T.withAuth(): T = this.apply {
   val teamCityCI by lazy { CIServer.instance.asTeamCity() }

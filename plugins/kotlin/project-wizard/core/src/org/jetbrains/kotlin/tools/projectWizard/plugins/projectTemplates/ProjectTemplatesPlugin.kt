@@ -2,11 +2,16 @@
 package org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates
 
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.core.*
+import org.jetbrains.kotlin.tools.projectWizard.core.Context
+import org.jetbrains.kotlin.tools.projectWizard.core.Failure
+import org.jetbrains.kotlin.tools.projectWizard.core.ParseError
+import org.jetbrains.kotlin.tools.projectWizard.core.Plugin
+import org.jetbrains.kotlin.tools.projectWizard.core.PluginSettingsOwner
+import org.jetbrains.kotlin.tools.projectWizard.core.SettingsWriter
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.PipelineTask
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.Property
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSetting
-
+import org.jetbrains.kotlin.tools.projectWizard.core.valueParserM
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.withAllSubModules

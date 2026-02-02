@@ -4,7 +4,14 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
-import org.jetbrains.plugins.github.api.data.pullrequest.timeline.*
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRAssignedEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRLabeledEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRRenamedTitleEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRReviewRequestedEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRReviewUnrequestedEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRUnassignedEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRUnlabeledEvent
 
 class GHPRTimelineMergedSimpleEvents : GHPRTimelineMergedEvents<GHPRTimelineEvent.Simple>(), GHPRTimelineEvent.Simple {
 

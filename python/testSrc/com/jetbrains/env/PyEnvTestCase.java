@@ -31,7 +31,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.python.test.env.common.PredefinedPyEnvironments.*;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.Companion;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_2_7;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_10;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_11;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_12;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_12_DJANGO;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_13;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_14;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_8_FULL;
+import static com.intellij.python.test.env.common.PredefinedPyEnvironments.VENV_3_9;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 /**

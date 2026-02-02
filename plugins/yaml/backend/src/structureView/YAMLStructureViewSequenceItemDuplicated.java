@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLSequenceItem;
 import org.jetbrains.yaml.psi.YAMLValue;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 
 class YAMLStructureViewSequenceItemDuplicated extends DuplicatedPsiTreeElementBase<YAMLSequenceItem> {

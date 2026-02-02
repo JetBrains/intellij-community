@@ -6,7 +6,11 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.externalSystem.autoimport.*
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectListener
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectReloadContext
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable

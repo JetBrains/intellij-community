@@ -9,7 +9,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.RowSorter;
 import java.util.Comparator;
 import java.util.List;
 

@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.base.analysis.KotlinUastOutOfCodeBlockModificat
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import java.util.*
+import java.util.ArrayDeque
 
 /**
  * Returns a set of PsiMethods/KtFunctions/KtProperties which "deep" override current [this] declaration.

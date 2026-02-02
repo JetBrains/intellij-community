@@ -16,7 +16,14 @@ import com.intellij.openapi.vcs.changes.ui.GroupingPolicyFactoryHolder
 import com.intellij.platform.project.asEntity
 import com.intellij.platform.vcs.impl.shared.changes.GroupingUpdatePlaces
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
-import com.intellij.platform.vcs.impl.shared.rhizome.*
+import com.intellij.platform.vcs.impl.shared.rhizome.DiffSplitterEntity
+import com.intellij.platform.vcs.impl.shared.rhizome.GroupingItemEntity
+import com.intellij.platform.vcs.impl.shared.rhizome.GroupingItemsEntity
+import com.intellij.platform.vcs.impl.shared.rhizome.NodeEntity
+import com.intellij.platform.vcs.impl.shared.rhizome.SelectShelveChangeEntity
+import com.intellij.platform.vcs.impl.shared.rhizome.ShelfTreeEntity
+import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeListEntity
+import com.intellij.platform.vcs.impl.shared.rhizome.ShelvesTreeRootEntity
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeListRpc
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.shelf.diff.BackendShelveEditorDiffPreview
@@ -24,15 +31,24 @@ import com.intellij.vcs.shelf.diff.ShelfDiffChangesProvider
 import com.intellij.vcs.shelf.diff.ShelfDiffChangesState
 import com.intellij.vcs.shelf.diff.ShelvedPreviewProcessor
 import com.jetbrains.rhizomedb.entity
-import fleet.kernel.*
+import fleet.kernel.DurableRef
+import fleet.kernel.change
+import fleet.kernel.onDispose
 import fleet.kernel.rebase.SharedChangeScope
 import fleet.kernel.rebase.shared
+import fleet.kernel.ref
 import fleet.kernel.rete.Rete
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.swing.tree.DefaultTreeModel
 
 private const val UPDATE_DEBOUNCE_TIMEOUT = 200L

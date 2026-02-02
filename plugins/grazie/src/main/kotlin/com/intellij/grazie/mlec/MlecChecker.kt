@@ -10,15 +10,25 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.cloud.APIQueries
 import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.rule.SentenceBatcher
-import com.intellij.grazie.text.*
-import com.intellij.grazie.utils.*
+import com.intellij.grazie.text.ExternalTextChecker
+import com.intellij.grazie.text.GrazieProblem
+import com.intellij.grazie.text.Rule
+import com.intellij.grazie.text.RuleGroup
+import com.intellij.grazie.text.TextProblem
+import com.intellij.grazie.utils.Text
+import com.intellij.grazie.utils.TextStyleDomain
+import com.intellij.grazie.utils.getAssociatedGrazieRule
+import com.intellij.grazie.utils.getProblems
+import com.intellij.grazie.utils.isEnabledInState
+import com.intellij.grazie.utils.shouldCheckGrammarStyle
+import com.intellij.grazie.utils.underline
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
-import java.util.*
+import java.util.Locale
 
 class MlecChecker : ExternalTextChecker() {
   private val incompleteSentenceMessages = setOf(

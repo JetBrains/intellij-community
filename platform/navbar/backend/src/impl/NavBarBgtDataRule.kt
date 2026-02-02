@@ -5,7 +5,13 @@ import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.ide.util.DeleteHandler.DefaultDeleteProvider
 import com.intellij.model.Pointer
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataSnapshot
+import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiDataRule
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider

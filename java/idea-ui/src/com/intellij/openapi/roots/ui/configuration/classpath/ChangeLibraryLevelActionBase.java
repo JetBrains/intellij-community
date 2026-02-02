@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;

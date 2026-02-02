@@ -1,8 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
-import com.intellij.build.*;
-import com.intellij.build.events.*;
+import com.intellij.build.BuildContentManager;
+import com.intellij.build.BuildDescriptor;
+import com.intellij.build.BuildProgressListener;
+import com.intellij.build.BuildViewManager;
+import com.intellij.build.DefaultBuildDescriptor;
+import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.EventResult;
+import com.intellij.build.events.FailureResult;
+import com.intellij.build.events.FileMessageEvent;
+import com.intellij.build.events.FinishBuildEvent;
+import com.intellij.build.events.MessageEvent;
+import com.intellij.build.events.StartBuildEvent;
+import com.intellij.build.events.StartEvent;
 import com.intellij.build.events.impl.ProgressBuildEventImpl;
 import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.execution.RunnerAndConfigurationSettings;

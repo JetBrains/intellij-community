@@ -12,7 +12,11 @@ import com.intellij.terminal.completion.spec.ShellCommandSpec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.terminal.block.completion.spec.*
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
 import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellChildOptionsContext
 
 internal class JavacShellCommandSpecsProvider : ShellCommandSpecsProvider {

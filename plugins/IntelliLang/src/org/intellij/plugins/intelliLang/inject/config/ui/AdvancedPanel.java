@@ -22,7 +22,8 @@ import com.intellij.ui.LanguageTextField;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
 
 public final class AdvancedPanel extends AbstractInjectionPanel<BaseInjection> {
 

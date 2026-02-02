@@ -2,7 +2,11 @@
 package com.intellij.execution.junit.codeInspection
 
 import com.intellij.codeInsight.TestFrameworks
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.execution.JUnitBundle
 import com.intellij.execution.junit.codeInspection.HamcrestCommonClassNames.ORG_HAMCREST_MATCHER_ASSERT
 import com.intellij.execution.junit.isJUnit4InScope
@@ -10,16 +14,30 @@ import com.intellij.execution.junit.isJUnit5Or6InScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaVersionService
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiPrimitiveType
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS
 import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSUMPTIONS
 import com.siyeh.ig.testFrameworks.AbstractAssertHint
 import com.siyeh.ig.testFrameworks.UAssertHint
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UCallableReferenceExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.generate.getUastElementFactory
 import org.jetbrains.uast.generate.replace
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.getQualifiedParentOrThis
+import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class JUnit5AssertionsConverterInspection(val frameworkName: @NonNls String = "JUnit5") : AbstractBaseUastLocalInspectionTool() {

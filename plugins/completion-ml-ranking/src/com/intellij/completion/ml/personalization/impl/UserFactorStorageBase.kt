@@ -2,13 +2,19 @@
 
 package com.intellij.completion.ml.personalization.impl
 
-import com.intellij.completion.ml.personalization.*
+import com.intellij.completion.ml.personalization.DateUtil
+import com.intellij.completion.ml.personalization.Day
+import com.intellij.completion.ml.personalization.FactorReader
+import com.intellij.completion.ml.personalization.FactorUpdater
+import com.intellij.completion.ml.personalization.UserFactorDescription
+import com.intellij.completion.ml.personalization.UserFactorDescriptions
+import com.intellij.completion.ml.personalization.UserFactorStorage
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.diagnostic.logger
 import org.jdom.Element
 import java.text.DecimalFormat
 import java.text.ParseException
-import java.util.*
+import java.util.SortedMap
 
 abstract class UserFactorStorageBase : UserFactorStorage, PersistentStateComponent<Element> {
   private companion object {

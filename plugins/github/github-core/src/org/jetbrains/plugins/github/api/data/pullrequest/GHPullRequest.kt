@@ -5,8 +5,12 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.plugins.github.api.data.*
-import java.util.*
+import org.jetbrains.plugins.github.api.data.GHActor
+import org.jetbrains.plugins.github.api.data.GHLabel
+import org.jetbrains.plugins.github.api.data.GHReactable
+import org.jetbrains.plugins.github.api.data.GHRepository
+import org.jetbrains.plugins.github.api.data.GHUser
+import java.util.Date
 
 @GraphQLFragment("/graphql/fragment/pullRequestInfo.graphql")
 class GHPullRequest(

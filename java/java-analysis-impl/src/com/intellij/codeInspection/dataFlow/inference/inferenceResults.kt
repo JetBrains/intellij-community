@@ -7,14 +7,27 @@ import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.Mutability
 import com.intellij.codeInspection.dataFlow.MutationSignature
 import com.intellij.lang.LighterASTNode
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiArrayAccessExpression
+import com.intellij.psi.PsiAssignmentExpression
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.siyeh.ig.psiutils.ClassUtils
-import java.util.*
+import java.util.BitSet
 
 @ConsistentCopyVisibility
 public data class ExpressionRange internal constructor (val startOffset: Int, val endOffset: Int) {

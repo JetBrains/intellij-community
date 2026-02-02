@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rete.impl
 
-import fleet.kernel.rete.*
+import fleet.kernel.rete.Broadcaster
+import fleet.kernel.rete.Collector
+import fleet.kernel.rete.SubscriptionScope
+import fleet.kernel.rete.Token
 
 internal class BroadcasterImpl<T> : AdaptiveSet<Collector<T>>(), Broadcaster<T> {
   override fun SubscriptionScope.collectImpl(emit: Collector<T>) {

@@ -19,9 +19,8 @@
   <content namespace="jetbrains">
     <module name="intellij.gradle.completion"/>
     <module name="intellij.gradle.toml"/>
+    <module name="intellij.gradle.properties"/>
   </content>
-
-  <depends optional="true" config-file="gradle-properties.xml">com.intellij.properties</depends>
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
@@ -57,6 +56,8 @@
                     interface="org.jetbrains.plugins.gradle.execution.GradleOrderEnumeratorHandler$FactoryImpl"
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.issueChecker" interface="org.jetbrains.plugins.gradle.issue.GradleIssueChecker"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.executionChecker" interface="org.jetbrains.plugins.gradle.service.execution.GradleExecutionChecker"
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.gradleJvmResolver" interface="org.jetbrains.plugins.gradle.resolvers.GradleJvmResolver"
                     dynamic="true"/>

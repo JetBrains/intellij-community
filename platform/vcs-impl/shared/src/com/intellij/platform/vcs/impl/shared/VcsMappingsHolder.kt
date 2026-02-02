@@ -11,7 +11,12 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.vcs.impl.shared.rpc.VcsMappingsApi
 import com.intellij.platform.vcs.impl.shared.rpc.VcsMappingsDto
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

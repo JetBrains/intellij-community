@@ -6,9 +6,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.UIManager;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Supplier;

@@ -2,7 +2,12 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionSuppressor;
+import com.intellij.codeInspection.LanguageInspectionSuppressors;
+import com.intellij.codeInspection.PossibleHeapPollutionVarargsInspection;
+import com.intellij.codeInspection.RedundantSuppressInspection;
+import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;

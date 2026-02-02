@@ -27,7 +27,11 @@ import com.intellij.util.PathUtil
 import com.intellij.util.io.ZipUtil
 import com.intellij.util.io.deleteWithParentsIfEmpty
 import com.jetbrains.python.PythonHelper
-import com.jetbrains.python.run.*
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.run.buildTargetedCommandLine
+import com.jetbrains.python.run.ensureProjectSdkAndModuleDirsAreOnTarget
+import com.jetbrains.python.run.execute
+import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAddedByUser

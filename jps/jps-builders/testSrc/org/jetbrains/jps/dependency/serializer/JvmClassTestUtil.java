@@ -3,9 +3,22 @@ package org.jetbrains.jps.dependency.serializer;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.Usage;
-import org.jetbrains.jps.dependency.java.*;
+import org.jetbrains.jps.dependency.java.ClassNewUsage;
+import org.jetbrains.jps.dependency.java.ElemType;
+import org.jetbrains.jps.dependency.java.ElementAnnotation;
+import org.jetbrains.jps.dependency.java.JVMFlags;
+import org.jetbrains.jps.dependency.java.JvmClass;
+import org.jetbrains.jps.dependency.java.JvmField;
+import org.jetbrains.jps.dependency.java.JvmMethod;
+import org.jetbrains.jps.dependency.java.ParamAnnotation;
+import org.jetbrains.jps.dependency.java.TypeRepr;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;

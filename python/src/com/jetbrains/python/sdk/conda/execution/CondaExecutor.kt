@@ -4,9 +4,15 @@ package com.jetbrains.python.sdk.conda.execution
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.isWindows
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.osFamily
-import com.intellij.python.community.execService.*
+import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.BinOnTarget
+import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.community.execService.ConcurrentProcessWeight
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.ProcessOutputTransformer
+import com.intellij.python.community.execService.ZeroCodeJsonParserTransformer
+import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.validatePythonAndGetInfo
 import com.intellij.util.ShellEnvironmentReader
@@ -24,7 +30,12 @@ import com.jetbrains.python.sdk.targetEnvConfiguration
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isExecutable
+import kotlin.io.path.pathString
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 

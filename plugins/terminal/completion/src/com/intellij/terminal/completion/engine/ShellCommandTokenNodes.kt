@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.completion.engine
 
-import com.intellij.terminal.completion.spec.*
+import com.intellij.terminal.completion.spec.ShellAliasSuggestion
+import com.intellij.terminal.completion.spec.ShellArgumentSpec
+import com.intellij.terminal.completion.spec.ShellCommandParserOptions
+import com.intellij.terminal.completion.spec.ShellCommandSpec
+import com.intellij.terminal.completion.spec.ShellOptionSpec
 
 internal abstract class ShellCommandTreeNode<T>(val text: String, open val spec: T?, val parent: ShellCommandTreeNode<*>?) {
   val children: MutableList<ShellCommandTreeNode<*>> = mutableListOf()

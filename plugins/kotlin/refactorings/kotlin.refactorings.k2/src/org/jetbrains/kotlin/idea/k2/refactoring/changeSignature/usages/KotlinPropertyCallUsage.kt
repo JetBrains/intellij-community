@@ -9,7 +9,11 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
 import org.jetbrains.kotlin.idea.k2.refactoring.util.createContextArgumentReplacementMapForVariableAccess
 import org.jetbrains.kotlin.idea.k2.refactoring.util.createReplacementReceiverArgumentExpression
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 
 internal class KotlinPropertyCallUsage(element: KtSimpleNameExpression, private val changeInfo: KotlinChangeInfoBase) : UsageInfo(element), KotlinBaseChangeSignatureUsage {

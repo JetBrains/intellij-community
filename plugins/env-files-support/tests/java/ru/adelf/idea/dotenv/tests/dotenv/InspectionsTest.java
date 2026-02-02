@@ -4,7 +4,14 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import org.junit.Test;
-import ru.adelf.idea.dotenv.inspections.*;
+import ru.adelf.idea.dotenv.inspections.DuplicateKeyInspection;
+import ru.adelf.idea.dotenv.inspections.ExtraBlankLineInspection;
+import ru.adelf.idea.dotenv.inspections.IncorrectDelimiterInspection;
+import ru.adelf.idea.dotenv.inspections.LeadingCharacterInspection;
+import ru.adelf.idea.dotenv.inspections.LowercaseKeyInspection;
+import ru.adelf.idea.dotenv.inspections.SpaceAroundSeparatorInspection;
+import ru.adelf.idea.dotenv.inspections.SpaceInsideNonQuotedInspection;
+import ru.adelf.idea.dotenv.inspections.TrailingWhitespaceInspection;
 import ru.adelf.idea.dotenv.tests.DotEnvLightCodeInsightFixtureTestCase;
 
 import java.util.ArrayList;

@@ -11,7 +11,7 @@ import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.packaging.elements.PackagingElement;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

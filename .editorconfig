@@ -39,4 +39,7 @@ ij_kotlin_allow_trailing_comma = true
 ij_kotlin_call_parameters_right_paren_on_new_line = unset
 ij_kotlin_call_parameters_new_line_after_left_paren = unset
 ij_kotlin_if_rparen_on_new_line = unset
+
+; IJI-3282
+ij_kotlin_name_count_to_use_star_import = 9999
 ;=====Kotlin=====

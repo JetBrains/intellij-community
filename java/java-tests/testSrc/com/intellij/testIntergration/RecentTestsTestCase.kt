@@ -9,7 +9,7 @@ import com.intellij.testIntegration.RecentTestsData
 import com.intellij.testIntegration.SingleTestEntry
 import com.intellij.testIntegration.SuiteEntry
 import org.mockito.Mockito
-import java.util.*
+import java.util.Date
 
 abstract class RecentTestsTestCase {
   private val data = RecentTestsData()

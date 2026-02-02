@@ -12,28 +12,31 @@
     <GroovyCodeStyleSettings>
       <option name="STATIC_METHODS_ORDER_WEIGHT" value="5" />
       <option name="METHODS_ORDER_WEIGHT" value="4" />
+      <option name="PACKAGES_TO_USE_IMPORT_ON_DEMAND">
+        <value>
+          <package name="java.util" withSubpackages="false" static="false" />
+          <package name="java.lang" withSubpackages="false" static="false" />
+        </value>
+      </option>
     </GroovyCodeStyleSettings>
     <JavaCodeStyleSettings>
       <option name="FIELD_NAME_PREFIX" value="my" />
       <option name="STATIC_FIELD_NAME_PREFIX" value="our" />
       <option name="PREFER_LONGER_NAMES" value="false" />
       <option name="VISIBILITY" value="EscalateVisible" />
+      <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="2147483647" />
+      <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="2147483647" />
       <option name="PACKAGES_TO_USE_IMPORT_ON_DEMAND">
-        <value>
-          <package name="java.awt" withSubpackages="false" static="false" />
-          <package name="javax.tools" withSubpackages="true" static="false" />
-          <package name="javax.swing" withSubpackages="false" static="false" />
-        </value>
+        <value />
       </option>
       <option name="JD_DO_NOT_WRAP_ONE_LINE_COMMENTS" value="true" />
     </JavaCodeStyleSettings>
     <JetCodeStyleSettings>
       <option name="PACKAGES_TO_USE_STAR_IMPORTS">
-        <value>
-          <package name="java.util" alias="false" withSubpackages="false" />
-          <package name="kotlinx.android.synthetic" alias="false" withSubpackages="true" />
-        </value>
+        <value />
       </option>
+      <option name="NAME_COUNT_TO_USE_STAR_IMPORT" value="2147483647" />
+      <option name="NAME_COUNT_TO_USE_STAR_IMPORT_FOR_MEMBERS" value="2147483647" />
     </JetCodeStyleSettings>
     <Properties>
       <option name="KEEP_BLANK_LINES" value="true" />

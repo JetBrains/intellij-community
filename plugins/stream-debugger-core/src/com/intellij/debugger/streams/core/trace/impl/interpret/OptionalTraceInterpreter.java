@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.core.trace.impl.interpret;
 
-import com.intellij.debugger.streams.core.trace.*;
+import com.intellij.debugger.streams.core.trace.ArrayReference;
+import com.intellij.debugger.streams.core.trace.BooleanValue;
+import com.intellij.debugger.streams.core.trace.CallTraceInterpreter;
+import com.intellij.debugger.streams.core.trace.TraceElement;
+import com.intellij.debugger.streams.core.trace.TraceInfo;
+import com.intellij.debugger.streams.core.trace.Value;
 import com.intellij.debugger.streams.core.trace.impl.TraceElementImpl;
 import com.intellij.debugger.streams.core.trace.impl.interpret.ex.UnexpectedValueException;
 import com.intellij.debugger.streams.core.trace.impl.interpret.ex.UnexpectedValueTypeException;

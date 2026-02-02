@@ -1,7 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils.library;
 
-import com.intellij.jarRepository.*;
+import com.intellij.jarRepository.JarRepositoryManager;
+import com.intellij.jarRepository.LibraryTest;
+import com.intellij.jarRepository.MavenRepoFixture;
+import com.intellij.jarRepository.RemoteRepositoriesConfiguration;
+import com.intellij.jarRepository.RemoteRepositoryDescription;
+import com.intellij.jarRepository.RepositoryLibraryType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.roots.OrderRootType;

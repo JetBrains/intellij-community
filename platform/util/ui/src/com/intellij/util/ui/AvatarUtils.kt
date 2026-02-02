@@ -8,7 +8,14 @@ import com.intellij.util.ui.AvatarUtils.generateColoredAvatar
 import com.intellij.util.ui.ImageUtil.applyQualityRenderingHints
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Font
+import java.awt.GradientPaint
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.GraphicsConfiguration
+import java.awt.Rectangle
 import java.awt.font.TextAttribute
 import java.awt.geom.Area
 import java.awt.geom.RoundRectangle2D

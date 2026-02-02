@@ -26,13 +26,24 @@ import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forEx
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forGenericContentEntity
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forModuleRootsFileBased
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
-import com.intellij.util.indexing.roots.origin.*
-import com.intellij.workspaceModel.core.fileIndex.*
+import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder
+import com.intellij.util.indexing.roots.origin.IndexingUrlSourceRootHolder
+import com.intellij.util.indexing.roots.origin.LibraryOriginImpl
+import com.intellij.util.indexing.roots.origin.MutableIndexingSourceRootHolder
+import com.intellij.util.indexing.roots.origin.MutableIndexingUrlRootHolder
+import com.intellij.util.indexing.roots.origin.MutableIndexingUrlSourceRootHolder
+import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
-import java.util.*
+import java.util.NavigableMap
+import java.util.TreeMap
 import java.util.function.Consumer
 import java.util.function.Function
 

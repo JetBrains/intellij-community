@@ -1,6 +1,11 @@
 package com.intellij.cce.python.visitor
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.CodeToken
+import com.intellij.cce.core.Language
+import com.intellij.cce.core.SimpleTokenProperties
+import com.intellij.cce.core.SymbolLocation
+import com.intellij.cce.core.TypeProperty
 import com.intellij.cce.visitor.RenameVisitorBase
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor

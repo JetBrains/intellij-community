@@ -17,7 +17,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import git4idea.GitActionIdsHolder.Id.*
+import git4idea.GitActionIdsHolder.Id.GPG_AGENT_CONFIGURATION_PROPOSE_CONFIGURE
+import git4idea.GitActionIdsHolder.Id.GPG_AGENT_CONFIGURATION_PROPOSE_MANUAL
+import git4idea.GitActionIdsHolder.Id.GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION_CONFIGURE
+import git4idea.GitActionIdsHolder.Id.GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION_MANUAL
+import git4idea.GitActionIdsHolder.Id.GPG_AGENT_CONFIGURATION_SUCCESS_MANUAL
 import git4idea.GitNotificationIdsHolder.Companion.GPG_AGENT_CONFIGURATION_ERROR
 import git4idea.GitNotificationIdsHolder.Companion.GPG_AGENT_CONFIGURATION_PROPOSE
 import git4idea.GitNotificationIdsHolder.Companion.GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION

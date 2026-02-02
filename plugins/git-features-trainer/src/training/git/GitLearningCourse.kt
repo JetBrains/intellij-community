@@ -9,7 +9,13 @@ import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import org.jetbrains.annotations.NonNls
-import training.git.lesson.*
+import training.git.lesson.GitAnnotateLesson
+import training.git.lesson.GitChangelistsAndShelveLesson
+import training.git.lesson.GitCommitLesson
+import training.git.lesson.GitFeatureBranchWorkflowLesson
+import training.git.lesson.GitInteractiveRebaseLesson
+import training.git.lesson.GitProjectHistoryLesson
+import training.git.lesson.GitQuickStartLesson
 import training.learn.course.IftModule
 import training.learn.course.KLesson
 import training.learn.course.LearningCourse

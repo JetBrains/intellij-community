@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBund
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.State
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
-import java.util.*
+import java.util.Objects
 import javax.swing.Icon
 
 /**

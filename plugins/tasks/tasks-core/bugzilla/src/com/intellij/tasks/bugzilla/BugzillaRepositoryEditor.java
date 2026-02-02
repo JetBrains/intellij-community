@@ -13,7 +13,8 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
 import java.util.Collections;
 import java.util.List;
 

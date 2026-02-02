@@ -7,8 +7,8 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.CompletionMLPolicy
-import com.intellij.openapi.project.DumbAware
 import com.intellij.completion.ml.storage.MutableLookupStorage
+import com.intellij.openapi.project.DumbAware
 
 class ContextFeaturesContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {

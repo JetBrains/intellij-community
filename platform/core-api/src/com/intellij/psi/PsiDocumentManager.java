@@ -102,6 +102,7 @@ public abstract class PsiDocumentManager {
   /**
    * If the {@code document} is committed, run {@code action} immediately.
    * Otherwise, schedule the execution of the {@code action} sometime in the future right after the {@code document} is committed.
+   * The action is going to be executed on EDT without write-action.
    */
   public abstract void performForCommittedDocument(@NotNull Document document, @NotNull Runnable action);
 

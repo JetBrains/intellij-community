@@ -4,7 +4,11 @@ package org.jetbrains.plugins.gradle.codeInspection.groovy
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType

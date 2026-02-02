@@ -1,9 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.rhizomedb.impl
 
-import com.jetbrains.rhizomedb.*
-import fleet.util.radixTrie.*
-import fleet.util.reducible.*
+import com.jetbrains.rhizomedb.Attribute
+import com.jetbrains.rhizomedb.Cardinality
+import com.jetbrains.rhizomedb.Datom
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.TX
+import com.jetbrains.rhizomedb.Versioned
+import com.jetbrains.rhizomedb.VersionedEID
+import fleet.util.radixTrie.RadixTrie
+import fleet.util.radixTrie.RadixTrieLong
+import fleet.util.radixTrie.get
+import fleet.util.radixTrie.put
+import fleet.util.radixTrie.update
+import fleet.util.reducible.ReduceDecision
 import kotlin.jvm.JvmInline
 
 /**

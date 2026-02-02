@@ -7,11 +7,17 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.util.Function;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomElementNavigationProvider;
+import com.intellij.util.xml.DomElementVisitor;
+import com.intellij.util.xml.DomService;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.ElementPresentation;
+import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 
 /**

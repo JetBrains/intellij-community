@@ -7,7 +7,7 @@ import com.intellij.platform.eel.EelExecPosixApi
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 
 /**

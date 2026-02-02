@@ -5,7 +5,9 @@ import org.gradle.api.Project;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.gradle.toolingExtension.impl.util.GradleConventionUtil.*;
+import static com.intellij.gradle.toolingExtension.impl.util.GradleConventionUtil.APPLICATION_PLUGIN_CONVENTION_CLASS_FQDN;
+import static com.intellij.gradle.toolingExtension.impl.util.GradleConventionUtil.findConventionPlugin;
+import static com.intellij.gradle.toolingExtension.impl.util.GradleConventionUtil.isGradleConventionsSupported;
 import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.getValue;
 
 public class ConventionApplicationPluginAccessor implements ApplicationPluginAccessor {

@@ -14,9 +14,9 @@ import {clearLogFile, logProgress, logToFile} from '../shared/mcp-rpc.mjs'
 import {createProjectPathManager} from './project-path'
 import {createStreamTransport} from './stream-transport'
 import {setIdeVersion} from './workarounds'
-import {BLOCKED_TOOL_NAMES, getReplacedToolNames, getSearchToolBlockedNames, SEARCH_TOOL_MODES} from './proxy-tools/registry'
-import type {SearchToolModeInfo, ToolModeInfo} from './proxy-tools/tooling'
-import {createProxyTooling, resolveSearchToolMode, resolveToolMode, TOOL_MODES} from './proxy-tools/tooling'
+import {BLOCKED_TOOL_NAMES, getReplacedToolNames} from './proxy-tools/registry'
+import type {ToolModeInfo} from './proxy-tools/tooling'
+import {createProxyTooling, resolveReadCapabilities, resolveSearchCapabilities, resolveToolMode, TOOL_MODES} from './proxy-tools/tooling'
 import {extractTextFromResult} from './proxy-tools/shared'
 import type {ToolArgs, ToolResultLike, ToolSpecLike} from './proxy-tools/types'
 
@@ -85,50 +85,39 @@ const projectPathManager = createProjectPathManager({projectPath, defaultProject
 const toolModeInfo: ToolModeInfo = resolveToolMode(env.JETBRAINS_MCP_TOOL_MODE)
 const REPLACED_TOOL_NAMES = getReplacedToolNames()
 const BASE_BLOCKED_TOOL_NAMES = new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL_NAMES])
-
-let cachedSearchToolModeInfo: SearchToolModeInfo | null = null
-
-function resolveSearchToolModeInfo(): SearchToolModeInfo {
-  if (cachedSearchToolModeInfo) return cachedSearchToolModeInfo
-  const resolved = resolveSearchToolMode(env.JETBRAINS_MCP_SEARCH_TOOL)
-  cachedSearchToolModeInfo = resolved
-  if (resolved.warning) {
-    warn(resolved.warning)
-  }
-  return resolved
-}
-
-function buildBlockedToolNames(): Set<string> {
-  const blocked = new Set(BASE_BLOCKED_TOOL_NAMES)
-  const searchToolModeInfo = resolveSearchToolModeInfo()
-  for (const name of getSearchToolBlockedNames(searchToolModeInfo.mode)) {
-    blocked.add(name)
-  }
-  return blocked
-}
+let searchCapabilities = resolveSearchCapabilities([]).capabilities
+let readCapabilities = resolveReadCapabilities([]).capabilities
 
 function blockedToolMessage(toolName: string): string {
-  const searchToolModeInfo = resolveSearchToolModeInfo()
   if (toolName === 'create_new_file') {
     if (toolModeInfo.mode === TOOL_MODES.CC) {
       return `Tool '${toolName}' is not exposed by ij-proxy. Use 'write' instead.`
     }
     return `Tool '${toolName}' is not exposed by ij-proxy. Use 'apply_patch' instead.`
   }
-  if (toolName === 'grep' && searchToolModeInfo.mode === SEARCH_TOOL_MODES.SEARCH) {
-    return `Tool '${toolName}' is not exposed by ij-proxy. Use 'search' instead.`
-  }
-  if (toolName === 'search' && searchToolModeInfo.mode === SEARCH_TOOL_MODES.GREP) {
-    return `Tool '${toolName}' is not exposed by ij-proxy. Use 'grep' instead.`
-  }
   return `Tool '${toolName}' is not exposed by ij-proxy.`
 }
 
-const {proxyToolSpecs, proxyToolNames, runProxyToolCall} = createProxyTooling({
-  projectPath,
-  callUpstreamTool,
-  toolMode: toolModeInfo.mode
-})
+let proxyToolSpecs: ToolSpecLike[] = []
+let proxyToolNames: Set<string> = new Set()
+let runProxyToolCall: (toolName: string, args: ToolArgs) => Promise<unknown> = async () => {
+  throw new Error('Proxy tooling not initialized')
+}
+
+function updateProxyTooling(): void {
+  const tooling = createProxyTooling({
+    projectPath,
+    callUpstreamTool,
+    toolMode: toolModeInfo.mode,
+    searchCapabilities,
+    readCapabilities
+  })
+  proxyToolSpecs = tooling.proxyToolSpecs
+  proxyToolNames = tooling.proxyToolNames
+  runProxyToolCall = tooling.runProxyToolCall
+}
+
+updateProxyTooling()
 
 function note(message: string): void {
   logToFile(message)
@@ -167,6 +156,10 @@ const upstreamClient = new Client({name: 'ij-mcp-proxy', version: '1.0.0'})
 upstreamClient.onerror = (error) => {
   warn(`Upstream client error: ${error.message}`)
 }
+upstreamClient.onclose = () => {
+  resetUpstreamState()
+  warn('Upstream client connection closed; will reconnect on next request')
+}
 
 const proxyServer = new Server(
   {name: 'ij-mcp-proxy', version: '1.0.0'},
@@ -182,9 +175,8 @@ const proxyServer = new Server(
 
 proxyServer.setRequestHandler(ListToolsRequestSchema, async () => {
   const upstreamTools = await getUpstreamTools()
-  const blocked = buildBlockedToolNames()
   return {
-    tools: mergeToolLists(proxyToolSpecs, upstreamTools, blocked)
+    tools: mergeToolLists(proxyToolSpecs, upstreamTools, BASE_BLOCKED_TOOL_NAMES)
   }
 })
 
@@ -199,7 +191,7 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
     return makeToolError('Tool name is required')
   }
 
-  if (buildBlockedToolNames().has(toolName)) {
+  if (BASE_BLOCKED_TOOL_NAMES.has(toolName)) {
     return makeToolError(blockedToolMessage(toolName))
   }
 
@@ -222,13 +214,17 @@ proxyServer.setRequestHandler(CallToolRequestSchema, async (request) => {
 })
 
 proxyServer.fallbackRequestHandler = async (request) => {
-  await ensureUpstreamConnected()
-  return await upstreamClient.request({method: request.method, params: request.params}, ResultSchema)
+  return await withUpstreamReconnect(request.method, async () => {
+    await ensureUpstreamConnected()
+    return await upstreamClient.request({method: request.method, params: request.params}, ResultSchema)
+  })
 }
 
 proxyServer.fallbackNotificationHandler = async (notification) => {
-  await ensureUpstreamConnected()
-  await upstreamClient.notification(notification)
+  await withUpstreamReconnect(notification.method, async () => {
+    await ensureUpstreamConnected()
+    await upstreamClient.notification(notification)
+  })
 }
 
 upstreamClient.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
@@ -266,7 +262,48 @@ void proxyServer.connect(stdioTransport).catch((error) => {
 let upstreamConnectedPromise: Promise<void> | null = null
 let upstreamTools: ToolSpecLike[] | null = null
 
+const RECOVERABLE_UPSTREAM_ERROR_RE = /\b(not connected|connection closed|session not found|server not initialized|mcp-session-id header is required)\b/i
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
+function isRecoverableUpstreamError(error: unknown): boolean {
+  const message = getErrorMessage(error)
+  return RECOVERABLE_UPSTREAM_ERROR_RE.test(message)
+}
+
+function resetUpstreamState(): void {
+  upstreamConnectedPromise = null
+  upstreamTools = null
+  searchCapabilities = resolveSearchCapabilities([]).capabilities
+  readCapabilities = resolveReadCapabilities([]).capabilities
+  updateProxyTooling()
+  setIdeVersion(null)
+}
+
+async function withUpstreamReconnect<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn()
+  } catch (error) {
+    if (!isRecoverableUpstreamError(error)) throw error
+    warn(`Upstream ${label} failed (${getErrorMessage(error)}); reconnecting and retrying once`)
+    resetUpstreamState()
+    try {
+      await streamTransport.resetTransport(error)
+    } catch (resetError) {
+      warn(`Failed to reset MCP stream transport: ${getErrorMessage(resetError)}`)
+    }
+    await ensureUpstreamConnected()
+    return fn()
+  }
+}
+
 async function ensureUpstreamConnected(): Promise<void> {
+  if (!upstreamClient.transport) {
+    upstreamConnectedPromise = null
+    upstreamTools = null
+  }
   if (upstreamConnectedPromise) return upstreamConnectedPromise
   upstreamConnectedPromise = upstreamClient.connect(streamTransport).catch((error) => {
     upstreamConnectedPromise = null
@@ -285,13 +322,18 @@ function updateIdeVersionFromUpstream(): void {
 }
 
 async function refreshUpstreamTools(): Promise<ToolSpecLike[]> {
-  await ensureUpstreamConnected()
-  const response = await upstreamClient.listTools()
-  const tools = Array.isArray(response?.tools) ? response.tools : []
-  projectPathManager.updateProjectPathKeys(tools)
-  projectPathManager.stripProjectPathFromTools(tools)
-  upstreamTools = tools
-  return tools
+  return await withUpstreamReconnect('tools/list', async () => {
+    await ensureUpstreamConnected()
+    const response = await upstreamClient.listTools()
+    const tools = Array.isArray(response?.tools) ? response.tools : []
+    projectPathManager.updateProjectPathKeys(tools)
+    projectPathManager.stripProjectPathFromTools(tools)
+    upstreamTools = tools
+    searchCapabilities = resolveSearchCapabilities(tools).capabilities
+    readCapabilities = resolveReadCapabilities(tools).capabilities
+    updateProxyTooling()
+    return tools
+  })
 }
 
 async function getUpstreamTools(): Promise<ToolSpecLike[]> {
@@ -332,36 +374,40 @@ function makeToolError(text: unknown): ToolOutput {
 }
 
 async function callUpstreamToolForClient(toolName: string, args: ToolArgs): Promise<unknown> {
-  await ensureUpstreamConnected()
-  await getUpstreamTools()
-  projectPathManager.injectProjectPathArgs(toolName, args)
-  const options = toolCallTimeoutMs > 0 ? {timeout: toolCallTimeoutMs} : undefined
-  const result = await upstreamClient.callTool({name: toolName, arguments: args}, undefined, options)
-  return normalizeToolResult(result)
+  return await withUpstreamReconnect(`tools/call ${toolName}`, async () => {
+    await ensureUpstreamConnected()
+    await getUpstreamTools()
+    projectPathManager.injectProjectPathArgs(toolName, args)
+    const options = toolCallTimeoutMs > 0 ? {timeout: toolCallTimeoutMs} : undefined
+    const result = await upstreamClient.callTool({name: toolName, arguments: args}, undefined, options)
+    return normalizeToolResult(result)
+  })
 }
 
 async function callUpstreamTool(toolName: string, args: ToolArgs): Promise<unknown> {
-  await ensureUpstreamConnected()
-  await getUpstreamTools()
-  const callArgs = {...args}
-  projectPathManager.injectProjectPathArgs(toolName, callArgs)
-  const options = toolCallTimeoutMs > 0 ? {timeout: toolCallTimeoutMs} : undefined
-  const result = normalizeToolResult(
-    await upstreamClient.callTool({name: toolName, arguments: callArgs}, undefined, options)
-  )
+  return await withUpstreamReconnect(`tools/call ${toolName}`, async () => {
+    await ensureUpstreamConnected()
+    await getUpstreamTools()
+    const callArgs = {...args}
+    projectPathManager.injectProjectPathArgs(toolName, callArgs)
+    const options = toolCallTimeoutMs > 0 ? {timeout: toolCallTimeoutMs} : undefined
+    const result = normalizeToolResult(
+      await upstreamClient.callTool({name: toolName, arguments: callArgs}, undefined, options)
+    )
 
-  if (result?.isError) {
-    throw new Error(extractTextFromResult(result) || 'Upstream tool error')
-  }
-  return result
+    if (result?.isError) {
+      throw new Error(extractTextFromResult(result) || 'Upstream tool error')
+    }
+    return result
+  })
 }
 
 function mergeToolLists(
   proxyTools: ToolSpecLike[] | undefined,
   upstreamTools: ToolSpecLike[] | undefined,
-  blockedNames: Iterable<string>
+  blockedNames: Set<string> | Iterable<string> | undefined
 ): ToolSpecLike[] {
-  const blocked = new Set(blockedNames || [])
+  const blocked = blockedNames instanceof Set ? blockedNames : new Set(blockedNames || [])
   const result: ToolSpecLike[] = []
   const seen = new Set<string>()
 

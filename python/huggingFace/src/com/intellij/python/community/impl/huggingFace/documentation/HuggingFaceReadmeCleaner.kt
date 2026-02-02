@@ -5,7 +5,7 @@ import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.net.URL
-import java.util.*
+import java.util.Locale
 
 @ApiStatus.Internal
 class HuggingFaceReadmeCleaner(

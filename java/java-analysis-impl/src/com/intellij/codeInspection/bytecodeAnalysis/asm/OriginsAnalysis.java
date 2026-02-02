@@ -8,7 +8,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode;
 import org.jetbrains.org.objectweb.asm.tree.InsnList;
-import org.jetbrains.org.objectweb.asm.tree.analysis.*;
+import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
+import org.jetbrains.org.objectweb.asm.tree.analysis.SourceInterpreter;
+import org.jetbrains.org.objectweb.asm.tree.analysis.SourceValue;
+import org.jetbrains.org.objectweb.asm.tree.analysis.Value;
 
 import java.util.HashSet;
 import java.util.LinkedList;

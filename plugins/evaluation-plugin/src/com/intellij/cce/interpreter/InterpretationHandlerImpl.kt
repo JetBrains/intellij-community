@@ -8,8 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.concurrency.errorIfNotMessage
 import java.io.File
-import java.util.*
-import kotlin.coroutines.cancellation.CancellationException
+import java.util.Date
 
 class InterpretationHandlerImpl(
   private val indicator: Progress,

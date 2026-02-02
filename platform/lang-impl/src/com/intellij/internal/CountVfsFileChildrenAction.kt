@@ -69,7 +69,7 @@ internal class CountVfsFileChildrenAction : AnAction(), DumbAware {
         var contentIndexableFilesCount = 0
         var excludedFilesCount = 0
         var ignoredFilesCount = 0
-        visitChildrenInVfsRecursively(root) { file ->
+        visitChildrenInVfsRecursively(root).forEach { file ->
           vfsFilesCount++
           runReadAction {
             when {
@@ -81,7 +81,6 @@ internal class CountVfsFileChildrenAction : AnAction(), DumbAware {
               fileIndex.isExcluded(file) -> excludedFilesCount++
             }
           }
-          true
         }
         vfsFilesCount-- // don't count the directory itself
         val message = "Under <i>${root.path}</i><br/>" +
@@ -97,19 +96,17 @@ internal class CountVfsFileChildrenAction : AnAction(), DumbAware {
 }
 
 @ApiStatus.Internal
-fun visitChildrenInVfsRecursively(file: VirtualFile, action: (VirtualFile) -> Boolean) {
-  VfsUtilCore.visitChildrenRecursively(file, object : VirtualFileVisitor<Unit>() {
-    override fun getChildrenIterable(file: VirtualFile): Iterable<VirtualFile?> {
-      val id = (file as? VirtualFileWithId)?.id ?: return emptyList()
-      val fs = ManagingFS.getInstance()
-      return FSRecords.getInstance().list(id).children.map { fs.findFileById(it.id) }
-    }
+fun visitChildrenInVfsRecursively(file: VirtualFile): Sequence<VirtualFile> = sequence {
+  yield(file)
+  if (file.isDirectory) {
+    val id = (file as? VirtualFileWithId)?.id ?: return@sequence
+    val fs = ManagingFS.getInstance()
+    val children = FSRecords.getInstance().list(id).children
+      .mapNotNull { fs.findFileById(it.id) }
+      .filter { it.name != ".DS_Store" }
 
-    override fun visitFile(file: VirtualFile): Boolean {
-      return if (file.name != ".DS_Store") {
-        action(file)
-      }
-      else false
+    for (child in children) {
+      yieldAll(visitChildrenInVfsRecursively(child))
     }
-  })
+  }
 }

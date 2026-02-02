@@ -22,7 +22,10 @@ import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.BASE_CONDA
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.CUSTOM
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.PROJECT_UV
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.PROJECT_VENV
 import com.jetbrains.python.sdk.add.v2.conda.selectCondaEnvironment
 import com.jetbrains.python.sdk.add.v2.uv.UvInterpreterSection
 import com.jetbrains.python.sdk.add.v2.venv.setupVirtualenv
@@ -31,12 +34,17 @@ import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import com.jetbrains.python.venvReader.VirtualEnvReader
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.awt.Component
 
 interface PySdkPanelBuilder {

@@ -4,7 +4,11 @@ package com.intellij.platform.project
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.kernel.withKernel
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.Attributes
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.Indexing
+import com.jetbrains.rhizomedb.entities
 import fleet.kernel.DurableEntityType
 import fleet.kernel.rete.each
 import fleet.kernel.rete.filter

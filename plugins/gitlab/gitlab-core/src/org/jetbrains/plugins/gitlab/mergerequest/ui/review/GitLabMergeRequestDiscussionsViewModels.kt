@@ -1,7 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.review
 
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.cancelAndJoinSilently
+import com.intellij.collaboration.async.mapFiltered
+import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.mapStatefulToStateful
+import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.async.transformConsecutiveSuccesses
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
 import com.intellij.collaboration.util.ComputedResult
@@ -17,14 +22,37 @@ import git4idea.changes.findCumulativeChange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.*
-import org.jetbrains.plugins.gitlab.ui.comment.*
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
+import org.jetbrains.plugins.gitlab.mergerequest.data.filePath
+import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLeftSideLine
+import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
+import org.jetbrains.plugins.gitlab.mergerequest.data.mapToRightSideLine
 import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModelBase
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestStandaloneDraftNoteViewModelBase
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.onDoneIn
 import java.time.Instant.EPOCH
-import java.util.*
+import java.util.Date
+import java.util.TreeSet
 
 private typealias DiscussionsFlow = StateFlow<ComputedResult<Collection<GitLabMergeRequestDiscussionViewModel>>>
 private typealias DraftNotesFlow = StateFlow<ComputedResult<Collection<GitLabMergeRequestStandaloneDraftNoteViewModelBase>>>

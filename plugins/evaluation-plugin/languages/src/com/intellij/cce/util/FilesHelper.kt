@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import org.apache.commons.io.input.UnixLineEndingInputStream
-import java.io.FileNotFoundException
 import java.nio.file.Paths
 
 object FilesHelper {

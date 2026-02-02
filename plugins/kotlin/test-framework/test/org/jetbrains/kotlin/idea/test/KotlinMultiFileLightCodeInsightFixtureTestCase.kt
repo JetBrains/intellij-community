@@ -8,7 +8,16 @@ import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 import java.io.File
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.Path
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createFile
+import kotlin.io.path.createTempDirectory
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.exists
+import kotlin.io.path.name
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 abstract class KotlinMultiFileLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFixtureTestCase() {
     protected open val isLibraryByDefault: Boolean get() = false

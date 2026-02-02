@@ -4,7 +4,12 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.CurrentContentRevision
+import com.intellij.openapi.vcs.changes.LocallyDeletedChange
+import com.intellij.openapi.vcs.changes.LogicalLock
+import com.intellij.openapi.vcs.changes.RemoteRevisionsCache
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.changes.TreeModelBuilderEx
 import com.intellij.ui.SimpleColoredComponent

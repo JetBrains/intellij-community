@@ -20,7 +20,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StringPattern;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 /**
  * Simple abstraction of a String matcher that can be based on simple and vastly more

@@ -10,7 +10,17 @@ import com.intellij.java.JavaBundle;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPackageAccessibilityStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +28,11 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
-import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.FOR_NAME;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.JAVA_LANG_CLASS_LOADER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.LOAD_CLASS;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.computeConstantExpression;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.isCallToMethod;
 
 public final class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLocalInspectionTool {
 

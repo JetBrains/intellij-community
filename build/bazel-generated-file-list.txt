@@ -987,6 +987,7 @@ plugins/gradle/jps-plugin
 plugins/gradle/kotlin/tests
 plugins/gradle/native
 plugins/gradle/native/tooling
+plugins/gradle/properties
 plugins/gradle/toml
 plugins/gradle/tooling-extension-api
 plugins/gradle/tooling-extension-impl

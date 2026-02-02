@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.internal
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.cli.extensionsStorage
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar

@@ -16,7 +16,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.Nls
-import java.util.*
+import java.util.BitSet
 
 internal abstract class ApplySelectedChangesActionBase protected constructor(
   protected val viewer: MergeThreesideViewer

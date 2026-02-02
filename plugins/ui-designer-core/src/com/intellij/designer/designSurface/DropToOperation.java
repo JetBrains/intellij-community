@@ -18,8 +18,8 @@ package com.intellij.designer.designSurface;
 import com.intellij.designer.designSurface.feedbacks.AlphaFeedback;
 import com.intellij.designer.model.RadComponent;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
 
 /**
  * @author Alexander Lobas

@@ -11,7 +11,14 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
 
-import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.*;
+import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.LookupAllKeysTrace;
+import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.LookupTraceBase;
+import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.TRACE_OF_ALL_KEYS_LOOKUP;
+import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.TRACE_OF_ENTRIES_LOOKUP;
+import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.TRACE_OF_STUB_ENTRIES_LOOKUP;
+import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.lookupAllKeysStarted;
+import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.lookupEntriesStarted;
+import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.lookupStubEntriesStarted;
 import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.MAX_LOOKUP_DEPTH;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;

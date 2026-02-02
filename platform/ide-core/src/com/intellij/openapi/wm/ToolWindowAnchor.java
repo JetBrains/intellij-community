@@ -7,7 +7,7 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.SwingConstants;
 import java.util.List;
 
 /**

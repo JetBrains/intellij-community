@@ -7,7 +7,20 @@ import com.intellij.testFramework.LightPlatformTestCase
 import org.jetbrains.idea.eclipse.codeStyleMapping.AllJavaCodeStyleSettings
 import org.jetbrains.idea.eclipse.exporter.EclipseCodeStyleSchemeExporter
 import org.jetbrains.idea.eclipse.importer.EclipseCodeStyleSchemeImporter.Companion.readEclipseXmlProfileOptions
-import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.*
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.PARENS_COMMON_LINES
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.PARENS_SEPARATE_LINES_IF_NOT_EMPTY
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.PARENS_SEPARATE_LINES_IF_WRAPPED
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.TAB_CHAR_MIXED
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.TAB_CHAR_SPACE
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.TEXT_BLOCK_INDENT_DEFAULT
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.VALUE_DO_NOT_INSERT
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.VALUE_END_OF_LINE
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.VALUE_FALSE
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.VALUE_INSERT
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.VALUE_NEXT_LINE_IF_WRAPPED
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.VALUE_NEXT_LINE_SHIFTED
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.VALUE_TRUE
+import org.jetbrains.idea.eclipse.importer.EclipseFormatterOptions.completeId
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 

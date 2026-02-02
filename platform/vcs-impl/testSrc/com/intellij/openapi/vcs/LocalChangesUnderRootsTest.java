@@ -18,7 +18,13 @@ import com.intellij.testFramework.vcs.MockChangeListManager;
 import com.intellij.testFramework.vcs.MockContentRevision;
 import com.intellij.vcsUtil.VcsUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class LocalChangesUnderRootsTest extends HeavyPlatformTestCase {
   private static final String MOCK = "Mock";

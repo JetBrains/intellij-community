@@ -3,7 +3,12 @@
 
 package com.intellij.execution.target.value
 
-import com.intellij.execution.target.*
+import com.intellij.execution.target.ExternallySynchronized
+import com.intellij.execution.target.FullPathOnTarget
+import com.intellij.execution.target.HostPort
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetPlatform
 import com.intellij.execution.target.local.LocalTargetEnvironment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator

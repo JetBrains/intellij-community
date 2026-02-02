@@ -6,7 +6,6 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
 import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterListStubImpl;
-import com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl;
 import com.intellij.psi.stubs.LightStubElementFactory;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;

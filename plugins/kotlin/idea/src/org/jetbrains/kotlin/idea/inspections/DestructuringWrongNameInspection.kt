@@ -9,9 +9,8 @@ import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.psi.destructuringDeclarationVisitor
-
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.psi.destructuringDeclarationVisitor
 
 @K1Deprecation
 class DestructuringWrongNameInspection : AbstractKotlinInspection() {

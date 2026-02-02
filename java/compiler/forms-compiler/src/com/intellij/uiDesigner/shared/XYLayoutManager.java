@@ -17,7 +17,8 @@ package com.intellij.uiDesigner.shared;
 
 import com.intellij.uiDesigner.core.AbstractLayout;
 
-import java.awt.*;
+import java.awt.Container;
+import java.awt.Dimension;
 
 public class XYLayoutManager extends AbstractLayout {
   public XYLayoutManager(){

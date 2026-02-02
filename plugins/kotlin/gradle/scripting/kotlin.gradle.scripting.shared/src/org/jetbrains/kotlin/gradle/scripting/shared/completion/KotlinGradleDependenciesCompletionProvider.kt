@@ -1,9 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.shared.completion
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.BaseCompletionLookupArranger
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionUtil
+import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.gradle.completion.FullStringInsertHandler
+import com.intellij.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
+import com.intellij.gradle.completion.GradleDependencyCompletionMatcher
+import com.intellij.gradle.completion.getCompletionContext
+import com.intellij.gradle.completion.removeDummySuffix
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -11,12 +22,12 @@ import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.util.ProcessingContext
 import kotlinx.coroutines.flow.flowOf
-import org.jetbrains.idea.completion.api.*
-import com.intellij.gradle.completion.FullStringInsertHandler
-import com.intellij.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
-import com.intellij.gradle.completion.GradleDependencyCompletionMatcher
-import com.intellij.gradle.completion.getCompletionContext
-import com.intellij.gradle.completion.removeDummySuffix
+import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionResult
+import org.jetbrains.idea.completion.api.DependencyCompletionService
+import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 
 private val exclude = setOf(

@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import java.util.*
 
 /**
  * Analyze maven modules graph and exclude all children from the [selectedModules] so only

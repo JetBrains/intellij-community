@@ -19,9 +19,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Dimension;
 
 /**
  * @author Bas Leijdekkers

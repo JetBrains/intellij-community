@@ -7,7 +7,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.StateRestoringCheckBox;
 
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.util.List;
 
 import static com.intellij.find.findUsages.JavaFindUsagesCollector.CLASSES_USAGES;

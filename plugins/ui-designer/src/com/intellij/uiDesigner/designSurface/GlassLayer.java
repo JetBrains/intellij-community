@@ -1,13 +1,25 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.actions.*;
+import com.intellij.uiDesigner.actions.MoveComponentAction;
+import com.intellij.uiDesigner.actions.MoveSelectionToDownAction;
+import com.intellij.uiDesigner.actions.MoveSelectionToLeftAction;
+import com.intellij.uiDesigner.actions.MoveSelectionToRightAction;
+import com.intellij.uiDesigner.actions.MoveSelectionToUpAction;
+import com.intellij.uiDesigner.actions.SelectAllComponentsAction;
+import com.intellij.uiDesigner.actions.StartInplaceEditingAction;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -15,8 +27,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import java.awt.AWTEvent;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;

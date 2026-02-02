@@ -6,7 +6,8 @@ import com.intellij.database.run.ui.grid.GridScrollPositionManager;
 import com.intellij.ui.TableUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 public class TableScrollPositionManager implements GridScrollPositionManager {
   private final TableResultView myResultView;

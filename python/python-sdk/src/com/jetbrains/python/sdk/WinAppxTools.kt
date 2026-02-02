@@ -4,14 +4,23 @@ package com.jetbrains.python.sdk
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.sun.jna.platform.win32.Kernel32
-import com.sun.jna.platform.win32.Kernel32.*
+import com.sun.jna.platform.win32.Kernel32.FILE_FLAG_OPEN_REPARSE_POINT
+import com.sun.jna.platform.win32.Kernel32.FILE_SHARE_READ
+import com.sun.jna.platform.win32.Kernel32.GENERIC_READ
+import com.sun.jna.platform.win32.Kernel32.INSTANCE
+import com.sun.jna.platform.win32.Kernel32.INVALID_HANDLE_VALUE
+import com.sun.jna.platform.win32.Kernel32.OPEN_EXISTING
 import com.sun.jna.platform.win32.Ntifs
 import com.sun.jna.platform.win32.WinioctlUtil
 import com.sun.jna.ptr.IntByReference
 import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.exists
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.pathString
 
 /**
  * AppX packages installed to AppX volume (see ``Get-AppxDefaultVolume``, ``Get-AppxPackage``).

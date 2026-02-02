@@ -2,10 +2,10 @@
 package com.intellij.platform.vcs.impl.frontend.navigation
 
 import com.intellij.openapi.project.Project
-import com.intellij.pom.NavigatableAdapter
 import com.intellij.platform.vcs.impl.frontend.shelf.ShelfService
 import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeListEntity
+import com.intellij.pom.NavigatableAdapter
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

@@ -5,8 +5,8 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import java.io.IOException
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
+import java.io.IOException
 
 abstract class Error {
     @get:Nls

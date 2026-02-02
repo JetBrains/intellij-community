@@ -20,8 +20,8 @@ import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.classMembers.AbstractUsesDependencyMemberInfoModel;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
 import org.jetbrains.annotations.NotNull;
 
 public class UsesDependencyMemberInfoModel<T extends NavigatablePsiElement, C extends PsiElement, M extends MemberInfoBase<T>>

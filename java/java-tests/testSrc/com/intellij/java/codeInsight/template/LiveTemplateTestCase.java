@@ -11,7 +11,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.util.ui.UIUtil;
 
 public abstract class LiveTemplateTestCase extends LightJavaCodeInsightFixtureTestCase {
   @Override

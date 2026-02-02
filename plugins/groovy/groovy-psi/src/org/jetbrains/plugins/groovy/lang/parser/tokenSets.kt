@@ -4,7 +4,15 @@
 package org.jetbrains.plugins.groovy.lang.parser
 
 import com.intellij.psi.tree.TokenSet
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_BOOLEAN
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_BYTE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_CHAR
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DOUBLE
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_FLOAT
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_INT
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_LONG
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_SHORT
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VOID
 
 internal val primitiveTypes = TokenSet.create(
   KW_BOOLEAN,

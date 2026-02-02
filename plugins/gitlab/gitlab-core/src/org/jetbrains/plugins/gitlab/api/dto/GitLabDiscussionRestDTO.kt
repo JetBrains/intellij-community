@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.jetbrains.plugins.gitlab.api.GitLabRestId
 import org.jetbrains.plugins.gitlab.api.GitLabRestIdData
-import java.util.*
+import java.util.Date
 
 class GitLabDiscussionRestDTO(
   @JsonProperty("id")

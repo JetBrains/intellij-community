@@ -4,10 +4,10 @@ package com.intellij.devkit.modules.toolwindow
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
-import com.intellij.openapi.util.KeyWithDefaultValue
 
 /**
  * Provider for finding references to module tree nodes.

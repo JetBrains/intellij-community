@@ -14,18 +14,26 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
-import org.jetbrains.plugins.gitlab.mergerequest.data.*
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabCodeReviewSubmittableTextViewModel.*
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
+import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabCodeReviewSubmittableTextViewModel.FileUploadResult
 import org.jetbrains.plugins.gitlab.upload.GitLabUploadFileUtil
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.awt.Image
 import java.nio.file.Path
-import java.util.*
+import java.util.UUID
 import javax.swing.Action
 
 interface GitLabCodeReviewSubmittableTextViewModel : CodeReviewSubmittableTextViewModel {

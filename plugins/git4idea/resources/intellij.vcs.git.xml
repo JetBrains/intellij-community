@@ -309,6 +309,7 @@
 
     <group id="Git.FileHistory.ContextMenu">
       <reference ref="Git.Revert.In.Log"/>
+      <reference ref="Git.Fixup.To.Commit"/>
       <separator/>
       <reference ref="Git.CreateNewTag"/>
       <separator/>

@@ -4,7 +4,8 @@ package com.intellij.ide.actions;
 
 import com.intellij.find.FindManager;
 import com.intellij.find.FindUtil;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;

@@ -4,7 +4,12 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.psi.*
+import com.intellij.psi.JavaElementVisitor
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.javadoc.PsiInlineDocTag
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.K1Deprecation

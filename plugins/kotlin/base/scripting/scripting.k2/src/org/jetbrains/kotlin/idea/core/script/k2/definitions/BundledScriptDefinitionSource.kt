@@ -10,7 +10,12 @@ import org.jetbrains.kotlin.idea.core.script.v1.NewScriptFileInfo
 import org.jetbrains.kotlin.idea.core.script.v1.kotlinScriptTemplateInfo
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.KotlinType
+import kotlin.script.experimental.api.dependencies
+import kotlin.script.experimental.api.dependenciesSources
+import kotlin.script.experimental.api.displayName
+import kotlin.script.experimental.api.hostConfiguration
+import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.host.createScriptDefinitionFromTemplate
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration

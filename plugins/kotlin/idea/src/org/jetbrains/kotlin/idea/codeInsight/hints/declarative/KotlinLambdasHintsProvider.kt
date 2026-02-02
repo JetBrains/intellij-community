@@ -2,7 +2,8 @@
 package org.jetbrains.kotlin.idea.codeInsight.hints.declarative
 
 import org.jetbrains.kotlin.K1Deprecation
-import org.jetbrains.kotlin.idea.codeInsight.hints.HintType.*
+import org.jetbrains.kotlin.idea.codeInsight.hints.HintType.LAMBDA_IMPLICIT_PARAMETER_RECEIVER
+import org.jetbrains.kotlin.idea.codeInsight.hints.HintType.LAMBDA_RETURN_EXPRESSION
 
 @K1Deprecation
 class KotlinLambdasHintsProvider : AbstractKotlinInlayHintsProvider(LAMBDA_RETURN_EXPRESSION, LAMBDA_IMPLICIT_PARAMETER_RECEIVER)

@@ -4,6 +4,7 @@ package com.jetbrains.python.pathValidation
 import com.intellij.execution.Platform
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.local
 import java.nio.file.Path
 
 /**

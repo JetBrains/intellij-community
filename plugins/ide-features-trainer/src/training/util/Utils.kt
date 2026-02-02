@@ -49,10 +49,14 @@ import java.awt.Component
 import java.awt.Desktop
 import java.awt.Dimension
 import java.net.URI
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import javax.swing.*
+import javax.swing.Box
+import javax.swing.BoxLayout
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 
 internal fun createNamedSingleThreadExecutor(name: String): ExecutorService {
   return Executors.newSingleThreadExecutor(ThreadFactoryBuilder().setNameFormat(name).build())

@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.codeInsight.AnnotationUtil
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiLiteral
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter.Companion.createInferenceResult
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.compose

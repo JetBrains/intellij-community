@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.psi.KtClass;
 import org.jetbrains.kotlin.psi.KtClassOrObject;
 import org.jetbrains.kotlin.psi.psiUtil.PsiUtilsKt;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 
 import static org.jetbrains.kotlin.asJava.LightClassUtilsKt.toLightClass;
 

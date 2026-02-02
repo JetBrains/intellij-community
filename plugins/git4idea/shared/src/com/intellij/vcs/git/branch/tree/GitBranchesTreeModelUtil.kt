@@ -14,7 +14,11 @@ import com.intellij.util.containers.init
 import com.intellij.vcs.git.ref.GitRefUtil
 import com.intellij.vcs.git.repo.GitRepositoryModel
 import com.intellij.vcs.git.telemetry.GitBranchesPopupSpan
-import git4idea.*
+import git4idea.GitBranch
+import git4idea.GitReference
+import git4idea.GitRemoteBranch
+import git4idea.GitStandardLocalBranch
+import git4idea.GitTag
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
 import git4idea.branch.GitTagType

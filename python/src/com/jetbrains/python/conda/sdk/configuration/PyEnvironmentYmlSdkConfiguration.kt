@@ -35,8 +35,15 @@ import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
 import com.jetbrains.python.sdk.conda.suggestCondaPath
-import com.jetbrains.python.sdk.configuration.*
+import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
+import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.EnvCheckerResult
+import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtension
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector
 import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.CondaEnvResult
+import com.jetbrains.python.sdk.configuration.findEnvOrNull
+import com.jetbrains.python.sdk.configuration.prepareSdkCreator
 import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand

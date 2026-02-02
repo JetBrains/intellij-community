@@ -25,10 +25,15 @@ import com.intellij.util.EventDispatcher;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageFileEditor;
 import org.intellij.images.editor.ImageZoomModel;
-import org.intellij.images.options.*;
+import org.intellij.images.options.EditorOptions;
+import org.intellij.images.options.GridOptions;
+import org.intellij.images.options.Options;
+import org.intellij.images.options.OptionsManager;
+import org.intellij.images.options.TransparencyChessboardOptions;
+import org.intellij.images.options.ZoomOptions;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 

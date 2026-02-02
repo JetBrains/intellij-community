@@ -2,7 +2,10 @@
 package org.jetbrains.plugins.groovy.lang.resolve.delegatesTo
 
 import com.intellij.psi.PsiMethod
-import groovy.lang.Closure.*
+import groovy.lang.Closure.DELEGATE_FIRST
+import groovy.lang.Closure.OWNER_FIRST
+import groovy.lang.Closure.OWNER_ONLY
+import groovy.lang.Closure.TO_SELF
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression

@@ -20,8 +20,9 @@ import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMem
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.List;
 
 class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {

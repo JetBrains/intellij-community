@@ -4,7 +4,15 @@ package org.jetbrains.uast.kotlin
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtReturnExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULabeledExpression
+import org.jetbrains.uast.ULambdaExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
 @ApiStatus.Internal
 class KotlinUReturnExpression(

@@ -21,7 +21,11 @@ import org.jetbrains.kotlin.idea.refactoring.pullUp.getInterfaceContainmentVerif
 import org.jetbrains.kotlin.idea.refactoring.pullUp.isAbstractInInterface
 import org.jetbrains.kotlin.idea.refactoring.pullUp.mustBeAbstractInInterface
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
 import javax.swing.JTextField
 
 @ApiStatus.Internal

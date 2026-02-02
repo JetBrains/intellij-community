@@ -8,7 +8,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 
 import static java.lang.String.format;
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.RELATIONAL_PRECEDENCE;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedence;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedenceForNonBinaryOps;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.parenthesize;
 
 final class IsCaseTransformation extends BinaryTransformation {
   @Override

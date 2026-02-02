@@ -12,13 +12,24 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.TimedVcsCommit;
+import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.VcsLogObjectsFactory;
+import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsRefType;
+import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.LogDataImpl;
 import git4idea.GitCommit;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUtil;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitHandler;
+import git4idea.commands.GitHandlerInputProcessorUtil;
+import git4idea.commands.GitLineHandler;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.log.GitLogProvider;
 import git4idea.log.GitRefManager;
@@ -30,12 +41,28 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.runWithSpanThrows;
 import static com.intellij.platform.vcs.impl.shared.telemetry.VcsScopeKt.VcsScope;
-import static git4idea.history.GitLogParser.GitLogOption.*;
+import static git4idea.history.GitLogParser.GitLogOption.AUTHOR_EMAIL;
+import static git4idea.history.GitLogParser.GitLogOption.AUTHOR_NAME;
+import static git4idea.history.GitLogParser.GitLogOption.AUTHOR_TIME;
+import static git4idea.history.GitLogParser.GitLogOption.BODY;
+import static git4idea.history.GitLogParser.GitLogOption.COMMITTER_EMAIL;
+import static git4idea.history.GitLogParser.GitLogOption.COMMITTER_NAME;
+import static git4idea.history.GitLogParser.GitLogOption.COMMIT_TIME;
+import static git4idea.history.GitLogParser.GitLogOption.HASH;
+import static git4idea.history.GitLogParser.GitLogOption.PARENTS;
+import static git4idea.history.GitLogParser.GitLogOption.RAW_BODY;
+import static git4idea.history.GitLogParser.GitLogOption.REF_NAMES;
+import static git4idea.history.GitLogParser.GitLogOption.SUBJECT;
 
 @ApiStatus.Internal
 public final class GitLogUtil {

@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.findClassAcrossModuleDependencies
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.k1DiagnosticsProvider
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.psi.KtFile

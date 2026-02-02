@@ -19,7 +19,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-import static com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority.*;
+import static com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority.BUILTIN;
+import static com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority.PROJECT;
+import static com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority.THIRD_PARTY;
 
 
 public class PyAddImportTest extends PyTestCase {

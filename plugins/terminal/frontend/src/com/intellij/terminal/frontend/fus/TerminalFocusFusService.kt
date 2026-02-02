@@ -9,11 +9,16 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.ComponentUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.TerminalPanelMarker
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector

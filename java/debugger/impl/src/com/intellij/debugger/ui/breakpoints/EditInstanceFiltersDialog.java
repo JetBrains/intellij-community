@@ -9,7 +9,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Arrays;
 
 public class EditInstanceFiltersDialog extends DialogWrapper {

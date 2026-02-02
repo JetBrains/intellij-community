@@ -12,7 +12,10 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_COMPILE_STATIC
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_STC_POJO
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_TYPE_CHECKED
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_TYPE_CHECKING_MODE
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isEnumConstant
 
 fun isCompileStatic(e: PsiElement): Boolean {

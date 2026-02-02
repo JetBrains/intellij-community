@@ -16,7 +16,11 @@
 package com.jetbrains.python.ast;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyNamesKt;
 import com.jetbrains.python.PyTokenTypes;

@@ -5,7 +5,11 @@ import com.intellij.lang.Language
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiMethod
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UVariable
+import org.jetbrains.uast.UastPostfixOperator
+import org.jetbrains.uast.UastPrefixOperator
+import org.jetbrains.uast.UastQualifiedExpressionAccessType
 import org.jetbrains.uast.values.UValue
 
 @ApiStatus.Experimental

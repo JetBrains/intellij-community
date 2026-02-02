@@ -8,7 +8,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
-import org.jetbrains.idea.svn.dialogs.browserCache.*;
+import org.jetbrains.idea.svn.dialogs.browserCache.CacheLoader;
+import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
+import org.jetbrains.idea.svn.dialogs.browserCache.KeepingExpandedExpander;
+import org.jetbrains.idea.svn.dialogs.browserCache.KeepingSelectionExpander;
+import org.jetbrains.idea.svn.dialogs.browserCache.Loader;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;

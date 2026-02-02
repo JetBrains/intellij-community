@@ -15,7 +15,11 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiParameter;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;

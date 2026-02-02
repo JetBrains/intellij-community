@@ -340,11 +340,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return true;
   }
 
-  // Used by external plugins
-  @SuppressWarnings("unused")
   public void scheduleItemUpdate(@NotNull LookupElement item) {
     // this check significantly affects perfomance with enabled assertions
-    if (LOG.isTraceEnabled()){
+    if (LOG.isTraceEnabled()) {
       LOG.assertTrue(getItems().contains(item), "Item isn't present in lookup");
     }
     cellRenderer.updateItemPresentation(item);
@@ -366,6 +364,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   @ApiStatus.Internal
   public void showIfMeaningless() {
     myShowIfMeaningless = true;
+  }
+
+  @ApiStatus.Internal
+  public void cancelRendering(@NotNull LookupElement element) {
+    cellRenderer.cancelRendering(element);
   }
 
   private static boolean containsDummyIdentifier(@Nullable String s) {

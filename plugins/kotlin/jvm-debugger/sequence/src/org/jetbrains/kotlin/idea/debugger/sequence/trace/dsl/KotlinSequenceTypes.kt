@@ -3,7 +3,14 @@
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 
 import com.intellij.debugger.streams.core.trace.dsl.Types
-import com.intellij.debugger.streams.core.trace.impl.handler.type.*
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ArrayType
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ArrayTypeImpl
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ClassTypeImpl
+import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ListType
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ListTypeImpl
+import com.intellij.debugger.streams.core.trace.impl.handler.type.MapType
+import com.intellij.debugger.streams.core.trace.impl.handler.type.MapTypeImpl
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 

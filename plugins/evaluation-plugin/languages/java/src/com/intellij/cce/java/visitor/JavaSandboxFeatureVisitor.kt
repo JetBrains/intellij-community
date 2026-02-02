@@ -1,6 +1,11 @@
 package com.intellij.cce.java.visitor
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.CodeToken
+import com.intellij.cce.core.Language
+import com.intellij.cce.core.SimpleTokenProperties
+import com.intellij.cce.core.SymbolLocation
+import com.intellij.cce.core.TypeProperty
 import com.intellij.cce.evaluable.METHOD_BODY_PROPERTY
 import com.intellij.cce.evaluable.METHOD_NAME_PROPERTY
 import com.intellij.cce.visitor.SandboxFeaturesVisitorBase
@@ -13,7 +18,6 @@ import com.intellij.psi.PsiExpressionStatement
 import com.intellij.psi.PsiJavaToken
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.util.startOffset
 
 class JavaSandboxFeatureVisitor : SandboxFeaturesVisitorBase(Language.JAVA) {
   override fun createPsiVisitor(codeFragment: CodeFragment): PsiElementVisitor {

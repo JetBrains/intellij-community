@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.pme.launcher;
 
-import com.pme.exe.*;
+import com.pme.exe.Bin;
+import com.pme.exe.ExeReader;
+import com.pme.exe.ImageDataDirectory;
+import com.pme.exe.ImageSectionHeader;
+import com.pme.exe.Section;
 import com.pme.exe.res.DirectoryEntry;
 import com.pme.exe.res.RawResource;
 import com.pme.exe.res.ResourceSectionReader;
@@ -10,7 +14,12 @@ import com.pme.exe.res.icon.IconResourceInjector;
 import com.pme.exe.res.vi.VersionInfo;
 import com.pme.util.OffsetTrackingInputStream;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;

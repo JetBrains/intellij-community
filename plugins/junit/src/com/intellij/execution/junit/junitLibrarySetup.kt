@@ -13,7 +13,9 @@ import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.text.VersionComparatorUtil
-import com.siyeh.ig.junit.JUnitCommonClassNames.*
+import com.siyeh.ig.junit.JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST
+import com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_TEST
 import org.jetbrains.uast.UElement
 
 internal fun isJUnit3InScope(file: PsiFile): Boolean {

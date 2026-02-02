@@ -8,7 +8,7 @@ import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusFactory;
 
-import java.awt.*;
+import java.awt.Color;
 
 public final class SvnFileStatus {
   private SvnFileStatus() {

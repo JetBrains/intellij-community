@@ -34,8 +34,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.inspections.JavaOutsideModuleDetector"/>
 
-    <projectService serviceImplementation="org.jetbrains.kotlin.console.KotlinConsoleKeeper"/>
-
     <buildProcess.parametersProvider
             implementation="org.jetbrains.kotlin.idea.jvm.shared.compiler.configuration.KotlinBuildProcessParametersProvider"/>
 
@@ -81,22 +79,6 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <scriptAdditionalIdeaDependenciesProvider
             implementation="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchAdditionalIdeaDependenciesProvider"/>
-
-    <storageComponentContainerContributor
-            implementation="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.IdeSamWithReceiverComponentContributor"/>
-
-    <declarationAttributeAltererExtension
-            implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.IdeAllOpenDeclarationAttributeAltererExtension"/>
-    <ultraLightClassModifierExtension
-            implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.AllOpenUltraLightClassModifierExtension"/>
-
-    <storageComponentContainerContributor
-            implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.IdeNoArgComponentContainerContributor"/>
-    <ultraLightClassModifierExtension
-            implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.NoArgUltraLightClassModifierExtension"/>
-    <!--suppress KotlinObjectExtensionRegistration -->
-    <defaultErrorMessages implementation="org.jetbrains.kotlin.noarg.diagnostic.DefaultErrorMessagesNoArg"/>
-
     <facetValidatorCreator implementation="org.jetbrains.kotlin.idea.jvm.shared.facet.KotlinLibraryValidatorCreator"/>
   </extensions>
 

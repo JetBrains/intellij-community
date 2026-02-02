@@ -3,7 +3,11 @@ package com.intellij.diff.merge
 
 import com.intellij.diff.tools.simple.DiffViewerHighlighters
 import com.intellij.diff.tools.util.text.MergeInnerDifferences
-import com.intellij.diff.util.*
+import com.intellij.diff.util.DiffGutterOperation
+import com.intellij.diff.util.DiffGutterRenderer
+import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.Side
+import com.intellij.diff.util.ThreeSide
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.ex.DocumentEx

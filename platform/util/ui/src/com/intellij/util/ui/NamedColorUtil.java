@@ -6,8 +6,8 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.render.RenderingUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JList;
+import java.awt.Color;
 
 public final class NamedColorUtil {
   public static @NotNull Color getErrorForeground() {

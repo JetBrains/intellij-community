@@ -4,7 +4,6 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.tree.JsonSchemaNodeExpansionRequest;
@@ -19,7 +18,10 @@ import java.util.HashSet;
 import java.util.List;
 
 import static com.jetbrains.jsonSchema.JsonPointerUtil.isSelfReference;
-import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.*;
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.ALL_OF;
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.ANY_OF;
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.IF;
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.ONE_OF;
 import static com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectMergerKt.getJsonSchemaObjectMerger;
 import static com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaInheritanceKt.inheritBaseSchemaIfNeeded;
 

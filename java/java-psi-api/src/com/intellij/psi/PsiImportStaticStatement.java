@@ -26,4 +26,13 @@ public interface PsiImportStaticStatement extends PsiImportStatementBase {
    * @return the name of the member, or null for an on-demand import.
    */
   @Nullable String getReferenceName();
+
+  /**
+   * Returns the full-qualified name of the imported class or member.
+   *
+   * @return the full-qualified name, or null if the statement is incomplete.
+   */
+  default @Nullable String getQualifiedName() {
+    return null;
+  }
 }

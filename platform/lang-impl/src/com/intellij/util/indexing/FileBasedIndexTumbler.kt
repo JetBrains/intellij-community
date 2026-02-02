@@ -30,7 +30,7 @@ import com.intellij.util.indexing.diagnostic.ScanningType.PARTIAL_ON_INDEX_RESTA
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.SortedSet
 
 class FileBasedIndexTumbler(private val reason: @NonNls String) {
   private val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl

@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface GridEditorPanel {
   void apply();

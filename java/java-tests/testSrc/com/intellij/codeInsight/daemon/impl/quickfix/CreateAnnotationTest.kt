@@ -3,7 +3,16 @@ package com.intellij.codeInsight.daemon.impl.quickfix
 
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.lang.jvm.actions.*
+import com.intellij.lang.jvm.actions.AnnotationAttributeValueRequest
+import com.intellij.lang.jvm.actions.AnnotationRequest
+import com.intellij.lang.jvm.actions.annotationRequest
+import com.intellij.lang.jvm.actions.arrayAttribute
+import com.intellij.lang.jvm.actions.classAttribute
+import com.intellij.lang.jvm.actions.constantAttribute
+import com.intellij.lang.jvm.actions.createAddAnnotationActions
+import com.intellij.lang.jvm.actions.intAttribute
+import com.intellij.lang.jvm.actions.nestedAttribute
+import com.intellij.lang.jvm.actions.stringAttribute
 import com.intellij.psi.PsiJvmModifiersOwner
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 

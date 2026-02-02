@@ -36,7 +36,7 @@ import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import java.util.SortedMap
 
 /**
  * Python resolve utilities for qualified names.

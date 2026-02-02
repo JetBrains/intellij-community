@@ -6,9 +6,9 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.getOrNull
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
-import com.jetbrains.python.PyToolUIInfo
-import com.intellij.python.community.services.systemPython.icons.PythonCommunityServicesSystemPythonIcons
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
+import com.intellij.python.community.services.systemPython.icons.PythonCommunityServicesSystemPythonIcons
+import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import kotlinx.coroutines.Dispatchers

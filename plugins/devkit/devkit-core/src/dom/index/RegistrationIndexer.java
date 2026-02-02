@@ -12,7 +12,16 @@ import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.Action;
+import org.jetbrains.idea.devkit.dom.ActionContainer;
+import org.jetbrains.idea.devkit.dom.Actions;
+import org.jetbrains.idea.devkit.dom.ApplicationComponents;
+import org.jetbrains.idea.devkit.dom.Component;
+import org.jetbrains.idea.devkit.dom.Group;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.Listeners;
+import org.jetbrains.idea.devkit.dom.ModuleComponents;
+import org.jetbrains.idea.devkit.dom.ProjectComponents;
 
 import java.util.List;
 import java.util.Map;

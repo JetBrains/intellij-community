@@ -2,7 +2,11 @@
 package org.jetbrains.tools.model.updater
 
 import org.jetbrains.tools.model.updater.GeneratorPreferences.ArtifactMode
-import org.jetbrains.tools.model.updater.impl.*
+import org.jetbrains.tools.model.updater.impl.JpsLibrary
+import org.jetbrains.tools.model.updater.impl.JpsPath
+import org.jetbrains.tools.model.updater.impl.JpsRemoteRepository
+import org.jetbrains.tools.model.updater.impl.JpsUrl
+import org.jetbrains.tools.model.updater.impl.MavenId
 
 private const val ktGroup = "org.jetbrains.kotlin"
 

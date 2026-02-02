@@ -28,7 +28,6 @@ import git4idea.repo.GitTagsHolderListener
 import git4idea.repo.tags
 import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow

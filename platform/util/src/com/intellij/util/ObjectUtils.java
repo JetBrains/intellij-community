@@ -3,7 +3,11 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.util.containers.Convertor;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;

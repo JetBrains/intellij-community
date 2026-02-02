@@ -1,11 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
+import com.intellij.codeInsight.hints.declarative.InlayTreeSink
+import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
+import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiLiteral
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiPolyadicExpression
+import com.intellij.psi.PsiTypeCastExpression
+import com.intellij.psi.PsiTypes
 
 public class JavaImplicitTypeDeclarativeInlayHintsProvider : InlayHintsProvider {
   public companion object {

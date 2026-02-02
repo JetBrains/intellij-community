@@ -6,7 +6,9 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.GraphicsEnvironment;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Stream;

@@ -42,7 +42,23 @@ import org.jetbrains.kotlin.idea.base.util.restrictByFileType
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToBeShortenedDescendantsToWaitingSet
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
-import org.jetbrains.kotlin.idea.refactoring.move.*
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveConflictCheckerInfo
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveRenameUsage
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMover
+import org.jetbrains.kotlin.idea.refactoring.move.MoveConflictUsageInfo
+import org.jetbrains.kotlin.idea.refactoring.move.MoveConflictsFoundException
+import org.jetbrains.kotlin.idea.refactoring.move.MoveContainerChangeInfo
+import org.jetbrains.kotlin.idea.refactoring.move.MoveContainerInfo
+import org.jetbrains.kotlin.idea.refactoring.move.MoveDeclarationsDescriptor
+import org.jetbrains.kotlin.idea.refactoring.move.checkAllConflicts
+import org.jetbrains.kotlin.idea.refactoring.move.cleanUpInternalUsages
+import org.jetbrains.kotlin.idea.refactoring.move.getInternalReferencesToUpdateOnPackageNameChange
+import org.jetbrains.kotlin.idea.refactoring.move.getTargetModule
+import org.jetbrains.kotlin.idea.refactoring.move.markInternalUsages
+import org.jetbrains.kotlin.idea.refactoring.move.postProcessMoveUsages
+import org.jetbrains.kotlin.idea.refactoring.move.restoreInternalUsages
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
@@ -51,7 +67,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.utils.ifEmpty
 import org.jetbrains.kotlin.utils.keysToMap
-import java.util.*
+import java.util.Collections
 import kotlin.math.max
 import kotlin.math.min
 

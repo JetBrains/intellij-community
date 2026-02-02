@@ -7,7 +7,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
-import org.jetbrains.org.objectweb.asm.tree.*;
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.InvokeDynamicInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.JumpInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.MethodInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.TypeInsnNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicInterpreter;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
@@ -19,10 +23,30 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.InstanceOfCheckValue;
+import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.NullValue;
+import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.ParamValue;
+import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.isInstance;
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.In;
-import static com.intellij.codeInspection.bytecodeAnalysis.PResults.*;
-import static org.jetbrains.org.objectweb.asm.Opcodes.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.PResults.ConditionalNPE;
+import static com.intellij.codeInspection.bytecodeAnalysis.PResults.Identity;
+import static com.intellij.codeInspection.bytecodeAnalysis.PResults.NPE;
+import static com.intellij.codeInspection.bytecodeAnalysis.PResults.PResult;
+import static com.intellij.codeInspection.bytecodeAnalysis.PResults.Return;
+import static com.intellij.codeInspection.bytecodeAnalysis.PResults.combineNullable;
+import static com.intellij.codeInspection.bytecodeAnalysis.PResults.join;
+import static com.intellij.codeInspection.bytecodeAnalysis.PResults.meet;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ARETURN;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ATHROW;
+import static org.jetbrains.org.objectweb.asm.Opcodes.DRETURN;
+import static org.jetbrains.org.objectweb.asm.Opcodes.FRETURN;
+import static org.jetbrains.org.objectweb.asm.Opcodes.IFEQ;
+import static org.jetbrains.org.objectweb.asm.Opcodes.IFNE;
+import static org.jetbrains.org.objectweb.asm.Opcodes.IFNONNULL;
+import static org.jetbrains.org.objectweb.asm.Opcodes.IFNULL;
+import static org.jetbrains.org.objectweb.asm.Opcodes.IRETURN;
+import static org.jetbrains.org.objectweb.asm.Opcodes.LRETURN;
+import static org.jetbrains.org.objectweb.asm.Opcodes.RETURN;
 
 abstract class PResults {
   // SoP = sum of products

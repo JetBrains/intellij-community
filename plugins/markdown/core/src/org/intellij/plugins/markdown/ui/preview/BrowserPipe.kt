@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.openapi.Disposable
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Base interface for communication channels with browser-based previews.

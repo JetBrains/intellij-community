@@ -6,7 +6,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.util.ThreeState
-import com.intellij.util.indexing.hints.*
+import com.intellij.util.indexing.hints.AcceptAllFilesAndDirectoriesIndexingHint
+import com.intellij.util.indexing.hints.AcceptAllRegularFilesIndexingHint
+import com.intellij.util.indexing.hints.BaseGlobalFileTypeInputFilter
+import com.intellij.util.indexing.hints.FileTypeIndexingHint
+import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate
+import com.intellij.util.indexing.hints.GlobalIndexSpecificIndexingHint
+import com.intellij.util.indexing.hints.RejectAllIndexingHint
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate

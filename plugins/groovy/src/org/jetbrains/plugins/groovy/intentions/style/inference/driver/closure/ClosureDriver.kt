@@ -1,14 +1,29 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeMapper
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.plugins.groovy.intentions.style.inference.*
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.NameGenerator
+import org.jetbrains.plugins.groovy.intentions.style.inference.SignatureInferenceEnvironment
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.INHABIT
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.UPPER
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.CommonDriver
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.EmptyDriver
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.InferenceDriver
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.ParameterizationManager
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformation
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformationBuilder
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.setUpParameterMapping
+import org.jetbrains.plugins.groovy.intentions.style.inference.forceWildcardsAsTypeArguments
+import org.jetbrains.plugins.groovy.intentions.style.inference.isClosureTypeDeep
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod

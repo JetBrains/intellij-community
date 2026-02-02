@@ -5,7 +5,17 @@ package org.jetbrains.kotlin.nj2k.conversions
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.parenthesize
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKBinaryExpression
+import org.jetbrains.kotlin.nj2k.tree.JKIfElseStatement
+import org.jetbrains.kotlin.nj2k.tree.JKIsExpression
+import org.jetbrains.kotlin.nj2k.tree.JKKtOperatorImpl
+import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken
+import org.jetbrains.kotlin.nj2k.tree.JKParenthesizedExpression
+import org.jetbrains.kotlin.nj2k.tree.JKPrefixExpression
+import org.jetbrains.kotlin.nj2k.tree.JKReturnStatement
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.withCommentsFrom
+import org.jetbrains.kotlin.nj2k.tree.withFormattingFrom
 import org.jetbrains.kotlin.nj2k.types.asPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.isFloatingPoint
 

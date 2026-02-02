@@ -16,7 +16,11 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.asyncDependenciesResolver
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.ResultWithDiagnostics
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.script.experimental.api.asDiagnostics
+import kotlin.script.experimental.api.valueOrNull
 
 @K1Deprecation
 open class DefaultScriptConfigurationLoader(val project: Project) : ScriptConfigurationLoader {

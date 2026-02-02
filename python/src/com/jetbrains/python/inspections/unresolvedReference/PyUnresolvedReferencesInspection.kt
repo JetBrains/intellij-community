@@ -10,15 +10,14 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.findFile
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -42,19 +41,31 @@ import com.jetbrains.python.codeInsight.imports.PythonImportUtils
 import com.jetbrains.python.getEffectiveLanguageLevel
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider
-import com.jetbrains.python.inspections.quickfix.*
+import com.jetbrains.python.inspections.quickfix.AddIgnoredIdentifierQuickFix
+import com.jetbrains.python.inspections.quickfix.GenerateBinaryStubsFix
+import com.jetbrains.python.inspections.quickfix.InstallAllPackagesQuickFix
+import com.jetbrains.python.inspections.quickfix.InstallAndImportPackageQuickFix
+import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
+import com.jetbrains.python.inspections.quickfix.PyMarkDirectoryAsSourceRootQuickFix
 import com.jetbrains.python.module.PySourceRootDetectionService
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.isNotInstalledAndCanBeInstalled
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyImportStatementBase
+import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.impl.references.PyFromImportNameReference
 import com.jetbrains.python.psi.impl.references.PyImportReference
 import com.jetbrains.python.psi.resolve.fromModule
 import com.jetbrains.python.psi.resolve.resolveInRoot
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.isReadOnly
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 /**
  * Marks references that fail to resolve.

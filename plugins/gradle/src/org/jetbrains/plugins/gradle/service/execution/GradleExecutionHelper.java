@@ -26,13 +26,24 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
-import org.gradle.tooling.*;
+import org.gradle.tooling.BuildLauncher;
+import org.gradle.tooling.CancellationToken;
+import org.gradle.tooling.GradleConnector;
+import org.gradle.tooling.LongRunningOperation;
+import org.gradle.tooling.ModelBuilder;
+import org.gradle.tooling.ProgressListener;
+import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.TestLauncher;
 import org.gradle.tooling.events.OperationType;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
@@ -42,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.connection.GradleConnectorService;
 import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
-import org.jetbrains.plugins.gradle.issue.OutdatedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
@@ -561,8 +571,10 @@ public final class GradleExecutionHelper {
 
       checkThatGradleBuildEnvironmentIsSupportedByIdea(buildEnvironment);
       checkThatGradleBuildEnvironmentIsDeprecatedByIdea(context, buildEnvironment);
-      checkThatLatestGradleMinorVersionIsUsed(context, buildEnvironment);
-
+      var checkers = GradleExecutionChecker.EP_NAME.getExtensionList();
+      for (var checker : checkers) {
+        checker.checkExecution(context, buildEnvironment);
+      }
       return buildEnvironment;
     }
     catch (CancellationException ce) {
@@ -576,39 +588,6 @@ public final class GradleExecutionHelper {
     finally {
       span.end();
     }
-  }
-
-  private static void checkThatLatestGradleMinorVersionIsUsed(
-    @NotNull GradleExecutionContext context,
-    @NotNull BuildEnvironment buildEnvironment
-  ) {
-    GradleVersion currentVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
-    if (GradleJvmSupportMatrix.isGradleDeprecatedByIdea(currentVersion)) return;
-    if (isLatestMinorVersionInspectionDisabled(context)) return;
-    if (isMinorGradleVersionOutdated(currentVersion)) return;
-
-    final var issue = new OutdatedGradleVersionIssue(context, currentVersion);
-    issue.addOpenInspectionSettingsQuickFix(context, "LatestMinorVersion");
-
-    context.getListener().onStatusChange(
-      new ExternalSystemBuildEvent(
-        context.getTaskId(),
-        new BuildIssueEventImpl(context.getTaskId(), issue, MessageEvent.Kind.INFO)
-      )
-    );
-  }
-
-  private static boolean isLatestMinorVersionInspectionDisabled(@NotNull GradleExecutionContext context) {
-    HighlightDisplayKey inspectionKey = HighlightDisplayKey.find("LatestMinorVersion");
-    if (inspectionKey == null) return true;
-    InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(context.getProject());
-    InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
-    return !inspectionProfile.isToolEnabled(inspectionKey);
-  }
-
-  private static boolean isMinorGradleVersionOutdated(@NotNull GradleVersion currentVersion) {
-    GradleVersion latestVersion = GradleJvmSupportMatrix.getLatestMinorGradleVersion(currentVersion.getMajorVersion());
-    return currentVersion.compareTo(latestVersion) >= 0;
   }
 
   private static void checkThatGradleBuildEnvironmentIsDeprecatedByIdea(

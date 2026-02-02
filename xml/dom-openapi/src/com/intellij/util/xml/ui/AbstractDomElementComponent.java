@@ -19,7 +19,7 @@ package com.intellij.util.xml.ui;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xml.DomElement;
 
-import java.awt.*;
+import java.awt.Component;
 
 
 public abstract class AbstractDomElementComponent<T extends DomElement> extends CompositeCommittable implements CommittablePanel {

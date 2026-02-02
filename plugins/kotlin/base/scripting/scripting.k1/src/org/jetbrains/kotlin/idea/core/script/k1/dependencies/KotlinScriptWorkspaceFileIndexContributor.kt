@@ -8,9 +8,9 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleOrLibrarySourceRootData
 import org.jetbrains.kotlin.K1Deprecation
-import org.jetbrains.kotlin.idea.core.script.v1.indexSourceRootsEagerly
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryRootTypeId
+import org.jetbrains.kotlin.idea.core.script.v1.indexSourceRootsEagerly
 
 /**
  * See recommendations for custom entities indexing

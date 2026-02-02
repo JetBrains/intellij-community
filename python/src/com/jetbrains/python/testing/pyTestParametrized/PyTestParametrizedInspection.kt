@@ -12,7 +12,12 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyParameter
+import com.jetbrains.python.psi.PyQualifiedExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.testing.pyTestFixtures.PyTestFixture
 import com.jetbrains.python.testing.pyTestFixtures.USE_FIXTURES

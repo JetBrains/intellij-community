@@ -14,7 +14,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrRecordDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.*
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightAnnotation
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.psi.util.getCompactConstructor
 import org.jetbrains.plugins.groovy.lang.psi.util.isRecordTransformationApplied

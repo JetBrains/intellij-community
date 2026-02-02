@@ -11,7 +11,14 @@ import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import com.intellij.psi.*;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -25,9 +32,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
 
-import static com.intellij.codeInspection.util.OptionalUtil.*;
+import static com.intellij.codeInspection.util.OptionalUtil.GUAVA_OPTIONAL;
+import static com.intellij.codeInspection.util.OptionalUtil.OPTIONAL_DOUBLE;
+import static com.intellij.codeInspection.util.OptionalUtil.OPTIONAL_INT;
+import static com.intellij.codeInspection.util.OptionalUtil.OPTIONAL_LONG;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
-import static com.siyeh.ig.callMatcher.CallMatcher.*;
+import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
+import static com.siyeh.ig.callMatcher.CallMatcher.exactInstanceCall;
+import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
+import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
 /**
  * An inliner which is capable to inline some Optional chains like

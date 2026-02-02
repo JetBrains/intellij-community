@@ -2,12 +2,32 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpressionList
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiThisExpression
 import com.intellij.psi.util.PsiMethodUtil
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.j2k.ast.*
+import org.jetbrains.kotlin.j2k.ast.Expression
+import org.jetbrains.kotlin.j2k.ast.Identifier
+import org.jetbrains.kotlin.j2k.ast.LiteralExpression
+import org.jetbrains.kotlin.j2k.ast.MethodCallExpression
+import org.jetbrains.kotlin.j2k.ast.Mutability
+import org.jetbrains.kotlin.j2k.ast.PrimitiveType
+import org.jetbrains.kotlin.j2k.ast.Property
+import org.jetbrains.kotlin.j2k.ast.assignNoPrototype
+import org.jetbrains.kotlin.j2k.ast.isMutable
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
 @K1Deprecation

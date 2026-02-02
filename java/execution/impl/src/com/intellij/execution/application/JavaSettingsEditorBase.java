@@ -6,13 +6,23 @@ import com.intellij.diagnostic.logging.LogsGroupFragment;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaRunConfigurationBase;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
-import com.intellij.execution.ui.*;
+import com.intellij.execution.ui.BeforeRunComponent;
+import com.intellij.execution.ui.BeforeRunFragment;
+import com.intellij.execution.ui.ClasspathModifier;
+import com.intellij.execution.ui.CommonJavaFragments;
+import com.intellij.execution.ui.CommonParameterFragments;
+import com.intellij.execution.ui.CommonTags;
+import com.intellij.execution.ui.JrePathEditor;
+import com.intellij.execution.ui.ModuleClasspathCombo;
+import com.intellij.execution.ui.RunConfigurationFragmentedEditor;
+import com.intellij.execution.ui.SettingsEditorFragment;
+import com.intellij.execution.ui.ShortenCommandLineModeCombo;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.List;
 

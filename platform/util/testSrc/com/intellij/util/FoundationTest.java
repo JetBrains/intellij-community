@@ -5,16 +5,38 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.NSWorkspace;
 import com.intellij.util.system.CpuArch;
-import com.sun.jna.*;
+import com.sun.jna.Library;
+import com.sun.jna.Memory;
+import com.sun.jna.Native;
+import com.sun.jna.Platform;
+import com.sun.jna.Pointer;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.intellij.ui.mac.foundation.Foundation.*;
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static com.intellij.ui.mac.foundation.Foundation.autorelease;
+import static com.intellij.ui.mac.foundation.Foundation.createDict;
+import static com.intellij.ui.mac.foundation.Foundation.createSelector;
+import static com.intellij.ui.mac.foundation.Foundation.getEncodingCode;
+import static com.intellij.ui.mac.foundation.Foundation.getEncodingName;
+import static com.intellij.ui.mac.foundation.Foundation.getObjcClass;
+import static com.intellij.ui.mac.foundation.Foundation.invoke;
+import static com.intellij.ui.mac.foundation.Foundation.invokeVarArg;
+import static com.intellij.ui.mac.foundation.Foundation.invoke_fpret;
+import static com.intellij.ui.mac.foundation.Foundation.nsString;
+import static com.intellij.ui.mac.foundation.Foundation.stringFromClass;
+import static com.intellij.ui.mac.foundation.Foundation.stringFromSelector;
+import static com.intellij.ui.mac.foundation.Foundation.toStringViaUTF8;
+import static org.hamcrest.CoreMatchers.endsWith;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class FoundationTest {
   @BeforeClass

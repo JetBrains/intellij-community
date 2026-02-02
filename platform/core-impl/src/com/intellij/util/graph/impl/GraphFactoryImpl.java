@@ -2,7 +2,13 @@
 package com.intellij.util.graph.impl;
 
 import com.google.common.graph.Graphs;
-import com.intellij.util.graph.*;
+import com.intellij.util.graph.ElementOrder;
+import com.intellij.util.graph.EndpointPair;
+import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.GraphFactory;
+import com.intellij.util.graph.MutableNetwork;
+import com.intellij.util.graph.Network;
+import com.intellij.util.graph.NetworkBuilder;
 import org.jetbrains.annotations.NotNull;
 
 public class GraphFactoryImpl extends GraphFactory {

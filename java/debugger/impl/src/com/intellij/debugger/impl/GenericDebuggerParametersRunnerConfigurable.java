@@ -15,7 +15,12 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.xdebugger.impl.settings.DebuggerConfigurable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 

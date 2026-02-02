@@ -7,12 +7,16 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbModeListenerBackgroundable;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
@@ -25,7 +29,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.*;
+import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.BEFORE_PROPERTY_CHANGE;
+import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.CHILD_REMOVED;
+import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGED;
 
 public final class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTreeChangePreprocessor {
   private final SimpleModificationTracker myModificationCount = new SimpleModificationTracker();

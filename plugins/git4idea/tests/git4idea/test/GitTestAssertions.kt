@@ -2,7 +2,6 @@
 package git4idea.test
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.FilePath

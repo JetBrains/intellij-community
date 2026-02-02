@@ -10,9 +10,9 @@ import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.GitObjectRepository
-import git4idea.inMemory.objects.GitObject
 import git4idea.inMemory.chainCommits
 import git4idea.inMemory.getTreeFromEntry
+import git4idea.inMemory.objects.GitObject
 import git4idea.inMemory.rebase.log.GitInMemoryCommitEditingOperation
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls

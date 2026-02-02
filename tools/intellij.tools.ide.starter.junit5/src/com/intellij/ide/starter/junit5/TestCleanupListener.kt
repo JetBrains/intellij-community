@@ -2,13 +2,19 @@ package com.intellij.ide.starter.junit5
 
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.coroutineScopesCancellationTimeout
-import com.intellij.ide.starter.coroutine.CommonScope.testSuiteSupervisorScope
 import com.intellij.ide.starter.coroutine.CommonScope.perClassSupervisorScope
 import com.intellij.ide.starter.coroutine.CommonScope.perTestSupervisorScope
+import com.intellij.ide.starter.coroutine.CommonScope.testSuiteSupervisorScope
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.tools.ide.util.common.logError
-import com.intellij.tools.ide.util.common.logOutput
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.platform.engine.TestExecutionResult
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestIdentifier

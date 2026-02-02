@@ -3,8 +3,10 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.ClassFinder
 import com.intellij.TestCaseLoader
 import com.intellij.execution.CommandLineWrapperUtil
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
@@ -14,6 +16,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.util.io.awaitExit
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.common.AttributeKey
@@ -749,7 +752,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     context.compileModules(moduleNames = null, includingTestsInModules = null)
     val tests = spanBuilder("loading all tests annotated with @SkipInHeadlessEnvironment").use { loadTestsSkippedInHeadlessEnvironment() }
     for (it in tests) {
-      options.batchTestIncludes = it.getFirst()
+      options.isDedicatedTestRuntime = "class"
+      options.testPatterns = it.getFirst()
       options.mainModule = it.getSecond()
       runTests()
     }
@@ -760,7 +764,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       .flatMap { context.getModuleRuntimeClasspath(module = it, forTests = true) }
       .distinct()
     val classloader = UrlClassLoader.build().files(classpath).get()
-    val testAnnotation = classloader.loadClass("com.intellij.testFramework.SkipInHeadlessEnvironment")
+    @Suppress("UNCHECKED_CAST") val testAnnotation = classloader.loadClass(SkipInHeadlessEnvironment::class.java.name) as Class<out Annotation>
+    @Suppress("UNCHECKED_CAST") val ignoreAnnotation = classloader.loadClass(IJIgnore::class.java.name) as Class<out Annotation>
 
     return coroutineScope {
       context.project.modules.map { module ->
@@ -768,19 +773,14 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           val outputRoots = context.outputProvider.getModuleOutputRoots(module, forTests = true)
           val root = requireNotNull(outputRoots.singleOrNull()) { "More than one output root for module '${module.name}': ${outputRoots.joinToString()}" }
           if (Files.exists(root)) {
-            Files.walk(root).use { stream ->
-              stream
-                .filter { it.toString().endsWith("Test.class") }
-                .map { root.relativize(it).toString() }
-                .filter {
-                  val className = FileUtilRt.getNameWithoutExtension(it).replace('/', '.')
-                  val testClass = classloader.loadClass(className)
-                  !Modifier.isAbstract(testClass.modifiers) &&
-                  testClass.annotations.any { annotation -> testAnnotation.isAssignableFrom(annotation.javaClass) }
-                }
-                .map { Pair(it, module.name) }
-                .toList()
-            }
+            ClassFinder(root, "", false).classes
+              .filter {
+                val testClass = classloader.loadClass(it)
+                !Modifier.isAbstract(testClass.modifiers) &&
+                !testClass.isAnnotationPresent(ignoreAnnotation) &&
+                testClass.isAnnotationPresent(testAnnotation)
+              }
+              .map { Pair(it, module.name) }
           }
           else {
             emptyList()

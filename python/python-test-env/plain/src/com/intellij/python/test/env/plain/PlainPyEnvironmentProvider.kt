@@ -2,7 +2,13 @@
 package com.intellij.python.test.env.plain
 
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.python.test.env.core.*
+import com.intellij.python.test.env.core.PyEnvDownloadCache
+import com.intellij.python.test.env.core.PyEnvironment
+import com.intellij.python.test.env.core.PyEnvironmentProvider
+import com.intellij.python.test.env.core.PyVersionMapping
+import com.intellij.python.test.env.core.extractIfNecessary
+import com.intellij.python.test.env.core.installPipPackages
+import com.intellij.python.test.env.core.markExecutable
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.system.OS
 import com.jetbrains.python.PythonBinary

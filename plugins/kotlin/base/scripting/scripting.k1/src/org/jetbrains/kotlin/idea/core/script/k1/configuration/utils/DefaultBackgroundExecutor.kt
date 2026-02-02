@@ -9,13 +9,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
 import com.intellij.util.containers.HashSetQueue
-import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.utils.DefaultBackgroundExecutor.Companion.PROGRESS_INDICATOR_DELAY
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.utils.DefaultBackgroundExecutor.Companion.PROGRESS_INDICATOR_MIN_QUEUE
+import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
-import java.util.*
+import java.util.Queue
 import javax.swing.SwingUtilities
 
 /**

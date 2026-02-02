@@ -3,7 +3,14 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnnotationParameterList;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 

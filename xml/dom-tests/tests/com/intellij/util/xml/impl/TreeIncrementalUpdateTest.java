@@ -24,7 +24,14 @@ import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.CustomChildren;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileDescription;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.SubTag;
+import com.intellij.util.xml.TypeChooser;
 import com.intellij.util.xml.events.DomEvent;
 
 import java.lang.reflect.Type;

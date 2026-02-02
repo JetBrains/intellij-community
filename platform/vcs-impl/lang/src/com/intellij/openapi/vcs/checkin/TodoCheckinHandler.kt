@@ -2,7 +2,12 @@
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
-import com.intellij.ide.todo.*
+import com.intellij.ide.todo.CommitChecksTodosTreeBuilder
+import com.intellij.ide.todo.PostCommitChecksTodosTreeBuilder
+import com.intellij.ide.todo.SetTodoFilterAction
+import com.intellij.ide.todo.TodoConfiguration
+import com.intellij.ide.todo.TodoPanelSettings
+import com.intellij.ide.todo.TodoView
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt

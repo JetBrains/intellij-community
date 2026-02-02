@@ -6,7 +6,11 @@ import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
-import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.FuzzyType
+import org.jetbrains.kotlin.idea.util.combineIfNoConflicts
+import org.jetbrains.kotlin.idea.util.fuzzyExtensionReceiverType
+import org.jetbrains.kotlin.idea.util.nullability
+import org.jetbrains.kotlin.idea.util.toFuzzyType
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
@@ -17,7 +21,6 @@ import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.isValidOperator
 import org.jetbrains.kotlin.utils.addIfNotNull
-import java.util.*
 
 @K1Deprecation
 abstract class TypesWithOperatorDetector(

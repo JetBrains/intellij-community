@@ -1,9 +1,15 @@
 package com.jetbrains.lsp.implementation
 
-import com.jetbrains.lsp.protocol.*
-import kotlinx.coroutines.*
+import com.jetbrains.lsp.protocol.LSP
+import com.jetbrains.lsp.protocol.ProgressParams
+import com.jetbrains.lsp.protocol.WorkDoneProgress
+import com.jetbrains.lsp.protocol.WorkDoneProgressParams
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 fun interface ProgressReporter {

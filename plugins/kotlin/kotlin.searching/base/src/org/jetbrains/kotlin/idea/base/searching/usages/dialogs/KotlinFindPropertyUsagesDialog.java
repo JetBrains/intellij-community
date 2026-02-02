@@ -15,11 +15,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesOptions;
 import org.jetbrains.kotlin.lexer.KtTokens;
-import org.jetbrains.kotlin.psi.*;
+import org.jetbrains.kotlin.psi.KtClass;
+import org.jetbrains.kotlin.psi.KtNamedDeclaration;
+import org.jetbrains.kotlin.psi.KtParameter;
+import org.jetbrains.kotlin.psi.KtParameterList;
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor;
 import org.jetbrains.kotlin.psi.psiUtil.PsiUtilsKt;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Component;
 
 import static org.jetbrains.kotlin.idea.base.searching.usages.dialogs.Utils.isAbstract;
 import static org.jetbrains.kotlin.idea.base.searching.usages.dialogs.Utils.isOpen;

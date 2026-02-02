@@ -3,7 +3,11 @@ package org.jetbrains.plugins.gitlab.mergerequest.util
 
 import git4idea.GitRemoteBranch
 import git4idea.remote.hosting.GitRemoteBranchesUtil
-import org.jetbrains.plugins.gitlab.mergerequest.data.*
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestFullDetails
+import org.jetbrains.plugins.gitlab.mergerequest.data.getSourceRemoteDescriptor
+import org.jetbrains.plugins.gitlab.mergerequest.data.getSpecialRemoteBranchForHead
+import org.jetbrains.plugins.gitlab.mergerequest.data.getTargetRemoteDescriptor
+import org.jetbrains.plugins.gitlab.mergerequest.data.isFork
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 object GitLabMergeRequestBranchUtil {

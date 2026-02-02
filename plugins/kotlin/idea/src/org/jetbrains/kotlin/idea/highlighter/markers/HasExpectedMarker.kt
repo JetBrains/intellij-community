@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.NavigationPopupD
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.buildNavigateToExpectedDeclarationsPopup
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.findMarkerBoundDeclarations
 import org.jetbrains.kotlin.idea.core.toDescriptor
-import org.jetbrains.kotlin.idea.util.expectedDescriptors
 import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
+import org.jetbrains.kotlin.idea.util.expectedDescriptors
 import org.jetbrains.kotlin.psi.KtDeclaration
 
 @K1Deprecation

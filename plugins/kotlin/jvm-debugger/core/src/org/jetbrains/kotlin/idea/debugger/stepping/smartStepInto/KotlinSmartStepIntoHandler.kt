@@ -7,8 +7,13 @@ import com.intellij.debugger.actions.JvmSmartStepIntoErrorReporter
 import com.intellij.debugger.actions.JvmSmartStepIntoHandler
 import com.intellij.debugger.actions.JvmSmartStepIntoHandler.SmartStepIntoDetectionStatus
 import com.intellij.debugger.actions.SmartStepTarget
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.ContextUtil
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.MethodFilter
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.impl.DexDebugFacility
 import com.intellij.debugger.jdi.MethodBytecodeUtil

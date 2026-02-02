@@ -27,20 +27,15 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.JComponent
-import kotlin.collections.List
-import kotlin.collections.MutableMap
-import kotlin.collections.buildList
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.forEach
-import kotlin.collections.listOf
-import kotlin.collections.map
-import kotlin.collections.mutableMapOf
 
 class MutableDiffRequestChain @JvmOverloads constructor(
   var content1: DiffContent,

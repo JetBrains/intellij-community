@@ -5,7 +5,11 @@ import com.intellij.codeInsight.daemon.DaemonBundle
 import com.intellij.ide.util.MethodCellRenderer
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFunctionalExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.search.PsiElementProcessorAdapter
 import com.intellij.psi.search.searches.ClassInheritorsSearch

@@ -9,9 +9,23 @@ import com.intellij.platform.eel.annotations.Filename
 import com.intellij.platform.eel.annotations.LocalPath
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.annotations.NativePath
-import com.intellij.psi.*
-import org.jetbrains.uast.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiVariable
+import org.jetbrains.uast.UAnnotated
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.UVariable
 import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.getUCallExpression
+import org.jetbrains.uast.resolveToUElement
 
 /**
  * Contains information about path annotation status.

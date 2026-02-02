@@ -15,10 +15,19 @@
  */
 package com.siyeh.ig.dependency;
 
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefClass;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefJavaElement;
+import com.intellij.codeInspection.reference.RefJavaUtil;
+import com.intellij.codeInspection.reference.RefPackage;
 import com.intellij.openapi.util.Key;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 public final class DependencyUtils {
 

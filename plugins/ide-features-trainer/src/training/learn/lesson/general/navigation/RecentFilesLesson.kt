@@ -19,8 +19,15 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.ui.UIUtil
 import training.FeaturesTrainerIcons
-import training.dsl.*
+import training.dsl.LessonContext
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskContext
+import training.dsl.TaskRuntimeContext
+import training.dsl.TaskTestContext
+import training.dsl.defaultRestoreDelay
+import training.dsl.sdkConfigurationTasks
+import training.dsl.waitAndUsePreviouslyFoundListItem
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson

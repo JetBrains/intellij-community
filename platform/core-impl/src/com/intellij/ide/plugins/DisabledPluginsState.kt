@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.io.path.Path
 

@@ -3,7 +3,7 @@ package com.intellij.uiDesigner.propertyInspector.renderers;
 
 import com.intellij.openapi.util.NlsSafe;
 
-import java.awt.*;
+import java.awt.Rectangle;
 
 public final class RectangleRenderer extends LabelPropertyRenderer<Rectangle> {
   private final StringBuffer myBuffer;

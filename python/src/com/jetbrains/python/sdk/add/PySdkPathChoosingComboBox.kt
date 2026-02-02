@@ -15,7 +15,11 @@
  */
 package com.jetbrains.python.sdk.add
 
-import com.intellij.execution.target.*
+import com.intellij.execution.target.BrowsableTargetEnvironmentType
+import com.intellij.execution.target.TargetBrowserHints
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentType
+import com.intellij.execution.target.getTargetType
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -34,8 +38,11 @@ import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.PySdkListCellRenderer
+import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.configuration.findPreferredVirtualEnvBaseSdk
+import com.jetbrains.python.sdk.findBaseSdks
+import com.jetbrains.python.sdk.getSdksToInstall
 import com.jetbrains.python.target.createDetectedSdk
 import com.jetbrains.python.ui.targetPathEditor.ManualPathEntryDialog
 import org.jetbrains.annotations.ApiStatus

@@ -2,7 +2,12 @@
 package org.jetbrains.plugins.groovy.codeInspection.style.string
 
 import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind
-import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.*
+import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.DOLLAR_SLASHY_QUOTED
+import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.DOUBLE_QUOTED
+import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.SINGLE_QUOTED
+import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.SLASHY
+import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.TRIPLE_DOUBLE_QUOTED
+import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.TRIPLE_QUOTED
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil
 
 private val QUOTE_TO_KIND: Map<String, InspectionStringQuotationKind> = listOf(

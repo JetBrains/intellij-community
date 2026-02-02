@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.base.analysis.test
 
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.kotlin.idea.base.analysis.LibraryDependenciesCacheImpl
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.analysis.LibraryDependenciesCacheImpl
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo

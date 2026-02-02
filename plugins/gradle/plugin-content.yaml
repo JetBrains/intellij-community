@@ -147,6 +147,9 @@
 - name: lib/modules/intellij.gradle.completion.jar
   contentModules:
   - name: intellij.gradle.completion
+- name: lib/modules/intellij.gradle.properties.jar
+  contentModules:
+  - name: intellij.gradle.properties
 - name: lib/modules/intellij.gradle.toml.jar
   contentModules:
   - name: intellij.gradle.toml

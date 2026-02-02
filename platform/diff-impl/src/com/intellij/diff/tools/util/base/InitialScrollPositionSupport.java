@@ -2,8 +2,12 @@
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.util.*;
+import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.Side;
+import com.intellij.diff.util.ThreeSide;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.DiffNavigationContext;
@@ -20,8 +24,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.LayoutManager;
+import java.awt.Point;
+import java.awt.Window;
 import java.util.List;
 import java.util.Set;
 

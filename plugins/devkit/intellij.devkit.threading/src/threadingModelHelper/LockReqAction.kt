@@ -3,7 +3,7 @@ package com.intellij.devkit.threading.threadingModelHelper
 
 import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
 import org.jetbrains.idea.devkit.threadingModelHelper.LOCK_REQUIREMENTS
-import java.util.*
+import java.util.EnumSet
 
 
 internal class LockReqAction : BaseReqSearchAction() {

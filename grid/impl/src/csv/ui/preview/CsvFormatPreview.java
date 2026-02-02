@@ -4,7 +4,7 @@ import com.intellij.database.csv.CsvFormat;
 import com.intellij.database.datagrid.GridRequestSource;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public interface CsvFormatPreview {
   void setFormat(@NotNull CsvFormat format, @NotNull GridRequestSource source);

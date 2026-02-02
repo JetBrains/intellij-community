@@ -12,7 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
 import org.jetbrains.plugins.groovy.lang.psi.impl.getTypeArgumentsFromResult
 import org.jetbrains.plugins.groovy.lang.resolve.DiamondResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.asJavaClassResult
-import java.util.*
 
 class EmptyMapLiteralType(private val literal: GrListOrMap) : GrMapType(literal) {
 

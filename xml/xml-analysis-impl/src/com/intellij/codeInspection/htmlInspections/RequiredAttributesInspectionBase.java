@@ -2,7 +2,11 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightingAwareElementDescriptor;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.XmlQuickFixFactory;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.html.impl.providers.HtmlAttributeValueProvider;
 import com.intellij.openapi.diagnostic.Logger;

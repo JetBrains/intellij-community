@@ -33,7 +33,13 @@ import git4idea.i18n.GitBundle
 import git4idea.index.enableStagingArea
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
-import training.dsl.*
+import training.dsl.LearningBalloonConfig
+import training.dsl.LessonContext
+import training.dsl.PreviousTaskInfo
+import training.dsl.TaskContext
+import training.dsl.TaskTestContext
+import training.dsl.restoreChangedSettingsInformer
+import training.dsl.subscribeForMessageBus
 import training.ui.LearningUiManager
 import java.awt.Point
 import java.awt.Rectangle

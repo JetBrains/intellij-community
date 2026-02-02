@@ -1,7 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddAssertStatementFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.AnnotateNullabilityFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteRedundantUpdateFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteSwitchLabelFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.RedundantInstanceofFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceComputeWithComputeIfPresentFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceFromOfNullableFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceMinMaxWithArgumentFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceTypeInCastFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithNullCheckFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithObjectsEqualsTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithOfNullableFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithTernaryOperatorTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithTrivialLambdaFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.StreamFilterNotNullFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.SurroundWithIfFixTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapIfStatementFixTest;
 import com.intellij.java.codeInsight.completion.NormalCompletionDfaTest;
 import com.intellij.java.codeInsight.completion.SmartTypeCompletionDfaTest;
 import com.intellij.java.codeInspection.dataFlow.OptionalOfNullableMisuseInspectionTest;

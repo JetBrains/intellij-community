@@ -7,7 +7,6 @@ import com.intellij.dvcs.branch.DvcsBranchManager.DvcsBranchManagerListener
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
@@ -27,11 +26,15 @@ import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListe
 import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchInProgressListener
 import git4idea.i18n.GitBundle.message
-import git4idea.repo.*
+import git4idea.repo.GitRepoInfo
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
+import git4idea.repo.GitRepositoryStateChangeListener
+import git4idea.repo.GitRepositoryTagsHolder
+import git4idea.repo.GitTagsHolderListener
 import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus

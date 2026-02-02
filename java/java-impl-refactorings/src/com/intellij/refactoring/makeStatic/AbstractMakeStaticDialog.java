@@ -25,7 +25,7 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.usageView.UsageViewUtil;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 
 public abstract class AbstractMakeStaticDialog extends RefactoringDialog {
   protected final PsiTypeParameterListOwner myMember;

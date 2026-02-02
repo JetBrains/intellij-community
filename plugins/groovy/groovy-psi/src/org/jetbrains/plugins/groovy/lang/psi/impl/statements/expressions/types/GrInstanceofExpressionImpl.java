@@ -3,7 +3,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.source.tree.java.PsiInstanceOfExpressionImpl;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.TokenSet;

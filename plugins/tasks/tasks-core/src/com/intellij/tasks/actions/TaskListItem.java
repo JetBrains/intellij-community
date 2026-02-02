@@ -9,7 +9,7 @@ import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.impl.TaskUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Dmitry Avdeev

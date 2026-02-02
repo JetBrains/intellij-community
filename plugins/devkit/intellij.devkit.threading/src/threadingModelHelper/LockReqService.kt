@@ -11,8 +11,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.idea.devkit.threadingModelHelper.*
-import java.util.*
+import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisConfig
+import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisResult
+import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
+import org.jetbrains.idea.devkit.threadingModelHelper.DefaultLockReqConsumer
+import org.jetbrains.idea.devkit.threadingModelHelper.LOCK_REQUIREMENTS
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqAnalyzerParallelBFS
+import java.util.EnumSet
 
 @Service(Service.Level.PROJECT)
 internal class LockReqsService(private val project: Project) {

@@ -10,7 +10,13 @@ import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.psi.*
+import com.intellij.psi.HierarchicalMethodSignature
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstantInitializer
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.asJava.KtLightClassMarker
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration

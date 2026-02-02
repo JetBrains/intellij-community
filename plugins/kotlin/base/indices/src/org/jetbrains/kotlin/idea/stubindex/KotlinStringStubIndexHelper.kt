@@ -12,7 +12,11 @@ import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.indexing.IdFilter
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.base.indices.*
+import org.jetbrains.kotlin.idea.base.indices.checkCollectionSize
+import org.jetbrains.kotlin.idea.base.indices.getAllKeysAndMeasure
+import org.jetbrains.kotlin.idea.base.indices.getByKeyAndMeasure
+import org.jetbrains.kotlin.idea.base.indices.processAllKeysAndMeasure
+import org.jetbrains.kotlin.idea.base.indices.processElementsAndMeasure
 import org.jetbrains.kotlin.psi.KtElement
 
 abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private val valueClass: Class<Key>) {

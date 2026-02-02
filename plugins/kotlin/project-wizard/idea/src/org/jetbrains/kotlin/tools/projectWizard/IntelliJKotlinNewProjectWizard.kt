@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.impl.LibraryScopeCache
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import com.intellij.util.indexing.DumbModeAccessType

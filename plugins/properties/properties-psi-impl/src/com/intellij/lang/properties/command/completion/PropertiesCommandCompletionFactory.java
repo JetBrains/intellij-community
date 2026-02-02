@@ -2,7 +2,6 @@
 package com.intellij.lang.properties.command.completion;
 
 import com.intellij.codeInsight.completion.command.CommandCompletionFactory;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiFile;

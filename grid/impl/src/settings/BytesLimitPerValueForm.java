@@ -4,7 +4,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.ui.components.fields.IntegerField;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 
 /**
  * @author Liudmila Kornilova

@@ -17,9 +17,9 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.tools.sdkTools.PySdkTools
 import com.jetbrains.python.tools.sdkTools.SdkCreationType
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import java.io.File
 import java.nio.file.Paths
 import kotlin.io.path.Path

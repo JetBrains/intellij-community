@@ -3,7 +3,7 @@ package com.intellij.database.datagrid
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Key
-import java.util.*
+import java.util.UUID
 
 class DataGridStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {

@@ -1,7 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.diff
 
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.collectScoped
+import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.mapStatefulToStateful
+import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.async.transformConsecutiveSuccesses
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
 import com.intellij.collaboration.ui.codereview.diff.viewer.showCodeReview
@@ -10,7 +16,11 @@ import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterCon
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.util.*
+import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.Hideable
+import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.collaboration.util.getOrNull
+import com.intellij.collaboration.util.syncOrToggleAll
 import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffExtension
 import com.intellij.diff.FrameDiffTool

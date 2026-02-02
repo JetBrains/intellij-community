@@ -18,8 +18,12 @@ import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 final class TestDataNavigationElementFactory {
   private static final int CREATE_MISSING_FILES_WITHOUT_CONFIRMATION_LIMIT = 3;

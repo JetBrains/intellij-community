@@ -3,14 +3,23 @@ package com.intellij.java.promo
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.util.projectWizard.*
+import com.intellij.ide.util.projectWizard.ModuleBuilder
+import com.intellij.ide.util.projectWizard.ModuleWizardStep
+import com.intellij.ide.util.projectWizard.PromoModuleBuilder
+import com.intellij.ide.util.projectWizard.SettingsStep
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.withVisualPadding
 import com.intellij.java.ui.icons.JavaUIIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleType
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FeaturePromoBundle
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeatureListItem
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeaturePage
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoPages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import javax.swing.Icon

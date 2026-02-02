@@ -43,6 +43,8 @@ interface FakeServerOptions {
   tools?: ToolSpecLike[]
   onToolCall?: ToolCallHandler
   responseMode?: 'json' | 'sse'
+  sessionId?: string
+  port?: number
 }
 
 type ProxyEnvFactory = (context: {fakeServer: FakeServerInstance}) => Record<string, string>
@@ -145,13 +147,13 @@ export const defaultUpstreamTools = [...DEFAULT_UPSTREAM_TOOL_NAMES].map((name) 
 )
 
 export async function startFakeMcpServer(
-  {tools = defaultUpstreamTools, onToolCall, responseMode = 'json'}: FakeServerOptions = {}
+  {tools = defaultUpstreamTools, onToolCall, responseMode = 'json', sessionId = 'test-session', port: requestedPort}: FakeServerOptions = {}
 ): Promise<FakeServerInstance> {
   const toolCallQueue: ToolCall[] = []
   const toolCallWaiters: Array<(call: ToolCall) => void> = []
   const sockets = new Set()
-  const sessionId = 'test-session'
   const responseModeValue = responseMode === 'sse' ? 'sse' : 'json'
+  let isClosed = false
 
   function enqueueToolCall(call: ToolCall): void {
     if (toolCallWaiters.length > 0) {
@@ -241,6 +243,10 @@ export async function startFakeMcpServer(
   }
 
   async function listenWithFallback(): Promise<void> {
+    if (typeof requestedPort === 'number' && Number.isFinite(requestedPort) && requestedPort > 0) {
+      await listenOnPort(requestedPort)
+      return
+    }
     try {
       await listenOnPort(0)
       return
@@ -266,11 +272,11 @@ export async function startFakeMcpServer(
 
   await listenWithFallback()
   const address = httpServer.address()
-  const port = typeof address === 'object' && address ? address.port : 0
-  debug(`fake server: listening on ${port}`)
+  const boundPort = typeof address === 'object' && address ? address.port : 0
+  debug(`fake server: listening on ${boundPort}`)
 
   return {
-    port,
+    port: boundPort,
     waitForToolCall(): Promise<ToolCall> {
       return new Promise((resolve) => {
         if (toolCallQueue.length > 0) {
@@ -281,6 +287,8 @@ export async function startFakeMcpServer(
       })
     },
     async close(): Promise<void> {
+      if (isClosed) return
+      isClosed = true
       await mcpServer.close()
       for (const socket of sockets) {
         socket.destroy()
@@ -345,6 +353,33 @@ export async function withProxy(
   } finally {
     if (proxyClient) await proxyClient.close()
     if (fakeServer) await fakeServer.close()
+    if (testDir) rmSync(testDir, {recursive: true, force: true})
+  }
+}
+
+export async function withStreamProxy(
+  options: {
+    proxyEnv?: Record<string, string>
+  } = {},
+  run: (context: {proxyClient: McpTestClient; testDir: string}) => Promise<void>
+): Promise<void> {
+  let proxyClient: McpTestClient | undefined
+  let testDir: string | undefined
+
+  try {
+    testDir = mkdtempSync(join(tmpdir(), 'ij-mcp-proxy-stream-'))
+    const proxy = startProxy(testDir, 64342, options.proxyEnv ?? {})
+    proxyClient = new McpTestClient(proxy)
+    debug('setup: sending initialize (stream)')
+    await proxyClient.send('initialize', {
+      protocolVersion: '2024-11-05',
+      clientInfo: {name: 'test-client', version: '1.0.0'},
+      capabilities: {}
+    })
+    debug('setup: initialize complete (stream)')
+    await run({proxyClient, testDir})
+  } finally {
+    if (proxyClient) await proxyClient.close()
     if (testDir) rmSync(testDir, {recursive: true, force: true})
   }
 }

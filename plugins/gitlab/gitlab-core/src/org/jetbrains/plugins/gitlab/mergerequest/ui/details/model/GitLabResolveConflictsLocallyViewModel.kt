@@ -19,7 +19,10 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.getRemoteDescriptor
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError.*
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError.AlreadyResolvedLocally
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError.DetailsNotLoaded
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError.MergeInProgress
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabResolveConflictsLocallyError.SourceRepositoryNotFound
 
 typealias GitLabResolveConflictsLocallyViewModel = ResolveConflictsLocallyViewModel<GitLabResolveConflictsLocallyError>
 

@@ -8,7 +8,11 @@ import com.intellij.debugger.streams.core.wrapper.CallArgument
 import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.core.wrapper.QualifierExpression
 import com.intellij.debugger.streams.core.wrapper.StreamChain
-import com.intellij.debugger.streams.core.wrapper.impl.*
+import com.intellij.debugger.streams.core.wrapper.impl.CallArgumentImpl
+import com.intellij.debugger.streams.core.wrapper.impl.IntermediateStreamCallImpl
+import com.intellij.debugger.streams.core.wrapper.impl.QualifierExpressionImpl
+import com.intellij.debugger.streams.core.wrapper.impl.StreamChainImpl
+import com.intellij.debugger.streams.core.wrapper.impl.TerminatorStreamCallImpl
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement

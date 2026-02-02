@@ -2,7 +2,12 @@
 package com.intellij.ide.bookmark.providers
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.ide.bookmark.*
+import com.intellij.ide.bookmark.Bookmark
+import com.intellij.ide.bookmark.BookmarkProvider
+import com.intellij.ide.bookmark.BookmarksManager
+import com.intellij.ide.bookmark.BookmarksManagerImpl
+import com.intellij.ide.bookmark.FileBookmark
+import com.intellij.ide.bookmark.LineBookmark
 import com.intellij.ide.bookmark.ui.tree.FileNode
 import com.intellij.ide.bookmark.ui.tree.LineNode
 import com.intellij.ide.projectView.ProjectViewNode

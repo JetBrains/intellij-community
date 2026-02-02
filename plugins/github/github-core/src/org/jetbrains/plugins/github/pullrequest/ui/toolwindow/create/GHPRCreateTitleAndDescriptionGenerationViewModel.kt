@@ -14,7 +14,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRTitleAndDescriptionGeneratorExtension.*
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRTitleAndDescriptionGeneratorExtension.GenerationDone
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRTitleAndDescriptionGeneratorExtension.GenerationError
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRTitleAndDescriptionGeneratorExtension.GenerationStep
 
 @ApiStatus.Internal
 interface GHPRTitleAndDescriptionGeneratorExtension {

@@ -12,7 +12,7 @@ import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.junit.Assume
 import org.junit.Test
-import java.util.*
+import java.util.Locale
 
 class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImportingTestCase() {
     override fun testDataDirName(): String = "multiplatform/commonizerImportAndCheckHighlighting"

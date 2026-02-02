@@ -15,7 +15,10 @@
  */
 package org.intellij.plugins.xpathView.ui;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 public class InputFormPanel extends JPanel implements InputForm {
     @SuppressWarnings({ "UNUSED_SYMBOL"})

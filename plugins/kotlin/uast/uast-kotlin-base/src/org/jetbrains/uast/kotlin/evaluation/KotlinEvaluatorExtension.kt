@@ -11,7 +11,11 @@ import org.jetbrains.uast.evaluation.UEvaluationState
 import org.jetbrains.uast.evaluation.to
 import org.jetbrains.uast.kotlin.KotlinBinaryOperators
 import org.jetbrains.uast.kotlin.KotlinPostfixOperators
-import org.jetbrains.uast.values.*
+import org.jetbrains.uast.values.UAbstractConstant
+import org.jetbrains.uast.values.UConstant
+import org.jetbrains.uast.values.UNullConstant
+import org.jetbrains.uast.values.UUndeterminedValue
+import org.jetbrains.uast.values.UValue
 
 @InternalIgnoreDependencyViolation
 class KotlinEvaluatorExtension : AbstractEvaluatorExtension(KotlinLanguage.INSTANCE) {

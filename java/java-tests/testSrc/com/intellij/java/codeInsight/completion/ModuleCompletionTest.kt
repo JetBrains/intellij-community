@@ -3,7 +3,8 @@ package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
-import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M4
 import com.intellij.testFramework.NeedsIndex
 import org.assertj.core.api.Assertions.assertThat
 import java.util.jar.JarFile

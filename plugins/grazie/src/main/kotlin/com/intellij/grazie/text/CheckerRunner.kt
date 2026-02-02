@@ -15,7 +15,12 @@ import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.seemsCloudConnec
 import com.intellij.grazie.ide.fus.AcceptanceRateTracker
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
-import com.intellij.grazie.ide.inspection.grammar.quickfix.*
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieAddExceptionQuickFix
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieCustomFixWrapper
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieEnableCloudAction
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieMassApplyAction
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
+import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.spellcheck.TypoProblem
 import com.intellij.grazie.text.TextChecker.ProofreadingContext

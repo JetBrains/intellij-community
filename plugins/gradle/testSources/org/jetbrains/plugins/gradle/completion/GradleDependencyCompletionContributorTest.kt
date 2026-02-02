@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.completion
 
 import com.intellij.gradle.completion.GradleDependencyCompletionContributor
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer
+import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerTestImpl
 import com.intellij.openapi.Disposable
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.testFramework.junit5.TestApplication
@@ -11,8 +12,12 @@ import com.intellij.testFramework.replaceService
 import com.intellij.util.application
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.idea.completion.api.*
-import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerTestImpl
+import org.jetbrains.idea.completion.api.DependencyArtifactCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyCompletionResult
+import org.jetbrains.idea.completion.api.DependencyGroupCompletionRequest
+import org.jetbrains.idea.completion.api.DependencyVersionCompletionRequest
+import org.jetbrains.idea.completion.api.GradleDependencyCompletionContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest

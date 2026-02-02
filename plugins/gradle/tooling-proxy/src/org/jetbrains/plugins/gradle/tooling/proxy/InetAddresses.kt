@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory
 import java.net.InetAddress
 import java.net.NetworkInterface
 import java.net.SocketException
-import java.util.*
+import java.util.Enumeration
 
 internal class InetAddresses {
   val loopback: MutableList<InetAddress> = mutableListOf()

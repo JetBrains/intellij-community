@@ -3,7 +3,9 @@ package fleet.kernel.rebase
 
 import com.jetbrains.rhizomedb.ChangeScope
 import com.jetbrains.rhizomedb.withDefaultPart
-import fleet.kernel.*
+import fleet.kernel.SharedPart
+import fleet.kernel.TransactorMiddleware
+import fleet.kernel.uidAttribute
 import fleet.util.UID
 
 class LeaderTransactorMiddleware(

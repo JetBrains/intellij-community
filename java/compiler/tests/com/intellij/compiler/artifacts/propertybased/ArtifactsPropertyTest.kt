@@ -1,15 +1,29 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts.propertybased
 
-import com.intellij.java.workspace.entities.*
+import com.intellij.java.workspace.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.ArtifactRootElementEntity
+import com.intellij.java.workspace.entities.ArtifactRootElementEntityBuilder
+import com.intellij.java.workspace.entities.CompositePackagingElementEntity
+import com.intellij.java.workspace.entities.PackagingElementEntity
+import com.intellij.java.workspace.entities.modifyArtifactEntity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.packaging.artifacts.*
-import com.intellij.packaging.elements.*
+import com.intellij.packaging.artifacts.Artifact
+import com.intellij.packaging.artifacts.ArtifactManager
+import com.intellij.packaging.artifacts.ArtifactModel
+import com.intellij.packaging.artifacts.ArtifactType
+import com.intellij.packaging.artifacts.ModifiableArtifact
+import com.intellij.packaging.artifacts.ModifiableArtifactModel
+import com.intellij.packaging.elements.CompositePackagingElement
+import com.intellij.packaging.elements.PackagingElement
+import com.intellij.packaging.elements.PackagingElementFactory
+import com.intellij.packaging.elements.PackagingElementOutputKind
+import com.intellij.packaging.elements.PackagingElementType
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactBridge
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
@@ -33,7 +47,11 @@ import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test

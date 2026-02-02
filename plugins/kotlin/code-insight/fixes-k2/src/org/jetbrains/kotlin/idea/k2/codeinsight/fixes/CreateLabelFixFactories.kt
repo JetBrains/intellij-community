@@ -6,7 +6,10 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.quickfix.CreateLabelFix
 import org.jetbrains.kotlin.idea.quickfix.CreateLabelFix.Companion.getContainingLambdas
 import org.jetbrains.kotlin.idea.quickfix.CreateLabelFix.Companion.getContainingLoops
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBreakExpression
+import org.jetbrains.kotlin.psi.KtContinueExpression
+import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
 
 internal object CreateLabelFixFactories {
 

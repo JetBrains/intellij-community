@@ -8,7 +8,9 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.util.ConcurrencyUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.*
+import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.Context
+import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.MutableMavenProjectContext
+import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.MutableModelContext
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import java.util.concurrent.ConcurrentHashMap

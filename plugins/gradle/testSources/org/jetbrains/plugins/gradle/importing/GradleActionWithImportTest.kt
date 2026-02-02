@@ -7,7 +7,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.io.File
-import java.util.*
+import java.util.Random
 
 class GradleActionWithImportTest : GradleActionWithImportTestCase() {
 

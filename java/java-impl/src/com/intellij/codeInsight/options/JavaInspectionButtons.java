@@ -9,7 +9,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.ui.DependencyConfigurable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 public final class JavaInspectionButtons extends CustomComponentExtensionWithSwingRenderer<JavaInspectionButtons.ButtonKind> {
   public JavaInspectionButtons() {

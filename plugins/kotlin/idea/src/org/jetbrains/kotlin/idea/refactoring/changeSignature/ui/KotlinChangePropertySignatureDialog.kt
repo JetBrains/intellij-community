@@ -11,7 +11,14 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeSignatureProcessor
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableParameterInfo
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.receiverTypeInfo
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.render
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.returnTypeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinBaseChangeSignatureDialog.Companion.showWarningMessage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog.Companion.getTypeInfo
 import org.jetbrains.kotlin.psi.KtExpression

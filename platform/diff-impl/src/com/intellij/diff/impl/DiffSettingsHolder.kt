@@ -5,12 +5,16 @@ import com.intellij.diff.tools.fragmented.UnifiedDiffTool
 import com.intellij.diff.tools.simple.SimpleDiffTool
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUtil
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.TreeMap
 
 @State(name = DiffSettingsHolder.SETTINGS_KEY, storages = [(Storage(value = DiffUtil.DIFF_CONFIG))], category = SettingsCategory.CODE)
 class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {

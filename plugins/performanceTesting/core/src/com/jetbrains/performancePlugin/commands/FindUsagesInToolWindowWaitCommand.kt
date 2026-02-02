@@ -9,7 +9,11 @@ import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.commands.FindUsagesInToolWindowCommand.Companion.FIRST_USAGE_SPAN_NAME
 import com.jetbrains.performancePlugin.commands.FindUsagesInToolWindowCommand.Companion.SPAN_NAME
 import com.jetbrains.performancePlugin.commands.FindUsagesInToolWindowCommand.Companion.TOOL_WINDOW_SPAN_NAME
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 

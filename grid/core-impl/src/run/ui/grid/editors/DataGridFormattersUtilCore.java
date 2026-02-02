@@ -16,7 +16,14 @@ import org.jetbrains.annotations.Nullable;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.Temporal;
@@ -25,8 +32,18 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import static com.intellij.database.extractors.FormatterCreator.getTimestampKey;
-import static com.intellij.database.run.ui.grid.editors.FormatsCache.*;
-import static java.time.temporal.ChronoField.*;
+import static com.intellij.database.run.ui.grid.editors.FormatsCache.LOCAL_DATE_FORMAT_PROVIDER;
+import static com.intellij.database.run.ui.grid.editors.FormatsCache.LOCAL_DATE_WITH_MILLI_FORMAT_PROVIDER;
+import static com.intellij.database.run.ui.grid.editors.FormatsCache.OFFSET_DATE_TIME_FORMAT_PROVIDER;
+import static com.intellij.database.run.ui.grid.editors.FormatsCache.SHORT_TIMESTAMP_FORMAT_PROVIDER;
+import static com.intellij.database.run.ui.grid.editors.FormatsCache.SIMPLE_DATE_FORMAT_PROVIDER;
+import static com.intellij.database.run.ui.grid.editors.FormatsCache.SIMPLE_TIMESTAMP_FORMAT_PROVIDER;
+import static com.intellij.database.run.ui.grid.editors.FormatsCache.TIMESTAMP_WITH_MILLI_FORMAT_PROVIDER;
+import static java.time.temporal.ChronoField.ERA;
+import static java.time.temporal.ChronoField.HOUR_OF_DAY;
+import static java.time.temporal.ChronoField.MILLI_OF_SECOND;
+import static java.time.temporal.ChronoField.MINUTE_OF_HOUR;
+import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
 
 public final class DataGridFormattersUtilCore {
   public static final LocalDate START_DATE = LocalDate.of(1970, 1, 1);

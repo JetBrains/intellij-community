@@ -2,12 +2,29 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiBlockStatement
+import com.intellij.psi.PsiBreakStatement
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiContinueStatement
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiIfStatement
+import com.intellij.psi.PsiReturnStatement
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiSwitchLabelStatement
+import com.intellij.psi.PsiSwitchStatement
+import com.intellij.psi.PsiThrowStatement
 import com.intellij.psi.controlFlow.ControlFlowFactory
 import com.intellij.psi.controlFlow.ControlFlowUtil
 import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy
 import org.jetbrains.kotlin.K1Deprecation
-import org.jetbrains.kotlin.j2k.ast.*
+import org.jetbrains.kotlin.j2k.ast.Block
+import org.jetbrains.kotlin.j2k.ast.Expression
+import org.jetbrains.kotlin.j2k.ast.Statement
+import org.jetbrains.kotlin.j2k.ast.ValueWhenEntrySelector
+import org.jetbrains.kotlin.j2k.ast.WhenEntry
+import org.jetbrains.kotlin.j2k.ast.WhenEntrySelector
+import org.jetbrains.kotlin.j2k.ast.WhenStatement
+import org.jetbrains.kotlin.j2k.ast.assignNoPrototype
 
 
 @K1Deprecation

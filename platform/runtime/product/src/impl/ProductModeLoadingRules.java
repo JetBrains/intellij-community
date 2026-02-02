@@ -8,7 +8,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.intellij.platform.runtime.product.ProductMode.*;
+import static com.intellij.platform.runtime.product.ProductMode.BACKEND;
+import static com.intellij.platform.runtime.product.ProductMode.FRONTEND;
+import static com.intellij.platform.runtime.product.ProductMode.MONOLITH;
 
 /**
  * This class is used to determine whether a module should be loaded based on the current {@link ProductMode}.

@@ -22,7 +22,11 @@ import com.intellij.python.pyproject.model.api.getModuleInfo
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PythonIdeLanguageCustomization
 import com.jetbrains.python.Result
-import com.jetbrains.python.inspections.*
+import com.jetbrains.python.inspections.InspectionRunnerResult
+import com.jetbrains.python.inspections.PyAsyncFileInspectionRunner
+import com.jetbrains.python.inspections.PyInspection
+import com.jetbrains.python.inspections.PyInspectionExtension
+import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.types.TypeEvalContext
