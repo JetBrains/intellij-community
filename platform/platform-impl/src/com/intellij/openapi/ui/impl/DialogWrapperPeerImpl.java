@@ -380,13 +380,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   @Override
   public boolean isMaximizable() {
     if (!(myDialog instanceof JDialog jDialog)) return false;
-    return MaximizeDialogKt.isMaximizable(jDialog);
+    return MaximizeDialogKt.isMaximizeButtonShown(jDialog);
   }
 
   @Override
   public void setMaximizable(boolean maximizable) {
     if (!(myDialog instanceof JDialog jDialog)) return;
-    MaximizeDialogKt.setMaximizable(jDialog, maximizable);
+    MaximizeDialogKt.setMaximizeButtonShown(jDialog, maximizable);
   }
 
   @Override

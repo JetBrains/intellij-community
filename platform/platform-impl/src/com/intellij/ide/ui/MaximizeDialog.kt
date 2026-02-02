@@ -24,8 +24,11 @@ import kotlin.math.abs
  * In the current implementation, this property only affects behavior on Windows.
  * On macOS, all dialogs are maximizable by the OS.
  * On Linux, dialogs have native headers, and it's the environment that determines whether they can be maximized (usually they can not).
+ *
+ * @see [canBeMaximized]
+ * @see [canBeNormalized]
  */
-var JDialog.isMaximizable: Boolean
+var JDialog.isMaximizeButtonShown: Boolean
   get() = ClientProperty.isTrue(this, MAXIMIZABLE)
   set(value) {
     ClientProperty.put(this, MAXIMIZABLE, if (value) true else null)
@@ -42,7 +45,9 @@ var JDialog.isMaximizable: Boolean
  * because the "normal, not maximized" size and location are unknown then,
  * as they're stored internally.
  *
- * @see [isMaximizable]
+ * @see [isMaximizeButtonShown]
+ * @see [canBeMaximized]
+ * @see [canBeNormalized]
  */
 fun JDialog.toggleMaximized() {
   if (canBeMaximized()) {
@@ -60,7 +65,7 @@ fun JDialog.toggleMaximized() {
  *
  * If this function returns `true`, then the dialog can be maximized using [maximize] or [toggleMaximized].
  *
- * @see [isMaximizable]
+ * @see [isMaximizeButtonShown]
  */
 fun JDialog.canBeMaximized(): Boolean {
   if (!commonResizingConditionsAreMet()) return false
@@ -76,7 +81,7 @@ fun JDialog.canBeMaximized(): Boolean {
  *
  * See [canBeMaximized] for the exact conditions when a dialog can be maximized.
  *
- * @see [isMaximizable]
+ * @see [isMaximizeButtonShown]
  */
 fun JDialog.maximize() {
   if (!canBeMaximized()) return
@@ -104,7 +109,7 @@ fun JDialog.maximize() {
  *
  * If this function returns `true`, then the dialog can be normalized using [normalize] or [toggleMaximized].
  *
- * @see [isMaximizable]
+ * @see [isMaximizeButtonShown]
  */
 fun JDialog.canBeNormalized(): Boolean {
   if (!commonResizingConditionsAreMet()) return false
@@ -122,7 +127,7 @@ fun JDialog.canBeNormalized(): Boolean {
  *
  * See [canBeNormalized] for the exact conditions when it's possible to normalize a dialog.
  *
- * @see [isMaximizable]
+ * @see [isMaximizeButtonShown]
  */
 fun JDialog.normalize() {
   if (!canBeNormalized()) return

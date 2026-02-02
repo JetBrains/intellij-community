@@ -384,10 +384,10 @@ com.intellij.ide.trustedProjects.TrustedProjectsLocator$LocatedProject
 f:com.intellij.ide.ui.MaximizeDialogKt
 - sf:canBeMaximized(javax.swing.JDialog):Z
 - sf:canBeNormalized(javax.swing.JDialog):Z
-- sf:isMaximizable(javax.swing.JDialog):Z
+- sf:isMaximizeButtonShown(javax.swing.JDialog):Z
 - sf:maximize(javax.swing.JDialog):V
 - sf:normalize(javax.swing.JDialog):V
-- sf:setMaximizable(javax.swing.JDialog,Z):V
+- sf:setMaximizeButtonShown(javax.swing.JDialog,Z):V
 - sf:toggleMaximized(javax.swing.JDialog):V
 com.intellij.ide.ui.OptionsSearchTopHitProvider$ApplicationLevelProvider
 - com.intellij.ide.SearchTopHitProvider
