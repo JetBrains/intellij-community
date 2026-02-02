@@ -15,7 +15,6 @@ import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPathBoundDescriptor
 import com.intellij.platform.core.nio.fs.MultiRoutingFsPath
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
-import com.intellij.platform.eel.impl.fs.telemetry.TracingFileSystemProvider
 import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend
 import com.intellij.platform.ide.impl.wsl.ijent.nio.IjentWslNioFileSystemProvider
@@ -76,7 +75,7 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
     return providersCache.computeIfAbsent(key) {
       val ijentUri = URI("ijent", "wsl", "/$distributionId", null, null)
 
-      val ijentFsProvider = TracingFileSystemProvider(IjentNioFileSystemProvider.getInstance())
+      val ijentFsProvider = IjentNioFileSystemProvider.getInstance()
 
       try {
         val descriptor = WslEelDescriptor(WSLDistribution(distributionId), wslRoot)
@@ -86,7 +85,7 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
         val fs = ijentFsProvider.newFileSystem(ijentUri, IjentNioFileSystemProvider.newFileSystemMap(ijentFs))
 
         coroutineScope.coroutineContext.job.invokeOnCompletion {
-          fs?.close()
+          fs.close()
         }
       }
       catch (_: FileSystemAlreadyExistsException) {
@@ -98,7 +97,7 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
           IjentEphemeralRootAwareFileSystemProvider(
             root = Path(wslRoot),
             ijentFsProvider = ijentFsProvider,
-            originalFsProvider = TracingFileSystemProvider(localFS.provider()),
+            originalFsProvider = localFS.provider(),
             // FIXME: is this behavior really correct?
             //
             // It is known that `originalFs.rootDirectories` always returns all WSL drives.
@@ -117,7 +116,7 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
           IjentWslNioFileSystemProvider(
             wslId = distributionId,
             ijentFsProvider = ijentFsProvider,
-            originalFsProvider = TracingFileSystemProvider(localFS.provider()),
+            originalFsProvider = localFS.provider(),
           ).getFileSystem(Path.of(wslRoot).toUri())
         }
         LOG.info("Switching $distributionId to IJent WSL nio.FS: $fileSystem")
