@@ -86,7 +86,7 @@ object NewUiOnboardingUtil {
     return ExperimentalUI.isNewUI()
            && isOnboardingEnabled
            && (proposeOnboarding ||
-               (type == OnboardingType.NEW_UI_ONBOARDING && ExperimentalUI.showNewUiOnboarding))
+               (type == OnboardingType.NEW_UI_ONBOARDING && ExperimentalUI.SHOW_NEW_UI_ONBOARDING_ON_START))
   }
 
   fun getHelpLink(topic: String): String {

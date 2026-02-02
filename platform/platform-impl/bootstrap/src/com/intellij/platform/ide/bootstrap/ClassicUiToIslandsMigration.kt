@@ -4,19 +4,24 @@ package com.intellij.platform.ide.bootstrap
 import com.intellij.ide.plugins.DisabledPluginsState
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.application.InitialConfigImportState
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.ui.ExperimentalUI
 import kotlinx.coroutines.Deferred
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 
+private val LOG = logger<ClassicUiToIslandsMigration>()
+
 /**
  * Todo can be removed after some time (e.g. in 2026.3). Additionally remove:
  * * com.intellij.platform.ide.bootstrap.ConfigKt.enableNewUi
  * * [ExperimentalUI.forcedSwitchedUi]
- * * [ExperimentalUI.showNewUiOnboarding]
+ * * [ExperimentalUI.SHOW_NEW_UI_ONBOARDING_ON_START]
  * * [ExperimentalUI.switchedFromClassicToIslandsInSession]
  * * [ExperimentalUI.cleanUpClassicUIFromDisabled]
  */
@@ -43,7 +48,9 @@ internal object ClassicUiToIslandsMigration {
         return
       }
 
-      if (InitialConfigImportState.isNewUser() || EarlyAccessRegistryManager.getBoolean("ide.experimental.ui")) {
+      if (InitialConfigImportState.isNewUser()
+          || EarlyAccessRegistryManager.getBoolean("ide.experimental.ui")
+          || !isAllowedUserLafToMigrate()) {
         EarlyAccessRegistryManager.setAndFlush(mapOf(ExperimentalUI.SWITCHED_FROM_CLASSIC_TO_ISLANDS to "false"))
       }
       else {
@@ -52,7 +59,6 @@ internal object ClassicUiToIslandsMigration {
 
         // We don't know yet if the classic UI is installed, therefore, always disable the plugin
         addClassicUiToDisabledPlugins()
-        ExperimentalUI.showNewUiOnboarding = true
       }
     }
     catch (e: CancellationException) {
@@ -92,5 +98,28 @@ internal object ClassicUiToIslandsMigration {
 
     DisabledPluginsState.setEnabledState(setOf(classicUI), false)
     cleanUpClassicUIFromDisabledPlugins.compareAndSet(false, true)
+  }
+
+  private fun isAllowedUserLafToMigrate(): Boolean {
+    return when (getUserLaf()) {
+      "Darcula", "JetBrainsLightTheme" -> true
+      else -> false
+    }
+  }
+
+  private fun getUserLaf(): String? {
+    try {
+      val lafPath = PathManager.getOptionsDir().resolve("laf.xml")
+      val element = buildNsUnawareJdom(lafPath)
+      val componentElement = element.getChild("component") ?: return null
+      val lafElement = componentElement.getChild("laf") ?: return "Darcula"
+
+      return lafElement.getAttributeValue("themeId")
+    }
+    catch (e: Throwable) {
+      LOG.info("Cannot parse laf.xml", e)
+
+      return null
+    }
   }
 }
