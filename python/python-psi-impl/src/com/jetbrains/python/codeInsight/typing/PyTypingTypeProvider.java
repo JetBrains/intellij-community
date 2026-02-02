@@ -4,6 +4,7 @@ package com.jetbrains.python.codeInsight.typing;
 import com.dynatrace.hash4j.hashing.HashValue128;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
@@ -133,11 +134,13 @@ import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.PyUnpackedTupleTypeImpl;
 import com.jetbrains.python.psi.types.PyVariadicType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -223,8 +226,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   public static final String TYPE_ALIAS = "typing.TypeAlias";
   public static final String TYPE_ALIAS_EXT = "typing_extensions.TypeAlias";
   public static final String TYPE_ALIAS_TYPE = "typing.TypeAliasType";
-  private static final String SPECIAL_FORM = "typing._SpecialForm";
-  private static final String SPECIAL_FORM_EXT = "typing_extensions._SpecialForm";
+  public static final String SPECIAL_FORM = "typing._SpecialForm";
+  public static final String SPECIAL_FORM_EXT = "typing_extensions._SpecialForm";
   public static final String REQUIRED = "typing.Required";
   public static final String REQUIRED_EXT = "typing_extensions.Required";
   public static final String NOT_REQUIRED = "typing.NotRequired";
@@ -1172,7 +1175,12 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     }
     Project project = moduleDefinition.getProject();
     var moduleInitFiles = PyModuleNameIndex.findByShortName(moduleName, project, GlobalSearchScope.everythingScope(project));
-    var firstModuleInitFile = ContainerUtil.find(moduleInitFiles, a -> a != null);
+    var skeletons = PythonSdkUtil.getSkeletonsRootPath(PathManager.getSystemDir().toString());
+    var firstModuleInitFile = ContainerUtil.find(moduleInitFiles, a -> a != null && !Path.of(a.getVirtualFile().getPath()).startsWith(skeletons));
+    if (firstModuleInitFile == null) {
+      firstModuleInitFile = ContainerUtil.find(moduleInitFiles, a -> a != null);
+    }
+
     if (firstModuleInitFile == null) {
       return null;
     }
