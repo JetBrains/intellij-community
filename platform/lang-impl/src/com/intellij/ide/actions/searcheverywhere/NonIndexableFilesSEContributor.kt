@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -29,6 +30,8 @@ import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.ListCellRenderer
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 /**
  * Marker interface, indicating that this contributor will be added to the "Files" tab in Search Everywhere
@@ -62,12 +65,15 @@ interface FilesTabSEContributor {
 private val LOG = Logger.getInstance(NonIndexableFilesSEContributor::class.java)
 
 @ApiStatus.Internal
+@OptIn(ExperimentalAtomicApi::class)
 class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEverywhereContributor<Any>,
                                                              DumbAware,
                                                              FilesTabSEContributor,
                                                              SearchEverywhereExtendedInfoProvider {
   private val project: Project = event.project!!
   private val navigationHandler: SearchEverywhereNavigationHandler = FileSearchEverywhereNavigationContributionHandler(project)
+
+  private var scope: AtomicReference<ScopeDescriptor?> = AtomicReference(null)
 
   override fun getSearchProviderId(): String = ID
 
@@ -99,13 +105,17 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
   }
 
   override fun setScope(scope: ScopeDescriptor) {
-    // TODO: Ilia Malakhov
+    this.scope.store(scope)
   }
 
   /**
    * @implNote instead of running under one large read action, launches many short blocking RAs
    */
-  override fun fetchWeightedElements(pattern: String, progressIndicator: ProgressIndicator, consumer: Processor<in FoundItemDescriptor<Any>>) {
+  override fun fetchWeightedElements(
+    pattern: String,
+    progressIndicator: ProgressIndicator,
+    consumer: Processor<in FoundItemDescriptor<Any>>,
+  ) {
     if (!isGotoFileToNonIndexableEnabled()) return
     if (pattern.isEmpty()) return
 
@@ -128,8 +138,12 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
     // We want to send good matches first, and only send others later if didn't find enough
     val suboptimalMatches = mutableListOf<VirtualFile>()
 
+    val scope = scope.load()?.scope
+    val filter: VirtualFileFilter = if (scope == null) VirtualFileFilter.ALL
+    else VirtualFileFilter { file -> scope.contains(file) }
+
     val filesDeque = ReadAction.nonBlocking<FilesDeque> {
-      FilesDeque.nonIndexableDequeue(project)
+      FilesDeque.nonIndexableDequeue(project, filter)
     }.executeSynchronously()
     while (true) {
       progressIndicator.checkCanceled()

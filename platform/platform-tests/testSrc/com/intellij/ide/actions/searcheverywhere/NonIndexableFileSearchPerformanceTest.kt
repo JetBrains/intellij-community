@@ -1,13 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.RegistryKey
@@ -119,6 +122,8 @@ open class NonIndexableFileSearchPerformanceTest {
   private fun createContributor(): NonIndexableFilesSEContributor {
     val event = TestActionEvent.createTestEvent(SimpleDataContext.getProjectContext(project))
     return NonIndexableFilesSEContributor(event).also { contributor ->
+      val scope = runReadAction { GlobalSearchScope.projectScope(project) }
+      contributor.setScope(ScopeDescriptor(scope))
       Disposer.register(projectModel.disposableRule.disposable, contributor)
     }
   }
