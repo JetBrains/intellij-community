@@ -20,9 +20,6 @@ class K2MppHighlightingIntegrationTest : AbstractKotlinMppGradleImportingTest() 
     override val allowOnNonMac: Boolean
         get() = false
 
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
-
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
         hideHighlightsBelow = HighlightSeverity.ERROR
         onlyCheckers(HighlightingChecker, GradleProjectsPublishingTestsFeature)

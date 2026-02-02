@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
+package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests.k2
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.icons.AllIcons
@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runC
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.RunConfigurationsChecker
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
+import org.junit.Ignore
 import org.junit.Test
 import javax.swing.Icon
 
@@ -29,6 +30,7 @@ class KotlinMppRunConfigurationsTest : AbstractKotlinMppGradleImportingTest() {
         addCustomGradleProperty("org.gradle.warning.mode", "none")
     }
 
+    @Ignore("KTIJ-37464")
     @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
     @Test
     fun testJvmRun() {
@@ -39,6 +41,7 @@ class KotlinMppRunConfigurationsTest : AbstractKotlinMppGradleImportingTest() {
         }
     }
 
+    @Ignore("KTIJ-37464")
     @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+", gradleVersion = "8.4+")
     @Test
     fun testKmmTests() {

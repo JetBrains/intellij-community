@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
+package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests.k2
 
 import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
@@ -36,12 +36,17 @@ class KotlinMppExperimentalTierCasesImportingTest : AbstractKotlinMppGradleImpor
     fun testJvmAndAndroidBinary() {
         doTest {
             publish("producer")
+            // Highlighting disabled: KTIJ-37464
+            disableCheckers(HighlightingChecker)
         }
     }
 
     @Test
     fun testJvmAndAndroidSource() {
         doTest {
+            // Highlighting disabled: KTIJ-37464
+            disableCheckers(HighlightingChecker)
+
             // highlighting for the 1.8.0 is different
             if (kotlinPluginVersion.version < KotlinToolingVersion("1.9.0")) {
                 disableCheckers(HighlightingChecker)
@@ -124,7 +129,10 @@ class KotlinMppExperimentalTierCasesImportingTest : AbstractKotlinMppGradleImpor
 
     @Test
     fun testSingleAndroidTarget() {
-        doTest()
+        doTest {
+            // Highlighting disabled: KTIJ-37464
+            disableCheckers(HighlightingChecker)
+        }
     }
 
     @Test

@@ -1,4 +1,4 @@
-package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
+package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests.k2
 
 import junit.framework.AssertionFailedError
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest

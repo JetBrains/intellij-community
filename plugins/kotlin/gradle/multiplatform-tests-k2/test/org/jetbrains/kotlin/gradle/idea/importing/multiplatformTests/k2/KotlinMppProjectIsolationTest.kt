@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
+package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests.k2
 
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.SuccessfulImportFeature
@@ -89,6 +89,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
         }
     }
 
+    @Ignore("KTIJ-37464")
     @Test
     @PluginTargetVersions(pluginVersion = "2.2.0-dev-231+", gradleVersion = "8.10+")
     fun testKmpSharedResourcesAndroidIOS() {
@@ -100,6 +101,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
         }
     }
 
+    @Ignore("KTIJ-37464")
     @Test
     @PluginTargetVersions(pluginVersion = "2.2.0-dev-745+", gradleVersion = "8.10+")
     fun testJvmMultiplatformTransitiveDependency() {
@@ -133,6 +135,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
         }
     }
 
+    @Ignore("KTIJ-37464")
     @Test
     @PluginTargetVersions(pluginVersion = "2.2.0-dev-745+", gradleVersion = "8.10+")
     fun testKmpDependsOnAndroidKMPLibrary() {

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -12,6 +13,8 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR_CHAR
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.LibrarySourceRoot
 import org.jetbrains.kotlin.idea.codeMetaInfo.CodeMetaInfoTestCase
 import org.jetbrains.kotlin.idea.codeMetaInfo.findCorrespondingFileInTestDir
@@ -52,6 +55,7 @@ data class HighlightingCheck(
         modules.combineMultipleFailures(this::invoke)
     }
 
+    @OptIn(KaAllowAnalysisOnEdt::class)
     operator fun invoke(module: Module) = combineMultipleFailures {
         for (sourceRoot in module.sourceRoots) {
             VfsUtilCore.processFilesRecursively(sourceRoot) { file ->
@@ -59,12 +63,14 @@ data class HighlightingCheck(
                     return@processFilesRecursively true
                 runInEdtAndWait {
                     runAssertion {
-                        checker.checkFile(
-                            file,
-                            file.findCorrespondingFileInTestDir(Paths.get(projectPath), testDataDirectory, correspondingFilePostfix),
-                            project,
-                            postprocessActualTestData
-                        )
+                        allowAnalysisOnEdt {
+                            checker.checkFile(
+                                file,
+                                file.findCorrespondingFileInTestDir(Paths.get(projectPath), testDataDirectory, correspondingFilePostfix),
+                                project,
+                                postprocessActualTestData
+                            )
+                        }
                     }
                 }
                 true

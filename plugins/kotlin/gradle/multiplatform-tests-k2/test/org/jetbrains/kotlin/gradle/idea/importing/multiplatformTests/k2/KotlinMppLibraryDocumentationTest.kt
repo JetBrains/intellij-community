@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
+package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests.k2
 
 import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProject
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.DocumentationChecker
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
+import org.junit.Ignore
 import kotlin.test.Test
 
 
@@ -20,6 +21,7 @@ class KotlinMppLibraryDocumentationTest : AbstractKotlinMppGradleImportingTest()
         onlyCheckers(DocumentationChecker, GradleProjectsPublishingTestsFeature)
     }
 
+    @Ignore("KT-70552")
     @Test
     @PluginTargetVersions(pluginVersion = "1.8.22+")
     fun testExpectDocumentationInPublishedMppLibrary() {

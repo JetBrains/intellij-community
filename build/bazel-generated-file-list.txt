@@ -1215,7 +1215,6 @@ plugins/kotlin/gradle/gradle-tooling
 plugins/kotlin/gradle/gradle-tooling/impl
 plugins/kotlin/gradle/gradle-tooling/tests
 plugins/kotlin/gradle/gradle/tests
-plugins/kotlin/gradle/multiplatform-tests
 plugins/kotlin/gradle/multiplatform-tests-k2
 plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1
 plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2
