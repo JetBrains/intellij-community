@@ -2,7 +2,9 @@
 package org.jetbrains.idea.maven.execution.build
 
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.DefaultJavaProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
@@ -12,13 +14,14 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import java.util.concurrent.atomic.AtomicReference
 
-private const val ID = "MAVEN_DELEGATE_BUILD_RUNNER"
+const val DELEGATE_RUNNER_ID: String = "MAVEN_DELEGATE_BUILD_RUNNER"
 private val LOG = logger<DelegateBuildRunner>()
 
 internal class DelegateBuildRunner : DefaultJavaProgramRunner() {
-  override fun getRunnerId() = ID
+  override fun getRunnerId() = DELEGATE_RUNNER_ID
 
   @Throws(ExecutionException::class)
   override fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
@@ -41,13 +44,17 @@ internal class DelegateBuildRunner : DefaultJavaProgramRunner() {
     return result.get()
   }
 
+  override fun canRun(executorId: String, profile: RunProfile): Boolean {
+    return executorId == DefaultRunExecutor.EXECUTOR_ID && profile is MavenRunConfiguration
+  }
+
   override fun doExecuteAsync(state: TargetEnvironmentAwareRunProfileState, env: ExecutionEnvironment): Promise<RunContentDescriptor?> {
     return state.prepareTargetToCommandExecution(env, LOG, "Failed to execute delegate run configuration async") { doExecute(state, env) }
   }
 
   object Util {
     @JvmStatic
-    fun getDelegateRunner(): ProgramRunner<*>? = ProgramRunner.findRunnerById(ID)
+    fun getDelegateRunner(): ProgramRunner<*>? = ProgramRunner.findRunnerById(DELEGATE_RUNNER_ID)
   }
 
 }
