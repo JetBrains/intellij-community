@@ -35,7 +35,7 @@ class TracingFileSystemProvider(
 
   override fun getDelegate(path1: Path?, path2: Path?): FileSystemProvider = delegate
 
-   override fun wrapDelegatePath(delegatePath: Path?): Path? = delegatePath
+  override fun wrapDelegatePath(delegatePath: Path?): Path? = delegatePath
 
   override fun toDelegatePath(path: Path?): Path? = path
 
