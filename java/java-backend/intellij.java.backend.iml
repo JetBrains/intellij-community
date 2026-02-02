@@ -46,6 +46,7 @@
     <orderEntry type="module" module-name="intellij.java.debugger.impl.backend" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.debugger.memory.agent" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.uast.ide" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.dependencyGraph" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
   </component>
 </module>

@@ -61,6 +61,7 @@
     <module name="intellij.java.uast.ide"/>
 
     <module name="intellij.platform.jps.build"/>
+    <module name="intellij.platform.jps.build.dependencyGraph"/>
 
     <!--only backend-->
     <module name="intellij.platform.backend"/>

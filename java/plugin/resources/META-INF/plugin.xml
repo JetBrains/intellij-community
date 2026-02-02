@@ -63,7 +63,7 @@
     <module name="intellij.java.uast.ide" required-if-available="intellij.platform.backend"/>
 
     <module name="intellij.platform.jps.build" required-if-available="intellij.platform.backend"/>
-    <module name="intellij.platform.jps.build.dependencyGraph" loading="embedded"/>
+    <module name="intellij.platform.jps.build.dependencyGraph" required-if-available="intellij.platform.backend"/>
     <module name="intellij.platform.jps.build.javac.rt" loading="embedded"/>
     <module name="intellij.java.guiForms.compiler" loading="embedded"/>
     <module name="intellij.java.compiler.antTasks" loading="embedded"/>

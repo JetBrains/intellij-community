@@ -18,7 +18,6 @@
   - name: intellij.java.psi
   - name: intellij.java.psi.impl
   - name: intellij.java.frontback.impl
-  - name: intellij.platform.jps.build.dependencyGraph
   - name: intellij.platform.jps.build.javac.rt
   - name: intellij.java.guiForms.compiler
   - name: intellij.java.compiler.antTasks
@@ -225,6 +224,9 @@
 - name: lib/modules/intellij.jvm.dfa.analysis.ui.jar
   contentModules:
   - name: intellij.jvm.dfa.analysis.ui
+- name: lib/modules/intellij.platform.jps.build.dependencyGraph.jar
+  contentModules:
+  - name: intellij.platform.jps.build.dependencyGraph
 - name: lib/modules/intellij.platform.jps.build.jar
   contentModules:
   - name: intellij.platform.jps.build
