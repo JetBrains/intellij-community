@@ -3,6 +3,8 @@ package com.intellij.polySymbols.completion.impl
 
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.*
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
@@ -52,17 +54,38 @@ internal data class PolySymbolCodeCompletionItemImpl(
         completionPrefix.substring(offset) == name)
       return
     val priorityOffset = baselinePriorityValue - PolySymbol.Priority.NORMAL.value
+    buildLookupElement(parameters.position, priorityOffset, parameters.originalFile.project, parameters.editor)
+      .let {
+        val result =
+          if (offset > 0)
+            result.withPrefixMatcher(completionPrefixMatcher.cloneWithPrefix(completionPrefix.substring(offset)))
+          else
+            result
+        if (restartCompletionOnAnyPrefixChange) {
+          result.restartCompletionOnAnyPrefixChange()
+        }
+        else if (restartCompletionOnPrefixChange.isNotEmpty()) {
+          restartCompletionOnPrefixChange.forEach { prefix -> result.restartCompletionOnPrefixChange(prefix) }
+        }
+        result.addElement(it)
+      }
+  }
+
+  override fun buildLookupElement(location: PsiElement): LookupElement =
+    buildLookupElement(location, 0.0, null, null)
+
+  private fun buildLookupElement(location: PsiElement, priorityOffset: Double, project: Project?, editor: Editor?): LookupElement =
     LookupElementBuilder
-      .create(wrapSymbolForDocumentation(symbol, parameters.position)?.createPointer() ?: name, name)
+      .create(wrapSymbolForDocumentation(symbol, location)?.createPointer() ?: name, name)
       .withLookupStrings(aliases)
       .withCaseSensitivity(caseSensitive)
       .withInsertHandler { insertionContext, completionItem ->
         val invokeCompletion = completeAfterInsert || completeAfterChars.contains(insertionContext.completionChar)
         insertHandler?.prepare(insertionContext, completionItem, invokeCompletion)?.run()
-        if (invokeCompletion) {
+        if (invokeCompletion && project != null && editor != null) {
           insertionContext.setLaterRunnable {
             CodeCompletionHandlerBase(CompletionType.BASIC)
-              .invokeCompletion(parameters.originalFile.project, parameters.editor)
+              .invokeCompletion(project, editor)
           }
         }
       }
@@ -97,21 +120,7 @@ internal data class PolySymbolCodeCompletionItemImpl(
         PrioritizedLookupElement.withPriority(it, priorityValue)
       }.let {
         PrioritizedLookupElement.withExplicitProximity(it, proximity ?: 0)
-      }.let {
-        val result =
-          if (offset > 0)
-            result.withPrefixMatcher(completionPrefixMatcher.cloneWithPrefix(completionPrefix.substring(offset)))
-          else
-            result
-        if (restartCompletionOnAnyPrefixChange) {
-          result.restartCompletionOnAnyPrefixChange()
-        }
-        else if (restartCompletionOnPrefixChange.isNotEmpty()) {
-          restartCompletionOnPrefixChange.forEach { prefix -> result.restartCompletionOnPrefixChange(prefix) }
-        }
-        result.addElement(it)
       }
-  }
 
   private fun renderPresentation(priorityOffset: Double, presentation: LookupElementPresentation) {
     val deprecatedOrObsolete = apiStatus.isDeprecatedOrObsolete()

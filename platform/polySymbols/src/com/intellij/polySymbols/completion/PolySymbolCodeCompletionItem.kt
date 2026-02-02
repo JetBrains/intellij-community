@@ -53,6 +53,8 @@ interface PolySymbolCodeCompletionItem {
     baselinePriorityValue: Double = PolySymbol.Priority.NORMAL.value,
   )
 
+  fun buildLookupElement(location: PsiElement): LookupElement
+
   fun withName(name: String): PolySymbolCodeCompletionItem
 
   fun withOffset(offset: Int): PolySymbolCodeCompletionItem
