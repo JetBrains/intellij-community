@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.navigation;
 
@@ -38,6 +38,11 @@ public class GotoDeclarationTestGenerated extends AbstractGotoDeclarationTest {
     @TestMetadata("dataClassToString.test")
     public void testDataClassToString() throws Exception {
         runTest("testData/navigation/gotoDeclaration/dataClassToString.test");
+    }
+
+    @TestMetadata("destructuringDeclarationInitializer.test")
+    public void testDestructuringDeclarationInitializer() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/destructuringDeclarationInitializer.test");
     }
 
     @TestMetadata("enumEntries.test")

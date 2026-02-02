@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.findUsages;
 
@@ -1802,6 +1802,11 @@ public abstract class FindUsagesTestGenerated extends AbstractK1FindUsagesTest {
 
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("destructuringEntry.0.kt")
+            public void testDestructuringEntry() throws Exception {
+                runTest("testData/findUsages/kotlin/variable/destructuringEntry.0.kt");
             }
 
             @TestMetadata("plusAssignFun.0.kt")
