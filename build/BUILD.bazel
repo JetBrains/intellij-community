@@ -118,7 +118,9 @@ jvm_library(
     "//libraries/javax/annotation",
     "@lib//:jps-javac-extension",
     "//libraries/protobuf",
-    "@lib//:netty-jps-provided",
+    "@lib//:netty-codec-protobuf",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
+    "//libraries/netty/buffer",
   ]
 )
 ### auto-generated section `build intellij.platform.jps.build.javac.rt` end

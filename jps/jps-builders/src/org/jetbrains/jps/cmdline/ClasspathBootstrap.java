@@ -22,6 +22,12 @@ import com.intellij.util.lang.HashMapZipFile;
 import com.intellij.util.lang.JavaVersion;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.thoughtworks.qdox.JavaProjectBuilder;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.EventLoopGroup;
+import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.handler.codec.protobuf.ProtobufDecoder;
+import io.netty.resolver.AddressResolverGroup;
+import io.netty.util.NetUtil;
 import kotlin.metadata.jvm.JvmMetadataUtil;
 import kotlinx.coroutines.Deferred;
 import net.n3.nanoxml.IXMLBuilder;
@@ -29,7 +35,6 @@ import org.h2.mvstore.MVStore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
@@ -46,7 +51,6 @@ import org.jetbrains.org.objectweb.asm.ClassWriter;
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -59,23 +63,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import static org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath;
-
 @ApiStatus.Internal
 public final class ClasspathBootstrap {
   private static final Logger LOG = Logger.getInstance(ClasspathBootstrap.class);
 
   private ClasspathBootstrap() { }
 
-  private static final Class<?>[] COMMON_REQUIRED_CLASSES = {
-    // Uncomment to use the same netty that is used in the rest of IDE
-    //NetUtil.class, // netty common
-    //EventLoopGroup.class, // netty transport
-    //AddressResolverGroup.class, // netty resolver
-    //ByteBufAllocator.class, // netty buffer
-    //ByteToMessageDecoder.class, // netty codec http
-    //ProtobufDecoder.class,  // netty codec protobuf
-    
+  private static final Class<?>[] COMMON_REQUIRED_CLASSES = new Class[]{
+    NetUtil.class, // netty common
+    EventLoopGroup.class, // netty transport
+    AddressResolverGroup.class, // netty resolver
+    ByteBufAllocator.class, // netty buffer
+    ByteToMessageDecoder.class, // netty codec http
+    ProtobufDecoder.class,  // netty codec protobuf
     Message.class, // protobuf
   };
 
@@ -104,30 +104,6 @@ public final class ClasspathBootstrap {
     "app.jar",
     "app-backend.java"
   };
-
-  @VisibleForTesting
-  public static final String NETTY_JPS_VERSION = "4.1.117.Final";
-  private static final String NETTY_JPS_DISTRIBUTION_JAR_NAME = "netty-jps.jar";
-  private static final String[] NETTY_ARTIFACT_NAMES = {
-    "netty-buffer", "netty-codec-http", "netty-codec", "netty-common", "netty-handler", "netty-resolver", "netty-transport"
-  };
-
-  private static void getNettyForJpsClasspath(Consumer<Path> consumer) {
-    Path rootPath = Path.of(getResourcePath(ExternalJavacProcess.class));
-    Path nettyDistributionPath = rootPath.resolveSibling("rt").resolve(NETTY_JPS_DISTRIBUTION_JAR_NAME);
-    if (Files.isRegularFile(rootPath) && Files.exists(nettyDistributionPath)) {
-      // running regular installation
-      consumer.accept(nettyDistributionPath);
-    }
-    else {
-      // running from sources or on the build server
-      // take the library from the local maven repository
-      Path artifactRoot = Path.of(getMavenRepositoryPath()).resolve("io").resolve("netty");
-      for (String artifactName : NETTY_ARTIFACT_NAMES) {
-        consumer.accept(artifactRoot.resolve(artifactName).resolve(NETTY_JPS_VERSION).resolve(artifactName + "-" + NETTY_JPS_VERSION + ".jar"));
-      }
-    }
-  }
 
   private static void addToClassPath(Set<String> result, Class<?> aClass) {
     Path path = PathManager.getJarForClass(aClass);
@@ -181,7 +157,6 @@ public final class ClasspathBootstrap {
     addToClassPath(cp, Deferred.class);  // kotlinx.coroutines, used intellij.platform.util, EnvironmentUtil
     addToClassPath(cp, JvmMetadataUtil.class);  // kotlin metadata parsing
     addToClassPath(cp, COMMON_REQUIRED_CLASSES);
-    getNettyForJpsClasspath(path -> cp.add(path.toString()));
 
     addToClassPath(cp, ClassWriter.class);  // asm
     addToClassPath(cp, ClassVisitor.class);  // asm-commons
@@ -227,7 +202,7 @@ public final class ClasspathBootstrap {
   }
 
   public static List<File> getExternalJavacProcessClasspath(String sdkHome, JavaCompilingTool compilingTool) {
-    // Important! All dependencies must be java 7 compatible (the oldest supported javac to be launched)
+    // Important! All dependencies must be java 8 compatible (the oldest supported javac to be launched)
     final Set<File> cp = new LinkedHashSet<>();
     cp.add(getResourceFile(ExternalJavacProcess.class)); // self
     cp.add(getResourceFile(JavacReferenceCollector.class));  // jps-javac-extension library
@@ -236,7 +211,6 @@ public final class ClasspathBootstrap {
     for (Class<?> aClass : COMMON_REQUIRED_CLASSES) {
       cp.add(getResourceFile(aClass));
     }
-    getNettyForJpsClasspath(path -> cp.add(path.toFile()));
 
     try {
       final Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");
