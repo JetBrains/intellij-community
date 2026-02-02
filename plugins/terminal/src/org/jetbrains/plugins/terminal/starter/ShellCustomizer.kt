@@ -42,7 +42,7 @@ interface ShellCustomizer {
   companion object {
     @ApiStatus.Internal
     val EP_NAME: ExtensionPointName<ShellCustomizer> =
-      ExtensionPointName("org.jetbrains.plugins.terminal.shellParametersCustomizer")
+      ExtensionPointName("org.jetbrains.plugins.terminal.shellCustomizer")
   }
 
 }
