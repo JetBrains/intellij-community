@@ -24,7 +24,7 @@ interface CachedTreePresentationSupport {
 }
 
 @Internal
-const val CACHED_TREE_PRESENTATION_PROPERTY = "CACHED_TREE_PRESENTATION"
+const val CACHED_TREE_PRESENTATION_PROPERTY: String = "CACHED_TREE_PRESENTATION"
 
 @Internal
 interface TreeNodeWithCacheableAttributes {
@@ -160,7 +160,7 @@ class CachedTreePresentationNode(
   val isLeaf: Boolean
     get() = data.presentation.isLeaf
 
-  var isExpanded = data.children.isNotEmpty()
+  var isExpanded: Boolean = data.children.isNotEmpty()
 
   init {
     update() // It's cheap, so we don't want to wait for a BGT update here.
