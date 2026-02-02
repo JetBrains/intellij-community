@@ -187,13 +187,11 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
                 .enabledIf(completionEnabledCheckBox.selected)
             }
 
-            row {
-              actionShortcutComboboxWithEnabledCheckbox(
-                labelText = message("terminal.command.completion.shortcut.trigger"),
-                presets = listOf(getCtrlSpacePreset(project), TAB_SHORTCUT_PRESET),
-                actionId = "Terminal.CommandCompletion.Invoke"
-              )
-            }
+            actionShortcutComboboxWithEnabledCheckbox(
+              labelText = message("terminal.command.completion.shortcut.trigger"),
+              presets = listOf(getCtrlSpacePreset(project), TAB_SHORTCUT_PRESET),
+              actionId = "Terminal.CommandCompletion.Invoke"
+            )
             row {
               actionShortcutCombobox(
                 labelText = message("terminal.command.completion.shortcut.insert"),
@@ -377,13 +375,11 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
           checkBox(message("settings.mouse.reporting"))
             .bindSelected(optionsProvider::mouseReporting)
         }
-        row {
-          actionShortcutComboboxWithEnabledCheckbox(
-            labelText = message("settings.move.focus.to.editor.with"),
-            presets = listOf(ESCAPE_SHORTCUT_PRESET),
-            actionId = "Terminal.SwitchFocusToEditor"
-          )
-        }
+        actionShortcutComboboxWithEnabledCheckbox(
+          labelText = message("settings.move.focus.to.editor.with"),
+          presets = listOf(ESCAPE_SHORTCUT_PRESET),
+          actionId = "Terminal.SwitchFocusToEditor"
+        )
         row {
           checkBox(message("settings.copy.to.clipboard.on.selection"))
             .bindSelected(optionsProvider::copyOnSelection)
@@ -653,7 +649,7 @@ private fun Row.actionShortcutCombobox(
 }
 
 /**
- * Shows action shortcut configuration UI:
+ * Creates a row with action shortcut configuration UI:
  * <checkbox> <label> <combobox> <change link (if custom shortcut selected)>
  *
  * The combobox is responsible for choosing the shortcut from the provided presets.
@@ -662,7 +658,7 @@ private fun Row.actionShortcutCombobox(
  * @param actionId action ID to configure shortcut for.
  * @param presets list of shortcut presets to choose from the combobox.
  */
-private fun Row.actionShortcutComboboxWithEnabledCheckbox(
+private fun Panel.actionShortcutComboboxWithEnabledCheckbox(
   @NlsContexts.Label labelText: String,
   presets: List<ShortcutPreset>,
   actionId: String,
@@ -673,8 +669,10 @@ private fun Row.actionShortcutComboboxWithEnabledCheckbox(
   }
   else ShortcutItem.Preset(presets.first())
 
-  val comboboxProperty = AtomicProperty(initialPreset ?: ShortcutItem.Custom)
-  val checkboxProperty = AtomicBooleanProperty(curShortcuts.isNotEmpty())
+  val initialComboboxState = initialPreset ?: ShortcutItem.Custom
+  val comboboxProperty = AtomicProperty(initialComboboxState)
+  val initialCheckboxState = curShortcuts.isNotEmpty()
+  val checkboxProperty = AtomicBooleanProperty(initialCheckboxState)
 
   fun updateActionShortcut(checkboxChecked: Boolean, shortcutItem: ShortcutItem) {
     if (checkboxChecked) {
@@ -687,33 +685,39 @@ private fun Row.actionShortcutComboboxWithEnabledCheckbox(
     }
   }
 
-  checkboxProperty.afterChange {
-    updateActionShortcut(it, comboboxProperty.get())
+  onApply {
+    updateActionShortcut(checkboxProperty.get(), comboboxProperty.get())
   }
-  comboboxProperty.afterChange {
-    updateActionShortcut(checkboxProperty.get(), it)
+  onReset {
+    checkboxProperty.set(initialCheckboxState)
+    comboboxProperty.set(initialComboboxState)
+  }
+  onIsModified {
+    checkboxProperty.get() != initialCheckboxState || comboboxProperty.get() != initialComboboxState
   }
 
-  val checkbox = checkBox(labelText)
-    .gap(RightGap.SMALL)
-    .bindSelected(checkboxProperty)
-    .component
+  row {
+    val checkbox = checkBox(labelText)
+      .gap(RightGap.SMALL)
+      .bindSelected(checkboxProperty)
+      .component
 
-  val combobox = comboBox(
-    items = presets.map { ShortcutItem.Preset(it) } + ShortcutItem.Custom,
-    renderer = textListCellRenderer { item ->
-      when (item) {
-        is ShortcutItem.Preset -> item.preset.text
-        is ShortcutItem.Custom -> message("terminal.command.completion.shortcut.custom")
-        null -> ""
+    val combobox = comboBox(
+      items = presets.map { ShortcutItem.Preset(it) } + ShortcutItem.Custom,
+      renderer = textListCellRenderer { item ->
+        when (item) {
+          is ShortcutItem.Preset -> item.preset.text
+          is ShortcutItem.Custom -> message("terminal.command.completion.shortcut.custom")
+          null -> ""
+        }
       }
-    }
-  ).bindItem(comboboxProperty)
-    .enabledIf(checkbox.selected)
-    .component
+    ).bindItem(comboboxProperty)
+      .enabledIf(checkbox.selected)
+      .component
 
-  changeActionShortcutLink(actionId)
-    .visibleIf(combobox.selectedValueIs(ShortcutItem.Custom))
+    changeActionShortcutLink(actionId)
+      .visibleIf(combobox.selectedValueIs(ShortcutItem.Custom))
+  }
 }
 
 private fun Row.changeActionShortcutLink(actionId: String): Cell<ActionLink> {
