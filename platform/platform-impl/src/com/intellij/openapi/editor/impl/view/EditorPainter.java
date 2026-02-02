@@ -383,6 +383,10 @@ public final class EditorPainter implements TextDrawingCallback {
       );
     }
 
+    private boolean shouldUseNewSelection() {
+      return !Registry.is("editor.disable.new.selection") && !myEditor.isColumnMode();
+    }
+
     private void paintBackground() {
       float selectionExtensionWidth = selectionExtensionWidth();
 
@@ -444,10 +448,10 @@ public final class EditorPainter implements TextDrawingCallback {
           boolean isSelection = result.second;
 
           myBetweenLinesAttributes.put(visualLine, attributes);
-          if (!isSelection || Registry.is("editor.disable.new.selection")) {
-            paintBackground(attributes.getBackgroundColor(), startX, prevY, endX - startX, y - prevY);
-          } else {
+          if (isSelection && shouldUseNewSelection() ) {
             mySelectionLinePainter.paintAllBlockInlaysAbove(visualLine);
+          } else {
+            paintBackground(attributes, startX, prevY, endX - startX, y - prevY);
           }
         }
         boolean dryRun = visualLine > myEndVisualLine;
@@ -461,7 +465,7 @@ public final class EditorPainter implements TextDrawingCallback {
             if (dryRun) return;
             if (visualLine == 0) xEnd -= myView.getPrefixTextWidthInPixels();
             paintBackground(attributes, startX, y, xEnd);
-            if (!Registry.is("editor.disable.new.selection")
+            if (shouldUseNewSelection()
                 && it.isInSelection()
                 && myEditor.isRightAligned()) {
               mySelectionLinePainter.paintSelection(new Rectangle2D.Float(
@@ -540,7 +544,7 @@ public final class EditorPainter implements TextDrawingCallback {
             CustomFoldRegion cfr = visLinesIterator.getCustomFoldRegion();
             if (cfr != null) {
               float paintWidth = endX - startX;
-              if (!Registry.is("editor.disable.new.selection", true) && mySelectionLinePainter.isCFRInSelection(cfr)) {
+              if (shouldUseNewSelection() && mySelectionLinePainter.isCFRInSelection(cfr)) {
                 paintWidth = cfr.getWidthInPixels();
                 backgroundAttributes.setBackgroundColor(
                   myEditor.getColorsScheme()
@@ -564,7 +568,7 @@ public final class EditorPainter implements TextDrawingCallback {
               return;
             }
             paintBackground(backgroundAttributes.getBackgroundColor(), x, y, endX - x, myLineHeight);
-            if (it.isInSelection() && !Registry.is("editor.disable.new.selection") && !myEditor.isRightAligned()) {
+            if (it.isInSelection() && shouldUseNewSelection() && !myEditor.isRightAligned()) {
               mySelectionLinePainter.paintSelection(
                 new Rectangle2D.Float(x, y, selectionExtensionWidth, myLineHeight)
               );
@@ -655,7 +659,7 @@ public final class EditorPainter implements TextDrawingCallback {
                      : (float)myView.visualPositionToXY(new VisualPosition(visualLine, selectionRange.first)).getX();
 
       float clipEndX = myClip.x + myClip.width;
-      if (!Registry.is("editor.disable.new.selection", true)) {
+      if (shouldUseNewSelection()) {
         clipEndX = Math.min(clipEndX, visualLineEnd(visualLine));
       }
       float endX = (float)Math.min(clipEndX, myView.visualPositionToXY(new VisualPosition(visualLine, selectionRange.second)).getX());
@@ -697,7 +701,7 @@ public final class EditorPainter implements TextDrawingCallback {
                      (float)myView.visualPositionToXY(selectionStartPosition).getX() : xStart;
 
       float clipEndX = myClip.x + myClip.width;
-      if (!Registry.is("editor.disable.new.selection", true)) {
+      if (shouldUseNewSelection()) {
         clipEndX = Math.min(clipEndX, visualLineEnd(visualLine));
       }
       float endX = selectionEndPosition.line == visualLine
@@ -716,7 +720,7 @@ public final class EditorPainter implements TextDrawingCallback {
       if (attributes == null) return;
 
       paintBackground(attributes.getBackgroundColor(), x, y, width, height);
-      if (!Registry.is("editor.disable.new.selection") && mySelectionLinePainter.isInSelection(x, y, width)) {
+      if (shouldUseNewSelection() && mySelectionLinePainter.isInSelection(x, y, width)) {
         mySelectionLinePainter.paintSelection(new Rectangle2D.Float(x, y, width, height));
       }
     }
