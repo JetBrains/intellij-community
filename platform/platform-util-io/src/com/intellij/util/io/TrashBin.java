@@ -2,14 +2,19 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Desktop;
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileSystemException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -47,6 +52,18 @@ public final class TrashBin {
 
   public static boolean isSupported() {
     return TRASH.getValue() != null;
+  }
+
+  public static boolean canMoveToTrash(@NotNull Path path) {
+    try {
+      return Objects.equals(Files.getFileStore(path), Files.getFileStore(Path.of(SystemProperties.getUserHome())));
+    }
+    catch (IOException ignored) { }
+    return false;
+  }
+
+  public static boolean canMoveToTrash(@NotNull VirtualFile file) {
+    return file.isInLocalFileSystem() && canMoveToTrash(file.toNioPath());
   }
 
   public static void moveToTrash(@NotNull Path path) throws IOException {
