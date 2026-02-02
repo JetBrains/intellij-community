@@ -11,13 +11,15 @@ import javax.swing.JDialog
 import kotlin.math.abs
 
 /**
- * Determines whether the given dialog is maximizable.
+ * Determines whether the given dialog should have the maximize/normalize button.
  *
  * Unlike [canBeMaximized], which checks whether the dialog can be maximized right now,
- * this property determines whether the maximize/restore functionality should be available for the given dialog at all.
+ * this property determines whether the maximize/restore button should be available for the given dialog at all.
  *
- * By default, dialogs are not maximizable, because they're not designed to be maximizable.
- * If they're maximized, e.g., by accidentally double-clicking on the header, they just don't look right.
+ * By default, the button is not shown, because most dialogs are not designed to be maximizable.
+ * If they're maximized, they just don't look right.
+ * If needed, such dialogs can be maximized by double-clicking the header or pressing Win+Up,
+ * because it's hard to do that accidentally, but the buttons are not shown unless this property is explicitly set.
  *
  * In the current implementation, this property only affects behavior on Windows.
  * On macOS, all dialogs are maximizable by the OS.
@@ -143,7 +145,6 @@ var JDialog.normalBounds: Rectangle?
 private fun JDialog.commonResizingConditionsAreMet(): Boolean =
   isShowing && // needed for getScreenRectangle
   isResizable && // can't resize if it's not resizable to begin with
-  isMaximizable && // maximization is enabled by the client
   rootPane != null // needed to store the client property
 
 private fun almostEquals(r1: Rectangle, r2: Rectangle): Boolean {
