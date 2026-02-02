@@ -6,7 +6,7 @@ import java.nio.channels.SeekableByteChannel
 
 internal class TracingSeekableByteChannel(
   private val delegate: SeekableByteChannel,
-  private val spanNamePrefix: String
+  private val spanNamePrefix: String,
 ) : SeekableByteChannel {
   override fun close() {
     Measurer.measure(Measurer.Operation.seekableByteChannelClose, spanNamePrefix) {
