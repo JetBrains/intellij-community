@@ -3201,9 +3201,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final @NotNull EditorCaretMoveService caretMoveService = EditorCaretMoveService.getInstance();
 
+  private boolean shouldSetCursorPositionImmediately() {
+    return !getSettings().isAnimatedCaret() ||
+           gainedFocus.getAndSet(false) ||
+           myMouseDragStarted ||
+           Registry.is("ui.simplified", false) ||
+           PowerSaveMode.isEnabled() ||
+           RemoteDesktopService.isRemoteSession();
+  }
+
   private void setCursorPosition() {
     synchronized (caretMoveService) {
-      if (!getSettings().isAnimatedCaret() || gainedFocus.getAndSet(false) || myMouseDragStarted) {
+      if (shouldSetCursorPositionImmediately()) {
         caretMoveService.setCursorPositionImmediately(this);
       } else {
         caretMoveService.setCursorPosition(this);
