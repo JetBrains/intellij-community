@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.Nullability;
@@ -35,7 +35,6 @@ import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -165,10 +164,6 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     init();
   }
 
-  public void selectStaticFlag(boolean isStatic){
-    myMakeStatic.setSelected(isStatic);
-  }
-
   protected String[] suggestMethodNames() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
@@ -241,10 +236,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
         data.type = new PsiEllipsisType(((PsiArrayType)data.type).getComponentType());
       }
     }
-    final PsiMethod containingMethod = getContainingMethod();
-    if (containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
-      PropertiesComponent.getInstance(myProject).setValue(EXTRACT_METHOD_DEFAULT_VISIBILITY, getVisibility());
-    }
+    PropertiesComponent.getInstance().setValue(EXTRACT_METHOD_DEFAULT_VISIBILITY, getVisibility());
 
     if (myGenerateAnnotations != null && myGenerateAnnotations.isEnabled()) {
       PropertiesComponent.getInstance(myProject).setValue(EXTRACT_METHOD_GENERATE_ANNOTATIONS, myGenerateAnnotations.isSelected(), true);
@@ -455,10 +447,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
 
   private ComboBoxVisibilityPanel<String> createVisibilityPanel() {
     final JavaComboBoxVisibilityPanel panel = new JavaComboBoxVisibilityPanel();
-    final PsiMethod containingMethod = getContainingMethod();
-    panel.setVisibility(containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.PUBLIC)
-                        ? PropertiesComponent.getInstance(myProject).getValue(EXTRACT_METHOD_DEFAULT_VISIBILITY, PsiModifier.PRIVATE)
-                        : PsiModifier.PRIVATE);
+    panel.setVisibility(getDefaultVisibility());
     panel.addListener(e -> {
       updateSignature();
       if (!myChangingVisibility) {
@@ -468,8 +457,8 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     return panel;
   }
 
-  private PsiMethod getContainingMethod() {
-    return PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(myElementsToExtract), PsiMethod.class);
+  public static String getDefaultVisibility() {
+    return PropertiesComponent.getInstance().getValue(EXTRACT_METHOD_DEFAULT_VISIBILITY, PsiModifier.PRIVATE);
   }
 
   private void updateVarargsEnabled() {
@@ -484,8 +473,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
       myMakeStatic.setEnabled(!myStaticFlag && myCanBeStatic && !isChainedConstructor());
     }
     updateSignature();
-    setActionEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(myNameField.getEnteredName()) ||
-                     isChainedConstructor());
+    setActionEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(myNameField.getEnteredName()) || isChainedConstructor());
   }
 
   @Override
