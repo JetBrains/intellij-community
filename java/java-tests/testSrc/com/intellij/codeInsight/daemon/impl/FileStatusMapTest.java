@@ -177,7 +177,7 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
     assertEmpty(highlightErrors());
     PsiClass psiClass = ((PsiJavaFile)getFile()).getClasses()[0];
     new RenameProcessor(myProject, psiClass, "Class2", false, false).run();
-    myDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests();
+    new TestDaemonCodeAnalyzerImpl(getProject()).waitForUpdateFileStatusBackgroundQueueInTests();
     TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL);
     assertEquals(getFile().getTextRange(), dirty);
 
@@ -200,7 +200,7 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     PsiElement elementAtCaret = myFile.findElementAt(myEditor.getCaretModel().getOffset());
     assertTrue(elementAtCaret instanceof PsiWhiteSpace);
-    myDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests();
+    new TestDaemonCodeAnalyzerImpl(getProject()).waitForUpdateFileStatusBackgroundQueueInTests();
     TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL);
     assertEquals(elementAtCaret.getTextRange(), dirty);
     assertEmpty(highlightErrors());
@@ -272,7 +272,7 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
     int offset = myEditor.getCaretModel().getOffset();
     type(' ');
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // reset "defensively marked"
-    myDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests();
+    new TestDaemonCodeAnalyzerImpl(getProject()).waitForUpdateFileStatusBackgroundQueueInTests();
     assertEquals(new TextRange(offset-1, offset+1), fileStatusMap.getFileDirtyScope(document, myFile, Pass.LOCAL_INSPECTIONS));
   }
 

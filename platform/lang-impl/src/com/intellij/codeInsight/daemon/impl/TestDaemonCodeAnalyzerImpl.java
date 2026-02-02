@@ -66,7 +66,8 @@ public final class TestDaemonCodeAnalyzerImpl {
 
   public TestDaemonCodeAnalyzerImpl(@NotNull Project project) {
     myProject = project;
-    myDaemonCodeAnalyzer = getDaemonCodeAnalyzer(myProject);
+    myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+    assert !myDaemonCodeAnalyzer.myDisposed;
   }
 
   /**
@@ -128,7 +129,8 @@ public final class TestDaemonCodeAnalyzerImpl {
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     PsiConsistencyAssertions.assertNoFileTextMismatch(psiFile, editor.getDocument(), null);
-    myDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests(); // update the file status map before prohibiting its modifications
+    // update the file status map before prohibiting its modifications
+    waitForUpdateFileStatusBackgroundQueueInTests();
     FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
     fileStatusMap.runAllowingDirt(canChangeDocument, () -> {
       for (int ignoreId : passesToIgnore) {
@@ -142,12 +144,6 @@ public final class TestDaemonCodeAnalyzerImpl {
         doRunPasses.run();
       }
     });
-  }
-
-  private static @NotNull DaemonCodeAnalyzerImpl getDaemonCodeAnalyzer(Project project) {
-    DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
-    assert !daemonCodeAnalyzer.myDisposed;
-    return daemonCodeAnalyzer;
   }
 
   @TestOnly
@@ -344,4 +340,9 @@ public final class TestDaemonCodeAnalyzerImpl {
     } while (!future.isDone());
   }
 
+  @TestOnly
+  public void waitForUpdateFileStatusBackgroundQueueInTests() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myDaemonCodeAnalyzer.myListeners.waitForUpdateFileStatusQueue();
+  }
 }
