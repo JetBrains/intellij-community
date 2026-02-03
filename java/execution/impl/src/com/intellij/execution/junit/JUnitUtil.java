@@ -376,6 +376,7 @@ public final class JUnitUtil {
           ProgressManager.checkCanceled();
           if (!method.hasModifierProperty(PsiModifier.PRIVATE) &&
               !method.hasModifierProperty(PsiModifier.STATIC) &&
+              !method.hasModifierProperty(PsiModifier.ABSTRACT) &&
               MetaAnnotationUtil.isMetaAnnotated(method, CUSTOM_TESTABLE_ANNOTATION_LIST)) {
             hasAnnotation = true;
             break;
