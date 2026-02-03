@@ -82,6 +82,7 @@ class GrazieMassApplyDialog : DialogWrapper {
   private val massOptionComboBox by lazy { CollectionComboBoxModel(MassOptions.entries) }
 
   constructor(file: PsiFile, problems: ProofreadingProblems) : super(file.project) {
+    check(!problems.isEmpty) { "In order to apply mass fixes, there must be at least one problem to fix" }
     this.text = file.text
     this.project = file.project
     this.problems = problems

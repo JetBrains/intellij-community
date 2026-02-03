@@ -1,5 +1,6 @@
 // "Typo: Change to..." "false"
 // TOOL: com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
+// ACTION: Accept all writing suggestions…
 // ACTION: Convert property initializer to getter
 // ACTION: Convert to 'buildString' call
 // ACTION: Convert to lazy property
