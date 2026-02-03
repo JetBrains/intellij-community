@@ -98,6 +98,8 @@
                  description="Calculation of LibraryScopeCache using WorkspaceModel entities"/>
     <registryKey defaultValue="true" key="se.enable.non.indexable.files.contributor" restartRequired="false"
                  description="Search files in non-indexable filesets with NonIndexableFilesSEContributor"/>
+    <registryKey defaultValue="true" key="rename.files.in.dumb.mode.enable" restartRequired="false"
+                 description="Allow renaming files in dumb mode"/>
     <registryKey defaultValue="false"
                  description="Enable reformat action execution on frontend in remote development"
                  key="reformat.action.execute.on.frontend"

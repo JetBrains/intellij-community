@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.refactoring.actions.RenameElementAction
@@ -19,6 +20,11 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.UiInterceptors
 
 class RenameClassInDumbModeTest : LightJavaCodeInsightFixtureTestCase() {
+
+  override fun setUp() {
+    super.setUp()
+    Registry.get("rename.files.in.dumb.mode.enable").setValue(true, getTestRootDisposable())
+  }
 
   fun `test rename class in dumb mode renames only parent file`() {
     myFixture.configureByText("TestClass.java", "public class TestClass {}")

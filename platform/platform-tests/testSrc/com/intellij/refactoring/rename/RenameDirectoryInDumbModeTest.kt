@@ -17,6 +17,7 @@ import com.intellij.refactoring.actions.RenameElementAction
 import com.intellij.refactoring.actions.RenameFileAction
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.TestActionEvent
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -33,6 +34,7 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
+@RegistryKey("rename.files.in.dumb.mode.enable", "true")
 @TestApplication
 class RenameDirectoryInDumbModeTest {
 

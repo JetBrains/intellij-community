@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
@@ -40,6 +41,8 @@ class FileDumbRenameHandler : RenameHandler, DumbAware {
   }
 
   override fun isAvailableOnDataContext(dataContext: DataContext): Boolean {
+    if (!Registry.`is`("rename.files.in.dumb.mode.enable")) return false
+
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return false
     if (!DumbService.isDumb(project)) return false
     return getElement(dataContext) != null

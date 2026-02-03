@@ -7,6 +7,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.refactoring.RefactoringBundle
@@ -32,7 +33,8 @@ import javax.swing.JPanel
 @ApiStatus.Internal
 class RenamePsiFileDumbProcessor : RenamePsiElementProcessor(), DumbAware {
   override fun canProcessElement(element: PsiElement): Boolean {
-    return DumbService.isDumb(element.project) && element is PsiFileSystemItem
+    return Registry.`is`("rename.files.in.dumb.mode.enable") &&
+           DumbService.isDumb(element.project) && element is PsiFileSystemItem
   }
 
   override fun isToSearchForTextOccurrences(element: PsiElement): Boolean {
