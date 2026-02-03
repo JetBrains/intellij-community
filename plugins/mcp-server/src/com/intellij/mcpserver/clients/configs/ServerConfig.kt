@@ -16,7 +16,7 @@ class CursorSSEConfig(val url: String) : ServerConfig()
 class WindsurfSSEConfig(val serverUrl: String) : ServerConfig()
 
 @Serializable
-class VSCodeSSEConfig(val url: String, val type: String) : ServerConfig()
+class VSCodeNetworkConfig(val url: String, val type: String) : ServerConfig()
 
 @Serializable
 class ClaudeCodeNetworkConfig(val url: String, val type: String) : ServerConfig()

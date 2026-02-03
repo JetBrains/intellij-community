@@ -2,7 +2,7 @@ package com.intellij.mcpserver.clients
 
 import com.intellij.mcpserver.clients.configs.STDIOServerConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
-import com.intellij.mcpserver.clients.configs.VSCodeSSEConfig
+import com.intellij.mcpserver.clients.configs.VSCodeNetworkConfig
 import com.intellij.mcpserver.clients.impl.VSCodeClient
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -101,7 +101,7 @@ class McpClientTest {
     McpClient.overrideWriteLegacyForTests(false)
 
     val client = TestableVSCodeClient()
-    val serverEntry = VSCodeSSEConfig(url = "http://localhost:1234/sse", type = "sse")
+    val serverEntry = VSCodeNetworkConfig(url = "http://localhost:1234/sse", type = "sse")
 
     val existingConfig = buildJsonObject {
       put("servers", buildJsonObject {
@@ -149,7 +149,7 @@ class McpClientTest {
     McpClient.overrideWriteLegacyForTests(true)
 
     val client = TestableVSCodeClient()
-    val serverEntry = VSCodeSSEConfig(url = "http://localhost:7777/sse", type = "sse")
+    val serverEntry = VSCodeNetworkConfig(url = "http://localhost:7777/sse", type = "sse")
 
     val existingConfig = buildJsonObject {
       put("servers", buildJsonObject {

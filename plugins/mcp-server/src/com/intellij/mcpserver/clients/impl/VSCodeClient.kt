@@ -5,7 +5,7 @@ import com.intellij.mcpserver.clients.McpClientInfo
 import com.intellij.mcpserver.clients.configs.ExistingConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
 import com.intellij.mcpserver.clients.configs.VSCodeConfig
-import com.intellij.mcpserver.clients.configs.VSCodeSSEConfig
+import com.intellij.mcpserver.clients.configs.VSCodeNetworkConfig
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -27,7 +27,11 @@ open class VSCodeClient(scope: McpClientInfo.Scope, configPath: Path) : McpClien
     return stdio || network
   }
 
-  override fun getSSEConfig(): ServerConfig = VSCodeSSEConfig(url = sseUrl, type = "sse")
+  override fun getSSEConfig(): ServerConfig = VSCodeNetworkConfig(url = sseUrl, type = "sse")
+
+  override fun getStreamableHttpConfig(): ServerConfig? = VSCodeNetworkConfig(url = streamableHttpUrl, type = "http")
+
+  override fun mcpServersKey(): String = "servers"
 
   @OptIn(ExperimentalSerializationApi::class)
   override fun readMcpServers(): Map<String, ExistingConfig>? {
@@ -35,23 +39,5 @@ open class VSCodeClient(scope: McpClientInfo.Scope, configPath: Path) : McpClien
       if (!configPath.exists()) return null
       json.decodeFromStream<VSCodeConfig>(configPath.inputStream()).servers ?: emptyMap()
     }.getOrNull()
-  }
-
-  /** VSCode uses a different root structure: `{ "servers": { ... } }` */
-  override fun buildUpdatedConfig(existingConfig: JsonObject, serverEntry: ServerConfig): JsonObject {
-    val existingServers = existingConfig["servers"]?.jsonObject ?: buildJsonObject {}
-    val targetKey = jetBrainsServerKey()
-
-    return buildJsonObject {
-      put("servers", buildJsonObject {
-        existingServers.forEach { (key, value) ->
-          if (key != targetKey && key !in LEGACY_SERVER_KEYS) put(key, value)
-        }
-        put(targetKey, json.encodeToJsonElement(serverEntry))
-        if (writeLegacy() && LEGACY_KEY != targetKey) {
-          put(LEGACY_KEY, json.encodeToJsonElement(serverEntry))
-        }
-      })
-    }
   }
 }
