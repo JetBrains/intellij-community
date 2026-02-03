@@ -12,19 +12,17 @@ import com.intellij.openapi.project.DumbAware
 
 class ContextFeaturesContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
-    val lookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl
-    if (lookup != null) {
-      val storage = MutableLookupStorage.get(lookup)
-      if (storage != null) {
-        MutableLookupStorage.saveAsUserData(parameters, storage)
-        if (CompletionMLPolicy.isReRankingDisabled(storage.language, parameters)) {
-          storage.disableReRanking()
-        }
-        if (storage.shouldComputeFeatures() && !storage.isContextFactorsInitialized()) {
-          ContextFactorCalculator.calculateContextFactors(lookup, parameters, storage)
-        }
-      }
+    val lookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl ?: return
+    val storage = MutableLookupStorage.get(lookup) ?: return
+
+    MutableLookupStorage.saveAsUserData(parameters, storage)
+
+    if (CompletionMLPolicy.isReRankingDisabled(storage.language, parameters)) {
+      storage.disableReRanking()
     }
-    super.fillCompletionVariants(parameters, result)
+
+    if (storage.shouldComputeFeatures() && !storage.isContextFactorsInitialized()) {
+      ContextFactorCalculator.calculateContextFactors(lookup, parameters, storage)
+    }
   }
 }
