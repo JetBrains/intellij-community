@@ -150,6 +150,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     myPropertiesFile = new TextFieldWithHistory();
     myPropertiesFile.setHistorySize(-1);
     myPropertiesFile.setEditable(false);
+    myPropertiesFile.setSwingPopup(false);
     ComboboxSpeedSearch.installSpeedSearch(myPropertiesFile, p -> (String)p);
     myPropertiesFilePanel.add(GuiUtils.constructFieldWithBrowseButton(myPropertiesFile, new ActionListener() {
       @Override
