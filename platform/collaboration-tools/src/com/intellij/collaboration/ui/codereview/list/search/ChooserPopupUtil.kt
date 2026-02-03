@@ -18,9 +18,12 @@ import com.intellij.ui.components.JBList
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
+import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.fold
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyAdapter
@@ -108,16 +111,11 @@ object ChooserPopupUtil {
    * // Emission 3: [A, B, C, D, E, F, G, H, I]  // includes all items
    * ```
    *
-   * If your data source emits individual batches (only new items per emission),
-   * use [showBatchedChooserPopup] instead.
-   *
    * @param point the point at which to show the popup
    * @param itemsLoader a flow that emits accumulated lists of items wrapped in [Result]
    * @param presenter a function that creates a [PopupItemPresentation] for each item
    * @param popupConfig configuration options for the popup appearance and behavior
    * @return the selected item, or `null` if the popup was cancelled
-   *
-   * @see showBatchedChooserPopup for handling batch-based data sources
    */
   @JvmOverloads
   suspend fun <T : Any> showAsyncChooserPopup(
@@ -147,17 +145,12 @@ object ChooserPopupUtil {
    * // Emission 3: [A, B, C, D, E, F, G, H, I]  // includes all items
    * ```
    *
-   * If your data source emits individual batches (only new items per emission),
-   * use [showBatchedChooserPopup] instead.
-   *
    * @param point the point at which to show the popup
    * @param itemsLoader a flow that emits accumulated lists of items wrapped in [Result]
    * @param filteringMapper a function that extracts a filterable string from each item
    * @param renderer the cell renderer for displaying items in the list
    * @param popupConfig configuration options for the popup appearance and behavior
    * @return the selected item, or `null` if the popup was cancelled
-   *
-   * @see showBatchedChooserPopup for handling batch-based data sources
    */
   @JvmOverloads
   suspend fun <T : Any> showAsyncChooserPopup(
@@ -219,80 +212,66 @@ object ChooserPopupUtil {
   }
 
   /**
-   * Shows a chooser popup that loads items in batches.
+   * Shows a chooser popup that displays items from a [ComputedResult] state flow.
    *
-   * The [batchesLoader] flow must emit **individual batches** on each emission.
-   * Each emission should contain only new items to append, not previously loaded items.
+   * The [itemsState] flow emits [ComputedResult] values representing the current loading state:
+   * - [ComputedResult.loading]: Shows a loading indicator
+   * - [ComputedResult.success]: Replaces the entire list with the new items
+   * - [ComputedResult.failure]: Shows an error message
    *
-   * Example of correct usage:
-   * ```
-   * // Emission 1: [A, B, C]                   // first batch
-   * // Emission 2: [D, E, F]                   // second batch (appended)
-   * // Result in popup: [A, B, C, D, E, F]
-   * ```
-   *
-   * If your data source emits accumulated lists (all items so far on each emission),
-   * use [showAsyncChooserPopup] instead.
+   * Unlike [showAsyncChooserPopup], this method **replaces** the entire
+   * list model on each successful emission rather than appending items.
    *
    * @param point the point at which to show the popup
-   * @param batchesLoader a flow that emits batches of new items wrapped in [Result]
+   * @param itemsState a state flow that emits [ComputedResult] with the complete list of items
    * @param presenter a function that creates a [PopupItemPresentation] for each item
    * @param popupConfig configuration options for the popup appearance and behavior
    * @return the selected item, or `null` if the popup was cancelled
-   *
-   * @see showAsyncChooserPopup for handling accumulated list data sources
    */
   @JvmOverloads
-  suspend fun <T : Any> showBatchedChooserPopup(
+  suspend fun <T : Any> showComputedResultChooserPopup(
     point: RelativePoint,
-    batchesLoader: Flow<Result<List<T>>>,
+    itemsState: StateFlow<ComputedResult<List<T>>>,
     presenter: (T) -> PopupItemPresentation,
     popupConfig: PopupConfig = PopupConfig.DEFAULT,
   ): T? =
-    showBatchedChooserPopup(
+    showComputedResultChooserPopup(
       point = point,
-      batchesLoader = batchesLoader,
+      itemsState = itemsState,
       filteringMapper = { presenter(it).shortText },
       renderer = SimplePopupItemRenderer.create(presenter),
       popupConfig = popupConfig,
     )
 
   /**
-   * Shows a chooser popup that loads items in batches.
+   * Shows a chooser popup that displays items from a [ComputedResult] state flow.
    *
-   * The [batchesLoader] flow must emit **individual batches** on each emission.
-   * Each emission should contain only new items to append, not previously loaded items.
+   * The [itemsState] flow emits [ComputedResult] values representing the current loading state:
+   * - [ComputedResult.loading]: Shows a loading indicator
+   * - [ComputedResult.success]: Replaces the entire list with the new items
+   * - [ComputedResult.failure]: Shows an error message
    *
-   * Example of correct usage:
-   * ```
-   * // Emission 1: [A, B, C]                   // first batch
-   * // Emission 2: [D, E, F]                   // second batch (appended)
-   * // Result in popup: [A, B, C, D, E, F]
-   * ```
-   *
-   * If your data source emits accumulated lists (all items so far on each emission),
-   * use [showAsyncChooserPopup] instead.
+   * Unlike [showAsyncChooserPopup], this method **replaces** the entire
+   * list model on each successful emission rather than appending items.
    *
    * @param point the point at which to show the popup
-   * @param batchesLoader a flow that emits batches of new items wrapped in [Result]
+   * @param itemsState a state flow that emits [ComputedResult] with the complete list of items
    * @param filteringMapper a function that extracts a filterable string from each item
    * @param renderer the cell renderer for displaying items in the list
    * @param popupConfig configuration options for the popup appearance and behavior
    * @return the selected item, or `null` if the popup was cancelled
-   *
-   * @see showAsyncChooserPopup for handling accumulated list data sources
    */
   @JvmOverloads
-  suspend fun <T : Any> showBatchedChooserPopup(
+  suspend fun <T : Any> showComputedResultChooserPopup(
     point: RelativePoint,
-    batchesLoader: Flow<Result<List<T>>>,
+    itemsState: StateFlow<ComputedResult<List<T>>>,
     filteringMapper: (T) -> String,
     renderer: ListCellRenderer<T>,
     popupConfig: PopupConfig = PopupConfig.DEFAULT,
   ): T? = coroutineScope {
     val listModel = CollectionListModel<T>()
     val list = createList(listModel, renderer)
-    val loadingListener = BatchedListLoadingListener(batchesLoader, list, listModel, popupConfig.errorPresenter)
+    val loadingListener = ComputedResultListLoadingListener(itemsState, list, listModel, popupConfig.errorPresenter)
 
     showChooserPopupWithListener(point, filteringMapper, popupConfig, list, loadingListener)
   }
@@ -495,18 +474,33 @@ private class ListLoadingListener<T>(
   }
 }
 
-private class BatchedListLoadingListener<T>(
-  batchesFlow: Flow<Result<List<T>>>,
+private class ComputedResultListLoadingListener<T>(
+  private val itemsState: StateFlow<ComputedResult<List<T>>>,
   private val list: JBList<T>,
-  listModel: CollectionListModel<T>,
-  errorPresenter: ErrorStatusPresenter.Text<Throwable>?,
-) : AbstractListLoadingListener<T>(batchesFlow, list, listModel, errorPresenter) {
-
-  override fun onSuccess(items: List<T>) {
-    if (items.isNotEmpty()) {
-      val selected = list.selectedIndex
-      listModel.addAll(listModel.size, items)
-      if (selected != -1) list.selectedIndex = selected
+  private val listModel: CollectionListModel<T>,
+  private val errorPresenter: ErrorStatusPresenter.Text<Throwable>?,
+) : AsyncListLoadingListener {
+  override fun afterShow(popup: JBPopup) {
+    popup.content.launchOnShow(javaClass.name) {
+      itemsState.collect { computedResult ->
+        computedResult.fold(
+          onInProgress = {
+            list.setPaintBusy(true)
+            list.emptyText.clear()
+          },
+          onSuccess = { items ->
+            val selected = list.selectedIndex
+            listModel.replaceAll(items)
+            if (selected != -1 && selected < listModel.size) {
+              list.selectedIndex = selected
+            }
+          },
+          onFailure = { exception ->
+            list.setPaintBusy(false)
+            showErrorOnPopupFailure(exception, errorPresenter, list)
+          }
+        )
+      }
     }
   }
 }
