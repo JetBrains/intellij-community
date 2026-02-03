@@ -75,6 +75,12 @@ jvm_import(
 )
 
 jvm_import(
+    name = "forms_import",
+    jar = "@forms_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "h2-mvstore_import",
     jar = "@h2-mvstore_http//file",
     source_jar = "@h2-mvstore-sources_http//file",
@@ -109,50 +115,74 @@ jvm_import(
 )
 
 jvm_import(
+    name = "jaxen_import",
+    jar = "@jaxen_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "jps-javac-extension_import",
     jar = "@jps-javac-extension_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
-    name = "kotlin-compiler_import",
+    name = "jvm-abi-gen-embeddable_import",
+    jar = "@jvm-abi-gen-embeddable_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-compiler-embeddable_import",
     jar = "@kotlin-compiler-embeddable_http//file",
-    source_jar = "@kotlin-compiler-embeddable_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "kotlin-compose-compiler-plugin-embeddable_import",
     jar = "@kotlin-compose-compiler-plugin-embeddable_http//file",
-    source_jar = "@kotlin-compose-compiler-plugin-embeddable-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "kotlin-metadata-jvm_import",
     jar = "@kotlin-metadata-jvm_http//file",
-    source_jar = "@kotlin-metadata-jvm-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "kotlin-reflect_import",
     jar = "@kotlin-reflect_http//file",
-    source_jar = "@kotlin-reflect-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "kotlin-serialization-compiler-plugin-embeddable_import",
     jar = "@kotlin-serialization-compiler-plugin-embeddable_http//file",
-    source_jar = "@kotlin-serialization-compiler-plugin-embeddable-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-script-runtime_import",
+    jar = "@kotlin-script-runtime_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "kotlin-stdlib_import",
     jar = "@kotlin-stdlib_http//file",
-    source_jar = "@kotlin-stdlib-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-stdlib-jdk7_import",
+    jar = "@kotlin-stdlib-jdk7_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-stdlib-jdk8_import",
+    jar = "@kotlin-stdlib-jdk8_http//file",
     visibility = ["//visibility:public"],
 )
 

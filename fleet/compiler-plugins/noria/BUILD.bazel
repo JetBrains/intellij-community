@@ -19,7 +19,7 @@ jvm_library(
   kotlinc_opts = ":noria-compiler-plugin_kotlinc_options",
   visibility = ["//visibility:public"],
   deps = [
-    "@rules_jvm//jvm-inc-builder:patched-kotlin-compiler-for-bazel",
+    "@rules_jvm//jvm-inc-builder:kotlin-compiler-for-bazel",
   ],
   resources = [":noria-compiler-plugin_resources"],
 )

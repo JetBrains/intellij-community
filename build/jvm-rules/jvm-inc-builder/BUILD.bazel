@@ -28,61 +28,16 @@ java_binary(
 )
 
 java_library(
-    name = "patched-kotlin-compiler-for-bazel",
+    name = "kotlin-compiler-for-bazel",
     visibility = ["//visibility:public"],  # used by (@community//fleet/compiler-plugins/expects:expects-compiler-plugin, etc.)
     exports = [
-        ":kotlin-compiler-embeddable_import",
-        ":kotlin-reflect_import",
-        ":kotlin-script-runtime_import",
-        ":kotlin-stdlib-jdk7_import",
-        ":kotlin-stdlib-jdk8_import",
-        ":kotlin-stdlib_import",
+        "//:kotlin-compiler-embeddable_import",
+        "//:kotlin-reflect_import",
+        "//:kotlin-script-runtime_import",
+        "//:kotlin-stdlib-jdk7_import",
+        "//:kotlin-stdlib-jdk8_import",
+        "//:kotlin-stdlib_import",
     ],
-)
-
-jvm_import(
-    name = "forms_import",
-    jar = "@forms_http//file",
-)
-
-jvm_import(
-    name = "jaxen_import",
-    jar = "@jaxen_http//file",
-)
-
-jvm_import(
-    name = "jvm-abi-gen-embeddable_import",
-    jar = "@jvm-abi-gen-embeddable_http//file",
-)
-
-jvm_import(
-    name = "kotlin-compiler-embeddable_import",
-    jar = "@kotlin-compiler-embeddable_http//file",
-)
-
-jvm_import(
-    name = "kotlin-reflect_import",
-    jar = "@kotlin-reflect_http//file",
-)
-
-jvm_import(
-    name = "kotlin-script-runtime_import",
-    jar = "@kotlin-script-runtime_http//file",
-)
-
-jvm_import(
-    name = "kotlin-stdlib_import",
-    jar = "@kotlin-stdlib_http//file",
-)
-
-jvm_import(
-    name = "kotlin-stdlib-jdk7_import",
-    jar = "@kotlin-stdlib-jdk7_http//file",
-)
-
-jvm_import(
-    name = "kotlin-stdlib-jdk8_import",
-    jar = "@kotlin-stdlib-jdk8_http//file",
 )
 
 kt_jvm_library(
@@ -98,26 +53,26 @@ kt_jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         #this two dependencies should be on the top because some parts of that in the Kotlin compiler
-        "//:opentelemetry-api_import",
-        "//:asm-all_import",
         "//:annotations_import",
+        "//:asm-all_import",
         "//:caffeine_import",
+        "//:forms_import",  # forms compilation support
         "//:h2-mvstore_import",
         "//:hash4j_import",
         "//:intellij-deps-fastutil_import",
+        "//:jaxen_import",  # forms compilation support
         "//:jps-javac-extension_import",
+        "//:jvm-abi-gen-embeddable_import",
         "//:kotlin-compose-compiler-plugin-embeddable_import",
         "//:kotlin-metadata-jvm_import",
         "//:kotlin-serialization-compiler-plugin-embeddable_import",
+        "//:opentelemetry-api_import",
         "//:qdox_import",
         "//dependency-graph",
         "//jps-builders-6:build-javac-rt",
         "//worker-framework",
         "//zip",
-        ":forms_import",  # forms compilation support
-        ":jaxen_import",  # forms compilation support
-        ":jvm-abi-gen-embeddable_import",
-        "patched-kotlin-compiler-for-bazel",
+        "kotlin-compiler-for-bazel",
     ],
 )
 

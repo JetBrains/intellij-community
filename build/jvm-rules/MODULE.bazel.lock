@@ -266,8 +266,8 @@
   "moduleExtensions": {
     "//:test_bazel_tool.bzl%extension": {
       "general": {
-        "bzlTransitiveDigest": "qGkIs/3yNSU+RyxsUfa8+9i0jlmnXoYwohYDio9VQt8=",
-        "usagesDigest": "72Yjd41koIDo7bjxOhFy1wsVyFisT9jzD5VAFPXSRoY=",
+        "bzlTransitiveDigest": "+lFrhupZBd4tDRcjuSYnXRgGyBHmZoi5ZqHNTpPOpjo=",
+        "usagesDigest": "KQUr4GdJxXEUbaolbdZkkNzIaooOBSwXLJsmv7bPIdc=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},

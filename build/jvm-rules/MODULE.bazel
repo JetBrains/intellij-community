@@ -244,13 +244,6 @@ http_file(
 )
 
 http_file(
-    name = "kotlin-compose-compiler-plugin-embeddable-sources_http",
-    downloaded_file_path = "kotlin-compose-compiler-plugin-embeddable-%s-sources.jar" % kotlin_compiler_version,
-    sha256 = "ab0ac3cd5742081f8ed1fc709e9961033ffdcc0d793a391b6100f2b407fea582",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compose-compiler-plugin-embeddable/%s/kotlin-compose-compiler-plugin-embeddable-%s-sources.jar" % (kotlin_compiler_version, kotlin_compiler_version),
-)
-
-http_file(
     name = "kotlin-metadata-jvm_http",
     downloaded_file_path = "kotlin-metadata-jvm-%s.jar" % kotlin_compiler_version,
     sha256 = "ec8d1099480e1ee5224e3756ec4a91e8ba5e257a69bc65f0e96f832cc1811d7f",
@@ -258,24 +251,10 @@ http_file(
 )
 
 http_file(
-    name = "kotlin-metadata-jvm-sources_http",
-    downloaded_file_path = "kotlin-metadata-jvm-%s-sources.jar" % kotlin_compiler_version,
-    sha256 = "b57b430ec604edd61b4cc863e09b48efb5c67ca06bacf30857e105045d2f4ddd",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-metadata-jvm/%s/kotlin-metadata-jvm-%s-sources.jar" % (kotlin_compiler_version, kotlin_compiler_version),
-)
-
-http_file(
     name = "kotlin-reflect_http",
     downloaded_file_path = "kotlin-reflect-%s.jar" % kotlin_compiler_version,
     sha256 = "52a0a1b5b4e61b8bb3b9d0208489f499c8d8d23ba4d389d67b868da8e6e1d614",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-reflect/%s/kotlin-reflect-%s.jar" % (kotlin_compiler_version, kotlin_compiler_version),
-)
-
-http_file(
-    name = "kotlin-reflect-sources_http",
-    downloaded_file_path = "kotlin-reflect-%s-sources.jar" % kotlin_compiler_version,
-    sha256 = "fa1664e3d51e4a27d7a2f440581e3f5ffce01795790c11b145a9965f5101cbfa",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-reflect/%s/kotlin-reflect-%s-sources.jar" % (kotlin_compiler_version, kotlin_compiler_version),
 )
 
 http_file(
@@ -290,13 +269,6 @@ http_file(
     downloaded_file_path = "kotlin-serialization-compiler-plugin-embeddable-%s.jar" % kotlin_compiler_version,
     sha256 = "3c7cc70d6540eabe7bdc47258ac7084480597e3db1cfc984d06acdf9b9904887",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-serialization-compiler-plugin-embeddable/%s/kotlin-serialization-compiler-plugin-embeddable-%s.jar" % (kotlin_compiler_version, kotlin_compiler_version),
-)
-
-http_file(
-    name = "kotlin-serialization-compiler-plugin-embeddable-sources_http",
-    downloaded_file_path = "kotlin-serialization-compiler-plugin-embeddable-%s-sources.jar" % kotlin_compiler_version,
-    sha256 = "7aab6ee8a10ee156be17bcb4c5e8d12b2d9dee4cdbcd292d56824b94bbe9de0e",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-serialization-compiler-plugin-embeddable/%s/kotlin-serialization-compiler-plugin-embeddable-%s-sources.jar" % (kotlin_compiler_version, kotlin_compiler_version),
 )
 
 http_file(
@@ -318,13 +290,6 @@ http_file(
     downloaded_file_path = "kotlin-stdlib-jdk8-%s.jar" % kotlin_compiler_version,
     sha256 = "4a7285164b546a2bc381f9abb5e73e5420773d1548371a8afb814c612af2f3dc",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-jdk8/%s/kotlin-stdlib-jdk8-%s.jar" % (kotlin_compiler_version, kotlin_compiler_version),
-)
-
-http_file(
-    name = "kotlin-stdlib-sources_http",
-    downloaded_file_path = "kotlin-stdlib-%s-sources.jar" % kotlin_compiler_version,
-    sha256 = "21a3acec677a5483cacd6e956bee49f1f816c0e9ece3b39d188b6fd3720fd306",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib/%s/kotlin-stdlib-%s-sources.jar" % (kotlin_compiler_version, kotlin_compiler_version),
 )
 
 http_file(
