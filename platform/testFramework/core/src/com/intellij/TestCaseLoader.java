@@ -94,8 +94,6 @@ public class TestCaseLoader {
    */
   private static final boolean REVERSE_ORDER = SystemProperties.getBooleanProperty("intellij.build.test.reverse.order", false);
 
-  private static final String PLATFORM_LITE_FIXTURE_NAME = "com.intellij.testFramework.PlatformLiteFixture";
-
   public static final String COMMON_TEST_GROUPS_RESOURCE_NAME = "tests/testGroups.properties";
 
   private final HashSet<Class<?>> myClassSet = new HashSet<>();
@@ -424,34 +422,11 @@ public class TestCaseLoader {
   public static int getRank(Class<?> aClass) {
     if (runFirst(aClass)) return 0;
 
-    // `PlatformLiteFixture` is a very special test case, because it doesn't load all the XMLs with component/extension declarations
-    // (that is, uses a mock application). Instead, it allows declaring them manually using its registerComponent/registerExtension
-    // methods. The goal is to make tests which extend PlatformLiteFixture extremely fast. The problem appears when such tests are invoked
-    // together with other tests which rely on declarations in XML files (that is, use a real application). The nature of the IDE
-    // application is such that static final fields are often used to cache extensions. While having a positive effect on performance,
-    // it creates problems during testing. Simply speaking, if the instance of PlatformLiteFixture is the first one in a suite, it pollutes
-    // static final fields (and all other kinds of caches) with invalid values. To avoid it, such tests should always be the last.
-    if (isPlatformLiteFixture(aClass)) {
-      return Integer.MAX_VALUE;
-    }
-
     return 1;
   }
 
   private static boolean runFirst(Class<?> testClass) {
     return getAnnotationInHierarchy(testClass, RunFirst.class) != null;
-  }
-
-  private static boolean isPlatformLiteFixture(Class<?> aClass) {
-    while (aClass != null) {
-      if (PLATFORM_LITE_FIXTURE_NAME.equals(aClass.getName())) {
-        return true;
-      }
-      else {
-        aClass = aClass.getSuperclass();
-      }
-    }
-    return false;
   }
 
   public int getClassesCount() {
