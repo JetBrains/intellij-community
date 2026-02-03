@@ -96,11 +96,16 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   @ApiStatus.Internal
   protected final MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(@NotNull Iterable<? extends LookupElement> source) {
     MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = MultiMap.createLinked();
+
     for (LookupElement element : source) {
-      inputBySorter.putValue(obtainSorter(element), element);
+      CompletionSorterImpl sorter = obtainSorter(element);
+      inputBySorter.putValue(sorter, element);
     }
+
     for (CompletionSorterImpl sorter : inputBySorter.keySet()) {
-      inputBySorter.put(sorter, sortByPresentation(inputBySorter.get(sorter)));
+      Collection<LookupElement> lookupElements = inputBySorter.get(sorter);
+      List<LookupElement> sortedByPresentation = sortByPresentation(lookupElements);
+      inputBySorter.put(sorter, sortedByPresentation);
     }
 
     return inputBySorter;
@@ -387,7 +392,8 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
           .filter(item -> !isCustomElements(item));
       }
 
-      Iterable<? extends LookupElement> sortedByRelevance = sortByRelevance(groupItemsBySorter(filteredIterableItems));
+      MultiMap<CompletionSorterImpl, LookupElement> sortedGroups = groupItemsBySorter(filteredIterableItems);
+      Iterable<? extends LookupElement> sortedByRelevance = sortByRelevance(sortedGroups);
 
       sortedByRelevance = applyFinalSorter(sortedByRelevance);
 
