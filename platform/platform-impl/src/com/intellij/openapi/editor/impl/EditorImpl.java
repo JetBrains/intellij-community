@@ -332,6 +332,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   // Reset on mouse press event.
   private boolean myCurrentDragIsSubstantial;
   private boolean myForcePushHappened;
+  private boolean myMouseIsInDrag;
 
   private @Nullable VisualPosition mySuppressedByBreakpointsLastPressPosition;
 
@@ -2825,6 +2826,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                            || !myLastPressedOnGutter // Small drags aren't a problem in the editor, only on the gutter.
                            || Math.abs(myLastMousePressedPoint.x - point.x) >= sensitivity
                            || Math.abs(myLastMousePressedPoint.y - point.y) >= sensitivity;
+      myMouseIsInDrag = myMouseDragStarted;
       if (!myMouseDragStarted) {
         return;
       }
@@ -3204,7 +3206,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean shouldSetCursorPositionImmediately() {
     return !getSettings().isAnimatedCaret() ||
            gainedFocus.getAndSet(false) ||
-           myMouseDragStarted ||
+           myMouseIsInDrag ||
            Registry.is("ui.simplified", false) ||
            PowerSaveMode.isEnabled() ||
            RemoteDesktopService.isRemoteSession();
@@ -4398,6 +4400,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myMouseDragStarted = false;
       myDragStarted = false;
       myDragSelectionStarted = false;
+      myMouseIsInDrag = false;
       myForcePushHappened = false;
       clearDnDContext();
 
@@ -4456,6 +4459,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void runMouseReleasedCommand(@NotNull MouseEvent e) {
+      myMouseIsInDrag = false;
       myMultiSelectionInProgress = false;
       myDragOnGutterSelectionStartLine = -1;
       myScrollingTimer.stop();
