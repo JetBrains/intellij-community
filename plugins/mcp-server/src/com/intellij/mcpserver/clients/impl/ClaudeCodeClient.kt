@@ -5,7 +5,7 @@ import com.intellij.execution.util.ExecUtil
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.clients.McpClientInfo
-import com.intellij.mcpserver.clients.configs.ClaudeCodeSSEConfig
+import com.intellij.mcpserver.clients.configs.ClaudeCodeNetworkConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -40,23 +40,26 @@ class ClaudeCodeClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
         logger.trace { "Claude remove mcp stderr: ${output.stderr}" }
       }
 
-      fun add(name: String, url: String) {
+      fun add(name: String, url: String, transportType: String) {
         val addCmd = GeneralCommandLine()
           .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
           .withExePath("claude")
-          .withParameters("mcp", "add", "--scope", "user", "--transport", "sse", name, url)
+          .withParameters("mcp", "add", "--scope", "user", "--transport", transportType, name, url)
         val out = ExecUtil.execAndGetOutput(addCmd, 1000)
         if (out.exitCode != 0) {
-          error("Claude failed with exit code ${out.exitCode}: ${out.stderr}")
+          throw McpClientConfigurationException(out.stdout)
         }
       }
 
       val productKey = productSpecificServerKey()
       remove(productKey)
-      add(productKey, sseUrl)
+      if (config !is ClaudeCodeNetworkConfig) {
+        throw IllegalArgumentException("Unexpected config type: ${config::class.java}")
+      }
+      add(productKey, config.url, config.type)
       if (LEGACY_KEY != productKey) {
         if (writeLegacy()) {
-          add(LEGACY_KEY, sseUrl)
+          add(LEGACY_KEY, config.url, config.type)
         }
         else {
           remove(LEGACY_KEY)
@@ -65,5 +68,7 @@ class ClaudeCodeClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
     }
   }
 
-  override fun getSSEConfig(): ServerConfig = ClaudeCodeSSEConfig(type = "sse", url = sseUrl)
+  override fun getSSEConfig(): ServerConfig = ClaudeCodeNetworkConfig(type = "sse", url = sseUrl)
+
+  override fun getStreamableHttpConfig(): ServerConfig = ClaudeCodeNetworkConfig(type = "http", url = streamableHttpUrl)
 }

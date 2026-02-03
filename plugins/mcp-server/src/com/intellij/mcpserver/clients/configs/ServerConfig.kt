@@ -19,7 +19,7 @@ class WindsurfSSEConfig(val serverUrl: String) : ServerConfig()
 class VSCodeSSEConfig(val url: String, val type: String) : ServerConfig()
 
 @Serializable
-class ClaudeCodeSSEConfig(val url: String, val type: String) : ServerConfig()
+class ClaudeCodeNetworkConfig(val url: String, val type: String) : ServerConfig()
 
 @Serializable
 class CodexStreamableHttpConfig(val url: String) : ServerConfig()
