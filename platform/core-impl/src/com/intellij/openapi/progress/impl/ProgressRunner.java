@@ -313,9 +313,6 @@ public final class ProgressRunner<R> {
     if (!EDT.isCurrentThreadEdt()) {
       return false;
     }
-    if (isSync && !ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
-      throw new IllegalStateException("Running sync tasks on pure EDT (w/o IW lock) is dangerous for several reasons.");
-    }
     if (!isSync && isModal) {
       throw new IllegalStateException("Running async modal tasks from EDT is impossible: modal implies sync dialog show + polling events");
     }
