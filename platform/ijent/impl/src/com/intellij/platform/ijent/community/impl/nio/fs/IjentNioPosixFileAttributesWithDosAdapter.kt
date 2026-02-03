@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.ijent.nio
+package com.intellij.platform.ijent.community.impl.nio.fs
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.CaseSensitivityAttribute
