@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols
 
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageSearcher
 import com.intellij.find.usages.symbol.SearchTargetSymbol
@@ -337,6 +338,9 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
      **/
     @JvmField
     val PROP_IJ_TEXT_ATTRIBUTES_KEY: PolySymbolProperty<String> = PolySymbolProperty["ij-text-attributes-key"]
+
+    @JvmField
+    val PROP_READ_WRITE_ACCESS: PolySymbolProperty<ReadWriteAccessDetector.Access> = PolySymbolProperty["ij-read-write-access"]
   }
 }
 
