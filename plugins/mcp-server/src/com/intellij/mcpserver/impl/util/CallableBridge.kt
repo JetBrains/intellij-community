@@ -11,7 +11,7 @@ import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 import kotlin.reflect.full.callSuspendBy
 
-class CallableBridge(private val callable: KCallable<*>, private val thisRef: Any? = null, private val json: Json = Json) {
+class CallableBridge(private val callable: KCallable<*>, private val thisRef: Any? = null, private val json: Json = McpServerJson) {
   class Result(val result: Any?, private val resultType: KType, private val json: Json) {
     fun encodeToString(): String {
       val serializer = serializerOrNull(resultType) ?: error("Result type ${result} is not serializable")
