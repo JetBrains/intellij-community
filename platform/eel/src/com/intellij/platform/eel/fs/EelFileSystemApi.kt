@@ -347,7 +347,7 @@ interface EelFileSystemApi {
     val entryOrder: WalkDirectoryEntryOrder get() = WalkDirectoryEntryOrder.RANDOM
 
     /**
-     * Yield permissions and timestamps. Default is false.
+     * Yield permissions, timestamps, and attributes. Default is false.
      */
     val readMetadata: Boolean get() = false
 
