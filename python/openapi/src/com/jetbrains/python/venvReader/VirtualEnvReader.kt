@@ -138,8 +138,8 @@ class VirtualEnvReader private constructor(
    */
   @RequiresBackgroundThread
   fun findPythonInPythonRoot(pathOrDir: PythonHomePath): PythonBinary? {
-    val pythonNames = getPythonBinaryNames(pathOrDir.osFamily)
-    if (pathOrDir.isRegularFile() && pathOrDir.name.lowercase() in pythonNames) {
+    val pythonPattern = getPythonBinaryPattern(pathOrDir.osFamily)
+    if (pathOrDir.isRegularFile() && pythonPattern.matches(pathOrDir.name)) {
       return pathOrDir
     }
 
@@ -188,17 +188,22 @@ class VirtualEnvReader private constructor(
   }
 
   /**
-   * Looks for python binary among directory entries
+   * Looks for python binary among directory entries.
+   * Prefers the shortest name (e.g., "python" over "python3.12") to ensure consistent results,
+   * since virtual environments create multiple symlinks (python, python3, python3.12)
+   * and Files.newDirectoryStream() order is undefined.
    */
   @RequiresBackgroundThread
   private fun findInterpreter(dir: Path): PythonBinary? =
     try {
       Files.newDirectoryStream(dir).use { stream ->
-        val pythonNames = getPythonBinaryNames(forcedOs ?: dir.osFamily)
-        stream.firstOrNull {
-          it.name.lowercase() in pythonNames &&
-          it.isRegularFile()
-        }
+        val pythonPattern = getPythonBinaryPattern(forcedOs ?: dir.osFamily)
+        
+        val candidates = stream.filter {
+          it.isRegularFile() && pythonPattern.matches(it.name)
+        }.toList()
+        
+        candidates.minByOrNull { it.name.length }
       }
 
     }
@@ -235,16 +240,20 @@ class VirtualEnvReader private constructor(
     @Suppress("VENV_IS_OK") // The only place it should be used in prod
     const val DEFAULT_VIRTUALENV_DIRNAME: String = ".venv"
 
-    private val POSIX_BINS = setOf("pypy", "python")
-    private val WIN_BINS = setOf("pypy.exe", "python.exe")
+    private val POSIX_PYTHON_PATTERN = Regex("^(pypy|python)(\\d+(\\.\\d+)*)?$")
+    private val WIN_PYTHON_PATTERN = Regex("^(pypy|python)(\\d+(\\.\\d+)*)?\\.exe$", RegexOption.IGNORE_CASE)
     private fun getLocalEelIfApp(): EelApi? = if (ApplicationManager.getApplication() != null) localEel else null
 
-    private fun getPythonBinaryNames(osFamily: EelOsFamily): Set<String> {
-      val pythonNames = when (osFamily) {
-        EelOsFamily.Posix -> POSIX_BINS
-        EelOsFamily.Windows -> WIN_BINS
+    /**
+     * Returns a regex pattern that matches Python binary names.
+     * Matches: python, python3, python3.X, python3.X.Y, python3.X.Y.Z, etc., pypy, pypy3, pypy3.X, pypy3.X.Y, etc.
+     * (and .exe versions on Windows).
+     */
+    private fun getPythonBinaryPattern(osFamily: EelOsFamily): Regex {
+      return when (osFamily) {
+        EelOsFamily.Posix -> POSIX_PYTHON_PATTERN
+        EelOsFamily.Windows -> WIN_PYTHON_PATTERN
       }
-      return pythonNames
     }
   }
 }
