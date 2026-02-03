@@ -143,7 +143,10 @@ class PyNamedTupleInspection : PyInspection() {
         if (isDataclass && isKwOnlyMarker(element, context)) {
           kwOnlyMarkerVisited = true
         }
-        else if (hasAssignedValue(element) || kwOnlyMarkerVisited) {
+        else if (kwOnlyMarkerVisited) {
+          return true
+        }
+        else if (hasAssignedValue(element)) {
           fieldsWithDefaultValue.add(element)
         }
         else {
