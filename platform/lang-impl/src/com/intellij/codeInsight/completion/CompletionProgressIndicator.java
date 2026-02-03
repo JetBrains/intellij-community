@@ -1012,9 +1012,9 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
       CompletionThreadingKt.tryReadOrCancel(this, () -> scheduleAdvertising(parameters));
     });
 
-    WeighingDelegate weigher = threading.delegateWeighing(this);
+    CompletionConsumer consumer = threading.createConsumer(this);
     try {
-      calculateItems(initContext, weigher, parameters);
+      calculateItems(initContext, consumer, parameters);
     }
     catch (ProcessCanceledException ignore) {
       cancel(); // some contributor may just throw PCE; if indicator is not canceled everything will hang
@@ -1026,17 +1026,17 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
   private void calculateItems(@NotNull CompletionInitializationContext initContext,
-                              @NotNull WeighingDelegate weigher,
+                              @NotNull CompletionConsumer consumer,
                               @NotNull CompletionParameters parameters) {
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       duringCompletion(initContext, parameters);
       ProgressManager.checkCanceled();
 
-      CompletionService.getCompletionService().performCompletion(parameters, weigher);
+      CompletionService.getCompletionService().performCompletion(parameters, consumer);
     });
     ProgressManager.checkCanceled();
 
-    weigher.waitFor();
+    consumer.waitFor();
     ProgressManager.checkCanceled();
   }
 
