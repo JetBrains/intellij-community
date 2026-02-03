@@ -57,13 +57,42 @@ abstract class McpClient(
 
   open fun mcpServersKey(): String = "mcpServers"
 
-  open fun configure(): Unit = updateServerConfig(getConfig())
+  /**
+   * Attempts to configure an MCP client with the provider server configuration.
+   *
+   * It is possible that the client does not support this particular configuration (i.e., the client is not ready for Streamable HTTP at the moment).
+   * If this is the case, then an [McpClientConfigurationException] gets thrown.
+   * @return null if configuration was completed without errors, or an error message otherwise
+   */
+  @Throws(McpClientConfigurationException::class)
+  open fun configure(config: ServerConfig) {
+    val existingConfig = readExistingConfig()
+    val updatedConfig = buildUpdatedConfig(existingConfig, config)
+    writeConfigToFile(updatedConfig)
+  }
 
-  fun getConfig(): ServerConfig = getSSEConfig() ?: getStdioConfig()
+  class McpClientConfigurationException(override val message: String): Exception(message) {
+  }
 
-  protected open fun getSSEConfig(): ServerConfig? = null
+  fun autoConfigure() {
+    val streamableHttpConfig = getStreamableHttpConfig()
+    if (streamableHttpConfig != null && runCatching { configure(streamableHttpConfig) }.isSuccess) {
+      return
+    }
+    val sseConfig = getSSEConfig()
+    if (sseConfig != null && runCatching { configure(sseConfig) }.isSuccess) {
+      return
+    }
+    return configure(getStdioConfig())
+  }
 
-  private fun getStdioConfig(): ServerConfig {
+  fun getPreferredConfig(): ServerConfig = getStreamableHttpConfig() ?: getSSEConfig() ?: getStdioConfig()
+
+  open fun getStreamableHttpConfig(): ServerConfig? = null
+
+  open fun getSSEConfig(): ServerConfig? = null
+
+  fun getStdioConfig(): ServerConfig {
     val cmd = createStdioMcpServerCommandLine(McpServerService.getInstance().port, null)
     return STDIOServerConfig(command = cmd.exePath, args = cmd.parametersList.parameters, env = cmd.environment)
   }
@@ -149,12 +178,6 @@ abstract class McpClient(
       return configuredPort == targetPort
     }
     return true
-  }
-
-  protected fun updateServerConfig(serverEntry: ServerConfig) {
-    val existingConfig = readExistingConfig()
-    val updatedConfig = buildUpdatedConfig(existingConfig, serverEntry)
-    writeConfigToFile(updatedConfig)
   }
 
   @Deprecated("Use product-specific terminology")

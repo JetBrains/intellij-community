@@ -27,7 +27,7 @@ class ClaudeCodeClient(scope: McpClientInfo.Scope, configPath: Path) : McpClient
     return stdio || network
   }
 
-  override fun configure() {
+  override fun configure(config: ServerConfig) {
     runWithModalProgressBlocking(
       ModalTaskOwner.guess(),
       McpServerBundle.message("autoconfigure.progress.title"),

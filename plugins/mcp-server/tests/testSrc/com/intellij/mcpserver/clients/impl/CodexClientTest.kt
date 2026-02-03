@@ -69,7 +69,7 @@ class CodexClientTest {
     McpClient.overrideWriteLegacyForTests(false)
 
     val client = TestCodexClient(McpClientInfo.Scope.GLOBAL, configPath, "http://localhost:7777/stream")
-    client.configure()
+    client.configure(client.getStreamableHttpConfig())
 
     val result = configPath.readText()
     assertTrue(result.contains("[mcp_servers.codextest]"))
@@ -87,7 +87,7 @@ class CodexClientTest {
     McpClient.overrideWriteLegacyForTests(true)
 
     val client = TestCodexClient(McpClientInfo.Scope.GLOBAL, configPath, "http://localhost:8888/stream")
-    client.configure()
+    client.configure(client.getStreamableHttpConfig()!!)
 
     val result = configPath.readText()
     assertTrue(result.contains("[mcp_servers.codextest]"))
@@ -160,7 +160,7 @@ class CodexClientTest {
     McpClient.overrideWriteLegacyForTests(false)
 
     val client = TestCodexClient(McpClientInfo.Scope.GLOBAL, configPath, "http://localhost:2222/stream")
-    client.configure()
+    client.configure(client.getStreamableHttpConfig())
 
     val result = configPath.readText()
     assertTrue(result.contains("""url = "http://localhost:2222/stream""""))
@@ -182,7 +182,7 @@ class CodexClientTest {
     McpClient.overrideWriteLegacyForTests(false)
 
     val client = TestCodexClient(McpClientInfo.Scope.GLOBAL, configPath, "http://localhost:3333/stream")
-    client.configure()
+    client.configure(client.getStreamableHttpConfig())
 
     val result = configPath.readText()
     assertTrue(result.contains("[random.section]"))

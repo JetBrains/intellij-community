@@ -117,7 +117,7 @@ internal class McpClientDetectionActivity : ProjectActivity {
       val clientsWithErrorDuringConfiguration = mutableSetOf<McpClient>()
       for (client in unconfiguredClients) {
         try {
-          client.configure()
+          client.autoConfigure()
         }
         catch (t: Throwable) {
           thisLogger().warn(t)
