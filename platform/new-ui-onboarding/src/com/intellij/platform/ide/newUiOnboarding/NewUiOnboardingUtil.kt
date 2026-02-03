@@ -39,6 +39,7 @@ import com.intellij.ui.popup.WizardPopup
 import com.intellij.util.SlowOperations
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -176,6 +177,15 @@ object NewUiOnboardingUtil {
       }
     }
     return popup
+  }
+
+  fun isPopupLeftSide(popup: JBPopup): Boolean {
+    val c = popup.content
+    val frame = UIUtil.findUltimateParent(c) ?: return false
+    val leftArea = SwingUtilities.convertPoint(c, 0, 0, frame).x
+    val rightArea = frame.width - c.width - leftArea
+
+    return leftArea > rightArea
   }
 
   private suspend fun performActionUpdate(action: AnAction, event: AnActionEvent) {

@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.newUiOnboarding.steps
 
-import com.intellij.ide.ui.MainMenuDisplayMode
-import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.UiComponentsSearchUtil
@@ -38,7 +36,7 @@ internal class GitWidgetStep : NewUiOnboardingStep {
     val builder = GotItComponentBuilder(text)
       .withHeader(NewUiOnboardingBundle.message("newUiOnboarding.git.widget.step.header"))
 
-    val atLeft = UISettings.getInstance().mainMenuDisplayMode == MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR
+    val atLeft = NewUiOnboardingUtil.isPopupLeftSide(popup)
     val x = if (atLeft) -JBUI.scale(4) else popup.content.width + JBUI.scale(4)
     val popupPoint = Point(x, JBUI.scale(32))
     val point = NewUiOnboardingUtil.convertPointToFrame(project, popup.content, popupPoint) ?: return null
