@@ -26,10 +26,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.SdkEntity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.TextWithIcon;
+import com.intellij.workspaceModel.ide.LibraryEntities;
+import com.intellij.workspaceModel.ide.SdkEntities;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -98,7 +102,7 @@ public class DefaultModuleRendererFactory extends ModuleRendererFactory {
 
   @ApiStatus.Internal
   public @NotNull TextWithIcon libraryLocation(@NotNull Project project, @NotNull ProjectFileIndex fileIndex, @NotNull VirtualFile vFile) {
-    String text = orderEntryText(fileIndex, vFile);
+    String text = entityText(fileIndex, vFile);
     Icon icon = AllIcons.Nodes.PpLibFolder;
 
     if (StringUtil.isEmpty(text) && Registry.is("index.run.configuration.jre")) {
@@ -129,11 +133,12 @@ public class DefaultModuleRendererFactory extends ModuleRendererFactory {
     return new TextWithIcon(text, icon);
   }
 
-  private @Nls @NotNull String orderEntryText(@NotNull ProjectFileIndex fileIndex, @NotNull VirtualFile vFile) {
-    for (OrderEntry order : fileIndex.getOrderEntriesForFile(vFile)) {
-      if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
-        return getPresentableName(order, vFile);
-      }
+  private static @NotNull String entityText(@NotNull ProjectFileIndex fileIndex, @NotNull VirtualFile vFile) {
+    for (LibraryEntity entity : fileIndex.findContainingLibraries(vFile)) {
+      return LibraryEntities.getPresentableName(entity);
+    }
+    for (SdkEntity entity : fileIndex.findContainingSdks(vFile)) {
+      return SdkEntities.getPresentableName(entity);
     }
     return "";
   }
