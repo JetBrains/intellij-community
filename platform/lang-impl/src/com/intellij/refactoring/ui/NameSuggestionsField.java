@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
@@ -45,6 +44,7 @@ public class NameSuggestionsField extends JPanel {
     myProject = project;
     myComboBoxModel = new MyComboBoxModel();
     final ComboBox<String> comboBox = new ComboBox<>(myComboBoxModel,-1);
+    comboBox.setSwingPopup(false);
     myComponent = comboBox;
     add(myComponent, BorderLayout.CENTER);
     setupComboBox(comboBox, StdFileTypes.JAVA);
@@ -73,6 +73,7 @@ public class NameSuggestionsField extends JPanel {
       myComboBoxModel = new MyComboBoxModel();
       myComboBoxModel.setSuggestions(nameSuggestions);
       final ComboBox<String> combobox = new ComboBox<>(myComboBoxModel);
+      combobox.setSwingPopup(false);
       combobox.setSelectedIndex(0);
       setupComboBox(combobox, fileType);
       myComponent = combobox;

@@ -78,6 +78,7 @@ import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.border.Border;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -312,6 +313,9 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
         mySelector.selectType(PsiTypes.voidType());
       }
       final JPanel returnTypePanel = new JPanel(new BorderLayout(2, 0));
+      Dimension size = component.getPreferredSize();
+      size.width = Math.min(size.width, 300);
+      component.setPreferredSize(size);
       final JLabel label = new JLabel(RefactoringBundle.message("changeSignature.return.type.prompt"));
       returnTypePanel.add(label, BorderLayout.NORTH);
       returnTypePanel.add(component, BorderLayout.SOUTH);
@@ -325,23 +329,13 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
           }
           myGenerateAnnotations.setEnabled(enabled);
         }
-        resizeReturnCombo(component, selectedType);
         returnTypePanel.revalidate();
         returnTypePanel.repaint();
         updateSignature();
       });
-      resizeReturnCombo(component, mySelector.getSelectedType());
       return returnTypePanel;
     }
     return null;
-  }
-
-  private static void resizeReturnCombo(JComponent component, PsiType selectedType) {
-    if (selectedType != null) {
-      final String presentableText = selectedType.getPresentableText();
-      final int presentableTextWidth = component.getFontMetrics(component.getFont()).stringWidth(presentableText);
-      ((ComboBox<?>)component).setMinimumAndPreferredWidth(presentableTextWidth);
-    }
   }
 
   protected PsiExpression[] findOccurrences() {
@@ -350,8 +344,6 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
 
   protected JPanel createOptionsPanel() {
     final JPanel optionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
-
-    //optionsPanel.add(new JLabel("Options: "));
 
     createStaticOptions(optionsPanel, JavaRefactoringBundle.message("declare.static.pass.fields.checkbox"));
 
