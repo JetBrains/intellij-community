@@ -394,7 +394,9 @@
       "successBackground": "accent-success-bg",
       "successBorderColor": "accent-success-border",
       "infoBackground": "accent-brand-bg-secondary",
-      "infoBorderColor": "accent-brand-border-secondary"
+      "infoBorderColor": "accent-brand-border-secondary",
+      "underlineArc": 12,
+      "underlineArc.compact": 8
     },
 
     "InlineBanner": {

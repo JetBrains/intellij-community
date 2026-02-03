@@ -390,7 +390,9 @@
       "successBackground": "accent-success-bg",
       "successBorderColor": "accent-success-border",
       "infoBackground": "accent-brand-bg-secondary",
-      "infoBorderColor": "accent-brand-border-secondary"
+      "infoBorderColor": "accent-brand-border-secondary",
+      "underlineArc": 12,
+      "underlineArc.compact": 8
     },
 
     "InlineBanner": {
@@ -1038,7 +1040,8 @@
         "transparentHoverBackground": "control-bg-hovered",
         "pressedBackground": "control-bg-pressed",
         "maxWidth": 350
-      }
+      },
+      "Button.arc.compact": 8
     },
 
     "Window.undecorated.border" : "1,1,1,1,#5A5D6B",
