@@ -527,7 +527,7 @@ public final class IterationState {
                               ? null
                               : myHighlighterIterator.getTextAttributes();
     TextAttributes selection = getSelectionAttributes(isInSelection);
-    if (!Registry.is("editor.disable.new.selection") && !myColumnMode && selection != null) {
+    if (!Registry.is("editor.old.full.horizontal.selection.enabled") && !myColumnMode && selection != null) {
       selection.setBackgroundColor(null);
     }
     TextAttributes caret = getCaretRowAttributes(isInCaretRow);

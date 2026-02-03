@@ -656,7 +656,7 @@ internal class SelectionLinePainter(
   }
 
   private fun paint(rect: Rectangle2D) {
-    if (Registry.`is`("editor.disable.new.selection") || editor.isColumnMode) {
+    if (Registry.`is`("editor.old.full.horizontal.selection.enabled") || editor.isColumnMode) {
       LOG.error("Using the new selection painting is disabled or editor is in column mode but SelectionLinePainter.paint was called, proceeding with caution")
       EditorPainter.fillRectExact(
         graphics,

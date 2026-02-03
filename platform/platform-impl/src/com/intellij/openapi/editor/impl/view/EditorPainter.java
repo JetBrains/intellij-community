@@ -384,7 +384,7 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private boolean shouldUseNewSelection() {
-      return !Registry.is("editor.disable.new.selection") && !myEditor.isColumnMode();
+      return !Registry.is("editor.old.full.horizontal.selection.enabled") && !myEditor.isColumnMode();
     }
 
     private void paintBackground() {
