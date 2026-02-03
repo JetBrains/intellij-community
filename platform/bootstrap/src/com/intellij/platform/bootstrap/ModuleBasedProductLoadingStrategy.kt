@@ -354,16 +354,36 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
     val allResourceRootsList = allResourceRoots.toList()
 
-    val descriptor = if (Files.isDirectory(mainResourceRoot)) {
+    val descriptor =
+      tryLoadingPluginDescriptorFromJarOrDirectory(mainResourceRoot, allResourceRootsList, zipFilePool,
+                                                   pluginModuleGroup, context, isBundled, pluginDir)
+    val modulesWithJarFiles = descriptor?.contentModules?.flatMap { moduleItem ->
+      val jarFiles = moduleItem.jarFiles
+      if (moduleItem.moduleLoadingRule != ModuleLoadingRule.EMBEDDED && jarFiles != null) jarFiles else emptyList()
+    }
+    descriptor?.jarFiles = allResourceRootsList.filter { modulesWithJarFiles == null || it !in modulesWithJarFiles }
+    return descriptor
+  }
+
+  private fun tryLoadingPluginDescriptorFromJarOrDirectory(
+    resourceRoot: Path,
+    allResourceRootsList: List<Path>,
+    zipFilePool: ZipEntryResolverPool,
+    pluginModuleGroup: PluginModuleGroup,
+    context: PluginDescriptorLoadingContext,
+    isBundled: Boolean,
+    pluginDir: Path?,
+  ): PluginMainDescriptor? {
+    return if (Files.isDirectory(resourceRoot)) {
       val fallbackResolver = PluginXmlPathResolver(allResourceRootsList.filter { it.extension == "jar" }, zipFilePool)
       val resolver = ModuleBasedPluginXmlPathResolver(
-        includedModules = includedModules,
+        includedModules = pluginModuleGroup.includedModules,
         optionalModuleIds = pluginModuleGroup.optionalModuleIds,
         notLoadedModuleIds = pluginModuleGroup.notLoadedModuleIds,
         fallbackResolver = fallbackResolver,
       )
       loadDescriptorFromDir(
-        dir = mainResourceRoot,
+        dir = resourceRoot,
         loadingContext = context,
         pool = zipFilePool,
         pathResolver = resolver,
@@ -378,23 +398,23 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
             }
           }
         }
-    }
-    else {
+      }
+      else {
       val defaultResolver = PluginXmlPathResolver(allResourceRootsList, zipFilePool)
       val pathResolver = if (allResourceRootsList.size == 1 && pluginModuleGroup.notLoadedModuleIds.isEmpty()) {
         defaultResolver
       }
       else {
         ModuleBasedPluginXmlPathResolver(
-          includedModules = includedModules,
+          includedModules = pluginModuleGroup.includedModules,
           optionalModuleIds = pluginModuleGroup.optionalModuleIds,
           notLoadedModuleIds = pluginModuleGroup.notLoadedModuleIds,
           fallbackResolver = defaultResolver,
         )
       }
-      val pluginDir = pluginDir ?: mainResourceRoot.parent.parent
+      val pluginDir = pluginDir ?: resourceRoot.parent.parent
       loadDescriptorFromJar(
-        file = mainResourceRoot,
+        file = resourceRoot,
         loadingContext = context,
         pool = zipFilePool,
         pathResolver = pathResolver,
@@ -402,12 +422,6 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         pluginDir = pluginDir,
       )
     }
-    val modulesWithJarFiles = descriptor?.contentModules?.flatMap { moduleItem ->
-      val jarFiles = moduleItem.jarFiles
-      if (moduleItem.moduleLoadingRule != ModuleLoadingRule.EMBEDDED && jarFiles != null) jarFiles else emptyList()
-    }
-    descriptor?.jarFiles = allResourceRootsList.filter { modulesWithJarFiles == null || it !in modulesWithJarFiles }
-    return descriptor
   }
 
   /* TODO: reuse ServiceModuleMapping instead */
