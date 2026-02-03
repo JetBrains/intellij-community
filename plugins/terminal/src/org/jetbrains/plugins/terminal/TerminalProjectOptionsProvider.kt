@@ -16,7 +16,6 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.eel.EelApi
@@ -32,6 +31,7 @@ import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.util.PathUtil
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
@@ -76,8 +76,11 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
   val defaultStartingDirectory: String?
     get() {
       for (customizer in ShellCustomizer.EP_NAME.extensionList) {
-        val dir = try {
-          customizer.getStartDirectory(project)
+        try {
+          val dir = customizer.getStartDirectory(project)
+          if (dir != null) {
+            return dir.toString()
+          }
         }
         catch (e: Throwable) {
           rethrowControlFlowException(e)
@@ -87,26 +90,20 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
             customizer::class.java
           ))
         }
-        if (dir != null) {
-          return dir.toString()
-        }
       }
-      var directory: String? = null
-      for (customizer in LocalTerminalCustomizer.EP_NAME.extensions) {
+      @Suppress("DEPRECATION")
+      for (customizer in LocalTerminalCustomizer.EP_NAME.extensionList) {
         try {
-          directory = customizer.getDefaultFolder(project)
+          val directory = customizer.getDefaultFolder(project)
           if (directory != null) {
-            break
+            return PathUtil.toSystemDependentName(directory)
           }
         }
         catch (e: Exception) {
           LOG.error("Exception during getting default folder", e)
         }
       }
-      if (directory == null) {
-        directory = getDefaultWorkingDirectory()
-      }
-      return if (directory != null) FileUtil.toSystemDependentName(directory) else null
+      return PathUtil.toSystemDependentName(getDefaultWorkingDirectory())
     }
 
   private fun getDefaultWorkingDirectory(): String? {
