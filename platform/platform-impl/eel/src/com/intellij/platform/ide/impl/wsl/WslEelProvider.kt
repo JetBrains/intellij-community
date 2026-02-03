@@ -2,25 +2,27 @@
 package com.intellij.platform.ide.impl.wsl
 
 import com.intellij.execution.eel.MultiRoutingFileSystemUtils
-import com.intellij.execution.ijent.nio.IjentEphemeralRootAwareFileSystemProvider
-import com.intellij.execution.ijent.nio.IjentEphemeralRootAwarePath
-import com.intellij.execution.wsl.*
+import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.WslIjentAvailabilityService
+import com.intellij.execution.wsl.WslIjentManager
+import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
+import com.intellij.platform.core.nio.fs.MultiRoutingFsPath
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPathBoundDescriptor
-import com.intellij.platform.core.nio.fs.MultiRoutingFsPath
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend
 import com.intellij.platform.ide.impl.wsl.ijent.nio.IjentWslNioFileSystemProvider
 import com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemPosixApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
-import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
+import com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwareFileSystemProvider
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
@@ -28,8 +30,13 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.VisibleForTesting
 import java.net.URI
-import java.nio.file.*
+import java.nio.file.FileStore
+import java.nio.file.FileSystem
+import java.nio.file.FileSystemAlreadyExistsException
+import java.nio.file.FileSystemNotFoundException
 import java.nio.file.FileSystems.getDefault
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
@@ -164,34 +171,15 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
 @ApiStatus.Internal
 @VisibleForTesting
 class WslEelProvider : EelProvider {
-  override tailrec fun getEelDescriptor(path: Path): WslEelDescriptor? {
+  override fun getEelDescriptor(path: Path): WslEelDescriptor? {
     if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) {
       return null
     }
+
     val wslPath = WslPath.parseWindowsUncPath(path.toString()) ?: return null
     val root = path.root ?: return null
-    when (path) {
-      is IjentNioPath -> {
-        val uri = URI("ijent", "wsl", "/${wslPath.distributionId}", null, null)
-        val ijentFs = FileSystems.getFileSystem(uri) as? IjentNioFileSystemProvider ?: return null
-        if (ijentFs == path.fileSystem) {
-          return WslEelDescriptor(WSLDistribution(wslPath.distributionId), root.toString())
-        }
-        else {
-          return null
-        }
-      }
-      is MultiRoutingFsPath -> {
-        return WslEelDescriptor(
-          WSLDistribution(wslPath.distributionId),
-          root.toString()
-        )
-      }
-      is IjentEphemeralRootAwarePath -> {
-        return getEelDescriptor(path.originalPath)
-      }
-      else -> return null
-    }
+
+    return WslEelDescriptor(WSLDistribution(wslPath.distributionId), root.toString())
   }
 
   override fun getCustomRoots(eelDescriptor: EelDescriptor): Collection<@MultiRoutingFileSystemPath String>? =
