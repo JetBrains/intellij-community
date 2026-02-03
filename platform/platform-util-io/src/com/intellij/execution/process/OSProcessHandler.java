@@ -113,7 +113,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    *     You are on the pooled thread under {@link com.intellij.openapi.application.ReadAction ReadAction}:
    *     <ul>
    *       <li>
-   *         Synchronous (you need to return execution result or derived information to the caller) - get rid the ReadAction or synchronicity.
+   *         Synchronous (you need to return an execution result or derived information to the caller) - get rid of the ReadAction or synchronicity.
    *         Move execution part out of the code executed under ReadAction, or make your execution asynchronous - execute on
    *         {@link Task.Backgroundable other thread} and invoke a callback.
    *       </li>
@@ -127,7 +127,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    *         Outside of {@link com.intellij.openapi.application.WriteAction WriteAction}:
    *         <ul>
    *           <li>
-   *             Synchronous (you need to return execution result or derived information to the caller) - execute under
+   *             Synchronous (you need to return an execution result or derived information to the caller) - execute under
    *             {@link ProgressManager#runProcessWithProgressSynchronously(Runnable, String, boolean, com.intellij.openapi.project.Project) modal progress}.
    *           </li>
    *           <li>
@@ -138,7 +138,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    *       <li>
    *         Under {@link com.intellij.openapi.application.WriteAction WriteAction}
    *   <ul>
-   *     <li>Synchronous (you need to return execution result or derived information to the caller) - get rid the WriteAction or synchronicity.
+   *     <li>Synchronous (you need to return an execution result or derived information to the caller) - get rid of the WriteAction or synchronicity.
    *       Move execution part out of the code executed under WriteAction, or make your execution asynchronous - execute on
    *      {@link Task.Backgroundable other thread} and invoke a callback.</li>
    *     <li>Non-synchronous (you don't need to return something) - execute on the pooled thread. E.g. using {@link Task.Backgroundable}</li>
@@ -146,12 +146,12 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    * </li>
    * </ul></li></ul>
    *
-   * @apiNote works only in the internal non-headless mode. Reports once per running session per stacktrace per cause.
+   * @apiNote works only in the non-headless mode. Reports once per running session per stacktrace per cause.
    */
   @ApiStatus.Internal
   public static void checkEdtAndReadAction(@NotNull ProcessHandler processHandler) {
     Application application = ApplicationManager.getApplication();
-    if (application == null || !application.isInternal() || application.isHeadlessEnvironment()) {
+    if (application == null || application.isHeadlessEnvironment()) {
       return;
     }
     String message = null;
