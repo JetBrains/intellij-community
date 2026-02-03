@@ -448,7 +448,7 @@ public final class EditorPainter implements TextDrawingCallback {
           boolean isSelection = result.second;
 
           myBetweenLinesAttributes.put(visualLine, attributes);
-          if (isSelection && shouldUseNewSelection() ) {
+          if (isSelection && shouldUseNewSelection()) {
             mySelectionLinePainter.paintAllBlockInlaysAbove(visualLine);
           } else {
             paintBackground(attributes, startX, prevY, endX - startX, y - prevY);
@@ -469,7 +469,7 @@ public final class EditorPainter implements TextDrawingCallback {
                 && it.isInSelection()
                 && myEditor.isRightAligned()) {
               mySelectionLinePainter.paintSelection(new Rectangle2D.Float(
-                startX - selectionExtensionWidth, y,
+                xEnd - selectionExtensionWidth, y,
                 selectionExtensionWidth, myLineHeight
               ));
             }
