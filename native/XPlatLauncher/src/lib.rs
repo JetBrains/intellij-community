@@ -30,6 +30,8 @@ variant_size_differences
 )]
 
 use std::env;
+use std::ffi::OsStr;
+use std::os::unix::ffi::OsStrExt;
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, bail, Context, Result};
@@ -245,8 +247,11 @@ fn restore_working_directory() -> Result<()> {
     if let Ok(cwd) = cwd_res {
         if cwd == PathBuf::from("/") {
             if let Ok(pwd) = pwd_var {
-                env::set_current_dir(&pwd)
-                    .with_context(|| format!("Cannot set current directory to '{pwd}'"))?;
+              let pwd_bytes: Vec<u8> = pwd.chars().map(|c| c as u8).collect();
+              let restore_pwd = OsStr::from_bytes(&pwd_bytes);
+
+              env::set_current_dir(&restore_pwd)
+                    .with_context(|| format!("Cannot set current directory to '{}'", restore_pwd.to_string_lossy()))?;
             }
         }
     }

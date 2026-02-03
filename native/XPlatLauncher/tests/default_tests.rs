@@ -398,6 +398,30 @@ mod tests {
     }
 
     #[test]
+    #[cfg(target_os = "macos")]
+    fn macos_adjusting_current_dir_with_non_ascii_pwd() {
+        let test = prepare_test_env(LauncherLocation::Standard);
+
+        let ascii_pwd = test.project_dir.join("한글");
+        let ascii_pwd_str = ascii_pwd.to_str().unwrap();
+        fs::create_dir_all(&ascii_pwd).unwrap();
+
+        let app_bundle_path_str = test.dist_root.parent().unwrap().to_str().unwrap();
+        let debug_mode_var = xplat_launcher::DEBUG_MODE_ENV_VAR.to_string() + "=1";
+        let stdout_path = test.project_dir.join("_stdout.txt");
+        let stdout_path_str = stdout_path.to_str().unwrap();
+        let args = vec!["-Wna", app_bundle_path_str, "--env", &debug_mode_var, "--stdout", stdout_path_str, "--args", "print-cwd"];
+
+        let open_res = std::process::Command::new("/usr/bin/open").args(&args).env("PWD", ascii_pwd_str)
+          .output().unwrap_or_else(|e| panic!("Failed to execute 'open' command: {:?}", e));
+        assert!(open_res.status.success(), "Failed: 'open {:?}':\n{:?}", args, open_res);
+
+        let stdout = fs::read_to_string(&stdout_path).unwrap_or_else(|_| panic!("Cannot read: {:?}", stdout_path));
+        let expected = format!("CWD={}", ascii_pwd.display());
+        assert!(stdout.contains(&expected), "'{}' is not in the output:\n{}", expected, stdout);
+    }
+
+    #[test]
     fn launching_via_external_symlink() {
         let test = prepare_test_env(LauncherLocation::Standard);
 
