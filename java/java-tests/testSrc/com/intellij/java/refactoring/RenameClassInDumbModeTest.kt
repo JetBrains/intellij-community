@@ -9,8 +9,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.refactoring.actions.RenameElementAction
-import com.intellij.refactoring.rename.RenameHandlerRegistry
+import com.intellij.refactoring.actions.RenameFileAction
 import com.intellij.refactoring.rename.RenameDialog
+import com.intellij.refactoring.rename.RenameHandlerRegistry
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -34,9 +35,27 @@ class RenameClassInDumbModeTest : LightJavaCodeInsightFixtureTestCase() {
       }
     }
 
-
     // class name is expected to remain the same, only file name is changed
     assertEquals("TestClass", psiClass.name)
+    assertEquals("RenamedClass.java", psiFile.name)
+  }
+
+  fun `test rename file action works in dumb mode`() {
+    myFixture.configureByText("FileName.java", "public class DifferentClass {}")
+
+    val psiFile = myFixture.file as PsiJavaFile
+    val psiClass = psiFile.classes[0]
+    assertNotNull("PsiClass should not be null", psiClass)
+
+    interceptRenameDialogAndInvokeRename("RenamedClass.java")
+    DumbModeTestUtils.runInDumbModeSynchronously(project) {
+      runInEdtAndWait {
+        RenameFileAction().actionPerformed(createEvent(project, psiClass))
+      }
+    }
+
+    // class name is expected to remain the same, "rename file action" only renames file
+    assertEquals("DifferentClass", psiClass.name)
     assertEquals("RenamedClass.java", psiFile.name)
   }
 
@@ -54,7 +73,7 @@ class RenameClassInDumbModeTest : LightJavaCodeInsightFixtureTestCase() {
       val dataContext = createEvent(project, psiClass).dataContext
       val handlers = RenameHandlerRegistry.getInstance().getRenameHandlers(dataContext)
       val usableHandlers = handlers.filter { DumbService.getInstance(project).isUsableInCurrentContext(it) }
-      assertTrue("Rename should be unavailable in dumb mode when class name differs from file", usableHandlers.isEmpty())
+      assertTrue("Rename should be unavailable in dumb mode when class name differs from file, psiFile=${psiFile.name}, psiClass=${psiClass.name}", usableHandlers.isEmpty())
     }
   }
 

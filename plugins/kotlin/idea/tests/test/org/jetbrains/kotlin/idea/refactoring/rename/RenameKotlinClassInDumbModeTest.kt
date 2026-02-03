@@ -8,6 +8,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.actions.RenameElementAction
+import com.intellij.refactoring.actions.RenameFileAction
 import com.intellij.refactoring.rename.RenameHandlerRegistry
 import com.intellij.refactoring.rename.RenameDialog
 import com.intellij.testFramework.DumbModeTestUtils
@@ -37,6 +38,23 @@ class RenameKotlinClassInDumbModeTest : KotlinLightCodeInsightFixtureTestCase() 
         // class name is expected to remain the same, only file name is changed
         assertEquals("TestClass", ktClass.name)
         assertEquals("RenamedClass.kt", ktFile.name)
+    }
+
+    fun `test rename file action works in dumb mode`() {
+        myFixture.configureByText("TestClass.kt", "class TestClass {}")
+
+        val ktFile = myFixture.file as KtFile
+        val ktClass = ktFile.declarations.filterIsInstance<KtClass>().first()
+        interceptRenameDialogAndInvokeRename("RenamedFile.kt")
+        DumbModeTestUtils.runInDumbModeSynchronously(project) {
+            runInEdtAndWait {
+                RenameFileAction().actionPerformed(createEvent(project, ktClass))
+            }
+        }
+
+        // class name is expected to remain the same, "rename file action" only renames file
+        assertEquals("TestClass", ktClass.name)
+        assertEquals("RenamedFile.kt", ktFile.name)
     }
 
     fun `test rename kotlin class in dumb mode has no rename handlers`() {
