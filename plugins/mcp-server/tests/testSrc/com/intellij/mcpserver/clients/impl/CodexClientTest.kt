@@ -1,8 +1,10 @@
 package com.intellij.mcpserver.clients.impl
 
 import com.intellij.mcpserver.clients.McpClient
+import com.intellij.mcpserver.clients.McpClient.Companion.TransportType
 import com.intellij.mcpserver.clients.McpClientInfo
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -207,11 +209,103 @@ class CodexClientTest {
     McpClient.overrideWriteLegacyForTests(false)
 
     val client = TestCodexClient(McpClientInfo.Scope.GLOBAL, configPath, "http://localhost:4444/stream")
-    client.configure()
+    client.configure(client.getStreamableHttpConfig())
 
     val result = configPath.readText()
     assertTrue(result.contains("""[projects."/Users/test/project"]"""))
     assertFalse(result.contains("""[projects.""/Users/test/project""]"""))
+  }
+
+  @Test
+  fun `getConfiguredTransportTypes detects HTTP Stream`() {
+    val configPath = tempDir.resolve("config.toml")
+    configPath.writeText(
+      """
+      [mcp_servers.test]
+      url = "http://localhost:8123/stream"
+      """.trimIndent()
+    )
+
+    val client = CodexClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val types = client.getConfiguredTransportTypes()
+
+    assertTrue(types.contains(TransportType.STREAMABLE_HTTP))
+  }
+
+  @Test
+  fun `getConfiguredTransportTypes detects Stdio`() {
+    val configPath = tempDir.resolve("config.toml")
+    configPath.writeText(
+      """
+      [mcp_servers.test]
+      command = "java"
+      args = ["com.intellij.mcpserver.stdio.MainKt"]
+
+      [mcp_servers.test.env]
+      IJ_MCP_SERVER_PORT = "8080"
+      """.trimIndent()
+    )
+
+    val client = CodexClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val types = client.getConfiguredTransportTypes()
+
+    assertTrue(types.contains(TransportType.STDIO))
+  }
+
+  @Test
+  fun `getTransportTypesDisplayString returns HTTP Stream`() {
+    val configPath = tempDir.resolve("config.toml")
+    configPath.writeText(
+      """
+      [mcp_servers.test]
+      url = "http://localhost:8123/stream"
+      """.trimIndent()
+    )
+
+    val client = CodexClient(McpClientInfo.Scope.GLOBAL, configPath)
+    val displayString = client.getTransportTypesDisplayString()!!
+
+    assertEquals("HTTP Stream", displayString)
+  }
+
+  @Test
+  fun `autoConfigure with HTTP Stream succeeds`() {
+    val configPath = tempDir.resolve("config.toml")
+    configPath.writeText("")
+
+    McpClient.overrideProductSpecificServerKeyForTests("codextest")
+
+    val client = TestCodexClient(McpClientInfo.Scope.GLOBAL, configPath, "http://localhost:5555/stream")
+    client.autoConfigure()
+
+    val result = configPath.readText()
+    assertTrue(result.contains("[mcp_servers.codextest]"))
+    assertTrue(result.contains("""url = "http://localhost:5555/stream""""))
+  }
+
+  @Test
+  fun `autoConfigure preserves unrelated sections`() {
+    val configPath = tempDir.resolve("config.toml")
+    configPath.writeText(
+      """
+      [projects."/Users/test/project"]
+      trust_level = "trusted"
+
+      [random.section]
+      value = 42
+      """.trimIndent()
+    )
+
+    McpClient.overrideProductSpecificServerKeyForTests("codextest")
+
+    val client = TestCodexClient(McpClientInfo.Scope.GLOBAL, configPath, "http://localhost:5555/stream")
+    client.autoConfigure()
+
+    val result = configPath.readText()
+    assertTrue(result.contains("""[projects."/Users/test/project"]"""))
+    assertTrue(result.contains("[random.section]"))
+    assertTrue(result.contains("value = 42"))
+    assertTrue(result.contains("[mcp_servers.codextest]"))
   }
 }
 
