@@ -896,7 +896,6 @@ private fun walkDirectoryProcessFile(
         owner = Files.getAttribute(currentItem, "unix:uid", LinkOption.NOFOLLOW_LINKS) as Int,
         group = Files.getAttribute(currentItem, "unix:gid", LinkOption.NOFOLLOW_LINKS) as Int,
         mask = convertPosixPermissionsToMask(posixAttributes.permissions()),
-        permissionsSet = posixAttributes.permissions()
       )
     }
   }

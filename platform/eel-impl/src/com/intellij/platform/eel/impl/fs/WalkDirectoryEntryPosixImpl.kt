@@ -5,7 +5,6 @@ import com.intellij.platform.eel.fs.WalkDirectoryEntry
 import com.intellij.platform.eel.fs.WalkDirectoryEntryPosix
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.attribute.PosixFilePermission
 import java.time.ZonedDateTime
 
 @ApiStatus.Internal
@@ -30,7 +29,6 @@ data class WalkDirectoryEntryPosixImpl(
     override val owner: Int,
     override val group: Int,
     override val mask: Int,
-    override val permissionsSet: Set<PosixFilePermission>,
   ) : WalkDirectoryEntryPosix.Permissions {
     override val otherCanExecute: Boolean get() = (mask and 0x1) != 0 // (00001) execute/search by others
     override val otherCanWrite: Boolean get() = (mask and 0x2) != 0 // (00002) write by others

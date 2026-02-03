@@ -13,21 +13,61 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.eel.*
-import com.intellij.platform.eel.fs.*
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.EelUserPosixInfo
+import com.intellij.platform.eel.fs.ChangeAttributesOptionsBuilder
+import com.intellij.platform.eel.fs.EelFileInfo
+import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder
 import com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryTraversalOrder
+import com.intellij.platform.eel.fs.EelPosixFileInfo
+import com.intellij.platform.eel.fs.EelPosixFileInfoImpl
+import com.intellij.platform.eel.fs.StreamingWriteResult
+import com.intellij.platform.eel.fs.WalkDirectoryEntry
+import com.intellij.platform.eel.fs.WalkDirectoryEntryPosix
+import com.intellij.platform.eel.fs.WalkDirectoryEntryResult
+import com.intellij.platform.eel.fs.WalkDirectoryEntryWindows
+import com.intellij.platform.eel.fs.WalkDirectoryOptionsBuilder
+import com.intellij.platform.eel.fs.WriteOptionsBuilder
+import com.intellij.platform.eel.fs.createTemporaryDirectory
+import com.intellij.platform.eel.fs.createTemporaryFile
+import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.isPosix
+import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.provider.*
-import com.intellij.platform.eel.provider.utils.EelPathUtils.UnixFilePermissionBranch.*
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.osFamily
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.eel.provider.toEelApiBlocking
+import com.intellij.platform.eel.provider.utils.EelPathUtils.UnixFilePermissionBranch.GROUP
+import com.intellij.platform.eel.provider.utils.EelPathUtils.UnixFilePermissionBranch.OTHER
+import com.intellij.platform.eel.provider.utils.EelPathUtils.UnixFilePermissionBranch.OWNER
 import com.intellij.platform.eel.provider.utils.EelPathUtils.incrementalWalkingTransfer
 import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.CollectionFactory
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.produceIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
@@ -39,12 +79,31 @@ import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.nio.file.StandardOpenOption.*
-import java.nio.file.attribute.*
+import java.nio.file.StandardOpenOption.CREATE
+import java.nio.file.StandardOpenOption.READ
+import java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
+import java.nio.file.StandardOpenOption.WRITE
+import java.nio.file.attribute.BasicFileAttributeView
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.DosFileAttributeView
+import java.nio.file.attribute.DosFileAttributes
+import java.nio.file.attribute.PosixFileAttributeView
+import java.nio.file.attribute.PosixFileAttributes
+import java.nio.file.attribute.PosixFilePermission
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.FileAlreadyExistsException
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.Path
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.exists
+import kotlin.io.path.fileAttributesView
+import kotlin.io.path.fileAttributesViewOrNull
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.pathString
+import kotlin.io.path.relativeTo
 import kotlin.math.min
 
 @ApiStatus.Internal
@@ -573,9 +632,11 @@ object EelPathUtils {
       is WalkDirectoryEntryPosix.Permissions -> {
         when (remote) {
           is WalkDirectoryEntryPosix.Permissions -> {
+            val localPermissionSet = convertMaskToPosixPermissions(local.mask)
+            val remotePermissionSet = convertMaskToPosixPermissions(remote.mask)
             when (fileAttributesStrategy) {
-              is FileTransferAttributesStrategy.RequirePosixPermissions -> (local.permissionsSet + fileAttributesStrategy.requiredPermissions) == remote.permissionsSet
-              else -> local.permissionsSet == remote.permissionsSet
+              is FileTransferAttributesStrategy.RequirePosixPermissions -> (localPermissionSet + fileAttributesStrategy.requiredPermissions) == remotePermissionSet
+              else -> localPermissionSet == remotePermissionSet
             }
           }
           is WalkDirectoryEntryWindows.Permissions -> {
@@ -902,6 +963,20 @@ object EelPathUtils {
     return mask
   }
 
+  fun convertMaskToPosixPermissions(mask: Int): Set<PosixFilePermission> {
+    val perms = mutableSetOf<PosixFilePermission>()
+    if (mask and 0x1 != 0) perms.add(PosixFilePermission.OTHERS_EXECUTE)
+    if (mask and 0x2 != 0) perms.add(PosixFilePermission.OTHERS_WRITE)
+    if (mask and 0x4 != 0) perms.add(PosixFilePermission.OTHERS_READ)
+    if (mask and 0x8 != 0) perms.add(PosixFilePermission.GROUP_EXECUTE)
+    if (mask and 0x10 != 0) perms.add(PosixFilePermission.GROUP_WRITE)
+    if (mask and 0x20 != 0) perms.add(PosixFilePermission.GROUP_READ)
+    if (mask and 0x40 != 0) perms.add(PosixFilePermission.OWNER_EXECUTE)
+    if (mask and 0x80 != 0) perms.add(PosixFilePermission.OWNER_WRITE)
+    if (mask and 0x100 != 0) perms.add(PosixFilePermission.OWNER_READ)
+    return perms
+  }
+
   private suspend fun setPermissionsAndAttributes(
     localEntry: WalkDirectoryEntry,
     remoteEntry: Path,
@@ -932,7 +1007,7 @@ object EelPathUtils {
         when (localEntry) {
           is WalkDirectoryEntryPosix -> {
             val localPerms = localEntry.permissions!!
-            perms.addAll(localPerms.permissionsSet)
+            perms.addAll(convertMaskToPosixPermissions(localPerms.mask))
             owner = localPerms.owner
             group = localPerms.group
           }
