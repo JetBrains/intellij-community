@@ -435,6 +435,10 @@ public final class JBUI {
       public static final Color ERROR_BORDER_COLOR = JBColor.namedColor("Banner.errorBorderColor", 0xFAD4D8, 0x5E3838);
 
       public static final Color FOREGROUND = JBColor.namedColor("Banner.foreground", 0x0, 0xDFE1E5);
+
+      public static @NotNull JBValue underlineArc() {
+        return new JBValue.UIInteger("Banner.underlineArc", 12);
+      }
     }
 
     public static final class Button {

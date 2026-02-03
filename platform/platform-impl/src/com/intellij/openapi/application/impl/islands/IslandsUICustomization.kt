@@ -781,7 +781,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
               val index = parent.components.indexOf(c)
               val top = if (index == 0) 1 else 4
               val bottom = if (index == parent.componentCount - 1) 1 else 4
-              return JBInsets(top, 10, bottom, 10)
+              val leftRight = if (UISettings.getInstance().compactMode) 11 else 13
+              return JBInsets(top, leftRight, bottom, leftRight)
             }
             return super.getBorderInsets(c)
           }
@@ -796,24 +797,24 @@ internal class IslandsUICustomization : InternalUICustomization() {
       super.paintComponent(g)
 
       if (isManyIslandEnabled) {
-        val rect = Rectangle(size)
-        val w = JBUI.scale(6)
-        val h = JBUI.scale(1)
-        JBInsets.removeFrom(rect, Insets(insets.top - h, w, insets.bottom - h, w))
-
         g as Graphics2D
-
         g.color = component.background
 
-        val arc = JBUI.getInt("Banner.underlineArc", 12).toDouble()
+        val rect = Rectangle(size)
+        val w = JBUIScale.scale(IslandsTabPainter.getHOffsetUnscaled(UISettings.getInstance().compactMode, JBTabsPosition.top).toFloat()).toDouble() + IslandsTabPainter.firstTabOffset
+        val h = JBUI.scale(1).toDouble()
 
-        RectanglePainter2D.FILL.paint(g, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble(),
-                                      arc, LinePainter2D.StrokeType.CENTERED, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
+        val x = rect.x + w
+        val y = rect.y + insets.top - h
+        val width = rect.width - 2 * w
+        val height = rect.height - (insets.top - h) - (insets.bottom - h)
+        val arc = JBUI.CurrentTheme.Banner.underlineArc().float.toDouble()
+
+        RectanglePainter2D.FILL.paint(g, x, y, width, height, arc, LinePainter2D.StrokeType.CENTERED, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
 
         g.color = borderColor
 
-        RectanglePainter2D.DRAW.paint(g, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble(),
-                                      arc, LinePainter2D.StrokeType.CENTERED, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
+        RectanglePainter2D.DRAW.paint(g, x, y, width, height, arc, LinePainter2D.StrokeType.CENTERED, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
       }
     }
   }
