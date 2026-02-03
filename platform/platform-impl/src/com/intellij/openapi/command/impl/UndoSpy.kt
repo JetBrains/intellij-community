@@ -38,6 +38,13 @@ interface UndoSpy {
     }
 
     @JvmStatic
+    fun withBlindSpot(action: Runnable) {
+      withBlindSpot {
+        action.run()
+      }
+    }
+
+    @JvmStatic
     fun <T> withBlindSpot(action: () -> T): T {
       val undoSpy = getInstance()
       return if (undoSpy == null) {

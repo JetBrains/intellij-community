@@ -120,21 +120,23 @@ final class UndoClientState implements Disposable {
     undoRedoInProgress = undo ? UndoRedoInProgress.UNDO : UndoRedoInProgress.REDO;
     try {
       var exception = new AtomicReference<RuntimeException>();
-      CommandProcessor.getInstance().executeCommand(
-        project,
-        () -> {
-          try {
-            beforeUndoRedoStarted.run();
-            CopyPasteManager.getInstance().stopKillRings();
-            undoOrRedo(editor, undo);
-          }
-          catch (RuntimeException ex) {
-            exception.set(ex);
-          }
-        },
-        commandName,
-        null,
-        commandMerger.getUndoConfirmationPolicy()
+      UndoSpy.withBlindSpot(
+        () -> CommandProcessor.getInstance().executeCommand(
+          project,
+          () -> {
+            try {
+              beforeUndoRedoStarted.run();
+              CopyPasteManager.getInstance().stopKillRings();
+              undoOrRedo(editor, undo);
+            }
+            catch (RuntimeException ex) {
+              exception.set(ex);
+            }
+          },
+          commandName,
+          null,
+          commandMerger.getUndoConfirmationPolicy()
+        )
       );
       if (exception.get() != null) {
         throw exception.get();
