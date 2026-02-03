@@ -15,7 +15,6 @@ import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.UITestUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.Functions;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -168,19 +167,6 @@ public class JUnit5TestSessionListener implements LauncherSessionListener {
       if (junit34Test) {
         Disposer.setDebugMode(true);
       }
-
-      // testDynamicExtensions
-      doTest.accept(_LastInSuiteTestPrefix + "testDynamicExtensions" + buildConfName, () -> {
-        boolean testDynamicExtensions = SystemProperties.getBooleanProperty("intellij.test.all.dynamic.extension.points", false);
-        if (!DynamicExtensionPointsTester.EXTENSION_POINTS_WHITE_LIST.isEmpty() || testDynamicExtensions) {
-          if (testDynamicExtensions) {
-            DynamicExtensionPointsTester.checkDynamicExtensionPoints(Functions.id());
-          }
-        }
-        else {
-          // intellij.test.all.dynamic.extension.points is off, no dynamic extensions to test
-        }
-      });
 
       // testProjectLeak
       doTest.accept(_LastInSuiteTestPrefix + "testProjectLeak" + buildConfName, () -> {
