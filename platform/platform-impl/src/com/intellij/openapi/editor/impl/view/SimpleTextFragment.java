@@ -56,7 +56,7 @@ final class SimpleTextFragment extends TextFragment {
   }
 
   @Override
-  public Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
+  public @NotNull Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
     return g -> {
       g.setFont(myFont);
       int xAsInt = (int)x;
@@ -121,7 +121,7 @@ final class SimpleTextFragment extends TextFragment {
   }
 
   @Override
-  public int[] xToVisualColumn(float startX, float x) {
+  public int @NotNull [] xToVisualColumn(float startX, float x) {
     float relX = x - startX;
     float prevPos = 0;
     for (int i = 0; i < myCharPositions.length; i++) {

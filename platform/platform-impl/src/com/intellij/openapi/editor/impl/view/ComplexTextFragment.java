@@ -179,7 +179,7 @@ public final class ComplexTextFragment extends TextFragment {
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
-  public Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
+  public @NotNull Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
     assert startColumn >= 0                    : assertMessage(x, y, startColumn, endColumn);
     assert endColumn <= myCharPositions.length : assertMessage(x, y, startColumn, endColumn);
     assert startColumn < endColumn             : assertMessage(x, y, startColumn, endColumn);
@@ -252,7 +252,7 @@ public final class ComplexTextFragment extends TextFragment {
   }
 
   @Override
-  public int[] xToVisualColumn(float startX, float x) {
+  public int @NotNull [] xToVisualColumn(float startX, float x) {
     float relX = x - startX;
     float prevPos = 0;
     int columnCount = getCodePointCount();

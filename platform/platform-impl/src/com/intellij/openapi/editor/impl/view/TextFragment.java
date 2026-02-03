@@ -134,7 +134,7 @@ public abstract class TextFragment implements LineFragment {
     }
 
     @Override
-    public int[] xToVisualColumn(float startX, float x) {
+    public int @NotNull [] xToVisualColumn(float startX, float x) {
       int startColumnInParent = visualColumnToParent(0);
       float parentStartX = startX - TextFragment.this.visualColumnToX(0, startColumnInParent);
       int[] parentColumn = TextFragment.this.xToVisualColumn(parentStartX, x);
@@ -160,7 +160,7 @@ public abstract class TextFragment implements LineFragment {
     }
 
     @Override
-    public Consumer<Graphics2D> draw(float x, float y, int startOffset, int endOffset) {
+    public @NotNull Consumer<Graphics2D> draw(float x, float y, int startOffset, int endOffset) {
       return TextFragment.this.draw(x, y, visualOffsetToParent(startOffset), visualOffsetToParent(endOffset));
     }
 

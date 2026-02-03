@@ -459,6 +459,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     }
 
     // offsets are visual (relative to fragment's start)
+    @NotNull
     Consumer<Graphics2D> draw(float x, float y, int startRelativeOffset, int endRelativeOffset) {
       if (myDelegate != null) {
         return myDelegate.draw(x, y, startRelativeOffset, endRelativeOffset);

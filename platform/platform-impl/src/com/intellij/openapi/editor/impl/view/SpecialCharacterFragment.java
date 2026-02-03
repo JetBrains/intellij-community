@@ -124,7 +124,7 @@ final class SpecialCharacterFragment implements LineFragment {
   }
 
   @Override
-  public int[] xToVisualColumn(float startX, float x) {
+  public int @NotNull [] xToVisualColumn(float startX, float x) {
     if (x <= startX) return new int[] {0, 0};
     if (x > startX + myWidth) return new int[] {1, 1};
     int column = (x <= startX + myWidth / 2) ? 0 : 1;
@@ -137,7 +137,7 @@ final class SpecialCharacterFragment implements LineFragment {
   }
 
   @Override
-  public Consumer<Graphics2D> draw(float x, float y, int startOffset, int endOffset) {
+  public @NotNull Consumer<Graphics2D> draw(float x, float y, int startOffset, int endOffset) {
     return g -> {
       g.setFont(getFont());
       g.drawString(myCode, x, y);
