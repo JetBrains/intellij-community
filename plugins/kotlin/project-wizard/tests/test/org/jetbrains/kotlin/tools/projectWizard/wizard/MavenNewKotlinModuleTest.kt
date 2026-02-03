@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.io.File
 
 @TestRoot("project-wizard/tests")
 @RunWith(JUnit4::class)
@@ -42,7 +43,7 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     override val testDirectory: String
         get() = "testData/mavenNewProjectWizard"
     private val newModuleName = "module"
-    private val testRoot = TestMetadataUtil.getTestRoot(MavenNewKotlinModuleTest::class.java)
+    private val testRoot: File? = TestMetadataUtil.getTestRoot(MavenNewKotlinModuleTest::class.java)
 
     @JvmField
     @Rule
